@@ -21,10 +21,10 @@ You will learn how to access a REST service and deserialize the returned JSON th
 
 [ReactJS](https://reactjs.org/) is a JavaScript library that is used to build user interfaces. Its main purpose is to incorporate a component-based approach to create reusable UI elements. With ReactJS, you can also interface with other libraries and frameworks. Note that the names ReactJS and React are used interchangeably.
 
-The React application in this guide is provided and configured for you in the ***src/main/frontend*** directory. The application uses the [Create React App](https://reactjs.org/docs/create-a-new-react-app.html) prebuilt configuration to set up the modern single-page React application. The [create-react-app](https://github.com/facebook/create-react-app) integrated toolchain is a comfortable environment for learning React and is the best way to start building a new single-page application with React.
+The React application in this guide is provided and configured for you in the ***src/main/frontend*** directory. The application uses [Next.js](https://nextjs.org/), a [React-powered framework](https://react.dev/learn/start-a-new-react-project), to set up the modern React application. The ***Next.js*** framework provides a powerful environment for learning and building React applications, with features like server-side rendering, static site generation, and easy API routes. It is the best way to start building a highly performant React application.
 
 
-The REST service that provides the resources was written for you in advance in the back end of the application, and it responds with the ***artists.json*** in the ***src/resources*** directory. You will implement a ReactJS client as the front end of your application, which consumes this JSON file and displays its contents on a single-page webpage. 
+The REST service that provides the resources was written for you in advance in the back end of the application, and it responds with the ***artists.json*** file  in the ***src/resources*** directory. You will implement a ReactJS client as the front end of your application, which consumes this JSON file and displays its contents on a single web page. 
 
 To learn more about REST services and how you can write them, see the [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) guide.
 
@@ -54,14 +54,14 @@ The ***finish*** directory contains the finished project that you will build.
 
 ### Try what you'll build
 
-The ***finish*** directory in the root of this guide contains the finished application. The React front end is already pre-built for you and the static files from the production build can be found in the ***src/main/webapp/static*** directory.
+The ***finish*** directory in the root of this guide contains the finished application. The React front end is already pre-built for you and the static files from the production build can be found in the ***src/main/webapp/_next/static*** directory.
 
 
 In this IBM cloud environment, you need to update the URL to access the ***artists.json***. Run the following commands to go to the ***finish*** directory and update the files where the URL has been specified:
 ```bash
 cd finish
-sed -i 's=http://localhost:9080/artists='"https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' src/main/webapp/static/js/main.2d7e902e.js
-sed -i 's=http://localhost:9080/artists='"https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-reactjs/finish/src/main/frontend/src/Components/ArtistTable.js
+sed -i 's=http://localhost:9080/artists='"https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-reactjs/finish/src/main/webapp/_next/static/chunks/app/page-37714928d1f43656.js
+sed -i 's=http://localhost:9080/artists='"https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-reactjs/finish/src/main/frontend/src/app/ArtistTable.jsx
 ```
 
 To try out the application, run the following Maven goal to build the application and deploy it to Open Liberty:
@@ -76,10 +76,9 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 
-When the Liberty instance is running, select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session. Open your browser and check out the application by going to the URL that the following command returns:
-```bash
-echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
-```
+When the Liberty instance is running, click the following button to check out the application:
+
+::startApplication{port="9080" display="external" name="Visit application" route="/"}
 
 See the following output:
 
@@ -123,7 +122,7 @@ After the Liberty instance is started, run the following curl command to view yo
 curl -s http://localhost:9080/artists | jq
 ```
 
-All the dependencies for the React front end can be found in ***src/main/frontend/src/package.json***, and they are installed before the front end is built by the ***frontend-maven-plugin***. Additionally, some provided ***CSS*** stylesheets files are provided and can be found in the ***src/main/frontend/src/Styles*** directory.
+All the dependencies for the React front end are listed in the  ***src/main/frontend/src/package.json*** file and are installed before the build process by the ***frontend-maven-plugin***. Also, ***CSS*** stylesheets files are available in the ***src/main/frontend/src/styles*** directory.
 
 
 ::page{title="Project configuration"}
@@ -134,7 +133,8 @@ Node.js is a server-side JavaScript runtime that is used for developing networki
 
 
 Take a look at the **pom.xml** file.
-> From the menu of the IDE, select **File** > **Open** > guide-rest-client-reactjs/start/pom.xml, or click the following button
+> From the menu of the IDE, select **File** > **Open** > guide-rest-client-reactjs/start/pom.xml, or click the following button:
+
 ::openFile{path="/home/project/guide-rest-client-reactjs/start/pom.xml"}
 
 The ***frontend-maven-plugin*** is used to ***install*** the dependencies that are listed in your ***package.json*** file from the npm registry into a folder called ***node_modules***. The ***node_modules*** folder can be found in your ***working*** directory. Then, the configuration ***produces*** the production files to the ***src/main/frontend/build*** directory. 
@@ -144,216 +144,227 @@ The ***maven-resources-plugin*** copies the ***static*** content from the ***bui
 
 ::page{title="Creating the default page"}
 
-You need to create the entry point of your React application. ***create-react-app*** uses the ***index.js*** file as the main entry point of the application. This JavaScript file corresponds with the ***index.html*** file, which is the entry point where your code runs in the browser.
+Create the entry point of your React application. The latest version of ***Next.js*** recommends you use the [App Router](https://nextjs.org/docs/app/building-your-application/routing/defining-routes), which centralizes routing logic under the ***app*** directory. 
+ 
+To construct the home page of the web application, create a ***page.jsx*** file.
 
-Create the ***index.js*** file.
+Create the ***page.jsx*** file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/index.js
+touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/page.jsx
 ```
 
 
-> Then, to open the index.js file in your IDE, select
-> **File** > **Open** > guide-rest-client-reactjs/start/src/main/frontend/src/index.js, or click the following button
+> Then, to open the page.jsx file in your IDE, select
+> **File** > **Open** > guide-rest-client-reactjs/start/src/main/frontend/src/app/page.jsx, or click the following button
 
-::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/index.js"}
+::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/page.jsx"}
 
 
 
-```javascript
+```
+import "../../styles/index.css";
+import ArtistTable from "./ArtistTable";
 import React from 'react';
-import ReactDOM from 'react-dom';
-import './Styles/index.css';
-import App from './Components/App';
 
-ReactDOM.render(<App />, document.getElementById('root'));
+export default function Home() {
+  return (
+    <ArtistTable></ArtistTable>
+  );
+}
 ```
 
 
 Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
+The ***page.jsx*** file is a container for all other components. When the ***Home*** React component  is rendered, the ***ArtistTable*** components content are displayed.
 
-The ***React*** library imports the ***react*** package. A DOM, or Document Object Model, is a programming interface for HTML and XML documents. React offers a virtual DOM, which is essentially a copy of the browser DOM that resides in memory. The React virtual DOM improves the performance of your web application and plays a crucial role in the rendering process. The ***react-dom*** package provides DOM-specific methods that can be used in your application to get outside of the React model, if necessary. 
+To render the pages correctly, add a ***layout.jsx*** file that defines the ***RootLayout*** containing the UI that are shared across all routes.
 
-The ***render*** method takes an HTML DOM element and tells the ReactDOM to render your React application inside of this DOM element. To learn more about the React virtual DOM, see the [ReactDOM](https://reactjs.org/docs/react-dom.html) documentation.
-
-
-::page{title="Creating the React components"}
-
-A React web application is a collection of components, and each component has a specific function. You will create the components that are used in the application to acquire and display data from the REST API. 
-
-The main component in your React application is the ***App*** component. You need to create the ***App.js*** file to act as a container for all other components. 
-
-Create the ***App.js*** file.
+Create the ***layout.jsx*** file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/Components/App.js
+touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/layout.jsx
 ```
 
 
-> Then, to open the App.js file in your IDE, select
-> **File** > **Open** > guide-rest-client-reactjs/start/src/main/frontend/src/Components/App.js, or click the following button
+> Then, to open the layout.jsx file in your IDE, select
+> **File** > **Open** > guide-rest-client-reactjs/start/src/main/frontend/src/app/layout.jsx, or click the following button
 
-::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/Components/App.js"}
+::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/layout.jsx"}
 
 
 
-```javascript
-import React from 'react';
-import {ArtistTable} from './ArtistTable';
-
-function App() {
-  return (
-      <ArtistTable/>
-  );
+```
+export const metadata = {
+  title: 'Next.js',
+  description: 'Generated by Next.js',
 }
 
-export default App;
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  )
+}
 ```
 
 
 
-The ***App.js*** file returns the ***ArtistTable*** function to create a reusable element that encompasses your web application. 
+For more detailed information, see the ***Next.js*** documentation on [Pages](https://nextjs.org/docs/app/building-your-application/routing/pages) and [Layouts](https://nextjs.org/docs/app/building-your-application/routing/layouts-and-templates).
 
-Next, create the ***ArtistTable*** function that fetches data from your back end and renders it in a table. 
 
-Create the ***ArtistTable.js*** file.
+::page{title="Creating the React component"}
+
+A React web application is a collection of components, and each component has a specific function. You will create a component that the application uses to acquire and display data from the REST API. 
+
+Create the ***ArtistTable*** function that fetches data from your back-end and renders it in a table. 
+
+Create the ***ArtistTable.jsx*** file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/Components/ArtistTable.js
+touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx
 ```
 
 
-> Then, to open the ArtistTable.js file in your IDE, select
-> **File** > **Open** > guide-rest-client-reactjs/start/src/main/frontend/src/Components/ArtistTable.js, or click the following button
+> Then, to open the ArtistTable.jsx file in your IDE, select
+> **File** > **Open** > guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx, or click the following button
 
-::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/Components/ArtistTable.js"}
+::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx"}
 
 
 
-```javascript
+```
+"use client";
 import React, { useEffect, useMemo, useState } from 'react';
-import { useTable, usePagination, useSortBy } from 'react-table';
-import '../Styles/table.css'
+import { useReactTable, getCoreRowModel, getPaginationRowModel, getSortedRowModel, flexRender} from '@tanstack/react-table'; 
+import '../../styles/table.css'
 
-export function ArtistTable() {
+function ArtistTable() {
 
   const [posts, setPosts] = useState([]);
+  const [sorting, setSorting] = useState([]);
+  const [pagination, setPagination] = useState({pageIndex: 0, pageSize: 4});
 
 
   const data = useMemo(() => [...posts], [posts]);
 
   const columns = useMemo(() => [{
-    Header: 'Artist Info',
+    header: 'Artist Info',
     columns: [
       {
-        Header: 'Artist ID',
-        accessor: 'id'
+        accessorKey: 'id',
+        header: 'Artist ID'
       },
       {
-        Header: 'Artist Name',
-        accessor: 'name'
+        accessorKey: 'name',
+        header: 'Artist Name'
       },
       {
-        Header: 'Genres',
-        accessor: 'genres',
+        accessorKey: 'genres',
+        header: 'Genres'
       }
     ]
   },
   {
-    Header: 'Albums',
+    header: 'Albums',
     columns: [
       {
-        Header: 'Number of Tracks',
-        accessor: 'ntracks',
+        accessorKey: 'ntracks',
+        header: 'Number of Tracks'
       },
       {
-        Header: 'Title',
-        accessor: 'title',
+        accessorKey: 'title',
+        header: 'Title'
       }
     ]
   }
   ], []
   );
 
-  const tableInstance = useTable(
-    {
-      columns,
-      data,
-      initialState: { pageIndex: 0, pageSize: 4 }
-    },
-    useSortBy,
-    usePagination
-  )
+  const tableInstance = useReactTable({ 
+          columns, 
+          data,
+          getCoreRowModel: getCoreRowModel(), 
+          getPaginationRowModel: getPaginationRowModel(), 
+          getSortedRowModel: getSortedRowModel(), 
+          state:{
+            sorting: sorting,
+            pagination: pagination,
+          },
+          onSortingChange: setSorting,
+          onPaginationChange: setPagination,
+          }); 
 
   const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    prepareRow,
-    page,
-    canPreviousPage,
-    canNextPage,
-    pageOptions,
-    pageCount,
-    gotoPage,
-    nextPage,
-    previousPage,
+    getHeaderGroups, 
+    getRowModel,
+    getState,
+    setPageIndex,
     setPageSize,
-    state: { pageIndex, pageSize }
+    getCanPreviousPage,
+    getCanNextPage,
+    previousPage,
+    nextPage,
+    getPageCount,
   } = tableInstance;
+
+  const {pageIndex, pageSize} = getState().pagination;
 
 
   return (
     <>
       <h2>Artist Web Service</h2>
       {/* tag::table[] */}
-      <table {...getTableProps()}>
+      <table>
         <thead>
-          {headerGroups.map(headerGroup => (
-            <tr {...headerGroup.getHeaderGroupProps()}>
-              {headerGroup.headers.map((column) => (
-                <th {...column.getHeaderProps(column.getSortByToggleProps())}>
-                  {column.render('Header')}
-                  <span>
-                    {column.isSorted
-                      ? column.isSortedDesc
-                        ? ' 🔽'
-                        : ' 🔼'
-                      : ''}
-                  </span>
+          {getHeaderGroups().map(headerGroup => (
+            <tr key={headerGroup.id}>
+              {headerGroup.headers.map(header => (
+                <th key={header.id} colSpan={header.colSpan} onClick={header.column.getToggleSortingHandler()}>
+                  {header.isPlaceholder ? null :(
+                    <div>
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                      {
+                        {
+                          asc: " 🔼",
+                          desc: " 🔽",
+                        }[header.column.getIsSorted() ?? null]
+                      }
+                    </div>
+                  )}
                 </th>
               ))}
             </tr>
           ))}
         </thead>
-        <tbody {...getTableBodyProps()}>
-          {page.map((row, i) => {
-            prepareRow(row)
-            return (
-              <tr {...row.getRowProps()}>
-                {row.cells.map(cell => {
-                  return <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
-                })}
-              </tr>
-            )
-          })}
+        <tbody>
+          {getRowModel().rows.map(row => (
+            <tr key={row.id}>
+              {row.getVisibleCells().map(cell => (
+                <td key={cell.id}>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              ))}
+            </tr>
+          ))}
         </tbody>
       </table>
       {/* end::table[] */}
       <div className="pagination">
-        <button onClick={() => previousPage()} disabled={!canPreviousPage}>
+        <button onClick={() => previousPage()} disabled={!getCanPreviousPage()}>
           {'Previous'}
         </button>{' '}
         <div className="page-info">
           <span>
             Page{' '}
             <strong>
-              {pageIndex + 1} of {pageOptions.length}
+              {pageIndex + 1} of {getPageCount()}
             </strong>{' '}
           </span>
           <span>
@@ -363,7 +374,7 @@ export function ArtistTable() {
               defaultValue={pageIndex + 1}
               onChange={e => {
                 const page = e.target.value ? Number(e.target.value) - 1 : 0
-                gotoPage(page)
+                setPageIndex(page);
               }}
               style={{ width: '100px' }}
             />
@@ -381,22 +392,26 @@ export function ArtistTable() {
             ))}
           </select>
         </div>
-        <button onClick={() => nextPage()} disabled={!canNextPage}>
+        <button onClick={() => nextPage()} disabled={!getCanNextPage()}>
           {'Next'}
         </button>{' '}
       </div>
     </>
   );
 }
+
+export default ArtistTable
 ```
 
 
 
-The ***React*** library imports the ***react*** package for you to create the ***ArtistTable*** function. This function must have the ***export*** declaration because it is being exported to the ***App.js*** module. The ***posts*** object is initialized using a React Hook that lets you add a state to represent the state of the posts that appear on the paginated table.
+At the beginning of the file, the ***use client*** directive indicates the ***ArtistTable*** component is rendered on the client side.
 
-To display the returned data, you will use pagination. Pagination is the process of separating content into discrete pages, and it can be used for handling data sets in React. In your application, you'll render the columns in the paginated table. The ***columns*** constant is used to define the table that is present on the webpage.
+The ***React*** library imports the ***react*** package for you to create the ***ArtistTable*** function. This function must have the ***export*** declaration because it is being exported to the ***page.jsx*** module. The ***posts*** object is initialized using a React Hook that lets you add a state to represent the state of the posts that appear on the paginated table.
 
-The ***useTable*** hook creates a paginated table. The ***useTable*** hook takes in the ***columns***, ***posts***, and ***setPosts*** objects as parameters. It returns a paginated table that is assigned to the ***table*** constant. The ***table*** constant renders the paginated table on the webpage. The ***return*** statement returns the paginated table. The ***useSortBy*** hook sorts the paginated table by the column headers. The ***usePagination*** hook creates the pagination buttons at the bottom of the table that are used to navigate through the paginated table.
+To display the returned data, you will use pagination. Pagination is the process of separating content into discrete pages, and you can use it for handling data sets in React. In your application, you'll render the columns in the paginated table. The ***columns*** constant defines the table that is present on the web page.
+
+The ***useReactTable*** hook creates a table instance. The hook takes in the ***columns*** and  ***posts*** as parameters. The ***getCoreRowModel*** function is included for the generation of the core row model of the table, which serves as the foundational row model upon pagination and sorting build. The ***getPaginationRowModel*** function applies pagination to the core row model, returning a row model that includes only the rows that should be displayed on the current page based on the pagination state. In addition, the ***getSortedRowModel*** function sorts the paginated table by the column headers then applies the changes to the row model. The paginated table instance is assigned to the ***table*** constant, which renders the paginated table on the web page.
 
 
 ### Importing the HTTP client
@@ -405,100 +420,108 @@ Your application needs a way to communicate with and retrieve resources from RES
 
 The ***GetArtistsInfo()*** function uses the Axios API to fetch data from your back end. This function is called when the ***ArtistTable*** is rendered to the page using the ***useEffect()*** React lifecycle method.
 
-Update the ***ArtistTable.js*** file.
+Update the ***ArtistTable.jsx*** file.
 
-> To open the ArtistTable.js file in your IDE, select
-> **File** > **Open** > guide-rest-client-reactjs/start/src/main/frontend/src/Components/ArtistTable.js, or click the following button
+> To open the ArtistTable.jsx file in your IDE, select
+> **File** > **Open** > guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx, or click the following button
 
-::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/Components/ArtistTable.js"}
+::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx"}
 
 
 
-```javascript
+```
+"use client";
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { useTable, usePagination, useSortBy } from 'react-table';
-import '../Styles/table.css'
+import { useReactTable, getCoreRowModel, getPaginationRowModel, getSortedRowModel, flexRender} from '@tanstack/react-table'; 
+import '../../styles/table.css'
 
-export function ArtistTable() {
+function ArtistTable() {
 
   const [posts, setPosts] = useState([]);
+  const [sorting, setSorting] = useState([]);
+  const [pagination, setPagination] = useState({pageIndex: 0, pageSize: 4});
 
   const GetArtistsInfo = async () => {
-    const response = await axios.get('http://localhost:9080/artists')
-      .then(response => {
-        const artists = response.data;
-        for (const artist of artists) {
-          const { albums, ...rest } = artist;
-          for (const album of albums) {
-            setPosts([...posts, { ...rest, ...album }]);
-            posts.push({ ...rest, ...album });
-          }
-        };
-      }).catch(error => { console.log(error); });
+    try {
+      const response = await axios.get('http://localhost:9080/artists');
+      const artists = response.data;
+      const processedData = [];
+      for (const artist of artists) {
+        const { albums, ...rest } = artist;
+        for (const album of albums) {
+          processedData.push({ ...rest, ...album });
+        }
+      };
+      setPosts(processedData);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const data = useMemo(() => [...posts], [posts]);
 
   const columns = useMemo(() => [{
-    Header: 'Artist Info',
+    header: 'Artist Info',
     columns: [
       {
-        Header: 'Artist ID',
-        accessor: 'id'
+        accessorKey: 'id',
+        header: 'Artist ID'
       },
       {
-        Header: 'Artist Name',
-        accessor: 'name'
+        accessorKey: 'name',
+        header: 'Artist Name'
       },
       {
-        Header: 'Genres',
-        accessor: 'genres',
+        accessorKey: 'genres',
+        header: 'Genres'
       }
     ]
   },
   {
-    Header: 'Albums',
+    header: 'Albums',
     columns: [
       {
-        Header: 'Number of Tracks',
-        accessor: 'ntracks',
+        accessorKey: 'ntracks',
+        header: 'Number of Tracks'
       },
       {
-        Header: 'Title',
-        accessor: 'title',
+        accessorKey: 'title',
+        header: 'Title'
       }
     ]
   }
   ], []
   );
 
-  const tableInstance = useTable(
-    {
-      columns,
-      data,
-      initialState: { pageIndex: 0, pageSize: 4 }
-    },
-    useSortBy,
-    usePagination
-  )
+  const tableInstance = useReactTable({ 
+          columns, 
+          data,
+          getCoreRowModel: getCoreRowModel(), 
+          getPaginationRowModel: getPaginationRowModel(), 
+          getSortedRowModel: getSortedRowModel(), 
+          state:{
+            sorting: sorting,
+            pagination: pagination,
+          },
+          onSortingChange: setSorting,
+          onPaginationChange: setPagination,
+          }); 
 
   const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    prepareRow,
-    page,
-    canPreviousPage,
-    canNextPage,
-    pageOptions,
-    pageCount,
-    gotoPage,
-    nextPage,
-    previousPage,
+    getHeaderGroups, 
+    getRowModel,
+    getState,
+    setPageIndex,
     setPageSize,
-    state: { pageIndex, pageSize }
+    getCanPreviousPage,
+    getCanNextPage,
+    previousPage,
+    nextPage,
+    getPageCount,
   } = tableInstance;
+
+  const {pageIndex, pageSize} = getState().pagination;
 
   useEffect(() => {
     GetArtistsInfo();
@@ -508,48 +531,50 @@ export function ArtistTable() {
     <>
       <h2>Artist Web Service</h2>
       {/* tag::table[] */}
-      <table {...getTableProps()}>
+      <table>
         <thead>
-          {headerGroups.map(headerGroup => (
-            <tr {...headerGroup.getHeaderGroupProps()}>
-              {headerGroup.headers.map((column) => (
-                <th {...column.getHeaderProps(column.getSortByToggleProps())}>
-                  {column.render('Header')}
-                  <span>
-                    {column.isSorted
-                      ? column.isSortedDesc
-                        ? ' 🔽'
-                        : ' 🔼'
-                      : ''}
-                  </span>
+          {getHeaderGroups().map(headerGroup => (
+            <tr key={headerGroup.id}>
+              {headerGroup.headers.map(header => (
+                <th key={header.id} colSpan={header.colSpan} onClick={header.column.getToggleSortingHandler()}>
+                  {header.isPlaceholder ? null :(
+                    <div>
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                      {
+                        {
+                          asc: " 🔼",
+                          desc: " 🔽",
+                        }[header.column.getIsSorted() ?? null]
+                      }
+                    </div>
+                  )}
                 </th>
               ))}
             </tr>
           ))}
         </thead>
-        <tbody {...getTableBodyProps()}>
-          {page.map((row, i) => {
-            prepareRow(row)
-            return (
-              <tr {...row.getRowProps()}>
-                {row.cells.map(cell => {
-                  return <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
-                })}
-              </tr>
-            )
-          })}
+        <tbody>
+          {getRowModel().rows.map(row => (
+            <tr key={row.id}>
+              {row.getVisibleCells().map(cell => (
+                <td key={cell.id}>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              ))}
+            </tr>
+          ))}
         </tbody>
       </table>
       {/* end::table[] */}
       <div className="pagination">
-        <button onClick={() => previousPage()} disabled={!canPreviousPage}>
+        <button onClick={() => previousPage()} disabled={!getCanPreviousPage()}>
           {'Previous'}
         </button>{' '}
         <div className="page-info">
           <span>
             Page{' '}
             <strong>
-              {pageIndex + 1} of {pageOptions.length}
+              {pageIndex + 1} of {getPageCount()}
             </strong>{' '}
           </span>
           <span>
@@ -559,7 +584,7 @@ export function ArtistTable() {
               defaultValue={pageIndex + 1}
               onChange={e => {
                 const page = e.target.value ? Number(e.target.value) - 1 : 0
-                gotoPage(page)
+                setPageIndex(page);
               }}
               style={{ width: '100px' }}
             />
@@ -577,13 +602,15 @@ export function ArtistTable() {
             ))}
           </select>
         </div>
-        <button onClick={() => nextPage()} disabled={!canNextPage}>
+        <button onClick={() => nextPage()} disabled={!getCanNextPage()}>
           {'Next'}
         </button>{' '}
       </div>
     </>
   );
 }
+
+export default ArtistTable
 ```
 
 
@@ -592,13 +619,13 @@ Add the ***axios*** library and the ***GetArtistsInfo()*** function.
 
 The ***axios*** HTTP call is used to read the artist JSON that contains the data from the sample JSON file in the ***resources*** directory. When a response is successful, the state of the system changes by assigning ***response.data*** to ***posts***. The ***artists*** and their ***albums*** JSON data are manipulated to allow them to be accessed by the ***ReactTable***. The ***...rest*** or ***...album*** object spread syntax is designed for simplicity. To learn more about it, see [Spread in object literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax#Spread_in_object_literals).
 
-Finally, run the following command to update the URL to access the ***artists.json*** in the ***ArtistTable.js*** file:
+Finally, run the following command to update the URL to access the ***artists.json*** in the ***ArtistTable.jsx*** file:
 ```bash
-sed -i 's=http://localhost:9080/artists='"https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/Components/ArtistTable.js
+sed -i 's=http://localhost:9080/artists='"https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx
 ```
 
 
-::page{title="Building and packaging the front end"}
+::page{title="Building and packaging the front-end"}
 
 After you successfully build your components, you need to build the front end and package your application. The Maven ***process-resources*** goal generates the Node.js resources, creates the front-end production build, and copies and processes the resources into the destination directory. 
 
@@ -609,19 +636,17 @@ cd /home/project/guide-rest-client-reactjs/start
 mvn process-resources
 ```
 
-The build may take a few minutes to complete. You can rebuild the front end at any time with the Maven ***process-resources*** goal. Any local changes to your JavaScript and HTML are picked up when you build the front end.
+The build may take a few minutes to complete. You can rebuild the front end at any time with the Maven ***process-resources*** goal. Any local changes to your JavaScript and HTML are picked up when you build the front-end.
 
 
-Open your browser and view the front end of your application by going to the URL that the following command returns:
-```bash
-echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
-```
+Click the following button to view the front end of your application:
+
+::startApplication{port="9080" display="external" name="Visit application" route="/"}
 
 
 ::page{title="Testing the React client"}
 
-New projects that are created with ***create-react-app*** comes with a test file called ***App.test.js***, which is included in the ***src/main/frontend/src*** directory. The ***App.test.js*** file is a simple JavaScript file that tests against the ***App.js*** component. There are no explicit test cases that are written for this application. The ***create-react-app*** configuration uses [Jest](https://jestjs.io/) as its test runner.
-To learn more about Jest, go to their documentation on [Testing React apps](https://jestjs.io/docs/en/tutorial-react). 
+**Next.js*** supports various testing tools. This guide uses ***Vitest*** for unit testing the React components, with the test file ***App.test.jsx*** located in ***src/main/frontend/__tests__/*** directory. The ***App.test.jsx*** file is a simple JavaScript file that tests against the ***page.jsx*** component. No explicit test cases are written for this application. To learn more about ***Vitest***, see [Setting up Vitest with Next.js](https://nextjs.org/docs/app/building-your-application/testing/vitest).
 
 
 Update the ***pom.xml*** file.
@@ -708,8 +733,8 @@ Update the ***pom.xml*** file.
                             <goal>install-node-and-npm</goal>
                         </goals>
                         <configuration>
-                            <nodeVersion>v21.6.2</nodeVersion>
-                            <npmVersion>10.2.4</npmVersion>
+                            <nodeVersion>v20.14.0</nodeVersion>
+                            <npmVersion>10.7.0</npmVersion>
                         </configuration>
                     </execution>
                     <execution>
@@ -750,7 +775,7 @@ Update the ***pom.xml*** file.
                 <artifactId>maven-resources-plugin</artifactId>
                 <version>3.3.1</version>
                 <executions>
-                 <execution>
+                    <execution>
                         <id>Copy frontend build to target</id>
                         <phase>process-resources</phase>
                         <goals>
@@ -763,7 +788,7 @@ Update the ***pom.xml*** file.
                             <resources>
                                 <resource>
                                     <directory>
-                                        ${basedir}/src/main/frontend/build
+                                        ${basedir}/src/main/frontend/out
                                     </directory>
                                     <filtering>true</filtering>
                                 </resource>
@@ -780,6 +805,22 @@ Update the ***pom.xml*** file.
 
 
 To run the default test, you can add the ***testing*** configuration to the ***frontend-maven-plugin***. Rerun the Maven ***process-resources*** goal to rebuild the front end and run the tests.
+
+```bash
+cd /home/project/guide-rest-client-reactjs/start
+mvn process-resources
+```
+
+If the test passes, you see a similar output to the following example:
+
+```
+[INFO]  ✓ __tests__/App.test.jsx  (1 test) 96ms
+[INFO] 
+[INFO]  Test Files  1 passed (1)
+[INFO]       Tests  1 passed (1)
+[INFO]    Start at  10:43:25
+[INFO]    Duration  3.73s (transform 264ms, setup 0ms, collect 343ms, tests 96ms, environment 408ms, prepare 1.16s)
+```
 
 Although the React application in this guide is simple, when you build more complex React applications, testing becomes a crucial part of your development lifecycle. If you need to write application-oriented test cases, follow the official [React testing documentation](https://reactjs.org/docs/testing.html).
 
