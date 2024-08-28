@@ -580,14 +580,21 @@ Replace the ***backendServices/pom.xml*** configuration file.
 
 This configuration adds three required Derby dependencies to the ***dependencies*** configuration so Maven can download the Derby libraries locally. The ***copyDependencies*** configuration instructs the Liberty Maven plug-in to copy the Derby libraries to the Liberty shared resources directory that is specified through the ***location*** configuration, and is referenced in the ***derbyJDBCLib*** ***library*** configuration of the ***server.xml*** file.
 
+In the terminal where you started the ***backendServices*** microservice, type ***r*** and press the ***enter/return*** key to restart the Liberty instance and pick up the Derby libraries.
+
 
 
 ::page{title="Running the application"}
 
-You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+After you see the following message, your Liberty instance is ready in dev mode:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
 
 
-When Liberty is running, click the following button to view the Event Manager application:
+Click the following button to view the Event Manager application:
 ::startApplication{port="9090" display="external" name="Visit Event Manager application" route="/"}
 
 Click ***Create Event*** in the left navigation bar to create events that are persisted to the database. After you create an event, it is available to view, update, and delete in the ***Current Events*** section.
