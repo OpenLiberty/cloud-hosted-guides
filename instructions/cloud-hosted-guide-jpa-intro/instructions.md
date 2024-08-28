@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-447-instruction
-version-history-start-date: 2021-12-02 17:23:03 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Accessing and persisting data in microservices using Java Persistence API (JPA) guide!"}
@@ -427,6 +424,161 @@ The ***EventDao*** class has a method for each CRUD operation, so let's break th
 * The ***deleteEvent()*** method removes an instance of the ***Event*** entity class from the database by calling the ***remove()*** method on an ***EntityManager*** instance. The state of the entity is changed to removed and is removed from the database upon transaction commit. 
 
 The DAO is injected into the ***backendServices/src/main/java/io/openliberty/guides/event/resources/EventResource.java*** class and used to access and persist data. The ***@Transactional*** annotation is used in the ***EventResource*** class to declaratively control the transaction boundaries on the ***@RequestScoped*** CDI bean. This ensures that the methods run within the boundaries of an active global transaction, which is why it is not necessary to explicitly begin, commit or rollback transactions. At the end of the transactional method invocation, the transaction commits and the persistence context flushes any changes to Event entity instances it is managing to the database.
+
+
+
+::page{title="Configuring the Derby driver and the Liberty Maven plugin"}
+
+To use a Derby database, you need to download its libraries and store them to the Liberty shared resources directory. Configure the Liberty Maven plug-in in the ***pom.xml*** file of the ***backendServices*** service.
+
+Replace the ***backendServices/pom.xml*** configuration file.
+
+> To open the pom.xml file in your IDE, select
+> **File** > **Open** > guide-jpa-intro/start/backendServices/pom.xml, or click the following button
+
+::openFile{path="/home/project/guide-jpa-intro/start/backendServices/pom.xml"}
+
+
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>backendServices</artifactId>
+    <packaging>war</packaging>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <!-- Liberty configuration -->
+        <backend.service.http.port>5050</backend.service.http.port>
+        <backend.service.https.port>5051</backend.service.https.port>
+    </properties>
+
+    <dependencies>
+        <!-- Provided dependencies -->
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-web-api</artifactId>
+            <version>10.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>6.1</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <!-- For tests -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>5.10.3</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>6.2.9.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-json-binding-provider</artifactId>
+            <version>6.2.9.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>jakarta.json</artifactId>
+            <version>2.0.1</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- Derby from https://mvnrepository.com/artifact/org.apache.derby/derby -->
+        <dependency>
+            <groupId>org.apache.derby</groupId>
+            <artifactId>derby</artifactId>
+            <version>10.17.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.derby</groupId>
+            <artifactId>derbyshared</artifactId>
+            <version>10.17.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.derby</groupId>
+            <artifactId>derbytools</artifactId>
+            <version>10.17.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.4.0</version>
+            </plugin>
+            <!-- Enable liberty-maven plugin -->
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.10.3</version>
+                <configuration>
+                    <copyDependencies>
+                        <location>${project.build.directory}/liberty/wlp/usr/shared/resources</location>
+                        <dependency>
+                            <groupId>org.apache.derby</groupId>
+                            <artifactId>derby</artifactId>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.apache.derby</groupId>
+                            <artifactId>derbyshared</artifactId>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.apache.derby</groupId>
+                            <artifactId>derbytools</artifactId>
+                        </dependency>
+                    </copyDependencies>
+                </configuration>
+            </plugin>
+            <!-- Plugin to run unit tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.3.1</version>
+            </plugin>
+            <!-- Plugin to run integration tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.3.1</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <backend.http.port>${backend.service.http.port}</backend.http.port>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+
+
+
+This configuration adds three required Derby dependencies to the ***dependencies*** configuration so Maven can download the Derby libraries locally. The ***copyDependencies*** configuration instructs the Liberty Maven plug-in to copy the Derby libraries to the Liberty shared resources directory that is specified through the ***location*** configuration, and is referenced in the ***derbyJDBCLib*** ***library*** configuration of the ***server.xml*** file.
 
 
 
