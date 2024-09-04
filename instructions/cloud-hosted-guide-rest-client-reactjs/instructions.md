@@ -699,7 +699,7 @@ Update the ***pom.xml*** file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.10.3</version>
+            <version>5.11.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
