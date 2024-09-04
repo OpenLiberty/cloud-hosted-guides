@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-508-instruction
-version-history-start-date: 2020-06-11 12:03:57 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Using Docker containers to develop microservices guide!"}
