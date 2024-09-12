@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-494-instruction
-version-history-start-date: 2021-04-16 13:57:46 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Enabling distributed tracing in microservices with Jaeger guide!"}
