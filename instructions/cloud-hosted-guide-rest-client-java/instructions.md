@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-491-instruction
-version-history-start-date: 2021-03-04 19:50:19 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Consuming a RESTful web service guide!"}
