@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-497-instruction
-version-history-start-date: 2020-10-05 09:33:58 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Enabling distributed tracing in microservices with Zipkin guide!"}
