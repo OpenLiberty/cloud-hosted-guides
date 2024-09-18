@@ -2060,7 +2060,7 @@ Replace the Liberty ***server.xml*** configuration file.
     <variable name="postgres/hostname" defaultValue="localhost" />
     <variable name="postgres/portnum" defaultValue="5432" />
 
-    <httpEndpoint id="defaultHttpEndpoint"
+    <httpEndpoint id="defaultHttpEndpoint" host="*"
                   httpPort="${http.port}" 
                   httpsPort="${https.port}" />
 
@@ -2287,7 +2287,7 @@ Replace the Liberty ***server.xml*** configuration file.
     <variable name="postgres/hostname" defaultValue="localhost" />
     <variable name="postgres/portnum" defaultValue="5432" />
 
-    <httpEndpoint id="defaultHttpEndpoint"
+    <httpEndpoint id="defaultHttpEndpoint" host="*"
                   httpPort="${http.port}" 
                   httpsPort="${https.port}" />
 
@@ -3217,7 +3217,7 @@ Replace the Liberty ***server.xml*** configuration file.
     <variable name="postgres/hostname" defaultValue="localhost" />
     <variable name="postgres/portnum" defaultValue="5432" />
 
-    <httpEndpoint id="defaultHttpEndpoint"
+    <httpEndpoint id="defaultHttpEndpoint" host="*"
                   httpPort="${http.port}" 
                   httpsPort="${https.port}" />
 
@@ -3716,7 +3716,7 @@ Replace the Liberty ***server.xml*** configuration file.
     <variable name="postgres/hostname" defaultValue="localhost" />
     <variable name="postgres/portnum" defaultValue="5432" />
 
-    <httpEndpoint id="defaultHttpEndpoint"
+    <httpEndpoint id="defaultHttpEndpoint" host="*"
                   httpPort="${http.port}" 
                   httpsPort="${https.port}" />
 
@@ -4291,7 +4291,7 @@ Replace the Liberty ***server.xml*** configuraton file.
     <variable name="postgres/username" defaultValue="admin" />
     <variable name="postgres/password" defaultValue="adminpwd" />
 
-    <httpEndpoint id="defaultHttpEndpoint"
+    <httpEndpoint id="defaultHttpEndpoint" host="*"
                   httpPort="${http.port}" 
                   httpsPort="${https.port}" />
 
