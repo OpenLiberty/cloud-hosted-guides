@@ -968,6 +968,12 @@ Replace the Liberty ***server.xml*** configuration file.
     <variable name="https.port" defaultValue="9443" />
     <variable name="context.root" defaultValue="/inventory" />
 
+    <basicRegistry id="basic" realm="BasicRealm">
+        <!--
+        <user name="yourUserName" password="" />
+        -->
+    </basicRegistry>
+
     <!-- To access this server from a remote client,
          add a host attribute to the following element, e.g. host="*" -->
     <httpEndpoint id="defaultHttpEndpoint"
@@ -2059,6 +2065,12 @@ Replace the Liberty ***server.xml*** configuration file.
     <variable name="context.root" defaultValue="/inventory" />
     <variable name="postgres/hostname" defaultValue="localhost" />
     <variable name="postgres/portnum" defaultValue="5432" />
+
+    <basicRegistry id="basic" realm="BasicRealm">
+        <!--
+        <user name="yourUserName" password="" />
+        -->
+    </basicRegistry>
 
     <httpEndpoint id="defaultHttpEndpoint" host="*"
                   httpPort="${http.port}" 
