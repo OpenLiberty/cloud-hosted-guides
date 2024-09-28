@@ -52,7 +52,7 @@ jobs:
         echo The PR was merged
         echo ${{ github.event.pull_request.title }} | sed 's/.* Change to //' > guide_name.txt
 
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v4
       with:
         name: guide_name
         path: guide_name.txt
@@ -136,7 +136,7 @@ jobs:
           # echo the PR title and trim only the guide name for example "To Prod: Change to cloud-hosted-guide-jakarta-websocket" = "cloud-hosted-guide-jakarta-websocket"
           echo ${{ github.event.pull_request.title }} | sed 's/.* Change to //' > guide_name.txt
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           name: guide_name
           path: guide_name.txt
