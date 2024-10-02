@@ -187,7 +187,7 @@ touch /home/project/guide-maven-intro/start/pom.xml
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.11.0</version>
+            <version>5.11.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
