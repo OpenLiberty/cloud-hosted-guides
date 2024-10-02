@@ -251,12 +251,12 @@ Replace the Maven project file.
         <dependency>
             <groupId>io.smallrye</groupId>
             <artifactId>smallrye-graphql-client</artifactId>
-            <version>2.9.2</version>
+            <version>2.10.0</version>
         </dependency>
         <dependency>
             <groupId>io.smallrye</groupId>
             <artifactId>smallrye-graphql-client-implementation-vertx</artifactId>
-            <version>2.9.2</version>
+            <version>2.10.0</version>
         </dependency>
         <dependency>
             <groupId>io.smallrye.stork</groupId>
@@ -273,7 +273,7 @@ Replace the Maven project file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.11.0</version>
+            <version>5.11.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -297,13 +297,13 @@ Replace the Maven project file.
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.20.1</version>
+            <version>1.20.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>1.20.1</version>
+            <version>1.20.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
