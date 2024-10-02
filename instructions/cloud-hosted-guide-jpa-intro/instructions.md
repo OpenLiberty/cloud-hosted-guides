@@ -481,7 +481,7 @@ Replace the ***backendServices/pom.xml*** configuration file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.11.0</version>
+            <version>5.11.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
