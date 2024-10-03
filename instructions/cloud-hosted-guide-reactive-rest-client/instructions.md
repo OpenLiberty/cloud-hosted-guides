@@ -413,7 +413,7 @@ Replace the Maven configuration file.
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>mockserver</artifactId>
-            <version>1.20.1</version>
+            <version>1.20.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -425,13 +425,13 @@ Replace the Maven configuration file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.11.0</version>
+            <version>5.11.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>1.20.1</version>
+            <version>1.20.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -467,7 +467,7 @@ Replace the Maven configuration file.
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>2.17.2</version>
+            <version>2.18.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
