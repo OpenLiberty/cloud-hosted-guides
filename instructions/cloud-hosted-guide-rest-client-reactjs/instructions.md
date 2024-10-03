@@ -699,7 +699,7 @@ Update the ***pom.xml*** file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.11.0</version>
+            <version>5.11.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -722,7 +722,7 @@ Update the ***pom.xml*** file.
             <plugin>
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
-                <version>1.15.0</version>
+                <version>1.15.1</version>
                 <configuration>
                     <workingDirectory>src/main/frontend</workingDirectory>
                 </configuration>
