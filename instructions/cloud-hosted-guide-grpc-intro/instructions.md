@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: cloud-hosted-guide-grpc-intro
-branch: lab-1145-instruction
-version-history-start-date: 2022-08-11T09:54:57Z
 tool-type: theia
 ---
 ::page{title="Welcome to the Streaming messages between client and server services using gRPC guide!"}
