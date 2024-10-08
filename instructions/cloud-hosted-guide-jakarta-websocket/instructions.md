@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: cloud-hosted-guide-jakarta-websocket
-branch: lab-3446-instruction
-version-history-start-date: 2023-01-05T10:56:36Z
 tool-type: theia
 ---
 ::page{title="Welcome to the Bidirectional communication between services using Jakarta WebSocket guide!"}
@@ -504,7 +501,6 @@ touch /home/project/guide-jakarta-websocket/start/client/src/main/webapp/index.h
     <head>
         <meta charset="UTF-8">
         <title>Open Liberty System Load</title>
-        <link href="https://fonts.googleapis.com/css?family=Asap" rel="stylesheet">
         <link rel="stylesheet" href="css/styles.css">
         <link href="favicon.ico" rel="icon" />
         <link href="favicon.ico" rel="shortcut icon" />
