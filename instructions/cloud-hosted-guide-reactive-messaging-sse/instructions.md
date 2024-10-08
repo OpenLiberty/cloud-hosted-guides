@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-472-instruction
-version-history-start-date: 2021-10-01 14:24:37 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Streaming updates to a client using Server-Sent Events guide!"}
