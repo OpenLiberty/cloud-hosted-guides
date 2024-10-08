@@ -539,12 +539,13 @@ touch /home/project/guide-jakarta-websocket/start/client/src/main/webapp/index.h
                 <a id="licenseLink"
                    href="https://github.com/OpenLiberty/open-liberty/blob/release/LICENSE"
                 >License</a>
-                <a href="https://twitter.com/OpenLibertyIO">Twitter</a>
                 <a href="https://github.com/OpenLiberty">GitHub</a>
+                <a href="https://stackoverflow.com/questions/tagged/open-liberty">stackoverflow</a>
+                <a href="https://groups.io/g/openliberty">groups.io</a>
                 <a href="https://openliberty.io/">openliberty.io</a>
             </div>
             <p id="footer_text">an IBM open source project</p>
-            <p id="footer_copyright">&copy;Copyright IBM Corp. 2022, 2023</p>
+            <p id="footer_copyright">&copy;Copyright IBM Corp. 2022, 2024</p>
         </footer>
         <script>
     const webSocket = new WebSocket('ws://localhost:9081/systemLoad')
