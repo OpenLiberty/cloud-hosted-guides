@@ -125,7 +125,7 @@ jobs:
 
       # Download all artifacts
       # https://github.com/actions/download-artifact#download-all-artifacts
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4
         with:
           path: instructions/
 
@@ -149,7 +149,7 @@ jobs:
 
       # Download all artifacts
       # https://github.com/actions/download-artifact#download-all-artifacts
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4
         with:
           path: instructions/
 
@@ -246,7 +246,7 @@ jobs:
 
       # Download all artifacts
       # https://github.com/actions/download-artifact#download-all-artifacts
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4
         with:
           path: instructions/
 
@@ -272,7 +272,7 @@ jobs:
 
       # Download all artifacts
       # https://github.com/actions/download-artifact#download-all-artifacts
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4
         with:
           path: instructions/
 
