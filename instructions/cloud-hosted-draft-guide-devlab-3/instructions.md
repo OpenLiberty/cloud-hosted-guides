@@ -21,10 +21,10 @@ You will learn how to access a REST service and deserialize the returned JSON th
 
 [ReactJS](https://reactjs.org/) is a JavaScript library that is used to build user interfaces. Its main purpose is to incorporate a component-based approach to create reusable UI elements. With ReactJS, you can also interface with other libraries and frameworks. Note that the names ReactJS and React are used interchangeably.
 
-The React application in this guide is provided and configured for you in the ***src/main/frontend*** directory. The application uses [Next.js](https://nextjs.org/), one of the [React-powered frameworks](https://react.dev/learn/start-a-new-react-project), to set up the modern React application. The ***Next.js*** framework provides a powerful environment for learning and building React applications, with features like server-side rendering, static site generation, and easy API routes. It is the best way to start building a new, highly performant React application.
+The React application in this guide is provided and configured for you in the ***src/main/frontend*** directory. The application uses [Next.js](https://nextjs.org/), a [React-powered framework](https://react.dev/learn/start-a-new-react-project), to set up the modern React application. The ***Next.js*** framework provides a powerful environment for learning and building React applications, with features like server-side rendering, static site generation, and easy API routes. It is the best way to start building a highly performant React application.
 
 
-The REST service that provides the resources was written for you in advance in the back-end of the application, and it responds with the ***artists.json*** in the ***src/resources*** directory. You will implement a ReactJS client as the front-end of your application, which consumes this JSON file and displays its contents on a single-page webpage. 
+The REST service that provides the resources was written for you in advance in the back end of the application, and it responds with the ***artists.json*** file  in the ***src/resources*** directory. You will implement a ReactJS client as the front end of your application, which consumes this JSON file and displays its contents on a single web page. 
 
 To learn more about REST services and how you can write them, see the [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) guide.
 
@@ -54,7 +54,7 @@ The ***finish*** directory contains the finished project that you will build.
 
 ### Try what you'll build
 
-The ***finish*** directory in the root of this guide contains the finished application. The React front-end is already pre-built for you and the static files from the production build can be found in the ***src/main/webapp/_next/static*** directory.
+The ***finish*** directory in the root of this guide contains the finished application. The React front end is already pre-built for you and the static files from the production build can be found in the ***src/main/webapp/_next/static*** directory.
 
 
 In this IBM cloud environment, you need to update the URL to access the ***artists.json***. Run the following commands to go to the ***finish*** directory and update the files where the URL has been specified:
@@ -122,12 +122,12 @@ After the Liberty instance is started, run the following curl command to view yo
 curl -s http://localhost:9080/artists | jq
 ```
 
-All the dependencies for the React front-end are listed in ***src/main/frontend/src/package.json*** and are installed before the build process by the ***frontend-maven-plugin***. Additionally, ***CSS*** stylesheets files are available in the ***src/main/frontend/src/styles*** directory.
+All the dependencies for the React front end are listed in the  ***src/main/frontend/src/package.json*** file and are installed before the build process by the ***frontend-maven-plugin***. Also, ***CSS*** stylesheets files are available in the ***src/main/frontend/src/styles*** directory.
 
 
 ::page{title="Project configuration"}
 
-The front-end of your application uses Node.js to build your React code. The Maven project is configured for you to install Node.js and produce the production files, which are copied to the web content of your application.
+The front end of your application uses Node.js to build your React code. The Maven project is configured for you to install Node.js and produce the production files, which are copied to the web content of your application.
 
 Node.js is a server-side JavaScript runtime that is used for developing networking applications. Its convenient package manager, [npm](https://www.npmjs.com/), is used to run the React build scripts that are found in the ***package.json*** file. To learn more about Node.js, see the official [Node.js documentation](https://nodejs.org/en/docs/).
 
@@ -144,7 +144,7 @@ The ***maven-resources-plugin*** copies the ***static*** content from the ***bui
 
 ::page{title="Creating the default page"}
 
-You'll need to create the entry point of your React application. In the latest version of ***Next.js***, it's recommended to use the https://nextjs.org/docs/app/building-your-application/routing/defining-routes[App Router], which centralizes routing logic under the ***app*** directory. 
+Create the entry point of your React application. The latest version of ***Next.js*** recommends you use the [App Router](https://nextjs.org/docs/app/building-your-application/routing/defining-routes), which centralizes routing logic under the ***app*** directory. 
  
 To construct the home page of the web application, create a ***page.jsx*** file.
 
@@ -179,9 +179,9 @@ export default function Home() {
 Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-The ***page.jsx*** file will serve as a container for all other components. When React component ***Home*** is rendered, the ***ArtistTable*** components content will be displayed.
+The ***page.jsx*** file is a container for all other components. When the ***Home*** React component  is rendered, the ***ArtistTable*** components content are displayed.
 
-In order to render the pages correctly, it is required to add a ***layout.jsx*** file which defines the ***RootLayout*** containing the UI that shared across all routes.
+To render the pages correctly, add a ***layout.jsx*** file that defines the ***RootLayout*** containing the UI that are shared across all routes.
 
 Create the ***layout.jsx*** file.
 
@@ -215,12 +215,12 @@ export default function RootLayout({ children }) {
 
 
 
-For more detailed information on structuring ***Pages*** and ***Layouts*** in ***Next.js***, please refer to the ***Next.js*** documentation on [Pages](https://nextjs.org/docs/app/building-your-application/routing/pages) and [Layouts](https://nextjs.org/docs/app/building-your-application/routing/layouts-and-templates).
+For more detailed information, see the ***Next.js*** documentation on [Pages](https://nextjs.org/docs/app/building-your-application/routing/pages) and [Layouts](https://nextjs.org/docs/app/building-your-application/routing/layouts-and-templates).
 
 
 ::page{title="Creating the React component"}
 
-A React web application is a collection of components, and each component has a specific function. You will create a component that are used in the application to acquire and display data from the REST API. 
+A React web application is a collection of components, and each component has a specific function. You will create a component that the application uses to acquire and display data from the REST API. 
 
 Create the ***ArtistTable*** function that fetches data from your back-end and renders it in a table. 
 
@@ -405,20 +405,20 @@ export default ArtistTable
 
 
 
-At the top of the file, the ***use client*** directive is used to indicate the ***ArtistTable*** component will be rendered on the client side.
+At the beginning of the file, the ***use client*** directive indicates the ***ArtistTable*** component is rendered on the client side.
 
 The ***React*** library imports the ***react*** package for you to create the ***ArtistTable*** function. This function must have the ***export*** declaration because it is being exported to the ***page.jsx*** module. The ***posts*** object is initialized using a React Hook that lets you add a state to represent the state of the posts that appear on the paginated table.
 
-To display the returned data, you will use pagination. Pagination is the process of separating content into discrete pages, and it can be used for handling data sets in React. In your application, you'll render the columns in the paginated table. The ***columns*** constant is used to define the table that is present on the webpage.
+To display the returned data, you will use pagination. Pagination is the process of separating content into discrete pages, and you can use it for handling data sets in React. In your application, you'll render the columns in the paginated table. The ***columns*** constant defines the table that is present on the web page.
 
-The ***useReactTable*** hook creates a table instance. The hook takes in the ***columns***, ***posts*** as parameters. The ***getCoreRowModel*** function is included for the generation of the core row model of the table, which serves as the foundational row model upon pagination and sorting build. The ***getPaginationRowModel*** function applies pagination to the core row model, returning a row model that includes only the rows that should be displayed on the current page based on the pagination state. In addition, the ***getSortedRowModel*** function sorts the paginated table by the column headers then applies the changes to the row model. The paginated table instance is assigned to the ***table*** constant, which renders the paginated table on the webpage.
+The ***useReactTable*** hook creates a table instance. The hook takes in the ***columns*** and  ***posts*** as parameters. The ***getCoreRowModel*** function is included for the generation of the core row model of the table, which serves as the foundational row model upon pagination and sorting build. The ***getPaginationRowModel*** function applies pagination to the core row model, returning a row model that includes only the rows that should be displayed on the current page based on the pagination state. In addition, the ***getSortedRowModel*** function sorts the paginated table by the column headers then applies the changes to the row model. The paginated table instance is assigned to the ***table*** constant, which renders the paginated table on the web page.
 
 
 ### Importing the HTTP client
 
 Your application needs a way to communicate with and retrieve resources from RESTful web services to output the resources onto the paginated table. The [Axios](https://github.com/axios/axios) library will provide you with an HTTP client. This client is used to make HTTP requests to external resources. Axios is a promise-based HTTP client that can send asynchronous requests to REST endpoints. To learn more about the Axios library and its HTTP client, see the [Axios documentation](https://www.npmjs.com/package/axios).
 
-The ***GetArtistsInfo()*** function uses the Axios API to fetch data from your back-end. This function is called when the ***ArtistTable*** is rendered to the page using the ***useEffect()*** React lifecycle method.
+The ***GetArtistsInfo()*** function uses the Axios API to fetch data from your back end. This function is called when the ***ArtistTable*** is rendered to the page using the ***useEffect()*** React lifecycle method.
 
 Update the ***ArtistTable.jsx*** file.
 
@@ -627,26 +627,26 @@ sed -i 's=http://localhost:9080/artists='"https://${USERNAME}-9080.$(echo $TOOL_
 
 ::page{title="Building and packaging the front-end"}
 
-After you successfully build your components, you need to build the front-end and package your application. The Maven ***process-resources*** goal generates the Node.js resources, creates the front-end production build, and copies and processes the resources into the destination directory. 
+After you successfully build your components, you need to build the front end and package your application. The Maven ***process-resources*** goal generates the Node.js resources, creates the front-end production build, and copies and processes the resources into the destination directory. 
 
-In a new command-line session, build the front-end by running the following command in the ***start*** directory:
+In a new command-line session, build the front end by running the following command in the ***start*** directory:
 
 ```bash
 cd /home/project/guide-rest-client-reactjs/start
 mvn process-resources
 ```
 
-The build may take a few minutes to complete. You can rebuild the front-end at any time with the Maven ***process-resources*** goal. Any local changes to your JavaScript and HTML are picked up when you build the front-end.
+The build may take a few minutes to complete. You can rebuild the front end at any time with the Maven ***process-resources*** goal. Any local changes to your JavaScript and HTML are picked up when you build the front-end.
 
 
-Click the following button to view the front-end of your application:
+Click the following button to view the front end of your application:
 
 ::startApplication{port="9080" display="external" name="Visit application" route="/"}
 
 
 ::page{title="Testing the React client"}
 
-***Next.js*** supports a variety of testing tools. This guide uses ***Vitest*** for unit testing the React components, with the test file ***App.test.jsx*** located in ***src/main/frontend/__tests__/*** directory. The ***App.test.jsx*** file is a simple JavaScript file that tests against the ***page.jsx*** component. There are no explicit test cases that are written for this application. To learn more about ***Vitest***, please visit https://nextjs.org/docs/app/building-your-application/testing/vitest[Setting up Vitest with Next.js].
+**Next.js*** supports various testing tools. This guide uses ***Vitest*** for unit testing the React components, with the test file ***App.test.jsx*** located in ***src/main/frontend/__tests__/*** directory. The ***App.test.jsx*** file is a simple JavaScript file that tests against the ***page.jsx*** component. No explicit test cases are written for this application. To learn more about ***Vitest***, see [Setting up Vitest with Next.js](https://nextjs.org/docs/app/building-your-application/testing/vitest).
 
 
 Update the ***pom.xml*** file.
@@ -699,7 +699,7 @@ Update the ***pom.xml*** file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.10.3</version>
+            <version>5.11.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -722,7 +722,7 @@ Update the ***pom.xml*** file.
             <plugin>
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
-                <version>1.15.0</version>
+                <version>1.15.1</version>
                 <configuration>
                     <workingDirectory>src/main/frontend</workingDirectory>
                 </configuration>
@@ -804,7 +804,7 @@ Update the ***pom.xml*** file.
 
 
 
-To run the default test, you can add the ***testing*** configuration to the ***frontend-maven-plugin***. Rerun the Maven ***process-resources*** goal to rebuild the front-end and run the tests.
+To run the default test, you can add the ***testing*** configuration to the ***frontend-maven-plugin***. Rerun the Maven ***process-resources*** goal to rebuild the front end and run the tests.
 
 ```bash
 cd /home/project/guide-rest-client-reactjs/start
