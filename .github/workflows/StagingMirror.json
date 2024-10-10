@@ -429,5 +429,12 @@
         "gitlab": "OpenLiberty-GPXX0EZCEN",
         "quicklab_id": 6776,
         "lab_id": 11817
+    },
+    {
+        "guide": "jms-intro",
+        "github": "cloud-hosted-guide-jms-intro",
+        "gitlab": "OpenLiberty-GPXX0XDOEN",
+        "quicklab_id": 7015,
+        "lab_id": 12550
     }
 ]
