@@ -126,10 +126,6 @@ curl -s http://localhost:9081/inventory/systems | jq
 
 
 
-You can also use ***curl*** command to retrieve the ***hostname*** and ***systemLoad*** information from the ***inventory/systems*** server endpoint in another command line session:
-```
-curl http://localhost:9081/inventory/systems
-```
 
 After you are finished checking out the application, stop the Liberty instances by pressing `Ctrl+C` in each command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 ```bash
@@ -179,6 +175,67 @@ touch /home/project/draft-guide-jms-intro/start/inventory/src/main/java/io/openl
 ::openFile{path="/home/project/draft-guide-jms-intro/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryQueueListener.java"}
 
 
+
+```java
+package io.openliberty.guides.inventory;
+
+import io.openliberty.guides.models.SystemLoad;
+import jakarta.ejb.ActivationConfigProperty;
+import jakarta.ejb.MessageDriven;
+import jakarta.inject.Inject;
+import jakarta.jms.JMSException;
+import jakarta.jms.Message;
+import jakarta.jms.MessageListener;
+import jakarta.jms.TextMessage;
+
+import java.util.logging.Logger;
+
+@MessageDriven(activationConfig = {
+    @ActivationConfigProperty(
+        propertyName = "destinationLookup", propertyValue = "jms/InventoryQueue"),
+    @ActivationConfigProperty(
+        propertyName = "destinationType", propertyValue = "jakarta.jms.Queue")
+})
+public class InventoryQueueListener implements MessageListener {
+
+    private static Logger logger =
+            Logger.getLogger(InventoryQueueListener.class.getName());
+
+    @Inject
+    private InventoryManager manager;
+
+    public void onMessage(Message message) {
+        try {
+            if (message instanceof TextMessage) {
+                TextMessage textMessage = (TextMessage) message;
+                String json = textMessage.getText();
+                SystemLoad systemLoad = SystemLoad.fromJson(json);
+
+                String hostname = systemLoad.hostname;
+                Double recentLoad = systemLoad.recentLoad;
+                if (manager.getSystem(hostname).isPresent()) {
+                    manager.updateCpuStatus(hostname, recentLoad);
+                    logger.info("Host " + hostname + " was updated: " + recentLoad);
+                } else {
+                    manager.addSystem(hostname, recentLoad);
+                    logger.info("Host " + hostname + " was added: " + recentLoad);
+                }
+            } else {
+                logger.warning(
+                    "Unsupported Message Type: " + message.getClass().getName());
+            }
+        } catch (JMSException e) {
+            e.printStackTrace();
+        }
+    }
+
+}
+```
+
+
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
+
 The ***inventory*** microservice receives the messages from the ***system*** microservice. Implement the ***InventoryQueueListener*** class with the ***MessageListener*** interface and annotate with ***@MessageDriven*** to monitor the ***jms/InventoryQueue*** message queue. Implement the ***onMessage()*** method that processes the incoming messages, updates the inventory by using the ***InventoryManager*** bean, and logs the action. Use the ***SystemLoad.fromJson()*** method to convert the JSON message string to the ***SystemLoad*** object.
 
 Next, configure the ***inventory*** microservice with an embedded messaging server and the [Messaging Server Client](https://openliberty.io/docs/latest/reference/feature/messagingClient-3.0.html) feature.
@@ -189,6 +246,68 @@ Replace the inventory's ***server.xml*** configuration file.
 > **File** > **Open** > draft-guide-jms-intro/start/inventory/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/draft-guide-jms-intro/start/inventory/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="Inventory Service">
+
+  <featureManager>
+    <feature>restfulWS-3.1</feature>
+    <feature>cdi-4.0</feature>
+    <feature>jsonb-3.0</feature>
+    <feature>mpHealth-4.0</feature>
+    <feature>mpConfig-3.1</feature>
+    <!--tag::messaging[]-->
+    <feature>messaging-3.1</feature>
+    <!--end::messaging[]-->
+    <!--tag::messagingServer[]-->
+    <feature>messagingServer-3.0</feature>
+    <!--end::messagingServer[]-->
+    <!--tag::messagingClient[]-->
+    <feature>messagingClient-3.0</feature>
+    <!--end::messagingClient[]-->
+    <feature>enterpriseBeansLite-4.0</feature>
+    <feature>mdb-4.0</feature>
+  </featureManager>
+
+  <variable name="http.port" defaultValue="9081"/>
+  <variable name="https.port" defaultValue="9444"/>
+
+  <httpEndpoint id="defaultHttpEndpoint" host="*"
+                httpPort="${http.port}" httpsPort="${https.port}" />
+
+  <wasJmsEndpoint id="InboundJmsCommsEndpoint"
+                  host="*"
+                  wasJmsPort="7277"
+                  wasJmsSSLPort="9101"/>
+
+  <connectionManager id="InventoryCM" maxPoolSize="400" minPoolSize="1"/>
+
+  <messagingEngine id="InventoryME">
+    <queue id="InventoryQueue"
+           maxQueueDepth="5000"/>
+  </messagingEngine>
+
+  <jmsConnectionFactory connectionManagerRef="InventoryCM"
+                        jndiName="InventoryConnectionFactory">
+    <properties.wasJms/>
+  </jmsConnectionFactory>
+
+  <jmsQueue id="InventoryQueue" jndiName="jms/InventoryQueue">
+    <properties.wasJms queueName="InventoryQueue"/>
+  </jmsQueue>
+
+  <jmsActivationSpec id="guide-jms-intro-inventory/InventoryQueueListener">
+    <properties.wasJms maxConcurrency="200"/>
+  </jmsActivationSpec>
+
+  <logging consoleLogLevel="INFO"/>
+
+  <webApplication location="guide-jms-intro-inventory.war" contextRoot="/"/>
+
+</server>
+```
 
 
 
@@ -231,6 +350,64 @@ touch /home/project/draft-guide-jms-intro/start/system/src/main/java/io/openlibe
 ::openFile{path="/home/project/draft-guide-jms-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
 
 
+
+```java
+package io.openliberty.guides.system;
+
+import java.lang.management.ManagementFactory;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.logging.Logger;
+
+import com.sun.management.OperatingSystemMXBean;
+
+import io.openliberty.guides.models.SystemLoad;
+import jakarta.annotation.Resource;
+import jakarta.ejb.Schedule;
+import jakarta.ejb.Singleton;
+import jakarta.inject.Inject;
+import jakarta.jms.JMSConnectionFactory;
+import jakarta.jms.JMSContext;
+import jakarta.jms.Queue;
+
+@Singleton
+public class SystemService {
+
+    private static final OperatingSystemMXBean OS_MEAN =
+            (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+    private static String hostname = null;
+
+    private static Logger logger = Logger.getLogger(SystemService.class.getName());
+
+    @Inject
+    @JMSConnectionFactory("InventoryConnectionFactory")
+    private JMSContext context;
+
+    @Resource(lookup = "jms/InventoryQueue")
+    private Queue queue;
+
+    private static String getHostname() {
+        if (hostname == null) {
+            try {
+                return InetAddress.getLocalHost().getHostName();
+            } catch (UnknownHostException e) {
+                return System.getenv("HOSTNAME");
+            }
+        }
+        return hostname;
+    }
+
+    @Schedule(second = "*/15", minute = "*", hour = "*", persistent = false)
+    public void sendSystemLoad() {
+        SystemLoad systemLoad = new SystemLoad(getHostname(),
+                                    Double.valueOf(OS_MEAN.getCpuLoad()));
+        context.createProducer().send(queue, systemLoad.toString());
+        logger.info(systemLoad.toString());
+    }
+}
+```
+
+
 The ***SystemService*** class contains the ***sendSystemLoad()*** method that calculates the recent system load, creates a ***SystemLoad*** object, and publishes the object as a message to the ***jms/InventoryQueue*** message queue running in the messaging server by using the ***send()*** method. The ***@Schedule*** annotation on the ***sendSystemLoad()*** method sets the frequency at which the system service publishes the calculation to the event stream, ensuring it runs every 15 seconds.
 
 
@@ -242,6 +419,56 @@ Replace the system's ***server.xml*** configuration file.
 > **File** > **Open** > draft-guide-jms-intro/start/system/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/draft-guide-jms-intro/start/system/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="System Service">
+
+  <featureManager>
+    <feature>cdi-4.0</feature>
+    <feature>jsonb-3.0</feature>
+    <feature>mpHealth-4.0</feature>
+    <feature>mpConfig-3.1</feature>
+    <!--tag::messaging[]-->
+    <feature>messaging-3.1</feature>
+    <!--end::messaging[]-->
+    <!--tag::messagingClient[]-->
+    <feature>messagingClient-3.0</feature>
+    <!--end::messagingClient[]-->
+    <feature>enterpriseBeansLite-4.0</feature>
+    <feature>mdb-4.0</feature>
+  </featureManager>
+
+  <variable name="http.port" defaultValue="9082"/>
+  <variable name="https.port" defaultValue="9445"/>
+  <!--tag::jms[]-->
+  <variable name="inventory.jms.host" defaultValue="localhost"/>
+  <variable name="inventory.jms.port" defaultValue="7277"/>
+  <!--end::jms[]-->
+
+  <httpEndpoint id="defaultHttpEndpoint" host="*"
+                httpPort="${http.port}" httpsPort="${https.port}"/>
+
+  <connectionManager id="InventoryCM" maxPoolSize="400" minPoolSize="1"/>
+
+  <jmsConnectionFactory
+    connectionManagerRef="InventoryCM"
+    jndiName="InventoryConnectionFactory">
+    <properties.wasJms
+      remoteServerAddress="${inventory.jms.host}:${inventory.jms.port}:BootstrapBasicMessaging"/>
+  </jmsConnectionFactory>
+
+  <jmsQueue id="InventoryQueue" jndiName="jms/InventoryQueue">
+    <properties.wasJms queueName="InventoryQueue"/>
+  </jmsQueue>
+
+  <logging consoleLogLevel="INFO"/>
+
+  <webApplication location="guide-jms-intro-system.war" contextRoot="/"/>
+
+</server>
+```
 
 
 
@@ -273,7 +500,7 @@ curl -s http://localhost:9081/inventory/systems | jq
 ```
 
 
-You can also use ***curl*** command to retrieve the ***hostname*** and ***systemLoad*** information from the ***inventory/systems*** server endpoint in another command line session:
+You can also use ***curl*** command to retrieve the ***hostname*** and ***systemLoad*** information from the ***inventory/systems*** REST endpoint in another command line session:
 ```
 curl http://localhost:9081/inventory/systems
 ```
@@ -294,6 +521,139 @@ touch /home/project/draft-guide-jms-intro/start/inventory/src/test/java/it/io/op
 > **File** > **Open** > draft-guide-jms-intro/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java, or click the following button
 
 ::openFile{path="/home/project/draft-guide-jms-intro/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.inventory;
+
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.TestMethodOrder;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class InventoryEndpointIT {
+
+    private static String port;
+    private static String baseUrl;
+    private static String hostname;
+
+    private Client client;
+
+    private final String INVENTORY_SYSTEMS = "inventory/systems";
+
+    @BeforeAll
+    public static void oneTimeSetup() {
+        port = System.getProperty("http.port");
+        baseUrl = "http://localhost:" + port + "/";
+    }
+
+    @BeforeEach
+    public void setup() {
+        client = ClientBuilder.newClient();
+    }
+
+    @AfterEach
+    public void teardown() {
+        client.close();
+    }
+
+
+    @Test
+    @Order(1)
+    public void testGetSystems() {
+        Response response = this.getResponse(baseUrl + INVENTORY_SYSTEMS);
+        this.assertResponse(baseUrl, response);
+
+        JsonArray systems = response.readEntity(JsonArray.class);
+
+        boolean hostnameExists = false;
+        boolean recentLoadExists = false;
+        for (int n = 0; n < systems.size(); n++) {
+            hostnameExists = systems.getJsonObject(n)
+                                    .get("hostname").toString().isEmpty();
+            recentLoadExists = systems.getJsonObject(n)
+                                      .get("systemLoad").toString().isEmpty();
+
+            assertFalse(hostnameExists, "A host was registered, but it was empty");
+            assertFalse(recentLoadExists,
+                "A recent system load was registered, but it was empty");
+            if (!hostnameExists && !recentLoadExists) {
+                String host = systems.getJsonObject(n).get("hostname").toString();
+                hostname = host.substring(1, host.length() - 1);
+                break;
+            }
+        }
+        assertNotNull(hostname, "Hostname should be set by the first test. (1)");
+        response.close();
+    }
+
+    @Test
+    @Order(2)
+    public void testGetSystemsWithHost() {
+        assertNotNull(hostname, "Hostname should be set by the first test. (2)");
+
+        Response response =
+            this.getResponse(baseUrl + INVENTORY_SYSTEMS + "/" + hostname);
+        this.assertResponse(baseUrl, response);
+
+        JsonObject system = response.readEntity(JsonObject.class);
+
+        String responseHostname = system.getString("hostname");
+        Boolean recentLoadExists = system.get("systemLoad").toString().isEmpty();
+
+        assertEquals(hostname, responseHostname,
+            "Hostname should match the one from the TestNonEmpty");
+        assertFalse(recentLoadExists, "A recent system load should not be empty");
+
+        response.close();
+    }
+
+    @Test
+    @Order(3)
+    public void testUnknownHost() {
+        Response badResponse =
+            client.target(baseUrl + INVENTORY_SYSTEMS + "/" + "badhostname")
+                  .request(MediaType.APPLICATION_JSON).get();
+
+        assertEquals(404, badResponse.getStatus(),
+            "BadResponse expected status: 404. Response code not as expected.");
+
+        String stringObj = badResponse.readEntity(String.class);
+        assertTrue(stringObj.contains("hostname does not exist."),
+            "badhostname is not a valid host but it didn't raise an error");
+
+        badResponse.close();
+    }
+
+    private Response getResponse(String url) {
+        return client.target(url).request().get();
+    }
+
+    private void assertResponse(String url, Response response) {
+        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+    }
+
+}
+```
 
 
 
@@ -407,6 +767,130 @@ Replace the ***pom.xml*** file of the inventory service.
 
 
 
+```xml
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>guide-jms-intro-inventory</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- Liberty configuration -->
+        <liberty.var.http.port>9081</liberty.var.http.port>
+        <liberty.var.https.port>9444</liberty.var.https.port>
+        <!-- IBM MQ -->
+        <liberty.var.ibmmq-hostname>localhost</liberty.var.ibmmq-hostname>
+        <liberty.var.ibmmq-port>1414</liberty.var.ibmmq-port>
+        <liberty.var.ibmmq-channel>DEV.APP.SVRCONN</liberty.var.ibmmq-channel>
+        <liberty.var.ibmmq-queue-manager>QM1</liberty.var.ibmmq-queue-manager>
+        <liberty.var.ibmmq-username>app</liberty.var.ibmmq-username>
+        <liberty.var.ibmmq-password>passw0rd</liberty.var.ibmmq-password>
+        <liberty.var.ibmmq-inventory-queue-name>DEV.QUEUE.1</liberty.var.ibmmq-inventory-queue-name>
+    </properties>
+    
+    <dependencies>
+        <!-- Provided dependencies -->
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>10.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>6.1</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        
+        <!--  Required dependencies -->
+        <dependency>
+           <groupId>io.openliberty.guides</groupId>
+           <artifactId>guide-jms-intro-models</artifactId>
+           <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <!-- For tests -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.10.3</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>6.2.9.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-json-binding-provider</artifactId>
+            <version>6.2.9.Final</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.4.0</version>
+                <configuration>
+                    <packagingExcludes>pom.xml</packagingExcludes>
+                </configuration>
+            </plugin>
+
+            <!-- Liberty plugin -->
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.10.3</version>
+            </plugin>
+
+            <!-- Plugin to run unit tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.3.1</version>
+            </plugin>
+
+            <!-- Plugin to run integration tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.3.1</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <http.port>${liberty.var.http.port}</http.port>
+                        <https.port>${liberty.var.https.port}</https.port>
+                    </systemPropertyVariables>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+
+
 
 Add the ***liberty.var.ibmmq-**** properties for the IBM MQ container. You can change to different values when you deploy the application on a production environment without modifying the Liberty ***server.xml*** configuration file.
 
@@ -417,6 +901,60 @@ Replace the ***server.xml*** file of the inventory service.
 > **File** > **Open** > draft-guide-jms-intro/start/inventory/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/draft-guide-jms-intro/start/inventory/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="Inventory Service">
+
+  <featureManager>
+    <feature>restfulWS-3.1</feature>
+    <feature>cdi-4.0</feature>
+    <feature>jsonb-3.0</feature>
+    <feature>mpHealth-4.0</feature>
+    <feature>mpConfig-3.1</feature>
+    <feature>messaging-3.1</feature>
+    <feature>messagingClient-3.0</feature>
+    <feature>messagingServer-3.0</feature>
+    <feature>enterpriseBeansLite-4.0</feature>
+    <feature>mdb-4.0</feature>
+  </featureManager>
+
+  <variable name="http.port" defaultValue="9081"/>
+  <variable name="https.port" defaultValue="9444"/>
+
+  <httpEndpoint id="defaultHttpEndpoint" host="*"
+                httpPort="${http.port}" httpsPort="${https.port}"/>
+
+  <wasJmsEndpoint id="InboundJmsCommsEndpoint"
+                  host="*"
+                  wasJmsPort="7277"
+                  wasJmsSSLPort="9101"/>
+
+  <jmsQueue id="InventoryQueue" jndiName="jms/InventoryQueue">
+    <properties.wmqjmsra baseQueueName="${ibmmq-inventory-queue-name}"/>
+  </jmsQueue>
+
+  <jmsActivationSpec id="guide-jms-intro-inventory/InventoryQueueListener">
+    <properties.wmqjmsra
+      hostName="${ibmmq-hostname}"
+      port="${ibmmq-port}"
+      channel="${ibmmq-channel}"
+      queueManager="${ibmmq-queue-manager}"
+      userName="${ibmmq-username}"
+      password="${ibmmq-password}"
+      transportType="CLIENT"/>
+  </jmsActivationSpec>
+
+  <resourceAdapter id="wmqjmsra"
+    location="https://repo.maven.apache.org/maven2/com/ibm/mq/wmq.jakarta.jmsra/9.4.0.0/wmq.jakarta.jmsra-9.4.0.0.rar"/>
+    
+  <logging consoleLogLevel="INFO"/>
+
+  <webApplication location="guide-jms-intro-inventory.war" contextRoot="/"/>
+
+</server>
+```
 
 
 
@@ -432,6 +970,134 @@ Replace the ***pom.xml*** file of the system service.
 
 
 
+```xml
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>guide-jms-intro-system</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- Liberty configuration -->
+        <liberty.var.http.port>9082</liberty.var.http.port>
+        <liberty.var.https.port>9445</liberty.var.https.port>
+        <liberty.var.inventory.jms.host>localhost</liberty.var.inventory.jms.host>
+        <liberty.var.inventory.jms.port>7277</liberty.var.inventory.jms.port>
+        <!-- IBM MQ -->
+        <liberty.var.ibmmq-hostname>localhost</liberty.var.ibmmq-hostname>
+        <liberty.var.ibmmq-port>1414</liberty.var.ibmmq-port>
+        <liberty.var.ibmmq-channel>DEV.APP.SVRCONN</liberty.var.ibmmq-channel>
+        <liberty.var.ibmmq-queue-manager>QM1</liberty.var.ibmmq-queue-manager>
+        <liberty.var.ibmmq-username>app</liberty.var.ibmmq-username>
+        <liberty.var.ibmmq-password>passw0rd</liberty.var.ibmmq-password>
+        <liberty.var.ibmmq-inventory-queue-name>DEV.QUEUE.1</liberty.var.ibmmq-inventory-queue-name>
+    </properties>
+
+    <dependencies>
+        <!-- Provided dependencies -->
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>10.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>6.1</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <!-- Required dependencies -->
+        <dependency>
+            <groupId>io.openliberty.guides</groupId>
+            <artifactId>guide-jms-intro-models</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.13</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.13</version>
+        </dependency>
+        <!-- For tests -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.10.3</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.4.0</version>
+                <configuration>
+                    <packagingExcludes>pom.xml</packagingExcludes>
+                </configuration>
+            </plugin>
+
+            <!-- Liberty plugin -->
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.10.3</version>
+            </plugin>
+
+            <!-- Plugin to run unit tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.3.1</version>
+            </plugin>
+
+            <!-- Plugin to run integration tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <id>integration-test</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                        </goals>
+                        <configuration>
+                            <trimStackTrace>false</trimStackTrace>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>verify</id>
+                        <goals>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+
+
 
 Add the ***liberty.var.ibmmq-**** properties for the IBM MQ container as you did for the ***inventory*** microservice previously.
 
@@ -442,6 +1108,59 @@ Replace the ***server.xml*** file of the system service.
 > **File** > **Open** > draft-guide-jms-intro/start/system/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/draft-guide-jms-intro/start/system/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="System Service">
+
+  <featureManager>
+    <feature>cdi-4.0</feature>
+    <feature>jsonb-3.0</feature>
+    <feature>mpHealth-4.0</feature>
+    <feature>mpConfig-3.1</feature>
+    <feature>messaging-3.1</feature>
+    <feature>messagingClient-3.0</feature>
+    <feature>enterpriseBeansLite-4.0</feature>
+    <feature>mdb-4.0</feature>
+  </featureManager>
+
+  <variable name="http.port" defaultValue="9082"/>
+  <variable name="https.port" defaultValue="9445"/>
+  <variable name="inventory.jms.host" defaultValue="localhost"/>
+  <variable name="inventory.jms.port" defaultValue="7277"/>
+
+  <httpEndpoint id="defaultHttpEndpoint" host="*"
+                httpPort="${http.port}" httpsPort="${https.port}" />
+
+  <connectionManager id="InventoryCM" maxPoolSize="400" minPoolSize="1"/>
+
+  <jmsConnectionFactory
+    connectionManagerRef="InventoryCM"
+    jndiName="InventoryConnectionFactory">
+    <properties.wmqjmsra
+      hostName="${ibmmq-hostname}"
+      port="${ibmmq-port}"
+      channel="${ibmmq-channel}"
+      queueManager="${ibmmq-queue-manager}"
+      userName="${ibmmq-username}"
+      password="${ibmmq-password}"
+      transportType="CLIENT" />
+  </jmsConnectionFactory>
+
+  <jmsQueue id="InventoryQueue" jndiName="jms/InventoryQueue">
+    <properties.wmqjmsra baseQueueName="${ibmmq-inventory-queue-name}"/>
+  </jmsQueue>
+
+  <resourceAdapter id="wmqjmsra"
+    location="https://repo.maven.apache.org/maven2/com/ibm/mq/wmq.jakarta.jmsra/9.4.0.0/wmq.jakarta.jmsra-9.4.0.0.rar"/>
+
+  <logging consoleLogLevel="INFO"/>
+
+  <webApplication location="guide-jms-intro-system.war" contextRoot="/"/>
+
+</server>
+```
 
 
 
