@@ -70,7 +70,7 @@ jobs:
       - name: Run Converter
         run: |
           branchName=${{ github.event.inputs.branch }}
-          instructionsMD="instructions.md"
+          ="instructions.md"
           git init
           mkdir -p instructions/${{ github.event.inputs.cloud_hosted_name }}/labs
           cd GuideConverter
@@ -80,7 +80,7 @@ jobs:
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
           cd ..
-          mv GuideConverter/${{ github.event.inputs.guide_name }}.md instructions/${{ github.event.inputs.cloud_hosted_name }}/labs/${instructionsMD}
+          mv GuideConverter/${{ github.event.inputs.guide_name }}.md instructions/${{ github.event.inputs.cloud_hosted_name }}/${instructionsMD}
           rm -rf GuideConverter
           bash .github/workflows/draftRemoval.sh ${{ github.event.inputs.cloud_hosted_name }}
           git add .
