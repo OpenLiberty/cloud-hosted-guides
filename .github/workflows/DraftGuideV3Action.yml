@@ -9,7 +9,7 @@ on:
       guide_name:
         description: 'Draft Guide name'
         required: true
-        default: 'draft-guide-rest-into'
+        default: 'draft-guide-rest-intro'
       converter_branch:
         description: 'Converter branch'
         required: true
@@ -17,7 +17,7 @@ on:
       cloud_hosted_name:
         description: 'Cloud hosted guide name'
         required: true
-        default: 'cloud-hosted-draft-guide-rest-into'
+        default: 'cloud-hosted-draft-guide-rest-intro'
 
 jobs:
   printBranch:
@@ -70,7 +70,7 @@ jobs:
       - name: Run Converter
         run: |
           branchName=${{ github.event.inputs.branch }}
-          instructionsMD="${{ github.event.inputs.cloud_hosted_name }}.md"
+          instructionsMD="instructions.md"
           git init
           mkdir -p instructions/${{ github.event.inputs.cloud_hosted_name }}/labs
           cd GuideConverter
@@ -87,7 +87,7 @@ jobs:
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
           git commit -m "Updated by github actions from ${{ github.event.inputs.guide_name }}"
-          git checkout --ours instructions/${{ github.event.inputs.cloud_hosted_name }}/labs/${instructionsMD}
+          git checkout --ours instructions/${{ github.event.inputs.cloud_hosted_name }}/${instructionsMD}
     
       - uses: peter-evans/create-pull-request@v3
         with:
