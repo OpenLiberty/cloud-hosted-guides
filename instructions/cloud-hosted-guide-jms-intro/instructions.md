@@ -258,15 +258,9 @@ Replace the inventory's ***server.xml*** configuration file.
     <feature>jsonb-3.0</feature>
     <feature>mpHealth-4.0</feature>
     <feature>mpConfig-3.1</feature>
-    <!--tag::messaging[]-->
     <feature>messaging-3.1</feature>
-    <!--end::messaging[]-->
-    <!--tag::messagingServer[]-->
     <feature>messagingServer-3.0</feature>
-    <!--end::messagingServer[]-->
-    <!--tag::messagingClient[]-->
     <feature>messagingClient-3.0</feature>
-    <!--end::messagingClient[]-->
     <feature>enterpriseBeansLite-4.0</feature>
     <feature>mdb-4.0</feature>
   </featureManager>
@@ -430,22 +424,16 @@ Replace the system's ***server.xml*** configuration file.
     <feature>jsonb-3.0</feature>
     <feature>mpHealth-4.0</feature>
     <feature>mpConfig-3.1</feature>
-    <!--tag::messaging[]-->
     <feature>messaging-3.1</feature>
-    <!--end::messaging[]-->
-    <!--tag::messagingClient[]-->
     <feature>messagingClient-3.0</feature>
-    <!--end::messagingClient[]-->
     <feature>enterpriseBeansLite-4.0</feature>
     <feature>mdb-4.0</feature>
   </featureManager>
 
   <variable name="http.port" defaultValue="9082"/>
   <variable name="https.port" defaultValue="9445"/>
-  <!--tag::jms[]-->
   <variable name="inventory.jms.host" defaultValue="localhost"/>
   <variable name="inventory.jms.port" defaultValue="7277"/>
-  <!--end::jms[]-->
 
   <httpEndpoint id="defaultHttpEndpoint" host="*"
                 httpPort="${http.port}" httpsPort="${https.port}"/>
