@@ -488,10 +488,6 @@ curl -s http://localhost:9081/inventory/systems | jq
 ```
 
 
-You can also use ***curl*** command to retrieve the ***hostname*** and ***systemLoad*** information from the ***inventory/systems*** REST endpoint in another command line session:
-```
-curl http://localhost:9081/inventory/systems
-```
 
 ::page{title="Testing the inventory application"}
 
@@ -731,6 +727,27 @@ docker run \
 --env MQ_APP_PASSWORD=passw0rd \
 --env MQ_ADMIN_PASSWORD=passw0rd \
 --name QM1 ibm-mqadvanced-server-dev:9.4.0.0-arm64
+```
+
+Start IBM MQ by running the following command on the command-line session:
+
+```bash
+docker pull icr.io/ibm-messaging/mq:9.4.0.0-r3
+
+docker volume create qm1data
+
+docker run \
+--env LICENSE=accept \
+--env MQ_QMGR_NAME=QM1 \
+--volume qm1data:/mnt/mqm \
+--publish 1414:1414 --publish 9443:9443 \
+--detach \
+--env MQ_APP_PASSWORD=passw0rd \
+--env MQ_ADMIN_PASSWORD=passw0rd \
+--rm \
+--platform linux/amd64 \
+--name QM1 \
+icr.io/ibm-messaging/mq:9.4.0.0-r3
 ```
 
 
