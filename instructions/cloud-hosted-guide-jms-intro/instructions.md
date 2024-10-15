@@ -59,17 +59,20 @@ The ***finish*** directory contains the finished project that you will build.
 The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
 To try out the application, first go to the ***finish*** directory and run the following Maven goal to build and install the ***models*** module. The ***models*** module contains the ***SystemLoad*** data class for both the ***system*** and ***inventory*** microservices to use.
+
 ```
 cd finish
 mvn -pl models clean install
 ```
 
 Start the ***inventory*** microservice by running the following command:
+
 ```
 mvn -pl inventory liberty:run
 ```
 
 Next, open another command-line session, navigate to the ***finish*** directory, and start the ***system*** microservice by using the following command:
+
 ```
 mvn -pl system liberty:run
 ```
@@ -1122,16 +1125,19 @@ Replace the ***properties.wasJms*** configuration by the ***properties.wmqjmsra*
 
 
 Start the ***inventory*** microservice by running the following command in dev mode:
+
 ```bash
 mvn -pl inventory liberty:dev
 ```
 
 Next, open another command-line session, navigate to the ***start*** directory, and start the ***system*** microservice by using the following command:
+
 ```bash
 mvn -pl system liberty:dev
 ```
 
 When you see the following message, your Liberty instances are ready in dev mode:
+
 ```
 The defaultServer server is ready to run a smarter planet.
 ```
