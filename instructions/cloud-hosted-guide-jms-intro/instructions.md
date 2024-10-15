@@ -135,11 +135,13 @@ curl -s http://localhost:9081/inventory/systems | jq
 
 
 After you are finished checking out the application, stop the Liberty instances by pressing `Ctrl+C` in each command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+
+
 ```bash
+cd /home/project/guide-jms-intro/finish
 mvn -pl inventory liberty:stop
 mvn -pl system liberty:stop
 ```
-
 
 ::page{title="Creating the consumer in the inventory microservice"}
 
@@ -710,17 +712,10 @@ icr.io/ibm-messaging/mq:9.4.0.0-r3
 ```
 
 
-When the IBM MQ container is running, you can access the ***https\://localhost:9443/ibmmq/console*** URL.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Run the following command to make sure that the IBM MQ container is running:
 ```bash
-curl https://localhost:9443/ibmmq/console
+docker ps
 ```
-
-
-
 
 Replace the ***pom.xml*** file of the inventory service.
 
@@ -1154,7 +1149,17 @@ When you see the following message, your Liberty instances are ready in dev mode
 The defaultServer server is ready to run a smarter planet.
 ```
 
+
 You can access the ***inventory*** microservice by the ***http\://localhost:9081/inventory/systems*** URL.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl -s http://localhost:9081/inventory/systems | jq
+```
+
+
 
 In the command shell where ***inventory*** dev mode is running, press ***enter/return*** to run the tests. If the tests pass, you'll see output that is similar to the following example:
 
