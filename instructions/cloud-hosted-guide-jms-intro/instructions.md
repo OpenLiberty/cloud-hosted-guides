@@ -488,10 +488,6 @@ curl -s http://localhost:9081/inventory/systems | jq
 ```
 
 
-You can also use ***curl*** command to retrieve the ***hostname*** and ***systemLoad*** information from the ***inventory/systems*** REST endpoint in another command line session:
-```
-curl http://localhost:9081/inventory/systems
-```
 
 ::page{title="Testing the inventory application"}
 
@@ -681,8 +677,7 @@ The application has been built and tested. In this section, you'll learn how to 
 
 
 
-If you're an Intel-based Mac user, start IBM MQ by running the following command on the command-line session:
-
+Start IBM MQ by running the following command on the command-line session:
 
 ```bash
 docker pull icr.io/ibm-messaging/mq:9.4.0.0-r3
@@ -701,36 +696,6 @@ docker run \
 --platform linux/amd64 \
 --name QM1 \
 icr.io/ibm-messaging/mq:9.4.0.0-r3
-```
-
-If you're an ARM-based Mac user, check out the [How to build Mac IBM MQ container image](https://community.ibm.com/community/user/integration/blogs/richard-coppen/2023/06/30/ibm-mq-9330-container-image-now-available-for-appl) blog in the IBM TechXchange Community website for building IBM MQ container image.
-
-Navigate to an empty directory for building the IBM MQ Docker container image and run the following commands:
-```bash
-git clone https://github.com/ibm-messaging/mq-container.git -b 9.4.0.0-r3
-cd mq-container
-make build-devserver COMMAND=docker
-```
-
-After building the container image, you can find the image version:
-```bash
-docker images | grep mq
-```
-
-When the container image is built, you see an image similar to the ***ibm-mqadvanced-server-dev:9.4.0.0-arm64***. Now, you can start IBM MQ by running the following command on the command-line session:
-
-```bash
-docker volume create qm1data
-
-docker run \
---env LICENSE=accept \
---env MQ_QMGR_NAME=QM1 \
---volume docker:/mnt/mqm \
---publish 1414:1414 --publish 9443:9443 \
---detach \
---env MQ_APP_PASSWORD=passw0rd \
---env MQ_ADMIN_PASSWORD=passw0rd \
---name QM1 ibm-mqadvanced-server-dev:9.4.0.0-arm64
 ```
 
 
