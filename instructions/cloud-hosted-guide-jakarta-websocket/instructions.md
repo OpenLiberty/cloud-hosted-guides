@@ -127,7 +127,6 @@ package io.openliberty.guides.system;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
-import java.lang.management.OperatingSystemMXBean;
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
@@ -144,6 +143,8 @@ import jakarta.websocket.OnOpen;
 import jakarta.websocket.Session;
 import jakarta.websocket.server.ServerEndpoint;
 
+import com.sun.management.OperatingSystemMXBean;
+
 @ServerEndpoint(value = "/systemLoad",
                 decoders = { SystemLoadDecoder.class },
                 encoders = { SystemLoadEncoder.class })
@@ -154,7 +155,7 @@ public class SystemService {
     private static Set<Session> sessions = new HashSet<>();
 
     private static final OperatingSystemMXBean OS =
-        ManagementFactory.getOperatingSystemMXBean();
+        (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
 
     private static final MemoryMXBean MEM =
         ManagementFactory.getMemoryMXBean();
@@ -182,9 +183,9 @@ public class SystemService {
         try {
             JsonObjectBuilder builder = Json.createObjectBuilder();
             builder.add("time", Calendar.getInstance().getTime().toString());
-            if (option.equalsIgnoreCase("loadAverage")
+            if (option.equalsIgnoreCase("cpuLoad")
                 || option.equalsIgnoreCase("both")) {
-                builder.add("loadAverage", Double.valueOf(OS.getSystemLoadAverage()));
+                builder.add("cpuLoad", Double.valueOf(OS.getCpuLoad() * 100.0));
             }
             if (option.equalsIgnoreCase("memoryUsage")
                 || option.equalsIgnoreCase("both")) {
@@ -446,7 +447,7 @@ public class SystemLoadScheduler {
 
     private SystemClient client;
     private static final String[] MESSAGES = new String[] {
-        "loadAverage", "memoryUsage", "both" };
+        "cpuLoad", "memoryUsage", "both" };
 
     @PostConstruct
     public void init() {
@@ -476,7 +477,7 @@ public class SystemLoadScheduler {
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-The ***SystemLoadScheduler*** class uses the ***SystemClient*** class to establish a connection to the server by the ***ws://localhost:9081/systemLoad*** URI at the ***@PostConstruct*** annotated method. The ***sendSystemLoad()*** method calls the client to send a random string from either ***loadAverage***, ***memoryUsage***, or ***both*** to the ***system*** service. Using the link:[Jakarta Enterprise Beans Timer Service](link:https://openliberty.io/docs/latest/reference/javadoc/liberty-jakartaee9.1-javadoc.html?package=jakarta/ejb/package-frame.html&class=jakarta/ejb/TimerService.html), annotate the ***sendSystemLoad()*** method with the ***@Schedule*** annotation so that it sends out a message every 10 seconds.
+The ***SystemLoadScheduler*** class uses the ***SystemClient*** class to establish a connection to the server by the ***ws://localhost:9081/systemLoad*** URI at the ***@PostConstruct*** annotated method. The ***sendSystemLoad()*** method calls the client to send a random string from either ***cpuLoad***, ***memoryUsage***, or ***both*** to the ***system*** service. Using the link:[Jakarta Enterprise Beans Timer Service](link:https://openliberty.io/docs/latest/reference/javadoc/liberty-jakartaee9.1-javadoc.html?package=jakarta/ejb/package-frame.html&class=jakarta/ejb/TimerService.html), annotate the ***sendSystemLoad()*** method with the ***@Schedule*** annotation so that it sends out a message every 10 seconds.
 
 Now, create the front-end UI. The images and styles for the UI are provided for you. 
 
@@ -500,7 +501,7 @@ touch /home/project/guide-jakarta-websocket/start/client/src/main/webapp/index.h
 <html>
     <head>
         <meta charset="UTF-8">
-        <title>Open Liberty System Load</title>
+        <title>Open Liberty - Jakarta WebSocket Example</title>
         <link rel="stylesheet" href="css/styles.css">
         <link href="favicon.ico" rel="icon" />
         <link href="favicon.ico" rel="shortcut icon" />
@@ -508,7 +509,7 @@ touch /home/project/guide-jakarta-websocket/start/client/src/main/webapp/index.h
     <body>
         <section id="appIntro">
             <div id="titleSection">
-                <h1 id="appTitle">Open Liberty System Load</h1>
+                <h1 id="appTitle">Jakarta WebSocket Example</h1>
                 <div class="line"></div>
                 <div class="headerImage"></div>
             </div>
@@ -526,8 +527,9 @@ touch /home/project/guide-jakarta-websocket/start/client/src/main/webapp/index.h
                     <table id="systemLoadsTable">
                         <tbody id="systemLoadsTableBody">
                             <tr>
-                                <th>Time</th><th>System Load</th>
-                                <th>Memory Usage (%)</th>
+                                <th>Time</th>
+                                <th>CPU Load (%)</th>
+                                <th>Heap Memory Usage (%)</th>
                             </tr>
                         </tbody>
                     </table>
@@ -557,10 +559,10 @@ touch /home/project/guide-jakarta-websocket/start/client/src/main/webapp/index.h
     webSocket.onmessage = function (event) {
         var data = JSON.parse(event.data);
         var tableRow = document.createElement('tr');
-        var loadAverage = data.loadAverage == null ? '-' : data.loadAverage.toFixed(2);
+        var cpuLoad = data.cpuLoad == null ? '-' : data.cpuLoad.toFixed(7);
         var memoryUsage = data.memoryUsage == null ? '-' : data.memoryUsage.toFixed(2);
         tableRow.innerHTML = '<td>' + data.time + '</td>' +
-                             '<td>' + loadAverage + '</td>' +
+                             '<td>' + cpuLoad + '</td>' +
                              '<td>' + memoryUsage + '</td>';
         document.getElementById('systemLoadsTableBody').appendChild(tableRow);
     };
@@ -721,7 +723,7 @@ public class SystemServiceIT {
         SystemClient client1 = new SystemClient(uri);
         SystemClient client2 = new SystemClient(uri);
         SystemClient client3 = new SystemClient(uri);
-        client2.sendMessage("loadAverage");
+        client2.sendMessage("cpuLoad");
         countDown.await(5, TimeUnit.SECONDS);
         client1.close();
         client2.close();
@@ -737,7 +739,7 @@ public class SystemServiceIT {
     public static void verify(JsonObject systemLoad) {
         assertNotNull(systemLoad.getString("time"));
         assertTrue(
-            systemLoad.getJsonNumber("loadAverage") != null
+            systemLoad.getJsonNumber("cpuLoad") != null
             || systemLoad.getJsonNumber("memoryUsage") != null
         );
         countDown.countDown();
