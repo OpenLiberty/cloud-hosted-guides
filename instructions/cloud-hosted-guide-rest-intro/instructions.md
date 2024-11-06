@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-483-instruction
-version-history-start-date: 2020-04-22 13:17:27 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Creating a RESTful web service guide!"}
