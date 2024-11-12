@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-508-instruction
-version-history-start-date: 2020-06-11 12:03:57 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Using Docker containers to develop microservices guide!"}
@@ -132,11 +129,15 @@ USER 1001
 Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-The ***FROM*** instruction initializes a new build stage and indicates the parent image from which your image is built. If you don't need a parent image, then use ***FROM scratch***, which makes your image a base image. 
-
-In this case, you’re using the ***icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi*** image as your parent image, which comes with the latest Open Liberty runtime.
+The ***FROM*** instruction initializes a new build stage and indicates the parent image from which your image is built. If you don't need a parent image, then use ***FROM scratch***, which makes your image a base image. In this case, you’re using the ***icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi*** image as your parent image, which comes with the latest Open Liberty runtime.
 
 The ***COPY*** instructions are structured as ***COPY*** ***[--chown=\<user\>:\<group\>]*** ***\<source\>*** ***\<destination\>***. They copy local files into the specified destination within your Docker image. In this case, the Liberty configuration file that is located at ***src/main/liberty/config/server.xml*** is copied to the ***/config/*** destination directory.
+
+The ***RUN*** instructions execute commands in a new layer on top of the current image and commit the results. In this case, they run the ***features.sh*** and ***configure.sh*** scripts to install the required features and finalize the server configuration for your Open Liberty application.
+
+The ***features.sh*** script adds the requested XML snippets to enable Liberty features by using [featureUtility](https://openliberty.io/docs/latest/reference/command/featureUtility-commands.html). Because you're starting with the ***kernel-slim*** image, which provides only the bare minimum server, the script reads your ***server.xml*** file to identify the required features and installs them into your Docker image.
+
+The ***configure.sh*** script adds the requested server configurations, applies any interim fixes, and populates caches to optimize the runtime.
 
 ### Writing a .dockerignore file
 
