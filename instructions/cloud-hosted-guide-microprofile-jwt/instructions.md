@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-505-instruction
-version-history-start-date: 2020-06-11 12:10:36 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Securing microservices with JSON Web Tokens guide!"}
