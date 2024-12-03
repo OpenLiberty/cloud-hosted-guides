@@ -684,7 +684,7 @@ Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 
 When you are done checking out the application, stop the Liberty instances by pressing `Ctrl+C` in each command-line session where you ran the ***system*** and ***inventory*** microservices.
 
-::page{title="Using IBM MQ as the messaging server - Optional"}
+::page{title="Optional: Using IBM MQ as the messaging server"}
 
 The application has been built and tested. In this section, you'll learn how to configure Liberty to use [IBM MQ container](https://github.com/ibm-messaging/mq-container) as the messaging server instead of the embedded Liberty Messaging Server.
 
