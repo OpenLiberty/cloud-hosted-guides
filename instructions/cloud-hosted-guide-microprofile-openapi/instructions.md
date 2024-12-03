@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-492-instruction
-version-history-start-date: 2021-03-03 17:52:52 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Documenting RESTful APIs guide!"}
