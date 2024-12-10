@@ -684,7 +684,7 @@ Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 
 When you are done checking out the application, stop the Liberty instances by pressing `Ctrl+C` in each command-line session where you ran the ***system*** and ***inventory*** microservices.
 
-::page{title="Using IBM MQ as the messaging server - Optional"}
+::page{title="Optional: Using IBM MQ as the messaging server"}
 
 The application has been built and tested. In this section, you'll learn how to configure Liberty to use [IBM MQ container](https://github.com/ibm-messaging/mq-container) as the messaging server instead of the embedded Liberty Messaging Server.
 
@@ -786,13 +786,13 @@ Replace the ***pom.xml*** file of the inventory service.
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>6.2.10.Final</version>
+            <version>6.2.11.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-json-binding-provider</artifactId>
-            <version>6.2.10.Final</version>
+            <version>6.2.11.Final</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -820,14 +820,14 @@ Replace the ***pom.xml*** file of the inventory service.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.1</version>
+                <version>3.5.2</version>
             </plugin>
 
             <!-- Plugin to run integration tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.1</version>
+                <version>3.5.2</version>
                 <configuration>
                     <systemPropertyVariables>
                         <http.port>${liberty.var.http.port}</http.port>
@@ -1024,14 +1024,14 @@ Replace the ***pom.xml*** file of the system service.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.1</version>
+                <version>3.5.2</version>
             </plugin>
 
             <!-- Plugin to run integration tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.1</version>
+                <version>3.5.2</version>
                 <executions>
                     <execution>
                         <id>integration-test</id>
