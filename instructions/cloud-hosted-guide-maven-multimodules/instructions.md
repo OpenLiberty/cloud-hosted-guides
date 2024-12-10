@@ -289,7 +289,7 @@ Replace the ear/POM file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.1</version>
+                <version>3.5.2</version>
                 <configuration>
                     <systemPropertyVariables>
                         <http.port>
