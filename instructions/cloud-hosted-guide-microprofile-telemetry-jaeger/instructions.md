@@ -401,13 +401,13 @@ http://maven.apache.org/xsd/maven-4.0.0.xsd">
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>6.2.10.Final</version>
+            <version>6.2.11.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-json-binding-provider</artifactId>
-            <version>6.2.10.Final</version>
+            <version>6.2.11.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -443,7 +443,7 @@ http://maven.apache.org/xsd/maven-4.0.0.xsd">
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.1</version>
+                <version>3.5.2</version>
                 <configuration>
                     <systemPropertyVariables>
                         <sys.http.port>${liberty.var.system.http.port}</sys.http.port>
