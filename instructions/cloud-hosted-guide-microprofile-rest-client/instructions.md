@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-481-instruction
-version-history-start-date: 2020-05-26 12:06:13 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Consuming RESTful services with template interfaces guide!"}
