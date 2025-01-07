@@ -780,7 +780,7 @@ Replace the ***pom.xml*** file of the inventory service.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.11.3</version>
+            <version>5.11.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -813,7 +813,7 @@ Replace the ***pom.xml*** file of the inventory service.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.11.1</version>
+                <version>3.11.2</version>
             </plugin>
 
             <!-- Plugin to run unit tests -->
@@ -996,7 +996,7 @@ Replace the ***pom.xml*** file of the system service.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.11.3</version>
+            <version>5.11.4</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -1017,7 +1017,7 @@ Replace the ***pom.xml*** file of the system service.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.11.1</version>
+                <version>3.11.2</version>
             </plugin>
 
             <!-- Plugin to run unit tests -->
