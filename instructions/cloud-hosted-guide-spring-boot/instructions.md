@@ -16,9 +16,9 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-The starting point of this guide is the finished application from the [Building an Application with Spring Boot](https://spring.io/guides/gs/spring-boot/) guide. If you are not familiar with Spring Boot, complete that guide first. Java 17 is required to run this project.
+The starting point of this guide is the finished application from the [Building an Application with Spring Boot](https://spring.io/guides/gs/spring-boot/) guide. If you are not familiar with Spring Boot, complete that guide first. Java 21 is required to run this project.
 
-You will learn how to use the ***springBootUtility*** command to deploy a Spring Boot application in Docker on Open Liberty without modification. This command stores the dependent library JAR files of the application to the target library cache, and packages the remaining application artifacts into a thin application JAR file.
+You will learn how to use the ***springBootUtility*** command to deploy a Spring Boot application in Docker on Open Liberty without modification. This command stores the dependent library JAR files of the application to the target library cache, and packages the remaining application artifacts into a thin application JAR file. Optionally, you will learn how to use Liberty InstantOn with your Spring Boot application for faster startup.
 
 You will also learn how to run the Spring Boot application locally with Open Liberty, and how to package it so that it is embedded with an Open Liberty server package.
 
@@ -111,7 +111,7 @@ touch /home/project/guide-spring-boot/start/Dockerfile
 
 
 ```
-FROM icr.io/appcafe/open-liberty:full-java17-openj9-ubi as staging
+FROM icr.io/appcafe/open-liberty:full-java21-openj9-ubi-minimal AS staging
 
 COPY --chown=1001:0 target/guide-spring-boot-0.1.0.jar \
                     /staging/fat-guide-spring-boot-0.1.0.jar
@@ -121,7 +121,7 @@ RUN springBootUtility thin \
  --targetThinAppPath=/staging/thin-guide-spring-boot-0.1.0.jar \
  --targetLibCachePath=/staging/lib.index.cache
 
-FROM icr.io/appcafe/open-liberty:kernel-slim-java17-openj9-ubi
+FROM icr.io/appcafe/open-liberty:kernel-slim-java21-openj9-ubi-minimal
 
 ARG VERSION=1.0
 ARG REVISION=SNAPSHOT
@@ -177,12 +177,12 @@ docker images
 Your ***springboot*** image appears in the list of Docker images:
 ```
 REPOSITORY    TAG       IMAGE ID         CREATED           SIZE
-springboot    latest    d3ffdaa81854     27 seconds ago    596MB
+springboot    latest    3a5492c0cbeb     27 seconds ago    485MB
 ```
 
 Now, you can run the Spring Boot application in a Docker container:
 ```bash
-docker run -d --name springBootContainer -p 9080:9080 -p 9443:9443 springboot
+docker run -d --name springBootContainer --rm -p 9080:9080 -p 9443:9443 springboot
 ```
 
 Before you access your application from the browser, run the ***docker ps*** command to make sure that your container is running:
@@ -194,13 +194,24 @@ docker ps
 You see an entry similar to the following example:
 ```
 CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                                            NAMES
-e33532aa07d6        springboot          "/opt/ibm/docker/doc…"   7 seconds ago       Up 2 seconds        0.0.0.0:9080->9080/tcp, 0.0.0.0:9443->9443/tcp   springBootContainer
+e33532aa07d6        springboot          "/opt/ol/helpers/run…"   7 seconds ago       Up 2 seconds        0.0.0.0:9080->9080/tcp, 0.0.0.0:9443->9443/tcp   springBootContainer
 ```
 
 You can watch the application start by monitoring the logs:
 ```bash
 docker logs springBootContainer
 ```
+
+Wait several seconds for the following message, which indicates that Liberty’s startup is complete:
+```
+...
+CWWKZ0001I: Application thin-guide-spring-boot-0.1.0 started in 8.033 seconds.
+...
+CWWKF0011I: The defaultServer server is ready to run a smarter planet.
+The defaultServer server started in 11.065 seconds.
+```
+
+Note that the ***thin-guide-spring-boot-0.1.0*** application took 8.033 seconds to start.
 
 
 After the application starts, run the following command to access the application:
@@ -209,14 +220,13 @@ After the application starts, run the following command to access the applicatio
 curl http://localhost:9080/hello
 ```
 
-### Tearing down the Docker container
-
-To stop and remove your container, run the following commands:
+After you are finished checking out the application, stop your container by running the following command:
 
 ```bash
 docker stop springBootContainer
-docker rm springBootContainer
 ```
+
+
 
 ::page{title="Running the application on Open Liberty"}
 
@@ -241,7 +251,7 @@ Update the ***Maven POM*** file in the ***start*** directory.
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.4</version>
+        <version>3.4.1</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.example</groupId>
@@ -251,7 +261,7 @@ Update the ***Maven POM*** file in the ***start*** directory.
     <description>Demo project for Spring Boot</description>
 
     <properties>
-        <java.version>17</java.version>
+        <java.version>21</java.version>
     </properties>
 
     <dependencies>
@@ -283,7 +293,7 @@ Update the ***Maven POM*** file in the ***start*** directory.
       <plugin>
         <groupId>io.openliberty.tools</groupId>
         <artifactId>liberty-maven-plugin</artifactId>
-        <version>3.10.3</version>
+        <version>3.11.2</version>
         <configuration>
           <appsDirectory>apps</appsDirectory>
           <installAppPackages>spring-boot-project</installAppPackages>
@@ -411,7 +421,7 @@ Update the Maven POM file in the ***start*** directory.
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.4</version>
+        <version>3.4.1</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.example</groupId>
@@ -421,7 +431,7 @@ Update the Maven POM file in the ***start*** directory.
     <description>Demo project for Spring Boot</description>
 
     <properties>
-        <java.version>17</java.version>
+        <java.version>21</java.version>
     </properties>
 
     <dependencies>
@@ -453,7 +463,7 @@ Update the Maven POM file in the ***start*** directory.
       <plugin>
         <groupId>io.openliberty.tools</groupId>
         <artifactId>liberty-maven-plugin</artifactId>
-        <version>3.10.3</version>
+        <version>3.11.2</version>
         <configuration>
           <appsDirectory>apps</appsDirectory>
           <installAppPackages>spring-boot-project</installAppPackages>
