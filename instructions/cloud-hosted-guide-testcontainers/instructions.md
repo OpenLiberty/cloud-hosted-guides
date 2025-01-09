@@ -693,7 +693,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.11.3</version>
+            <version>5.11.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -761,7 +761,7 @@ Replace the ***pom.xml*** file.
                         </dependencyGroup>
                     </copyDependencies>
                 </configuration>
-                <version>3.11.1</version>
+                <version>3.11.2</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
