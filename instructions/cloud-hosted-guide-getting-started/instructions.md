@@ -133,7 +133,9 @@ The Open Liberty Maven plug-in includes a ***dev*** goal that listens for any ch
 
 Stop the Open Liberty instance if it is running, and start it in [dev mode](https://openliberty.io/docs/latest/development-mode.html) by running the ***liberty:dev*** goal in the ***start*** directory:
 
+
 ```bash
+cd /home/project/guide-getting-started/start
 mvn liberty:dev
 ```
 
