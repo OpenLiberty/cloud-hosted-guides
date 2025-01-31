@@ -492,6 +492,10 @@ After you change the file, Open Liberty automatically reloads its configuration.
 
 Now, when you visit the ***/health*** endpoint, additional traces are logged in the ***trace.log*** file.
 
+```bash
+ls /home/project/guide-getting-started/start/target/liberty/wlp/usr/servers/defaultServer/logs
+```
+
 When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
 
 
