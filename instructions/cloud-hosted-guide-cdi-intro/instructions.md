@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-498-instruction
-version-history-start-date: 2022-03-22T21:26:09Z
 tool-type: theia
 ---
 ::page{title="Welcome to the Injecting dependencies into microservices guide!"}
@@ -292,17 +289,7 @@ Your inventory application is now completed.
 
 You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
-You can find the ***inventory*** and ***system*** services at the following URLs:
-
-
- ***http\://localhost:9080/inventory/systems***
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/inventory/systems | jq
-```
+You can find the ***system*** and ***inventory*** services at the following URLs:
 
 
  ***http\://localhost:9080/system/properties***
@@ -312,6 +299,26 @@ _To see the output for this URL in the IDE, run the following command at a termi
 
 ```bash
 curl -s http://localhost:9080/system/properties | jq
+```
+
+
+ ***http\://localhost:9080/inventory/systems/localhost***
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl -s http://localhost:9080/inventory/systems/localhost | jq
+```
+
+
+ ***http\://localhost:9080/inventory/systems***
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl -s http://localhost:9080/inventory/systems | jq
 ```
 
 
