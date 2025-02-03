@@ -85,7 +85,7 @@ The defaultServer server is ready to run a smarter planet.
 
 
 To launch the front-end web application, click the following button. From here, you can log in to the application with the form-based login.
-::startApplication{port="9090" display="external" name="Launch Application" route="/"}
+::startApplication{port="9090" display="external" name="Launch Application" route="/login.jsf"}
 
 Log in with one of the following usernames and its corresponding password:
 
@@ -458,7 +458,7 @@ Because you are running the ***frontend*** and ***system*** services in dev mode
 
 
 To launch the front-end web application, click the following button:
-::startApplication{port="9090" display="external" name="Launch Application" route="/"}
+::startApplication{port="9090" display="external" name="Launch Application" route="/login.jsf"}
 
 Log in with one of the following usernames and its corresponding password:
 
