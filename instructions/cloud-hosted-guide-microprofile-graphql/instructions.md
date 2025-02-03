@@ -18,7 +18,7 @@ Learn how to use MicroProfile GraphQL to query and update data from multiple ser
 
 ::page{title="What you'll learn"}
 
-You will learn how to build and use a simple GraphQL service with [MicroProfile GraphQL](https://openliberty.io/docs/latest/reference/feature/mpGraphQL-2.0.html). 
+You will learn how to build and use a simple GraphQL service with [MicroProfile GraphQL](https://openliberty.io/docs/latest/reference/feature/mpGraphQL.html). 
 
 GraphQL is an open source data query language. Unlike REST APIs, each HTTP request that is sent to a GraphQL service goes to a single HTTP endpoint. Create, read, update, and delete operations and their details are differentiated by the contents of the request. If the operation returns data, the user specifies what properties of the data that they want returned. For read operations, a JSON object is returned that contains only the data and properties that are specified. For other operations, a JSON object might be returned containing information such as a success message. 
 
@@ -35,7 +35,7 @@ You'll create a GraphQL application that retrieves data from multiple ***system*
 ![GraphQL architecture where multiple system microservices are integrated behind one GraphQL service](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-graphql/prod/assets/architecture.png)
 
 
-You'll enable the interactive [GraphiQL](https://github.com/graphql/graphiql/tree/main/packages/graphiql) tool in the Open Liberty runtime. GraphiQL helps you make queries to a GraphQL service. In the GraphiQL UI, you need to type only the body of the query for the purposes of manual tests and examples. 
+You'll enable the interactive [GraphiQL](https://github.com/graphql/graphiql/tree/main/packages/graphiql#readme) tool in the Open Liberty runtime. GraphiQL helps you make queries to a GraphQL service. In the GraphiQL UI, you need to type only the body of the query for the purposes of manual tests and examples. 
 
 
 ::page{title="Getting started"}
@@ -680,7 +680,7 @@ Replace the Maven project file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.1</version>
+            <version>7.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -703,19 +703,19 @@ Replace the Maven project file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.11.1</version>
+            <version>5.11.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>6.2.10.Final</version>
+            <version>6.2.11.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-json-binding-provider</artifactId>
-            <version>6.2.10.Final</version>
+            <version>6.2.11.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -733,7 +733,7 @@ Replace the Maven project file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.10.3</version>
+                <version>3.11.2</version>
                 <configuration>
                     <looseApplication>false</looseApplication>
                 </configuration>
@@ -746,13 +746,13 @@ Replace the Maven project file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.0</version>
+                <version>3.5.2</version>
             </plugin>
             <!-- Plugin to run functional tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.0</version>
+                <version>3.5.2</version>
                 <configuration>
                     <systemPropertyVariables>
                         <http.port>${liberty.var.http.port}</http.port>
@@ -782,13 +782,15 @@ Replace the Liberty server.xml configuration file.
 ```xml
 <server description="GraphQL service">
     <featureManager>
-        <feature>restfulWS-3.1</feature>
-        <feature>jsonb-3.0</feature>
-        <feature>jsonp-2.1</feature>
-        <feature>cdi-4.0</feature>
-        <feature>mpConfig-3.1</feature>
-        <feature>mpRestClient-3.0</feature>
-        <feature>mpGraphQL-2.0</feature>
+        <platform>jakartaee-10.0</platform>
+        <platform>microprofile-7.0</platform>
+        <feature>restfulWS</feature>
+        <feature>jsonb</feature>
+        <feature>jsonp</feature>
+        <feature>cdi</feature>
+        <feature>mpConfig</feature>
+        <feature>mpRestClient</feature>
+        <feature>mpGraphQL</feature>
     </featureManager>
 
     <variable name="http.port" defaultValue="9082"/>
@@ -804,7 +806,7 @@ Replace the Liberty server.xml configuration file.
 
 
 
-The ***mpGraphQL*** feature that is added to the ***server.xml*** enables the use of the [MicroProfile GraphQL](https://openliberty.io/docs/latest/reference/feature/mpGraphQL-2.0.html) feature in Open Liberty. Open Liberty's MicroProfile GraphQL feature includes GraphiQL. Enable it by setting the ***io.openliberty.enableGraphQLUI*** variable to ***true***.
+The ***mpGraphQL*** feature that is added to the ***server.xml*** enables the use of the [MicroProfile GraphQL](https://openliberty.io/docs/latest/reference/feature/mpGraphQL.html) feature in Open Liberty. Open Liberty's MicroProfile GraphQL feature includes GraphiQL. Enable it by setting the ***io.openliberty.enableGraphQLUI*** variable to ***true***.
 
 
 ::page{title="Building and running the application"}
