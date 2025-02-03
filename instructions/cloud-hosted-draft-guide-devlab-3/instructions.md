@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Creating a RESTful web service guide!"}
+::page{title="Welcome to the Producing and consuming messages in Java microservices guide!"}
 
-Learn how to create a RESTful service with Jakarta Restful Web Services, JSON-B, and Open Liberty.
+Learn how to produce and consume messages to communicate between Java microservices in a standard way by using the Jakarta Messaging API with the embedded Liberty Messaging Server or an external messaging server, IBM MQ.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,22 +14,22 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
-
 ::page{title="What you'll learn"}
 
-You will learn how to build and test a simple RESTful service with Jakarta Restful Web Services and JSON-B, which will expose the JVM's system properties. The RESTful service responds to ***GET*** requests made to the ***http://localhost:9080/LibertyProject/system/properties*** URL.
+You’ll learn how to communicate between Java web services when one service is producing a continuous stream of asynchronous messages or events to be consumed by other services, rather than just sending and receiving individual requests for data. You will also learn how to use a messaging server and client to manage the production and consumption of the messages by the services.
 
-The service responds to a ***GET*** request with a JSON representation of the system properties, where each property is a field in a JSON object, like this:
+In this guide, you will first use the embedded Liberty Messaging Server to manage messages, then you will optionally switch to using an external messaging server to manage the messages, in this case, [IBM MQ](https://www.ibm.com/products/mq). You might use an external messaging server if it is critical that none of the messages is lost if there is a system overload or outage; for example during a bank transfer in a banking application.
 
-```
-{
-  "os.name":"Mac",
-  "java.version": "1.8"
-}
-```
+You will learn how to write your Java application using the Jakarta Messaging API which provides a standard way to produce and consume messages in Java application, regardless of which messaging server your application will ultimately use.
 
-The design of an HTTP API is an essential part of creating a web application. The REST API is the go-to architectural style for building an HTTP API. The Jakarta Restful Web Services API offers functions to create, read, update, and delete exposed resources. The Jakarta Restful Web Services API supports the creation of RESTful web services that are performant, scalable, and modifiable.
+The application in this guide consists of two microservices, ***system*** and ***inventory***. Every 15 seconds, the ***system*** microservice computes and publishes a message that contains the system’s current CPU and memory load usage. The ***inventory*** microservice subscribes to that information at the ***/systems*** REST endpoint so that it can keep an updated list of all the systems and their current system loads.
+
+You’ll create the ***system*** and ***inventory*** microservices using the Jakarta Messaging API to produce and consume the messages using the embedded Liberty Messaging Server.
+
+![Application architecture where system and inventory services use the Jakarta Messaging to communicate.](https://raw.githubusercontent.com/OpenLiberty/guide-jms-intro/prod/assets/architecture.png)
+
+
+You will then, optionally, reconfigure the application, without changing the application's Java code, to use an external IBM MQ messaging server instead.
 
 ::page{title="Getting started"}
 
@@ -42,11 +42,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-jms-intro.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-rest-intro.git
-cd guide-rest-intro
+git clone https://github.com/openliberty/guide-jms-intro.git
+cd guide-jms-intro
 ```
 
 
@@ -58,15 +58,30 @@ The ***finish*** directory contains the finished project that you will build.
 
 The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
+To try out the application, first go to the ***finish*** directory and run the following Maven goal to build and install the ***models*** module. The ***models*** module contains the ***SystemLoad*** data class for both the ***system*** and ***inventory*** microservices to use.
+
 
 ```bash
-cd finish
-mvn liberty:run
+cd /home/project/guide-jms-intro/finish
+mvn -pl models clean install
 ```
 
-After you see the following message, your Liberty instance is ready:
 
+Start the ***inventory*** microservice by running the following command:
+
+```bash
+mvn -pl inventory liberty:run
+```
+
+Next, open another command-line session, navigate to the ***finish*** directory, and start the ***system*** microservice by using the following command:
+
+
+```bash
+cd /home/project/guide-jms-intro/finish
+mvn -pl system liberty:run
+```
+
+When you see the following message, your Liberty instances are ready:
 ```
 The defaultServer server is ready to run a smarter planet.
 ```
@@ -76,38 +91,75 @@ The defaultServer server is ready to run a smarter planet.
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 
-Check out the service at the ***http\://localhost:9080/LibertyProject/system/properties*** URL. 
+Visit the ***http\://localhost:9081/health*** URL to confirm that the ***inventory*** microservice is up and running.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```bash
-curl -s http://localhost:9080/LibertyProject/system/properties | jq
+curl -s http://localhost:9081/health | jq
 ```
 
 
 
-After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+
+When both the liveness and readiness health checks are up, go to the ***http\://localhost:9081/inventory/systems*** URL to access the ***inventory*** microservice. You see the ***systemLoad*** property for all the systems:
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```bash
-mvn liberty:stop
+curl -s http://localhost:9081/inventory/systems | jq
 ```
 
 
-::page{title="Creating a RESTful application"}
+
+```
+{
+   "hostname": <your hostname>,
+   "systemLoad": 6.037155240703536E-9
+}
+```
+
+
+You can revisit the ***http\://localhost:9081/inventory/systems*** URL after a while, and you will notice the ***systemLoad*** property for the systems changed.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl -s http://localhost:9081/inventory/systems | jq
+```
+
+
+
+
+After you are finished checking out the application, stop the Liberty instances by pressing `Ctrl+C` in each command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+
+
+```bash
+cd /home/project/guide-jms-intro/finish
+mvn -pl inventory liberty:stop
+mvn -pl system liberty:stop
+```
+
+::page{title="Creating the consumer in the inventory microservice"}
 
 Navigate to the ***start*** directory to begin.
-```bash
-cd /home/project/guide-rest-intro/start
-```
-
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
-mvn liberty:dev
+cd /home/project/guide-jms-intro/start
 ```
 
-After you see the following message, your Liberty instance is ready in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
+
+Run the following goal to start the ***inventory*** microservice in dev mode:
+
+```bash
+mvn -pl inventory liberty:dev
+```
+
+When you see the following message, your Liberty instance is ready in dev mode:
 
 ```
 **************************************************************
@@ -116,258 +168,1036 @@ After you see the following message, your Liberty instance is ready in dev mode:
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-Jakarta Restful Web Services defines two key concepts for creating REST APIs. The most obvious one is the resource itself, which is modelled as a class. The second is a RESTful application, which groups all exposed resources under a common path. You can think of the RESTful application as a wrapper for all of your resources.
+The ***inventory*** microservice records in its inventory the recent system load information that it received from potentially multiple instances of the ***system*** microservice.
 
-
-Replace the ***SystemApplication*** class.
-
-> To open the SystemApplication.java file in your IDE, select
-> **File** > **Open** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java, or click the following button
-
-::openFile{path="/home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java"}
-
-
-
-```java
-package io.openliberty.guides.rest;
-
-import jakarta.ws.rs.core.Application;
-import jakarta.ws.rs.ApplicationPath;
-
-@ApplicationPath("system")
-public class SystemApplication extends Application {
-
-}
-```
-
-
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
-
-
-The ***SystemApplication*** class extends the ***Application*** class, which associates all RESTful resource classes in the WAR file with this RESTful application. These resources become available under the common path that's specified with the ***@ApplicationPath*** annotation. The ***@ApplicationPath*** annotation has a value that indicates the path in the WAR file that the RESTful application accepts requests from.
-
-
-::page{title="Creating the RESTful resource"}
-
-In a RESTful application, a single class represents a single resource, or a group of resources of the same type. In this application, a resource might be a system property, or a set of system properties. A single class can easily handle multiple different resources, but keeping a clean separation between types of resources helps with maintainability in the long run.
-
-Create the ***PropertiesResource*** class.
+Create the ***InventoryQueueListener*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+touch /home/project/guide-jms-intro/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryQueueListener.java
 ```
 
 
-> Then, to open the PropertiesResource.java file in your IDE, select
-> **File** > **Open** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java, or click the following button
+> Then, to open the InventoryQueueListener.java file in your IDE, select
+> **File** > **Open** > guide-jms-intro/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryQueueListener.java, or click the following button
 
-::openFile{path="/home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java"}
+::openFile{path="/home/project/guide-jms-intro/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryQueueListener.java"}
 
 
 
 ```java
-package io.openliberty.guides.rest;
+package io.openliberty.guides.inventory;
 
-import java.util.Properties;
+import io.openliberty.guides.models.SystemLoad;
+import jakarta.ejb.ActivationConfigProperty;
+import jakarta.ejb.MessageDriven;
+import jakarta.inject.Inject;
+import jakarta.jms.JMSException;
+import jakarta.jms.Message;
+import jakarta.jms.MessageListener;
+import jakarta.jms.TextMessage;
 
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
+import java.util.logging.Logger;
 
-@Path("properties")
-public class PropertiesResource {
+@MessageDriven(activationConfig = {
+    @ActivationConfigProperty(
+        propertyName = "destinationLookup", propertyValue = "jms/InventoryQueue"),
+    @ActivationConfigProperty(
+        propertyName = "destinationType", propertyValue = "jakarta.jms.Queue")
+})
+public class InventoryQueueListener implements MessageListener {
 
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Properties getProperties() {
-        return System.getProperties();
+    private static Logger logger =
+            Logger.getLogger(InventoryQueueListener.class.getName());
+
+    @Inject
+    private InventoryManager manager;
+
+    public void onMessage(Message message) {
+        try {
+            if (message instanceof TextMessage) {
+                TextMessage textMessage = (TextMessage) message;
+                String json = textMessage.getText();
+                SystemLoad systemLoad = SystemLoad.fromJson(json);
+
+                String hostname = systemLoad.hostname;
+                Double recentLoad = systemLoad.recentLoad;
+                if (manager.getSystem(hostname).isPresent()) {
+                    manager.updateCpuStatus(hostname, recentLoad);
+                    logger.info("Host " + hostname + " was updated: " + recentLoad);
+                } else {
+                    manager.addSystem(hostname, recentLoad);
+                    logger.info("Host " + hostname + " was added: " + recentLoad);
+                }
+            } else {
+                logger.warning(
+                    "Unsupported Message Type: " + message.getClass().getName());
+            }
+        } catch (JMSException e) {
+            e.printStackTrace();
+        }
     }
 
 }
 ```
 
 
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-The ***@Path*** annotation on the class indicates that this resource responds to the ***properties*** path in the RESTful Web Services application. The ***@ApplicationPath*** annotation in the ***SystemApplication*** class together with the ***@Path*** annotation in this class indicates that the resource is available at the ***system/properties*** path.
+The ***inventory*** microservice receives the messages from the ***system*** microservice. Implement the ***InventoryQueueListener*** class with the ***MessageListener*** interface and annotate with ***@MessageDriven*** to monitor the ***jms/InventoryQueue*** message queue. Implement the ***onMessage()*** method that processes the incoming messages, updates the inventory by using the ***InventoryManager*** bean, and logs the action. Use the ***SystemLoad.fromJson()*** method to convert the JSON message string to the ***SystemLoad*** object.
 
-Jakarta Restful Web Services maps the HTTP methods on the URL to the methods of the class by using annotations. Your application uses the ***GET*** annotation to map an HTTP ***GET*** request to the ***system/properties*** path.
+Next, configure the ***inventory*** microservice with an embedded messaging server and the [Messaging Server Client](https://openliberty.io/docs/latest/reference/feature/messagingClient.html) feature.
 
-The ***@GET*** annotation on the method indicates that this method is called for the HTTP ***GET*** method. The ***@Produces*** annotation indicates the format of the content that is returned. The value of the ***@Produces*** annotation is specified in the HTTP ***Content-Type*** response header. This application returns a JSON structured. The desired ***Content-Type*** for a JSON response is ***application/json***, with ***MediaType.APPLICATION_JSON*** instead of the ***String*** content type. Using a constant such as ***MediaType.APPLICATION_JSON*** is better because a spelling error results in a compile failure.
-
-Jakarta Restful Web Services supports a number of ways to marshal JSON. The Jakarta Restful Web Services specification mandates JSON-Binding (JSON-B). The method body returns the result of ***System.getProperties()***, which is of type ***java.util.Properties***. The method is annotated with ***@Produces(MediaType.APPLICATION_JSON)*** so Jakarta Restful Web Services uses JSON-B to automatically convert the returned object to JSON data in the HTTP response.
-
-
-::page{title="Configuring Liberty"}
-
-To get the service running, the Liberty ***server.xml*** configuration file needs to be correctly configured.
-
-Replace the Liberty ***server.xml*** configuration file.
+Replace the inventory's ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-rest-intro/start/src/main/liberty/config/server.xml, or click the following button
+> **File** > **Open** > guide-jms-intro/start/inventory/src/main/liberty/config/server.xml, or click the following button
 
-::openFile{path="/home/project/guide-rest-intro/start/src/main/liberty/config/server.xml"}
+::openFile{path="/home/project/guide-jms-intro/start/inventory/src/main/liberty/config/server.xml"}
 
 
 
 ```xml
-<server description="Intro REST Guide Liberty server">
+<server description="Inventory Service">
+
   <featureManager>
-      <platform>jakartaee-10.0</platform>
-      <feature>restfulWS</feature>
-      <feature>jsonb</feature>
+    <platform>jakartaee-10.0</platform>
+    <platform>microprofile-7.0</platform>
+    <feature>restfulWS</feature>
+    <feature>cdi</feature>
+    <feature>jsonb</feature>
+    <feature>mpHealth</feature>
+    <feature>mpConfig</feature>
+    <feature>messaging</feature>
+    <feature>messagingServer</feature>
+    <feature>messagingClient</feature>
+    <feature>enterpriseBeansLite</feature>
+    <feature>mdb</feature>
   </featureManager>
 
-  <httpEndpoint httpPort="${http.port}" httpsPort="${https.port}"
-                id="defaultHttpEndpoint" host="*" />
+  <variable name="http.port" defaultValue="9081"/>
+  <variable name="https.port" defaultValue="9444"/>
 
-  <webApplication location="guide-rest-intro.war" contextRoot="${app.context.root}"/>
+  <httpEndpoint id="defaultHttpEndpoint" host="*"
+                httpPort="${http.port}" httpsPort="${https.port}" />
+
+  <wasJmsEndpoint id="InboundJmsCommsEndpoint"
+                  host="*"
+                  wasJmsPort="7277"
+                  wasJmsSSLPort="9101"/>
+
+  <connectionManager id="InventoryCM" maxPoolSize="400" minPoolSize="1"/>
+
+  <messagingEngine id="InventoryME">
+    <queue id="InventoryQueue"
+           maxQueueDepth="5000"/>
+  </messagingEngine>
+
+  <jmsConnectionFactory connectionManagerRef="InventoryCM"
+                        jndiName="InventoryConnectionFactory">
+    <properties.wasJms/>
+  </jmsConnectionFactory>
+
+  <jmsQueue id="InventoryQueue" jndiName="jms/InventoryQueue">
+    <properties.wasJms queueName="InventoryQueue"/>
+  </jmsQueue>
+
+  <jmsActivationSpec id="guide-jms-intro-inventory/InventoryQueueListener">
+    <properties.wasJms maxConcurrency="200"/>
+  </jmsActivationSpec>
+
+  <logging consoleLogLevel="INFO"/>
+
+  <webApplication location="guide-jms-intro-inventory.war" contextRoot="/"/>
+
 </server>
 ```
 
 
 
-The configuration does the following actions:
 
-* Configures Liberty to enable Jakarta Restful Web Services. This is specified in the ***featureManager*** element.
-* Configures Liberty to resolve the HTTP port numbers from variables, which are then specified in the Maven ***pom.xml*** file. This is specified in the ***httpEndpoint*** element. Variables use the ***${variableName}*** syntax.
-* Configures Liberty to run the produced web application on a context root specified in the ***pom.xml*** file. This is specified in the ***webApplication*** element.
+The ***messagingServer*** feature enables a Liberty runtime to host an embedded messaging server to manage messaging destinations. The ***messagingClient*** feature enables applications to connect to a Liberty messaging server and access the messaging destinations hosted on that server through the Jakarta Messaging API that is enabled by the ***messaging*** feature.
+
+Add the ***wasJmsEndpoint*** element to configure the Liberty runtime to monitor and manage incoming JMS connections from any hosts. Set up the ***messagingEngine*** configuration to ensure that the Liberty runtime can manage incoming message queues more effectively, assigning a reliable and persistent destination for the ***InventoryQueue***. Configure a ***jmsConnectionFactory*** element to use the ***InventoryCM*** connection manager and set properties for the JMS implementation. Define a ***jmsQueue*** element for the ***InventoryQueue*** message queue with its JNDI name and a ***jmsActivationSpec*** element to configure properties, including the queue listener class name and maximum concurrency.
+
+To learn more about configuration for the ***jmsQueue*** element and ***jmsConnectionFactory*** element, see the [JMS Queue](https://openliberty.io/docs/latest/reference/config/jmsQueue.html) and [JMS Connection Factory](https://openliberty.io/docs/latest/reference/config/jmsConnectionFactory.html) documentation.
 
 
-The variables that are being used in the ***server.xml*** file are provided by the properties set in the Maven ***pom.xml*** file. The properties must be formatted as ***liberty.var.variableName***.
+::page{title="Creating the message producer in the system service "}
+
+Open another command-line session, navigate to the ***start*** directory, and run the following goal to start the ***system*** microservice in dev mode:
+
+```bash
+cd /home/project/guide-jms-intro/start
+```
+
+```bash
+mvn -pl system liberty:dev
+```
+
+When you see the following message, your Liberty instance is ready in dev mode:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+The ***system*** microservice is the producer of the messages that are published to the messaging server as a stream of events. Every 15 seconds, the ***system*** microservice triggers an event that calculates the recent CPU usage for the last minute.
+
+Create the ***SystemService*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-jms-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
+```
+
+
+> Then, to open the SystemService.java file in your IDE, select
+> **File** > **Open** > guide-jms-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
+
+::openFile{path="/home/project/guide-jms-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
+
+
+
+```java
+package io.openliberty.guides.system;
+
+import java.lang.management.ManagementFactory;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.logging.Logger;
+
+import com.sun.management.OperatingSystemMXBean;
+
+import io.openliberty.guides.models.SystemLoad;
+import jakarta.annotation.Resource;
+import jakarta.ejb.Schedule;
+import jakarta.ejb.Singleton;
+import jakarta.inject.Inject;
+import jakarta.jms.JMSConnectionFactory;
+import jakarta.jms.JMSContext;
+import jakarta.jms.Queue;
+
+@Singleton
+public class SystemService {
+
+    private static final OperatingSystemMXBean OS_MEAN =
+            (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+    private static String hostname = null;
+
+    private static Logger logger = Logger.getLogger(SystemService.class.getName());
+
+    @Inject
+    @JMSConnectionFactory("InventoryConnectionFactory")
+    private JMSContext context;
+
+    @Resource(lookup = "jms/InventoryQueue")
+    private Queue queue;
+
+    private static String getHostname() {
+        if (hostname == null) {
+            try {
+                return InetAddress.getLocalHost().getHostName();
+            } catch (UnknownHostException e) {
+                return System.getenv("HOSTNAME");
+            }
+        }
+        return hostname;
+    }
+
+    @Schedule(second = "*/15", minute = "*", hour = "*", persistent = false)
+    public void sendSystemLoad() {
+        SystemLoad systemLoad = new SystemLoad(getHostname(),
+                                    Double.valueOf(OS_MEAN.getCpuLoad()));
+        context.createProducer().send(queue, systemLoad.toString());
+        logger.info(systemLoad.toString());
+    }
+}
+```
+
+
+The ***SystemService*** class contains the ***sendSystemLoad()*** method that calculates the recent system load, creates a ***SystemLoad*** object, and publishes the object as a message to the ***jms/InventoryQueue*** message queue running in the messaging server by using the ***send()*** method. The ***@Schedule*** annotation on the ***sendSystemLoad()*** method sets the frequency at which the system service publishes the calculation to the event stream, ensuring it runs every 15 seconds.
+
+
+Next, configure the ***system*** microservice to access the message queue.
+
+Replace the system's ***server.xml*** configuration file.
+
+> To open the server.xml file in your IDE, select
+> **File** > **Open** > guide-jms-intro/start/system/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-jms-intro/start/system/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="System Service">
+
+  <featureManager>
+    <platform>jakartaee-10.0</platform>
+    <platform>microprofile-7.0</platform>
+    <feature>cdi</feature>
+    <feature>jsonb</feature>
+    <feature>mpHealth</feature>
+    <feature>mpConfig</feature>
+    <feature>messaging</feature>
+    <feature>messagingClient</feature>
+    <feature>enterpriseBeansLite</feature>
+    <feature>mdb</feature>
+  </featureManager>
+
+  <variable name="http.port" defaultValue="9082"/>
+  <variable name="https.port" defaultValue="9445"/>
+  <variable name="inventory.jms.host" defaultValue="localhost"/>
+  <variable name="inventory.jms.port" defaultValue="7277"/>
+
+  <httpEndpoint id="defaultHttpEndpoint" host="*"
+                httpPort="${http.port}" httpsPort="${https.port}"/>
+
+  <connectionManager id="InventoryCM" maxPoolSize="400" minPoolSize="1"/>
+
+  <jmsConnectionFactory
+    connectionManagerRef="InventoryCM"
+    jndiName="InventoryConnectionFactory">
+    <properties.wasJms
+      remoteServerAddress="${inventory.jms.host}:${inventory.jms.port}:BootstrapBasicMessaging"/>
+  </jmsConnectionFactory>
+
+  <jmsQueue id="InventoryQueue" jndiName="jms/InventoryQueue">
+    <properties.wasJms queueName="InventoryQueue"/>
+  </jmsQueue>
+
+  <logging consoleLogLevel="INFO"/>
+
+  <webApplication location="guide-jms-intro-system.war" contextRoot="/"/>
+
+</server>
+```
+
+
+
+
+The ***messaging*** and ***messagingClient*** features enable the Liberty runtime to provide the required messaging services. Add a ***connectionManager*** element to handle connections for the messaging server running on the ***inventory*** microservice. Define the ***jmsConnectionFactory*** element to use the ***InventoryCM*** connection manager and set up the required ***remoteServerAddress*** properties. Use the ***jmsQueue*** element to define the inventory message queue.
+
+In your dev mode console for the ***system*** microservice, type ***r*** and press ***enter/return*** key to restart the Liberty instance so that Liberty reads the configuration changes. When you see the following message, your Liberty instance is ready in dev mode:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
 
 
 ::page{title="Running the application"}
 
 You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
+You can find the ***inventory*** microservice at the following URLs:
 
-Check out the service that you created at the ***http\://localhost:9080/LibertyProject/system/properties*** URL. 
+
+ ***http\://localhost:9081/inventory/systems***
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```bash
-curl -s http://localhost:9080/LibertyProject/system/properties | jq
+curl -s http://localhost:9081/inventory/systems | jq
 ```
 
 
 
+::page{title="Testing the inventory application"}
 
-::page{title="Testing the service"}
+While you can test your application manually, you should rely on automated tests because they trigger a failure whenever a code change introduces a defect. Because the application is a RESTful web service application, you can use JUnit and the RESTful web service Client API to write tests. In testing the functionality of the application, the scopes and dependencies are being tested.
 
-
-You can test this service manually by starting Liberty and visiting the http://localhost:9080/LibertyProject/system/properties URL. However, automated tests are a much better approach because they trigger a failure if a change introduces a bug. JUnit and the Jakarta Restful Web Services Client API provide a simple environment to test the application.
-
-You can write tests for the individual units of code outside of a running Liberty instance, or they can be written to call the Liberty instance directly. In this example, you will create a test that does the latter.
-
-Create the ***EndpointIT*** class.
+Create the ***InventoryEndpointIT*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+touch /home/project/guide-jms-intro/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
 ```
 
 
-> Then, to open the EndpointIT.java file in your IDE, select
-> **File** > **Open** > guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java, or click the following button
+> Then, to open the InventoryEndpointIT.java file in your IDE, select
+> **File** > **Open** > guide-jms-intro/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java, or click the following button
 
-::openFile{path="/home/project/guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java"}
+::openFile{path="/home/project/guide-jms-intro/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.rest;
+package it.io.openliberty.guides.inventory;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.util.Properties;
-
-import jakarta.json.bind.Jsonb;
-import jakarta.json.bind.JsonbBuilder;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 
-public class EndpointIT {
-    private static final Jsonb JSONB = JsonbBuilder.create();
-    @Test
-    public void testGetProperties() {
-        String port = System.getProperty("http.port");
-        String context = System.getProperty("context.root");
-        String url = "http://localhost:" + port + "/" + context + "/";
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.TestMethodOrder;
 
-        Client client = ClientBuilder.newClient();
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-        WebTarget target = client.target(url + "system/properties");
-        Response response = target.request().get();
 
-        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus(),
-                     "Incorrect response code from " + url);
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class InventoryEndpointIT {
 
-        String json = response.readEntity(String.class);
-        Properties sysProps = JSONB.fromJson(json, Properties.class);
+    private static String port;
+    private static String baseUrl;
+    private static String hostname;
 
-        assertEquals(System.getProperty("os.name"), sysProps.getProperty("os.name"),
-                     "The system property for the local and remote JVM should match");
-        response.close();
+    private Client client;
+
+    private final String INVENTORY_SYSTEMS = "inventory/systems";
+
+    @BeforeAll
+    public static void oneTimeSetup() {
+        port = System.getProperty("http.port");
+        baseUrl = "http://localhost:" + port + "/";
+    }
+
+    @BeforeEach
+    public void setup() {
+        client = ClientBuilder.newClient();
+    }
+
+    @AfterEach
+    public void teardown() {
         client.close();
     }
+
+
+    @Test
+    @Order(1)
+    public void testGetSystems() {
+        Response response = this.getResponse(baseUrl + INVENTORY_SYSTEMS);
+        this.assertResponse(baseUrl, response);
+
+        JsonArray systems = response.readEntity(JsonArray.class);
+
+        boolean hostnameExists = false;
+        boolean recentLoadExists = false;
+        for (int n = 0; n < systems.size(); n++) {
+            hostnameExists = systems.getJsonObject(n)
+                                    .get("hostname").toString().isEmpty();
+            recentLoadExists = systems.getJsonObject(n)
+                                      .get("systemLoad").toString().isEmpty();
+
+            assertFalse(hostnameExists, "A host was registered, but it was empty");
+            assertFalse(recentLoadExists,
+                "A recent system load was registered, but it was empty");
+            if (!hostnameExists && !recentLoadExists) {
+                String host = systems.getJsonObject(n).get("hostname").toString();
+                hostname = host.substring(1, host.length() - 1);
+                break;
+            }
+        }
+        assertNotNull(hostname, "Hostname should be set by the first test. (1)");
+        response.close();
+    }
+
+    @Test
+    @Order(2)
+    public void testGetSystemsWithHost() {
+        assertNotNull(hostname, "Hostname should be set by the first test. (2)");
+
+        Response response =
+            this.getResponse(baseUrl + INVENTORY_SYSTEMS + "/" + hostname);
+        this.assertResponse(baseUrl, response);
+
+        JsonObject system = response.readEntity(JsonObject.class);
+
+        String responseHostname = system.getString("hostname");
+        Boolean recentLoadExists = system.get("systemLoad").toString().isEmpty();
+
+        assertEquals(hostname, responseHostname,
+            "Hostname should match the one from the TestNonEmpty");
+        assertFalse(recentLoadExists, "A recent system load should not be empty");
+
+        response.close();
+    }
+
+    @Test
+    @Order(3)
+    public void testUnknownHost() {
+        Response badResponse =
+            client.target(baseUrl + INVENTORY_SYSTEMS + "/" + "badhostname")
+                  .request(MediaType.APPLICATION_JSON).get();
+
+        assertEquals(404, badResponse.getStatus(),
+            "BadResponse expected status: 404. Response code not as expected.");
+
+        String stringObj = badResponse.readEntity(String.class);
+        assertTrue(stringObj.contains("hostname does not exist."),
+            "badhostname is not a valid host but it didn't raise an error");
+
+        badResponse.close();
+    }
+
+    private Response getResponse(String url) {
+        return client.target(url).request().get();
+    }
+
+    private void assertResponse(String url, Response response) {
+        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+    }
+
 }
 ```
 
 
 
-This test class has more lines of code than the resource implementation. This situation is common. The test method is indicated with the ***@Test*** annotation.
 
+See the following descriptions of the test cases:
 
-The test code needs to know some information about the application to make requests. The server port and the application context root are key, and are dictated by the Liberty's configuration. While this information can be hardcoded, it is better to specify it in a single place like the Maven ***pom.xml*** file. Refer to the ***pom.xml*** file to see how the application information such as the ***http.port***, ***https.port*** and ***app.context.root*** elements are provided in the file.
+* ***testGetSystems()*** verifies that the hostname and the system load for each system in the inventory are not empty.
 
+* ***testGetSystemsWithHost()*** verifies that the hostname and system load returned by the ***system*** microservice match the ones stored in the ***inventory*** microservice and ensures they are not empty.
 
-These Maven properties are then passed to the Java test program as the ***systemPropertyVariables*** element in the ***pom.xml*** file.
+* ***testUnknownHost()*** verifies that an unknown host or a host that does not expose their JVM system properties is correctly handled as an error.
 
-Getting the values to create a representation of the URL is simple. The test class uses the ***getProperty*** method to get the application details.
-
-To call the RESTful service using the Jakarta Restful Web Services client, first create a ***WebTarget*** object by calling the ***target*** method that provides the URL. To cause the HTTP request to occur, the ***request().get()*** method is called on the ***WebTarget*** object. The ***get*** method call is a synchronous call that blocks until a response is received. This call returns a ***Response*** object, which can be inspected to determine whether the request was successful.
-
-The first thing to check is that a ***200*** response was received. The JUnit ***assertEquals*** method can be used for this check.
-
-Check the response body to ensure it returned the right information. The client and the server are running on the same machine so it is reasonable to expect that the system properties for the local and remote JVM would be the same. In this case, an ***assertEquals*** assertion is made so that the ***os.name*** system property for both JVMs is the same. You can write additional assertions to check for more values.
 
 ### Running the tests
 
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode for the ***inventory*** microservice.
 
-You will see the following output:
+If the tests pass, you see a similar output to the following example:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.rest.EndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.884 sec - in it.io.openliberty.guides.rest.EndpointIT
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.325 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
 
 Results :
 
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-To see whether the tests detect a failure, add an assertion that you know fails, or change the existing assertion to a constant value that doesn't match the ***os.name*** system property.
+When you are done checking out the application, stop the Liberty instances by pressing `Ctrl+C` in each command-line session where you ran the ***system*** and ***inventory*** microservices.
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
+::page{title="Optional: Using IBM MQ as the messaging server"}
 
+The application has been built and tested. In this section, you'll learn how to configure Liberty to use [IBM MQ container](https://github.com/ibm-messaging/mq-container) as the messaging server instead of the embedded Liberty Messaging Server.
+
+
+
+Start IBM MQ by running the following command on the command-line session:
+
+```bash
+docker pull icr.io/ibm-messaging/mq:9.4.0.0-r3
+
+docker volume create qm1data
+
+docker run \
+--env LICENSE=accept \
+--env MQ_QMGR_NAME=QM1 \
+--volume qm1data:/mnt/mqm \
+--publish 1414:1414 --publish 9443:9443 \
+--detach \
+--env MQ_APP_PASSWORD=passw0rd \
+--env MQ_ADMIN_PASSWORD=passw0rd \
+--rm \
+--platform linux/amd64 \
+--name QM1 \
+icr.io/ibm-messaging/mq:9.4.0.0-r3
+```
+
+
+Run the following command to make sure that the IBM MQ container is running:
+```bash
+docker ps
+```
+
+Replace the ***pom.xml*** file of the inventory service.
+
+> To open the pom.xml file in your IDE, select
+> **File** > **Open** > guide-jms-intro/start/inventory/pom.xml, or click the following button
+
+::openFile{path="/home/project/guide-jms-intro/start/inventory/pom.xml"}
+
+
+
+```xml
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>guide-jms-intro-inventory</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- Liberty configuration -->
+        <liberty.var.http.port>9081</liberty.var.http.port>
+        <liberty.var.https.port>9444</liberty.var.https.port>
+        <!-- IBM MQ -->
+        <liberty.var.ibmmq-hostname>localhost</liberty.var.ibmmq-hostname>
+        <liberty.var.ibmmq-port>1414</liberty.var.ibmmq-port>
+        <liberty.var.ibmmq-channel>DEV.APP.SVRCONN</liberty.var.ibmmq-channel>
+        <liberty.var.ibmmq-queue-manager>QM1</liberty.var.ibmmq-queue-manager>
+        <liberty.var.ibmmq-username>app</liberty.var.ibmmq-username>
+        <liberty.var.ibmmq-password>passw0rd</liberty.var.ibmmq-password>
+        <liberty.var.ibmmq-inventory-queue-name>DEV.QUEUE.1</liberty.var.ibmmq-inventory-queue-name>
+    </properties>
+    
+    <dependencies>
+        <!-- Provided dependencies -->
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>10.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>7.0</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        
+        <!--  Required dependencies -->
+        <dependency>
+           <groupId>io.openliberty.guides</groupId>
+           <artifactId>guide-jms-intro-models</artifactId>
+           <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <!-- For tests -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.11.4</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>6.2.11.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-json-binding-provider</artifactId>
+            <version>6.2.11.Final</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.4.0</version>
+                <configuration>
+                    <packagingExcludes>pom.xml</packagingExcludes>
+                </configuration>
+            </plugin>
+
+            <!-- Liberty plugin -->
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.11.2</version>
+            </plugin>
+
+            <!-- Plugin to run unit tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.2</version>
+            </plugin>
+
+            <!-- Plugin to run integration tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.5.2</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <http.port>${liberty.var.http.port}</http.port>
+                        <https.port>${liberty.var.https.port}</https.port>
+                    </systemPropertyVariables>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+
+
+
+Add the ***liberty.var.ibmmq-**** properties for the IBM MQ container. You can change to different values when you deploy the application on a production environment without modifying the Liberty ***server.xml*** configuration file.
+
+
+Replace the ***server.xml*** file of the inventory service.
+
+> To open the server.xml file in your IDE, select
+> **File** > **Open** > guide-jms-intro/start/inventory/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-jms-intro/start/inventory/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="Inventory Service">
+
+  <featureManager>
+    <platform>jakartaee-10.0</platform>
+    <platform>microprofile-7.0</platform>
+    <feature>restfulWS</feature>
+    <feature>cdi</feature>
+    <feature>jsonb</feature>
+    <feature>mpHealth</feature>
+    <feature>mpConfig</feature>
+    <feature>messaging</feature>
+    <feature>messagingClient</feature>
+    <feature>messagingServer</feature>
+    <feature>enterpriseBeansLite</feature>
+    <feature>mdb</feature>
+  </featureManager>
+
+  <variable name="http.port" defaultValue="9081"/>
+  <variable name="https.port" defaultValue="9444"/>
+
+  <httpEndpoint id="defaultHttpEndpoint" host="*"
+                httpPort="${http.port}" httpsPort="${https.port}"/>
+
+  <wasJmsEndpoint id="InboundJmsCommsEndpoint"
+                  host="*"
+                  wasJmsPort="7277"
+                  wasJmsSSLPort="9101"/>
+
+  <jmsQueue id="InventoryQueue" jndiName="jms/InventoryQueue">
+    <properties.wmqjmsra baseQueueName="${ibmmq-inventory-queue-name}"/>
+  </jmsQueue>
+
+  <jmsActivationSpec id="guide-jms-intro-inventory/InventoryQueueListener">
+    <properties.wmqjmsra
+      hostName="${ibmmq-hostname}"
+      port="${ibmmq-port}"
+      channel="${ibmmq-channel}"
+      queueManager="${ibmmq-queue-manager}"
+      userName="${ibmmq-username}"
+      password="${ibmmq-password}"
+      transportType="CLIENT"/>
+  </jmsActivationSpec>
+
+  <resourceAdapter id="wmqjmsra"
+    location="https://repo.maven.apache.org/maven2/com/ibm/mq/wmq.jakarta.jmsra/9.4.0.0/wmq.jakarta.jmsra-9.4.0.0.rar"/>
+    
+  <logging consoleLogLevel="INFO"/>
+
+  <webApplication location="guide-jms-intro-inventory.war" contextRoot="/"/>
+
+</server>
+```
+
+
+
+
+Refine the ***jmsQueue*** and ***jmsActivationSpec*** configurations with the variables for IBM MQ settings. Add the ***resourceAdapter*** element to define the RAR file that provides the IBM MQ classes for Java and JMS. Note that the ***messagingEngine*** and ***jmsConnectionFactory*** configurations are removed from the configuration because they are no longer required.
+
+Replace the ***pom.xml*** file of the system service.
+
+> To open the pom.xml file in your IDE, select
+> **File** > **Open** > guide-jms-intro/start/system/pom.xml, or click the following button
+
+::openFile{path="/home/project/guide-jms-intro/start/system/pom.xml"}
+
+
+
+```xml
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>guide-jms-intro-system</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- Liberty configuration -->
+        <liberty.var.http.port>9082</liberty.var.http.port>
+        <liberty.var.https.port>9445</liberty.var.https.port>
+        <liberty.var.inventory.jms.host>localhost</liberty.var.inventory.jms.host>
+        <liberty.var.inventory.jms.port>7277</liberty.var.inventory.jms.port>
+        <!-- IBM MQ -->
+        <liberty.var.ibmmq-hostname>localhost</liberty.var.ibmmq-hostname>
+        <liberty.var.ibmmq-port>1414</liberty.var.ibmmq-port>
+        <liberty.var.ibmmq-channel>DEV.APP.SVRCONN</liberty.var.ibmmq-channel>
+        <liberty.var.ibmmq-queue-manager>QM1</liberty.var.ibmmq-queue-manager>
+        <liberty.var.ibmmq-username>app</liberty.var.ibmmq-username>
+        <liberty.var.ibmmq-password>passw0rd</liberty.var.ibmmq-password>
+        <liberty.var.ibmmq-inventory-queue-name>DEV.QUEUE.1</liberty.var.ibmmq-inventory-queue-name>
+    </properties>
+
+    <dependencies>
+        <!-- Provided dependencies -->
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>10.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>7.0</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <!-- Required dependencies -->
+        <dependency>
+            <groupId>io.openliberty.guides</groupId>
+            <artifactId>guide-jms-intro-models</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.16</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.16</version>
+        </dependency>
+        <!-- For tests -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.11.4</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.4.0</version>
+                <configuration>
+                    <packagingExcludes>pom.xml</packagingExcludes>
+                </configuration>
+            </plugin>
+
+            <!-- Liberty plugin -->
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.11.2</version>
+            </plugin>
+
+            <!-- Plugin to run unit tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.2</version>
+            </plugin>
+
+            <!-- Plugin to run integration tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.5.2</version>
+                <executions>
+                    <execution>
+                        <id>integration-test</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                        </goals>
+                        <configuration>
+                            <trimStackTrace>false</trimStackTrace>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>verify</id>
+                        <goals>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+
+
+
+Add the ***liberty.var.ibmmq-**** properties for the IBM MQ container as you did for the ***inventory*** microservice previously.
+
+
+Replace the ***server.xml*** file of the system service.
+
+> To open the server.xml file in your IDE, select
+> **File** > **Open** > guide-jms-intro/start/system/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-jms-intro/start/system/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="System Service">
+
+  <featureManager>
+    <platform>jakartaee-10.0</platform>
+    <platform>microprofile-7.0</platform>
+    <feature>cdi</feature>
+    <feature>jsonb</feature>
+    <feature>mpHealth</feature>
+    <feature>mpConfig</feature>
+    <feature>messaging</feature>
+    <feature>messagingClient</feature>
+    <feature>enterpriseBeansLite</feature>
+    <feature>mdb</feature>
+  </featureManager>
+
+  <variable name="http.port" defaultValue="9082"/>
+  <variable name="https.port" defaultValue="9445"/>
+  <variable name="inventory.jms.host" defaultValue="localhost"/>
+  <variable name="inventory.jms.port" defaultValue="7277"/>
+
+  <httpEndpoint id="defaultHttpEndpoint" host="*"
+                httpPort="${http.port}" httpsPort="${https.port}" />
+
+  <connectionManager id="InventoryCM" maxPoolSize="400" minPoolSize="1"/>
+
+  <jmsConnectionFactory
+    connectionManagerRef="InventoryCM"
+    jndiName="InventoryConnectionFactory">
+    <properties.wmqjmsra
+      hostName="${ibmmq-hostname}"
+      port="${ibmmq-port}"
+      channel="${ibmmq-channel}"
+      queueManager="${ibmmq-queue-manager}"
+      userName="${ibmmq-username}"
+      password="${ibmmq-password}"
+      transportType="CLIENT" />
+  </jmsConnectionFactory>
+
+  <jmsQueue id="InventoryQueue" jndiName="jms/InventoryQueue">
+    <properties.wmqjmsra baseQueueName="${ibmmq-inventory-queue-name}"/>
+  </jmsQueue>
+
+  <resourceAdapter id="wmqjmsra"
+    location="https://repo.maven.apache.org/maven2/com/ibm/mq/wmq.jakarta.jmsra/9.4.0.0/wmq.jakarta.jmsra-9.4.0.0.rar"/>
+
+  <logging consoleLogLevel="INFO"/>
+
+  <webApplication location="guide-jms-intro-system.war" contextRoot="/"/>
+
+</server>
+```
+
+
+
+
+Replace the ***properties.wasJms*** configuration by the ***properties.wmqjmsra*** configuration. All property values are defined in the ***pom.xml*** file that you replaced. Also, modify the ***jmsQueue*** property to set the ***baseQueueName*** value with the ***${ibmmq-inventory-queue-name}*** variable. Add the ***resourceAdapter*** element like you did for the ***inventory*** microservice.
+
+
+Start the ***inventory*** microservice by running the following command in dev mode:
+
+
+```bash
+cd /home/project/guide-jms-intro/start
+mvn -pl inventory liberty:dev
+```
+
+Next, open another command-line session, navigate to the ***start*** directory, and start the ***system*** microservice by using the following command:
+
+
+```bash
+cd /home/project/guide-jms-intro/start
+mvn -pl system liberty:dev
+```
+
+When you see the following message, your Liberty instances are ready in dev mode:
+
+```
+The defaultServer server is ready to run a smarter planet.
+```
+
+
+You can access the ***inventory*** microservice by the ***http\://localhost:9081/inventory/systems*** URL.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl -s http://localhost:9081/inventory/systems | jq
+```
+
+
+
+In the command shell where ***inventory*** dev mode is running, press ***enter/return*** to run the tests. If the tests pass, you'll see output that is similar to the following example:
+
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.325 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+
+Results :
+
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+```
+
+After you are finished checking out the application, stop the Liberty instances by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***inventory*** microservices.
+
+Run the following commands to stop the running IBM MQ container and clean up the ***qm1data*** volume:
+
+```bash
+docker stop QM1
+docker rm QM1
+docker volume remove qm1data
+```
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just developed a RESTful service in Open Liberty by using Jakarta Restful Web Services and JSON-B.
+You just developed a Java cloud-native application that uses Jakarta Messaging to produce and consume messages in Open Liberty.
 
 
 
@@ -376,33 +1206,32 @@ You just developed a RESTful service in Open Liberty by using Jakarta Restful We
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-rest-intro*** project by running the following commands:
+Delete the ***guide-jms-intro*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-rest-intro
+rm -fr guide-jms-intro
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20RESTful%20web%20service&guide-id=cloud-hosted-guide-rest-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Producing%20and%20consuming%20messages%20in%20Java%20microservices&guide-id=cloud-hosted-guide-jms-intro)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-jms-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-jms-intro/pulls)
 
 
 
 ### Where to next?
 
-* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
-* [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
+* [Bidirectional communication between services using Jakarta WebSocket](https://openliberty.io/guides/jakarta-websocket.html)
 
 
 ### Log out of the session
