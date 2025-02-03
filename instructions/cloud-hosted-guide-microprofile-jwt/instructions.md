@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-505-instruction
-version-history-start-date: 2020-06-11 12:10:36 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Securing microservices with JSON Web Tokens guide!"}
@@ -407,7 +404,7 @@ The following table breaks down some of the properties:
 | ***mp.jwt.decrypt.key.location*** | With this property, you can specify the location of the Key Management key. It is a Private key that is used to decrypt the Content Encryption key, which is then used to decrypt the JWE ciphertext. This private key must correspond to the public key that is used to encrypt the Content Encryption key.
 | ***mp.jwt.verify.publickey.algorithm*** | With this property, you can control the Public Key Signature Algorithm that is supported by the MicroProfile JWT endpoint. The default value is RS256. Previously, this configuration was included in the ***server.xml*** file.
 
-For more information about these and other JWT properties, see the [MicroProfile Config properties for MicroProfile JSON Web Token documentation](https://openliberty.io/docs/latest/microprofile-config-properties.html#jwt).
+For more information about these and other JWT properties, see the [MicroProfile Config properties for MicroProfile JSON Web Token documentation](https://openliberty.io/docs/latest/reference/microprofile-config-properties.html#jwt).
 
 Next, add the MicroProfile JSON Web Token feature to the Liberty ***server.xml*** configuration file for the ***system*** service.
 
@@ -424,15 +421,17 @@ Replace the system ***server.xml*** configuration file.
 <server description="Sample Liberty server">
 
   <featureManager>
-    <feature>restfulWS-3.1</feature>
-    <feature>jsonb-3.0</feature>
-    <feature>jsonp-2.1</feature>
-    <feature>cdi-4.0</feature>
-    <feature>mpConfig-3.1</feature>
-    <feature>mpRestClient-3.0</feature>
-    <feature>appSecurity-5.0</feature>
-    <feature>servlet-6.0</feature>
-    <feature>mpJwt-2.1</feature>
+    <platform>jakartaee-10.0</platform>
+    <platform>microprofile-7.0</platform>
+    <feature>restfulWS</feature>
+    <feature>jsonb</feature>
+    <feature>jsonp</feature>
+    <feature>cdi</feature>
+    <feature>mpConfig</feature>
+    <feature>mpRestClient</feature>
+    <feature>appSecurity</feature>
+    <feature>servlet</feature>
+    <feature>mpJwt</feature>
   </featureManager>
 
   <variable name="http.port" defaultValue="8080"/>
