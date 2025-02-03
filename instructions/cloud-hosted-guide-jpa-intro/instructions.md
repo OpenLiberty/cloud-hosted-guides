@@ -338,7 +338,7 @@ The persistence unit is defined by the ***persistence-unit*** XML element. The *
 A JTA transaction type requires a JTA data source to be provided. The ***jta-data-source*** element specifies the Java Naming and Directory Interface (JNDI) name of the data source that is used. The ***data source*** has already been configured for you in the ***backendServices/src/main/liberty/config/server.xml*** file. This data source configuration is where the Java Database Connectivity (JDBC) connection is defined along with some database vendor-specific properties.
 
 
-The ***jakarta.persistence.schema-generation*** properties are used here so that you aren't required to manually create a database table to run this sample application. To learn more about the JPA schema generation and available properties, see https://jakarta.ee/specifications/persistence/3.0/jakarta-persistence-spec-3.0.html#a12917[Schema Generation, Section 9.4 of the JPA Specification]
+The ***jakarta.persistence.schema-generation*** properties are used here so that you aren't required to manually create a database table to run this sample application. To learn more about the JPA schema generation and available properties, see [Schema Generation, Section 9.4 of the JPA Specification](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html#a12917)
 
 
 ::page{title="Performing CRUD operations using JPA"}
@@ -473,7 +473,7 @@ Replace the ***backendServices/pom.xml*** configuration file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.1</version>
+            <version>7.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
