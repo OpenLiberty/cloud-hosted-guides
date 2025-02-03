@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-482-instruction
-version-history-start-date: 2020-05-26 16:16:02 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Building fault-tolerant microservices with the @Fallback annotation guide!"}
@@ -301,11 +298,11 @@ curl -k -u admin https://localhost:9443/metrics?scope=base | grep _ft_
 See the following sample outputs for the **@Fallback** annotated method and the fallback method before a fallback occurs:
 
 ```
-# TYPE base_ft_invocations_total counter
-base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
-base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 0
-base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
-base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
+# TYPE ft_invocations_total counter
+ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
+ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 0
+ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
+ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
 ```
 
 You can test the fault tolerance mechanism of your microservices by dynamically changing the ***io_openliberty_guides_system_inMaintenance*** property value to ***true*** in the ***resources/CustomConfigSource.json*** file, which puts the ***system*** service in maintenance.
@@ -350,11 +347,11 @@ curl -k -u admin https://localhost:9443/metrics?scope=base | grep _ft_
 See the following sample outputs for the ***@Fallback*** annotated method and the fallback method after a fallback occurs:
 
 ```
-# TYPE base_ft_invocations_total counter
-base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
-base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
-base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
-base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
+# TYPE ft_invocations_total counter
+ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
+ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
+ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
+ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
 ```
 
 
@@ -410,8 +407,8 @@ import it.io.openliberty.guides.utils.TestUtils;
 
 public class FaultToleranceIT {
 
-    private Response response;
     private Client client;
+    private Response response;
 
     @BeforeEach
     public void setup() {
@@ -420,8 +417,8 @@ public class FaultToleranceIT {
 
     @AfterEach
     public void teardown() {
-        client.close();
         response.close();
+        client.close();
     }
 
     @Test
@@ -441,8 +438,8 @@ public class FaultToleranceIT {
         int propertiesSizeFallBack = obj.size();
         assertTrue(propertiesSize > propertiesSizeFallBack,
                    "The total number of properties from the @Fallback method "
-                 + "is not smaller than the number from the system service"
-                 +  "as expected.");
+                   + "is not smaller than the number from the system service"
+                   +  "as expected.");
         TestUtils.changeSystemProperty(TestUtils.SYSTEM_MAINTENANCE_TRUE,
                                        TestUtils.SYSTEM_MAINTENANCE_FALSE);
         Thread.sleep(3000);
@@ -451,7 +448,7 @@ public class FaultToleranceIT {
     @Test
     public void testFallbackSkipForGet() {
         response = TestUtils.getResponse(client,
-                TestUtils.INVENTORY_UNKNOWN_HOST_URL);
+                   TestUtils.INVENTORY_UNKNOWN_HOST_URL);
         assertResponse(TestUtils.baseUrl, response, 404);
         assertTrue(response.readEntity(String.class).contains("error"),
                    "Incorrect response body from "
@@ -460,7 +457,7 @@ public class FaultToleranceIT {
 
     private void assertResponse(String url, Response response, int statusCode) {
         assertEquals(statusCode, response.getStatus(),
-                "Incorrect response code from " + url);
+                     "Incorrect response code from " + url);
     }
 
     private void assertResponse(String url, Response response) {
