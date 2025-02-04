@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-501-instruction
-version-history-start-date: 2020-07-29 08:54:14 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Integrating RESTful services with a reactive system guide!"}
