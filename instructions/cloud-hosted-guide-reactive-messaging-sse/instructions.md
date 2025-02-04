@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-472-instruction
-version-history-start-date: 2021-10-01 14:24:37 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Streaming updates to a client using Server-Sent Events guide!"}
@@ -163,7 +160,7 @@ Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Comm
 
 The ***subscribeToSystem()*** method allows clients to subscribe to events via an HTTP ***GET*** request to the ***/bff/sse/*** endpoint. The ***@Produces(MediaType.SERVER_SENT_EVENTS)*** annotation sets the ***Content-Type*** in the response header to ***text/event-stream***. This content type indicates that client requests that are made to this endpoint are to receive Server-Sent Events. Additionally, the method parameters take in an instance of the ***SseEventSink*** class and the ***Sse*** class, both of which are injected using the ***@Context*** annotation. First, the method checks if the ***sse*** and ***broadcaster*** instance variables are assigned. If these variables aren't assigned, the ***sse*** variable is obtained from the ***@Context*** injection and the ***broadcaster*** variable is obtained by using the ***Sse.newBroadcaster()*** method. Then, the ***register()*** method is called to register the ***SseEventSink*** instance to the ***SseBroadcaster*** instance to subscribe to events.
 
-For more information about these interfaces, see the Javadocs for [OutboundSseEvent](https://openliberty.io/docs/ref/javaee/8/#class=javax/ws/rs/sse/OutboundSseEvent.html&package=allclasses-frame.html) and [OutboundSseEvent.Builder](https://openliberty.io/docs/ref/javaee/8/#class=javax/ws/rs/sse/OutboundSseEvent.Builder.html&package=allclasses-frame.html).
+For more information about these interfaces, see the Javadocs for [OutboundSseEvent](https://openliberty.io/docs/latest/reference/javadoc/liberty-jakartaee10-javadoc.html?path=liberty-jakartaee10-javadoc/jakarta/ws/rs/sse/OutboundSseEvent.html) and [OutboundSseEvent.Builder](https://openliberty.io/docs/latest/reference/javadoc/liberty-jakartaee10-javadoc.html?path=liberty-jakartaee10-javadoc/jakarta/ws/rs/sse/OutboundSseEvent.Builder.html).
 
 ### Reading from the reactive messaging channel
 
@@ -313,6 +310,7 @@ Next, use the following ***startContainers.sh*** script to start the application
 ```bash
 ./scripts/startContainers.sh
 ```
+
 This script creates a network for the containers to communicate with each other. It also creates containers for Kafka, the ***frontend*** service, the ***bff*** service , and three instances of the ***system*** service.
 
 
