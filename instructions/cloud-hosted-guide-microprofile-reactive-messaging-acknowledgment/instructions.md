@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-499-instruction
-version-history-start-date: 2020-09-16 15:14:06 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Acknowledging messages using MicroProfile Reactive Messaging guide!"}
