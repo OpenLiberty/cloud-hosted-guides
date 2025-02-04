@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-503-instruction
-version-history-start-date: 2020-06-11 12:14:46 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Testing reactive Java microservices guide!"}
@@ -134,7 +131,6 @@ Start the microservices in dev mode by running the following command to launch a
 ./scripts/startKafka.sh
 ```
 
-
 Navigate to the ***start/system*** directory.
 
 ```bash
@@ -158,7 +154,6 @@ mvn liberty:devc
 ```
 
 For more information about disabling Ryuk, see the [Testcontainers custom configuration](https://java.testcontainers.org/features/configuration/#disabling-ryuk) document.
-
 
 After you see the following message, your Liberty instance is ready in dev mode:
 
