@@ -235,7 +235,7 @@ Replace the Maven project file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.1</version>
+            <version>7.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -251,17 +251,17 @@ Replace the Maven project file.
         <dependency>
             <groupId>io.smallrye</groupId>
             <artifactId>smallrye-graphql-client</artifactId>
-            <version>2.10.0</version>
+            <version>2.11.0</version>
         </dependency>
         <dependency>
             <groupId>io.smallrye</groupId>
             <artifactId>smallrye-graphql-client-implementation-vertx</artifactId>
-            <version>2.10.0</version>
+            <version>2.11.0</version>
         </dependency>
         <dependency>
             <groupId>io.smallrye.stork</groupId>
             <artifactId>stork-core</artifactId>
-            <version>2.7.0</version>
+            <version>2.7.1</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -273,19 +273,19 @@ Replace the Maven project file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.11.1</version>
+            <version>5.11.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>6.2.10.Final</version>
+            <version>6.2.11.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-json-binding-provider</artifactId>
-            <version>6.2.10.Final</version>
+            <version>6.2.11.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -297,13 +297,13 @@ Replace the Maven project file.
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.20.2</version>
+            <version>1.20.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>1.20.2</version>
+            <version>1.20.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -321,7 +321,7 @@ Replace the Maven project file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.10.3</version>
+                <version>3.11.2</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -331,12 +331,12 @@ Replace the Maven project file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.0</version>
+                <version>3.5.2</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.0</version>
+                <version>3.5.2</version>
                 <configuration>
                     <systemPropertyVariables>
                         <http.port>${liberty.var.http.port}</http.port>
@@ -375,11 +375,13 @@ Replace the Liberty server.xml configuration file.
 <server description="Query Service">
 
   <featureManager>
-    <feature>restfulWS-3.1</feature>
-    <feature>cdi-4.0</feature>
-    <feature>jsonb-3.0</feature>
-    <feature>mpConfig-3.1</feature>
-    <feature>mpOpenAPI-3.1</feature>
+    <platform>jakartaee-10.0</platform>
+    <platform>microprofile-7.0</platform>
+    <feature>restfulWS</feature>
+    <feature>cdi</feature>
+    <feature>jsonb</feature>
+    <feature>mpConfig</feature>
+    <feature>mpOpenAPI</feature>
   </featureManager>
 
   <variable name="http.port" defaultValue="9084"/>
@@ -528,7 +530,6 @@ When you're done checking out the application, run the following script to stop 
 ```bash
 ./scripts/stopContainers.sh
 ```
-
 
 ::page{title="Testing the application"}
 
