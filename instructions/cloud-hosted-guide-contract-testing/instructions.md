@@ -66,8 +66,9 @@ docker-compose -f "pact-broker/docker-compose.yml" up -d --build
 
 When the Pact Broker is running, you'll see the following output:
 ```
-Creating pact-broker_postgres_1 ... done
-Creating pact-broker_pact-broker_1 ... done
+...
+Container pact-broker-postgres-1      Started
+Container pact-broker-pact-broker-1   Started
 ```
 
 
@@ -295,7 +296,7 @@ Replace the inventory Maven project file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.1</version>
+            <version>7.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -628,7 +629,7 @@ Replace the system Maven project file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.1</version>
+            <version>7.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -834,7 +835,7 @@ cd /home/project/guide-contract-testing
 
 ```bash
 docker-compose -f "pact-broker/docker-compose.yml" down
-docker rmi postgres:16.2
+docker rmi postgres:17.2
 docker rmi pactfoundation/pact-broker:latest
 docker volume rm pact-broker_postgres-volume
 ```
