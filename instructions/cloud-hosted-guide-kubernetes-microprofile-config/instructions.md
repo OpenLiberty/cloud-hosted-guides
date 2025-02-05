@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-485-instruction
-version-history-start-date: 2021-08-23 16:28:42 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Configuring microservices running in Kubernetes guide!"}
@@ -153,13 +150,15 @@ Replace the ***server.xml*** file.
 <server description="Sample Liberty server">
 
   <featureManager>
-    <feature>restfulWS-3.1</feature>
-    <feature>jsonb-3.0</feature>
-    <feature>cdi-4.0</feature>
-    <feature>jsonp-2.1</feature>
-    <feature>mpConfig-3.1</feature>
-    <feature>mpHealth-4.0</feature>
-    <feature>appSecurity-5.0</feature>
+    <platform>jakartaee-10.0</platform>
+    <platform>microprofile-7.0</platform>
+    <feature>restfulWS</feature>
+    <feature>jsonb</feature>
+    <feature>cdi</feature>
+    <feature>jsonp</feature>
+    <feature>mpConfig</feature>
+    <feature>mpHealth</feature>
+    <feature>appSecurity</feature>
   </featureManager>
 
   <variable name="http.port" defaultValue="9090"/>
