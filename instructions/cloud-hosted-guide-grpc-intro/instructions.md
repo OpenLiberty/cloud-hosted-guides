@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: cloud-hosted-guide-grpc-intro
-branch: lab-1145-instruction
-version-history-start-date: 2022-08-11T09:54:57Z
 tool-type: theia
 ---
 ::page{title="Welcome to the Streaming messages between client and server services using gRPC guide!"}
@@ -306,7 +303,8 @@ Replace the system's ***server.xml*** configuration file.
 <server description="system service">
 
     <featureManager>
-        <feature>restfulWS-3.1</feature>
+        <platform>jakartaee-10.0</platform>
+        <feature>restfulWS</feature>
         <feature>grpc-1.0</feature>
     </featureManager>
 
@@ -426,11 +424,13 @@ Replace the query's ***server.xml*** configuration file.
 <server description="query service">
 
     <featureManager>
-        <feature>restfulWS-3.1</feature>
-        <feature>jsonp-2.1</feature>
-        <feature>jsonb-3.0</feature>
-        <feature>cdi-4.0</feature>
-        <feature>mpConfig-3.1</feature>
+        <platform>jakartaee-10.0</platform>
+        <platform>microprofile-7.0</platform>
+        <feature>restfulWS</feature>
+        <feature>jsonp</feature>
+        <feature>jsonb</feature>
+        <feature>cdi</feature>
+        <feature>mpConfig</feature>
         <feature>grpcClient-1.0</feature>
     </featureManager>
 
