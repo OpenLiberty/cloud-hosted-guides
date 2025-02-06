@@ -145,8 +145,8 @@ The ***maven-resources-plugin*** copies the ***static*** content from the ***bui
 
 ::page{title="Creating the default page"}
 
-Create the entry point of your React application. The latest version of ***Next.js*** recommends you use the [App Router](https://nextjs.org/docs/app/building-your-application/routing/defining-routes), which centralizes routing logic under the ***app*** directory. 
- 
+Create the entry point of your React application. The latest version of ***Next.js*** recommends you use the [App Router](https://nextjs.org/docs/app), which centralizes routing logic under the ***app*** directory.
+
 To construct the home page of the web application, create a ***page.jsx*** file.
 
 Create the ***page.jsx*** file.
@@ -216,7 +216,7 @@ export default function RootLayout({ children }) {
 
 
 
-For more detailed information, see the ***Next.js*** documentation on [Pages](https://nextjs.org/docs/app/building-your-application/routing/pages) and [Layouts](https://nextjs.org/docs/app/building-your-application/routing/layouts-and-templates).
+For more detailed information, see the ***Next.js*** documentation on the [Layouts and Pages](https://nextjs.org/docs/app/getting-started/layouts-and-pages).
 
 
 ::page{title="Creating the React component"}
@@ -691,7 +691,7 @@ Update the ***pom.xml*** file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.1</version>
+            <version>7.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
