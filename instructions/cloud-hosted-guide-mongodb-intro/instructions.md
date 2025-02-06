@@ -70,9 +70,11 @@ You can find more details and configuration options on the [MongoDB website](htt
 
 Run the following commands to use the Dockerfile to build the image, run the image in a Docker container, and map port ***27017*** from the container to your host machine:
 
-
 ```bash
 sed -i 's=latest=7.0.15-rc1=g' assets/Dockerfile
+```
+
+```bash
 docker build -t mongo-sample -f assets/Dockerfile .
 docker run --name mongo-guide -p 27017:27017 -d mongo-sample
 ```
