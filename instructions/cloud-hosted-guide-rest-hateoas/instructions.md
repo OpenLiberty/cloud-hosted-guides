@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-433-instruction
-version-history-start-date: 2021-12-03 21:43:01 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Creating a hypermedia-driven RESTful web service guide!"}
@@ -368,9 +365,11 @@ public class InventoryUtil {
     public static JsonObject getProperties(String hostname) {
         Client client = ClientBuilder.newClient();
         URI propURI = InventoryUtil.buildUri(hostname);
-        return client.target(propURI)
-                     .request(MediaType.APPLICATION_JSON)
-                     .get(JsonObject.class);
+        JsonObject properties = client.target(propURI)
+                                      .request(MediaType.APPLICATION_JSON)
+                                      .get(JsonObject.class);
+        client.close();
+        return properties;
     }
 
     public static JsonArray buildLinksForHost(String hostname, String invUri) {
@@ -396,7 +395,7 @@ public class InventoryUtil {
             HttpURLConnection http = (HttpURLConnection) target.openConnection();
             http.setConnectTimeout(50);
             int response = http.getResponseCode();
-            return (response != 200) ? false : true;
+            return response == 200;
         } catch (Exception e) {
             return false;
         }
