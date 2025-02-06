@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: cloud-hosted-guide-security-intro
-branch: lab-653-instruction
-version-history-start-date: 2022-05-27T14:10:25Z
 tool-type: theiadocker
 ---
 ::page{title="Welcome to the Securing a web application guide!"}
@@ -255,9 +252,9 @@ touch /home/project/guide-security-intro/start/src/main/liberty/config/userRegis
 
 
 
-The registry has four users, ***bob***, ***alice***, ***carl***, and ***dave***. It also has four groups: ***Manager***, ***TeamLead***, ***Employee***, and ***PartTime***. Each user belongs to one or more groups.
+The registry has four users, ***bob***, ***alice***, ***carl***, and ***dave***. It also has four groups: ***Manager***, ***TeamLead***, ***Employee***, and ***PartTime***. Each user belongs to one or more groups. To learn more about configuration for the ***basicRegistry*** element, see the [Basic User Registry](https://openliberty.io/docs/latest/reference/config/basicRegistry.html) documentation.
 
-It is not recommended to store passwords in plain text. The passwords in the ***userRegistry.xml*** file are encoded by using the Liberty ***securityUtility*** command with XOR encoding.
+It is not recommended to store passwords in plain text. The passwords in the ***userRegistry.xml*** file are encoded by using the Liberty ***securityUtility*** command with XOR encoding. To learn more about the ***securityUtility*** commands, see the [securityUtility commands](https://openliberty.io/docs/latest/reference/command/securityUtility-commands.html) documentation.
 
 
 See the Liberty ***server.xml*** configuration file.
@@ -266,7 +263,7 @@ See the Liberty ***server.xml*** configuration file.
 
 Use the ***include*** element to add the basic user registry configuration to your Liberty configuration. Open Liberty includes configuration information from the specified XML file in its configuration.
 
-The ***server.xml*** configuration file contains the security configuration of the Liberty under the ***application-bnd*** element. Use the ***security-role*** and ***group*** elements to map the groups in the ***userRegistry.xml*** file to the appropriate user roles supported by the application for proper user authorization. The ***Manager*** and ***TeamLead*** groups are mapped to the ***admin*** role while the ***Employee*** group is mapped to the ***user*** role.
+The ***server.xml*** configuration file contains the security configuration of the Liberty under the ***application-bnd*** element. Use the ***security-role*** and ***group*** elements to map the groups in the ***userRegistry.xml*** file to the appropriate user roles supported by the application for proper user authorization. The ***Manager*** and ***TeamLead*** groups are mapped to the ***admin*** role while the ***Employee*** group is mapped to the ***user*** role. To learn more about configuration for the ***security-role*** element, see the [Application](https://openliberty.io/docs/latest/reference/config/application.html#application.html#application-bnd/security-role&expand=true) documentation.
 
 
 ::page{title="Running the application"}
