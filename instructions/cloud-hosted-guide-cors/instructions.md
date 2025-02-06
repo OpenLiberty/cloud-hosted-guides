@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-448-instruction
-version-history-start-date: 2021-12-02 17:13:42 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Enabling Cross-Origin Resource Sharing (CORS) guide!"}
@@ -119,24 +116,26 @@ Replace the Liberty ***server.xml*** configuration file.
 ```xml
 <server description="Sample Liberty server">
 
-<featureManager>
-    <feature>restfulWS-3.1</feature>
-    <feature>jsonb-3.0</feature>
-</featureManager>
+    <featureManager>
+        <platform>jakartaee-10.0</platform>
+        <feature>restfulWS</feature>
+        <feature>jsonb</feature>
+    </featureManager>
 
-<variable name="http.port" defaultValue="9080"/>
-<variable name="https.port" defaultValue="9443"/>
+    <variable name="http.port" defaultValue="9080"/>
+    <variable name="https.port" defaultValue="9443"/>
 
-<httpEndpoint host="*" httpPort="${http.port}" httpsPort="${https.port}"
-    id="defaultHttpEndpoint"/>
+    <httpEndpoint id="defaultHttpEndpoint"
+        host="*" httpPort="${http.port}" httpsPort="${https.port}"/>
 
-<webApplication location="guide-cors.war" contextRoot="/"/>
+    <webApplication location="guide-cors.war" contextRoot="/"/>
 
-<cors domain="/configurations/simple"
-    allowedOrigins="http://openliberty.io"
-    allowedMethods="GET"
-    allowCredentials="true"
-    exposeHeaders="MyHeader"/>
+    <cors domain="/configurations/simple"
+        allowedOrigins="http://openliberty.io"
+        allowedMethods="GET"
+        allowCredentials="true"
+        exposeHeaders="MyHeader"/>
+
 
 </server>
 ```
@@ -280,31 +279,33 @@ Replace the Liberty ***server.xml*** configuration file.
 ```xml
 <server description="Sample Liberty server">
 
-<featureManager>
-    <feature>restfulWS-3.1</feature>
-    <feature>jsonb-3.0</feature>
-</featureManager>
+    <featureManager>
+        <platform>jakartaee-10.0</platform>
+        <feature>restfulWS</feature>
+        <feature>jsonb</feature>
+    </featureManager>
 
-<variable name="http.port" defaultValue="9080"/>
-<variable name="https.port" defaultValue="9443"/>
+    <variable name="http.port" defaultValue="9080"/>
+    <variable name="https.port" defaultValue="9443"/>
 
-<httpEndpoint host="*" httpPort="${http.port}" httpsPort="${https.port}"
-    id="defaultHttpEndpoint"/>
+    <httpEndpoint id="defaultHttpEndpoint"
+        host="*" httpPort="${http.port}" httpsPort="${https.port}"/>
 
-<webApplication location="guide-cors.war" contextRoot="/"/>
+    <webApplication location="guide-cors.war" contextRoot="/"/>
 
-<cors domain="/configurations/simple"
-    allowedOrigins="http://openliberty.io"
-    allowedMethods="GET"
-    allowCredentials="true"
-    exposeHeaders="MyHeader"/>
+    <cors domain="/configurations/simple"
+        allowedOrigins="http://openliberty.io"
+        allowedMethods="GET"
+        allowCredentials="true"
+        exposeHeaders="MyHeader"/>
 
-<cors domain="/configurations/preflight"
-    allowedOrigins="*"
-    allowedMethods="OPTIONS, DELETE"
-    allowCredentials="true"
-    allowedHeaders="MyOwnHeader1, MyOwnHeader2"
-    maxAge="10"/>
+    <cors domain="/configurations/preflight"
+        allowedOrigins="*"
+        allowedMethods="OPTIONS, DELETE"
+        allowCredentials="true"
+        allowedHeaders="MyOwnHeader1, MyOwnHeader2"
+        maxAge="10"/>
+
 </server>
 ```
 
