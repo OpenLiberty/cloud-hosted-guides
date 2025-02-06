@@ -347,7 +347,8 @@ touch /home/project/guide-spring-boot/start/src/main/liberty/config/server.xml
 <server description="new server">
 
     <featureManager>
-        <feature>servlet-6.0</feature>
+        <platform>jakartaee-10.0</platform>
+        <feature>servlet</feature>
         <feature>springBoot-3.0</feature>
     </featureManager>
 
