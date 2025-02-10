@@ -2155,7 +2155,7 @@ Replace the ***pom.xml*** configuration file.
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.4</version>
+            <version>42.7.5</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -3366,7 +3366,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.4</version>
+            <version>42.7.5</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -3398,7 +3398,7 @@ Replace the ***pom.xml*** file.
                             <dependency>
                                 <groupId>org.postgresql</groupId>
                                 <artifactId>postgresql</artifactId>
-                                <version>42.7.4</version>
+                                <version>42.7.5</version>
                             </dependency>
                         </dependencyGroup>
                     </copyDependencies>
@@ -5027,7 +5027,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.4</version>
+            <version>42.7.5</version>
             <scope>provided</scope>
         </dependency>
         
@@ -5094,7 +5094,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-auth-jwt</artifactId>
-            <version>4.5.11</version>
+            <version>4.5.12</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -5126,7 +5126,7 @@ Replace the ***pom.xml*** file.
                             <dependency>
                                 <groupId>org.postgresql</groupId>
                                 <artifactId>postgresql</artifactId>
-                                <version>42.7.4</version>
+                                <version>42.7.5</version>
                             </dependency>
                         </dependencyGroup>
                     </copyDependencies>
