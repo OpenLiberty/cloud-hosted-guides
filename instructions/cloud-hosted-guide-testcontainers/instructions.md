@@ -678,14 +678,14 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.1</version>
+            <version>7.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.4</version>
+            <version>42.7.5</version>
             <scope>provided</scope>
         </dependency>
         
