@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-388-instruction
-version-history-start-date: 2021-10-22 16:29:01 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Deploying a microservice to OpenShift 4 using Open Liberty Operator guide!"}
@@ -84,15 +81,6 @@ openlibertytraces         oltrace,oltraces   apps.openliberty.io/v1   true      
 Each CRD defines a kind of object that can be used, which is specified in the previous example by the ***KIND*** value. The ***SHORTNAME*** value specifies alternative names that you can substitute in the configuration to refer to an object kind. For example, you can refer to the ***OpenLibertyApplication*** object kind by one of its specified shortnames, such as ***olapps***. 
 
 The ***openlibertyapplications*** CRD defines a set of configurations for deploying an Open Liberty-based application, including the application image, number of instances, and storage settings. The Open Liberty Operator watches for changes to instances of the ***OpenLibertyApplication*** object kind and creates Kubernetes resources that are based on the configuration that is defined in the CRD.
-
-
-::page{title="Deploying the system microservice to OpenShift"}
-
-To deploy the ***system*** microservice, you must first package the microservice, then create and run an OpenShift build to produce runnable container images of the packaged microservice.
-
-### Packaging the microservice
-
-Ensure that you are in the ***start*** directory and run the following command to package the ***system*** microservice:
 
 
 ```bash
