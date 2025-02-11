@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-486-instruction
-version-history-start-date: 2021-08-19 19:37:00 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Checking the health of microservices on Kubernetes guide!"}
