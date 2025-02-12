@@ -388,7 +388,9 @@ The readiness probes are configured to poll the ***/health/ready*** endpoint. Th
 
 To build these microservices, navigate to the ***start*** directory and run the following command.
 
+
 ```bash
+cd /home/project/guide-kubernetes-microprofile-health/start
 mvn package
 ```
 
