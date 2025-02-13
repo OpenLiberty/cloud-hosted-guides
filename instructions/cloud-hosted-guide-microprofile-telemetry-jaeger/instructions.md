@@ -195,11 +195,13 @@ Replace the ***server.xml*** file of the system service:
 <server description="system service">
 
     <featureManager>
-        <feature>cdi-4.0</feature>
-        <feature>jsonb-3.0</feature>
-        <feature>jsonp-2.1</feature>
-        <feature>restfulWS-3.1</feature>
-        <feature>mpTelemetry-1.1</feature>
+        <platform>jakartaee-10.0</platform>
+        <platform>microprofile-7.0</platform>
+        <feature>cdi</feature>
+        <feature>jsonb</feature>
+        <feature>jsonp</feature>
+        <feature>restfulWS</feature>
+        <feature>mpTelemetry</feature>
     </featureManager>
 
     <httpEndpoint httpPort="${http.port}"
@@ -231,12 +233,14 @@ Replace the ***server.xml*** file of the inventory service:
 <server description="inventory service">
 
     <featureManager>
-        <feature>cdi-4.0</feature>
-        <feature>jsonb-3.0</feature>
-        <feature>jsonp-2.1</feature>
-        <feature>restfulWS-3.1</feature>
-        <feature>mpConfig-3.1</feature>
-        <feature>mpTelemetry-1.1</feature>
+        <platform>jakartaee-10.0</platform>
+        <platform>microprofile-7.0</platform>
+        <feature>cdi</feature>
+        <feature>jsonb</feature>
+        <feature>jsonp</feature>
+        <feature>restfulWS</feature>
+        <feature>mpConfig</feature>
+        <feature>mpTelemetry</feature>
     </featureManager>
 
     <httpEndpoint httpPort="${http.port}"
@@ -275,11 +279,13 @@ touch /home/project/guide-microprofile-telemetry-jaeger/start/system/src/main/re
 ```
 otel.service.name=system
 otel.sdk.disabled=false
+otel.metrics.exporter=none
+otel.logs.exporter=none
 ```
 
 
 
-The MicroProfile properties file sets the ***otel.service.name*** property with the ***system*** service name and sets the ***otel.sdk.disabled*** property to ***false*** to enable tracing.
+The MicroProfile properties file sets the ***otel.service.name*** property with the ***system*** service name, sets the ***otel.sdk.disabled*** property to ***false*** to enable tracing, sets the ***otel.metrics.exporter*** property to ***none*** to disable metrics, and sets the ***otel.logs.exporter*** property to ***none*** to disable exporting logs.
 
 
 Replace the ***microprofile-config.properties*** file of the inventory service:
@@ -295,13 +301,15 @@ Replace the ***microprofile-config.properties*** file of the inventory service:
 io.openliberty.guides.inventory.client.SystemClient/mp-rest/url=http://localhost:9080/system
 otel.service.name=inventory
 otel.sdk.disabled=false
+otel.metrics.exporter=none
+otel.logs.exporter=none
 ```
 
 
 
 Similarly, specify the ***otel*** properties for the ***inventory*** service.
 
-For more information about these and other Telemetry properties, see the [MicroProfile Config properties for MicroProfile Telemetry](https://openliberty.io/docs/latest/microprofile-config-properties.html#telemetry) documentation.
+For more information about these and other Telemetry properties, see the [MicroProfile Config properties for MicroProfile Telemetry](https://openliberty.io/docs/latest/reference/microprofile-config-properties.html#telemetry) documentation.
 
 
 To run the ***system*** and ***inventory*** services, run the following curl command:
@@ -375,7 +383,7 @@ http://maven.apache.org/xsd/maven-4.0.0.xsd">
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.1</version>
+            <version>7.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -473,12 +481,14 @@ Replace the ***server.xml*** file of the inventory service:
 <server description="inventory service">
 
     <featureManager>
-        <feature>cdi-4.0</feature>
-        <feature>jsonb-3.0</feature>
-        <feature>jsonp-2.1</feature>
-        <feature>restfulWS-3.1</feature>
-        <feature>mpConfig-3.1</feature>
-        <feature>mpTelemetry-1.1</feature>
+        <platform>jakartaee-10.0</platform>
+        <platform>microprofile-7.0</platform>
+        <feature>cdi</feature>
+        <feature>jsonb</feature>
+        <feature>jsonp</feature>
+        <feature>restfulWS</feature>
+        <feature>mpConfig</feature>
+        <feature>mpTelemetry</feature>
     </featureManager>
 
     <httpEndpoint httpPort="${http.port}"
