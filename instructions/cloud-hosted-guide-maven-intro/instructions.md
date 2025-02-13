@@ -38,8 +38,8 @@ mvn -v
 If Maven is installed properly, you see information about the Maven installation similar to the following example:
 
 ```
-Apache Maven 3.8.1 (05c21c65bdfed0f71a2f2ada8b84da59348c4c5d)
-Maven home: /Applications/Maven/apache-maven-3.8.1
+Apache Maven 3.9.6 (05c21c65bdfed0f71a2f2ada8b84da59348c4c5d)
+Maven home: /Applications/Maven/apache-maven-3.9.6
 Java version: 11.0.12, vendor: International Business Machines Corporation, runtime: /Library/Java/JavaVirtualMachines/ibm-semeru-open-11.jdk/Contents/Home
 Default locale: en_US, platform encoding: UTF-8
 OS name: "mac os x", version: "11.6", arch: "x86_64", family: "mac"
@@ -173,7 +173,7 @@ touch /home/project/guide-maven-intro/start/pom.xml
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.1</version>
+            <version>7.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
