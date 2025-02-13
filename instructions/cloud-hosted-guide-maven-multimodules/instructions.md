@@ -141,12 +141,6 @@ Replace the war/POM file.
     <dependencies>
         <!-- Provided dependencies -->
         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>4.0.1</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>jakarta.platform</groupId>
             <artifactId>jakarta.jakartaee-api</artifactId>
             <version>10.0.0</version>
@@ -155,7 +149,7 @@ Replace the war/POM file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.1</version>
+            <version>7.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -228,6 +222,7 @@ Replace the ear/POM file.
             <artifactId>guide-maven-multimodules-jar</artifactId>
             <version>1.0-SNAPSHOT</version>
             <type>jar</type>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>io.openliberty.guides</groupId>
@@ -254,11 +249,6 @@ Replace the ear/POM file.
                 <version>3.3.0</version>
                 <configuration>
                     <modules>
-                        <jarModule>
-                            <groupId>io.openliberty.guides</groupId>
-                            <artifactId>guide-maven-multimodules-jar</artifactId>
-                            <uri>/guide-maven-multimodules-jar-1.0-SNAPSHOT.jar</uri>
-                        </jarModule>
                         <webModule>
                             <groupId>io.openliberty.guides</groupId>
                             <artifactId>guide-maven-multimodules-war</artifactId>
@@ -314,7 +304,7 @@ Set the ***basic configuration*** for the project and set the ***packaging*** el
 
 The ***Java library module*** and the ***web module*** were added as dependencies. Specify a type of ***war*** for the web module. If you don’t specify this type for the web module, Maven looks for a JAR file.
 
-The definition and configuration of the ***maven-ear-plugin*** plug-in were added to create an EAR file. Define the ***jarModule*** and ***webModule*** modules to be packaged into the EAR file. To customize the context root of the application, set the ***contextRoot*** element to ***/converter*** in the ***webModule***. Otherwise, Maven automatically uses the WAR file ***artifactId*** ID as the context root for the application while generating the ***application.xml*** file.
+The definition and configuration of the ***maven-ear-plugin*** plug-in were added to create an EAR file. Define the ***webModule*** module to be packaged into the EAR file. To customize the context root of the application, set the ***contextRoot*** element to ***/converter*** in the ***webModule***. Otherwise, Maven automatically uses the WAR file ***artifactId*** ID as the context root for the application while generating the ***application.xml*** file.
 
 To deploy and run an EAR application on an Open Liberty instance, you need to provide a Liberty's ***server.xml*** configuration file.
 
@@ -337,7 +327,8 @@ touch /home/project/guide-maven-multimodules/start/ear/src/main/liberty/config/s
 <server description="Sample Liberty server">
 
     <featureManager>
-        <feature>pages-3.1</feature>
+        <platform>jakartaee-10.0</platform>
+        <feature>pages</feature>
     </featureManager>
 
     <variable name="http.port" defaultValue="9080" />
@@ -349,6 +340,7 @@ touch /home/project/guide-maven-multimodules/start/ear/src/main/liberty/config/s
     <enterpriseApplication id="guide-maven-multimodules-ear"
         location="guide-maven-multimodules-ear.ear"
         name="guide-maven-multimodules-ear" />
+
 </server>
 ```
 
@@ -694,7 +686,7 @@ cd /home/project/guide-maven-multimodules/start
 mvn install
 ```
 
-Since the modules are independent, you can re-build them individually by running ***mvn install*** from the corresponding ***start*** directory for each module.
+Because the modules are independent, you can re-build them individually by running ***mvn install*** from the corresponding ***start*** directory for each module.
 
 Or, run `mvn -pl <child project> install` from the start directory.
 
