@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-481-instruction
-version-history-start-date: 2020-05-26 12:06:13 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Consuming RESTful services with template interfaces guide!"}
@@ -112,6 +109,10 @@ mvn liberty:stop
 ::page{title="Writing the RESTful client interface"}
 
 Now, navigate to the ***start*** directory to begin.
+
+```bash
+cd /home/project/guide-microprofile-rest-client/start
+```
 
 When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
