@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-492-instruction
-version-history-start-date: 2021-03-03 17:52:52 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Documenting RESTful APIs guide!"}
@@ -187,7 +184,7 @@ public class InventoryResource {
             description = "The host for whom to retrieve "
                 + "the JVM system properties for.",
             required = true,
-            example = "foo",
+            example = "localhost",
             schema = @Schema(type = SchemaType.STRING))
         @PathParam("hostname") String hostname) {
         Properties props = manager.get(hostname);
@@ -269,7 +266,7 @@ The two endpoints at which your JAX-RS endpoint methods are served are now more 
       required: true
       schema:
         type: string
-      example: foo
+      example: localhost
     responses:
       "404":
         description: Missing description
@@ -552,7 +549,7 @@ responses:
       application/json: {}
 ```
 
-For more information about which elements you can filter, see the [MicroProfile API documentation](https://openliberty.io/docs/ref/microprofile/).
+For more information about which elements you can filter, see the [MicroProfile API documentation](https://openliberty.io/docs/latest/reference/javadoc/microprofile-7.0-javadoc.html).
 
 To learn more about MicroProfile Config, visit the MicroProfile Config [GitHub repository](https://github.com/eclipse/microprofile-config) and try one of the MicroProfile Config [guides](https://openliberty.io/guides/?search=Config).
 
@@ -625,7 +622,7 @@ paths:
         required: true
         schema:
           type: string
-        example: foo
+        example: localhost
       responses:
         "404":
           description: Invalid hostname or the system service may not be running on
