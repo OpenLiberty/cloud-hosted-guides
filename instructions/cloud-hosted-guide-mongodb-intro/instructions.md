@@ -70,9 +70,11 @@ You can find more details and configuration options on the [MongoDB website](htt
 
 Run the following commands to use the Dockerfile to build the image, run the image in a Docker container, and map port ***27017*** from the container to your host machine:
 
-
 ```bash
 sed -i 's=latest=7.0.15-rc1=g' assets/Dockerfile
+```
+
+```bash
 docker build -t mongo-sample -f assets/Dockerfile .
 docker run --name mongo-guide -p 27017:27017 -d mongo-sample
 ```
@@ -265,7 +267,7 @@ The values from the ***microprofile-config.properties*** file are injected into 
 
 ::page{title="Implementing the Create, Retrieve, Update, and Delete operations"}
 
-You are going to implement the basic create, retrieve, update, and delete (CRUD) operations in the ***CrewService*** class. The ***com.mongodb.client*** and ***com.mongodb.client.result*** packages are used to help implement these operations for the microservice. For more information about these packages, see the [com.mongodb.client](https://mongodb.github.io/mongo-java-driver/3.12/javadoc/com/mongodb/client/package-summary.html) and [com.mongodb.client.result](https://mongodb.github.io/mongo-java-driver/3.12/javadoc/com/mongodb/client/result/package-summary.html) Javadoc. For more information about creating a RESTful service with JAX-RS, JSON-B, and Open Liberty, see the guide on [Creating a RESTful web serivce](https://openliberty.io/guides/rest-intro.html).
+You are going to implement the basic create, retrieve, update, and delete (CRUD) operations in the ***CrewService*** class. The ***com.mongodb.client*** and ***com.mongodb.client.result*** packages are used to help implement these operations for the microservice. For more information about these packages, see the [com.mongodb.client](https://mongodb.github.io/mongo-java-driver/5.2.1/apidocs/mongodb-driver-sync/com/mongodb/client/package-summary.html) and [com.mongodb.client.result](https://mongodb.github.io/mongo-java-driver/5.2.1/apidocs/mongodb-driver-core/com/mongodb/client/result/package-summary.html) Javadoc. For more information about creating a RESTful service with JAX-RS, JSON-B, and Open Liberty, see the guide on [Creating a RESTful web serivce](https://openliberty.io/guides/rest-intro.html).
 
 Create the ***CrewService*** class.
 
@@ -617,14 +619,16 @@ Replace the Liberty ***server.xml*** configuration file.
 ```xml
 <server description="Sample Liberty server">
     <featureManager>
-        <feature>cdi-4.0</feature>
-        <feature>ssl-1.0</feature>
-        <feature>mpConfig-3.1</feature>
+        <platform>jakartaee-10.0</platform>
+        <platform>microprofile-7.0</platform>
+        <feature>beanValidation</feature>
+        <feature>cdi</feature>
+        <feature>jsonb</feature>
         <feature>passwordUtilities-1.1</feature>
-        <feature>beanValidation-3.0</feature>	   
-        <feature>restfulWS-3.1</feature>
-        <feature>jsonb-3.0</feature>
-        <feature>mpOpenAPI-3.1</feature>
+        <feature>restfulWS</feature>
+        <feature>ssl-1.0</feature>
+        <feature>mpConfig</feature>
+        <feature>mpOpenAPI</feature>
     </featureManager>
 
     <variable name="http.port" defaultValue="9080"/>
@@ -659,7 +663,7 @@ Replace the Liberty ***server.xml*** configuration file.
 
 
 
-The features that are required to create the CDI producer for MongoDB are [Contexts and Dependency Injection](https://openliberty.io/docs/latest/reference/feature/cdi-4.0.html) (***cdi-4.0***), [Secure Socket Layer](https://openliberty.io/docs/latest/reference/feature/ssl-1.0.html) (***ssl-1.0***), [MicroProfile Config](https://openliberty.io/docs/latest/reference/feature/mpConfig-3.1.html) (***mpConfig-3.1***), and [Password Utilities](https://openliberty.io/docs/latest/reference/feature/passwordUtilities-1.1.html) (***passwordUtilities-1.1***). These features are specified in the ***featureManager*** element. The Secure Socket Layer (SSL) context is configured in the ***server.xml*** configuration file so that the application can connect to MongoDB with TLS. The ***keyStore*** element points to the ***truststore.p12*** keystore file that was created in one of the previous sections. The ***ssl*** element specifies the ***defaultKeyStore*** as the keystore and ***outboundTrustStore*** as the truststore.
+The features that are required to create the CDI producer for MongoDB are [Contexts and Dependency Injection](https://openliberty.io/docs/latest/reference/feature/cdi.html) (***cdi***), [Secure Socket Layer](https://openliberty.io/docs/latest/reference/feature/ssl.html) (***ssl***), [MicroProfile Config](https://openliberty.io/docs/latest/reference/feature/mpConfig.html) (***mpConfig***), and [Password Utilities](https://openliberty.io/docs/latest/reference/feature/passwordUtilities.html) (***passwordUtilities***). These features are specified in the ***featureManager*** element. The Secure Socket Layer (SSL) context is configured in the ***server.xml*** configuration file so that the application can connect to MongoDB with TLS. The ***keyStore*** element points to the ***truststore.p12*** keystore file that was created in one of the previous sections. The ***ssl*** element specifies the ***defaultKeyStore*** as the keystore and ***outboundTrustStore*** as the truststore.
 
 After you replace the ***server.xml*** file, the Open Liberty configuration is automatically reloaded.
 
