@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-451-instruction
-version-history-start-date: 2021-11-26 20:42:26 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Validating constraints with microservices guide!"}
@@ -531,11 +528,13 @@ Replace the Liberty ***server.xml*** configuration file.
 <server description="Liberty Server for Bean Validation Guide">
 
     <featureManager>
-        <feature>beanValidation-3.0</feature>
-        <feature>cdi-4.0</feature>
-        <feature>restfulWS-3.1</feature>
-        <feature>jsonb-3.0</feature>
-        <feature>mpOpenAPI-3.1</feature>
+        <platform>jakartaee-10.0</platform>
+        <platform>microprofile-7.0</platform>
+        <feature>beanValidation</feature>
+        <feature>cdi</feature>
+        <feature>restfulWS</feature>
+        <feature>jsonb</feature>
+        <feature>mpOpenAPI</feature>
     </featureManager>
 
     <variable name="http.port" defaultValue="9080"/>
