@@ -247,7 +247,7 @@ Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Comm
 
 The ***inventory*** microservice receives the messages from the ***system*** microservice. Implement the ***InventoryQueueListener*** class with the ***MessageListener*** interface and annotate with ***@MessageDriven*** to monitor the ***jms/InventoryQueue*** message queue. Implement the ***onMessage()*** method that processes the incoming messages, updates the inventory by using the ***InventoryManager*** bean, and logs the action. Use the ***SystemLoad.fromJson()*** method to convert the JSON message string to the ***SystemLoad*** object.
 
-Next, configure the ***inventory*** microservice with an embedded messaging server and the [Messaging Server Client](https://openliberty.io/docs/latest/reference/feature/messagingClient-3.0.html) feature.
+Next, configure the ***inventory*** microservice with an embedded messaging server and the [Messaging Server Client](https://openliberty.io/docs/latest/reference/feature/messagingClient.html) feature.
 
 Replace the inventory's ***server.xml*** configuration file.
 
@@ -262,16 +262,18 @@ Replace the inventory's ***server.xml*** configuration file.
 <server description="Inventory Service">
 
   <featureManager>
-    <feature>restfulWS-3.1</feature>
-    <feature>cdi-4.0</feature>
-    <feature>jsonb-3.0</feature>
-    <feature>mpHealth-4.0</feature>
-    <feature>mpConfig-3.1</feature>
-    <feature>messaging-3.1</feature>
-    <feature>messagingServer-3.0</feature>
-    <feature>messagingClient-3.0</feature>
-    <feature>enterpriseBeansLite-4.0</feature>
-    <feature>mdb-4.0</feature>
+    <platform>jakartaee-10.0</platform>
+    <platform>microprofile-7.0</platform>
+    <feature>restfulWS</feature>
+    <feature>cdi</feature>
+    <feature>jsonb</feature>
+    <feature>mpHealth</feature>
+    <feature>mpConfig</feature>
+    <feature>messaging</feature>
+    <feature>messagingServer</feature>
+    <feature>messagingClient</feature>
+    <feature>enterpriseBeansLite</feature>
+    <feature>mdb</feature>
   </featureManager>
 
   <variable name="http.port" defaultValue="9081"/>
@@ -433,14 +435,16 @@ Replace the system's ***server.xml*** configuration file.
 <server description="System Service">
 
   <featureManager>
-    <feature>cdi-4.0</feature>
-    <feature>jsonb-3.0</feature>
-    <feature>mpHealth-4.0</feature>
-    <feature>mpConfig-3.1</feature>
-    <feature>messaging-3.1</feature>
-    <feature>messagingClient-3.0</feature>
-    <feature>enterpriseBeansLite-4.0</feature>
-    <feature>mdb-4.0</feature>
+    <platform>jakartaee-10.0</platform>
+    <platform>microprofile-7.0</platform>
+    <feature>cdi</feature>
+    <feature>jsonb</feature>
+    <feature>mpHealth</feature>
+    <feature>mpConfig</feature>
+    <feature>messaging</feature>
+    <feature>messagingClient</feature>
+    <feature>enterpriseBeansLite</feature>
+    <feature>mdb</feature>
   </featureManager>
 
   <variable name="http.port" defaultValue="9082"/>
@@ -765,7 +769,7 @@ Replace the ***pom.xml*** file of the inventory service.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.1</version>
+            <version>7.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -867,16 +871,18 @@ Replace the ***server.xml*** file of the inventory service.
 <server description="Inventory Service">
 
   <featureManager>
-    <feature>restfulWS-3.1</feature>
-    <feature>cdi-4.0</feature>
-    <feature>jsonb-3.0</feature>
-    <feature>mpHealth-4.0</feature>
-    <feature>mpConfig-3.1</feature>
-    <feature>messaging-3.1</feature>
-    <feature>messagingClient-3.0</feature>
-    <feature>messagingServer-3.0</feature>
-    <feature>enterpriseBeansLite-4.0</feature>
-    <feature>mdb-4.0</feature>
+    <platform>jakartaee-10.0</platform>
+    <platform>microprofile-7.0</platform>
+    <feature>restfulWS</feature>
+    <feature>cdi</feature>
+    <feature>jsonb</feature>
+    <feature>mpHealth</feature>
+    <feature>mpConfig</feature>
+    <feature>messaging</feature>
+    <feature>messagingClient</feature>
+    <feature>messagingServer</feature>
+    <feature>enterpriseBeansLite</feature>
+    <feature>mdb</feature>
   </featureManager>
 
   <variable name="http.port" defaultValue="9081"/>
@@ -972,7 +978,7 @@ Replace the ***pom.xml*** file of the system service.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.1</version>
+            <version>7.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -1074,14 +1080,16 @@ Replace the ***server.xml*** file of the system service.
 <server description="System Service">
 
   <featureManager>
-    <feature>cdi-4.0</feature>
-    <feature>jsonb-3.0</feature>
-    <feature>mpHealth-4.0</feature>
-    <feature>mpConfig-3.1</feature>
-    <feature>messaging-3.1</feature>
-    <feature>messagingClient-3.0</feature>
-    <feature>enterpriseBeansLite-4.0</feature>
-    <feature>mdb-4.0</feature>
+    <platform>jakartaee-10.0</platform>
+    <platform>microprofile-7.0</platform>
+    <feature>cdi</feature>
+    <feature>jsonb</feature>
+    <feature>mpHealth</feature>
+    <feature>mpConfig</feature>
+    <feature>messaging</feature>
+    <feature>messagingClient</feature>
+    <feature>enterpriseBeansLite</feature>
+    <feature>mdb</feature>
   </featureManager>
 
   <variable name="http.port" defaultValue="9082"/>
