@@ -383,7 +383,7 @@ Replace the Maven configuration file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.1</version>
+            <version>7.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -397,23 +397,23 @@ Replace the Maven configuration file.
         <dependency>
             <groupId>org.glassfish.jersey.core</groupId>
             <artifactId>jersey-client</artifactId>
-            <version>3.1.8</version>
+            <version>3.1.10</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.ext.rx</groupId>
             <artifactId>jersey-rx-client-rxjava</artifactId>
-            <version>3.1.8</version>
+            <version>3.1.10</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.ext.rx</groupId>
             <artifactId>jersey-rx-client-rxjava2</artifactId>
-            <version>3.1.8</version>
+            <version>3.1.10</version>
         </dependency>
         <!-- For tests -->
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>mockserver</artifactId>
-            <version>1.20.2</version>
+            <version>1.20.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -425,31 +425,31 @@ Replace the Maven configuration file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.11.1</version>
+            <version>5.11.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>1.20.2</version>
+            <version>1.20.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.ext</groupId>
             <artifactId>jersey-proxy-client</artifactId>
-            <version>3.1.8</version>
+            <version>3.1.10</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.media</groupId>
             <artifactId>jersey-media-json-jackson</artifactId>
-            <version>3.1.8</version>
+            <version>3.1.10</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.inject</groupId>
             <artifactId>jersey-hk2</artifactId>
-            <version>3.1.8</version>
+            <version>3.1.10</version>
                 <scope>test</scope>
         </dependency>
         <dependency>
@@ -467,7 +467,7 @@ Replace the Maven configuration file.
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>2.18.0</version>
+            <version>2.18.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -488,7 +488,7 @@ Replace the Maven configuration file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.10.3</version>
+                <version>3.11.2</version>
                 <configuration>
                     <containerRunOpts>
                         -e INVENTORY_BASE_URI=http://mock-server:1080
@@ -501,14 +501,14 @@ Replace the Maven configuration file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.0</version>
+                <version>3.5.2</version>
             </plugin>
 
             <!-- Plugin to run integration tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.0</version>
+                <version>3.5.2</version>
                 <executions>
                     <execution>
                         <id>integration-test</id>
