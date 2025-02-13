@@ -181,13 +181,15 @@ Replace the Liberty ***server.xml*** configuration file.
 ```xml
 <server description="Sample Liberty server">
     <featureManager>
-        <feature>restfulWS-3.1</feature>
-        <feature>jsonp-2.1</feature>
-        <feature>jsonb-3.0</feature>
-        <feature>cdi-4.0</feature>
-        <feature>mpMetrics-5.1</feature>
-        <feature>mpHealth-4.0</feature>
-        <feature>mpConfig-3.1</feature>
+        <platform>jakartaee-10.0</platform>
+        <platform>microprofile-7.0</platform>
+        <feature>restfulWS</feature>
+        <feature>jsonp</feature>
+        <feature>jsonb</feature>
+        <feature>cdi</feature>
+        <feature>mpHealth</feature>
+        <feature>mpConfig</feature>
+        <feature>mpMetrics</feature>
     </featureManager>
 
     <variable name="http.port" defaultValue="9080"/>
@@ -198,7 +200,7 @@ Replace the Liberty ***server.xml*** configuration file.
     <mpMetrics authentication="false"/>
 
 
-    <httpEndpoint host="*" httpPort="${http.port}" 
+    <httpEndpoint host="*" httpPort="${http.port}"
         httpsPort="${https.port}" id="defaultHttpEndpoint"/>
 
     <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
@@ -457,13 +459,15 @@ Replace the Liberty ***server.xml*** configuration file.
 ```xml
 <server description="Sample Liberty server">
     <featureManager>
-        <feature>restfulWS-3.1</feature>
-        <feature>jsonp-2.1</feature>
-        <feature>jsonb-3.0</feature>
-        <feature>cdi-4.0</feature>
-        <feature>mpMetrics-5.1</feature>
-        <feature>mpHealth-4.0</feature>
-        <feature>mpConfig-3.1</feature>
+        <platform>jakartaee-10.0</platform>
+        <platform>microprofile-7.0</platform>
+        <feature>restfulWS</feature>
+        <feature>jsonp</feature>
+        <feature>jsonb</feature>
+        <feature>cdi</feature>
+        <feature>mpHealth</feature>
+        <feature>mpConfig</feature>
+        <feature>mpMetrics</feature>
     </featureManager>
 
     <variable name="http.port" defaultValue="9080"/>
@@ -475,7 +479,7 @@ Replace the Liberty ***server.xml*** configuration file.
 
     <logging traceSpecification="com.ibm.ws.microprofile.health.*=all" />
 
-    <httpEndpoint host="*" httpPort="${http.port}" 
+    <httpEndpoint host="*" httpPort="${http.port}"
         httpsPort="${https.port}" id="defaultHttpEndpoint"/>
 
     <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
@@ -487,6 +491,10 @@ Replace the Liberty ***server.xml*** configuration file.
 After you change the file, Open Liberty automatically reloads its configuration.
 
 Now, when you visit the ***/health*** endpoint, additional traces are logged in the ***trace.log*** file.
+
+```bash
+ls /home/project/guide-getting-started/start/target/liberty/wlp/usr/servers/defaultServer/logs
+```
 
 When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
 
@@ -632,13 +640,15 @@ Replace the Liberty ***server.xml*** configuration file.
 ```xml
 <server description="Sample Liberty server">
     <featureManager>
-        <feature>restfulWS-3.1</feature>
-        <feature>jsonp-2.1</feature>
-        <feature>jsonb-3.0</feature>
-        <feature>cdi-4.0</feature>
-        <feature>mpMetrics-5.1</feature>
-        <feature>mpHealth-4.0</feature>
-        <feature>mpConfig-3.1</feature>
+        <platform>jakartaee-10.0</platform>
+        <platform>microprofile-7.0</platform>
+        <feature>restfulWS</feature>
+        <feature>jsonp</feature>
+        <feature>jsonb</feature>
+        <feature>cdi</feature>
+        <feature>mpHealth</feature>
+        <feature>mpConfig</feature>
+        <feature>mpMetrics</feature>
     </featureManager>
 
     <variable name="http.port" defaultValue="9080"/>
@@ -649,7 +659,7 @@ Replace the Liberty ***server.xml*** configuration file.
 
     <logging traceSpecification="com.ibm.ws.microprofile.health.*=all" />
 
-    <httpEndpoint host="*" httpPort="${http.port}" 
+    <httpEndpoint host="*" httpPort="${http.port}"
         httpsPort="${https.port}" id="defaultHttpEndpoint"/>
 
     <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
@@ -729,7 +739,7 @@ Replace the pom.xml file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.1</version>
+            <version>7.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
