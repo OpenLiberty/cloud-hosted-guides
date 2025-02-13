@@ -251,7 +251,7 @@ Update the ***Maven POM*** file in the ***start*** directory.
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.1</version>
+        <version>3.4.2</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.example</groupId>
@@ -347,7 +347,8 @@ touch /home/project/guide-spring-boot/start/src/main/liberty/config/server.xml
 <server description="new server">
 
     <featureManager>
-        <feature>servlet-6.0</feature>
+        <platform>jakartaee-10.0</platform>
+        <feature>servlet</feature>
         <feature>springBoot-3.0</feature>
     </featureManager>
 
@@ -421,7 +422,7 @@ Update the Maven POM file in the ***start*** directory.
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.1</version>
+        <version>3.4.2</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.example</groupId>
