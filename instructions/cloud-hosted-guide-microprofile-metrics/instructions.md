@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-493-instruction
-version-history-start-date: 2021-03-03 17:52:50 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Providing metrics from a microservice guide!"}
@@ -97,32 +94,45 @@ curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=application
 See the following sample outputs for the ***@Timed***, ***@Gauge***, and ***@Counted*** metrics:
 
 ```
-# TYPE application_inventoryProcessingTime_rate_per_second gauge
-application_inventoryProcessingTime_rate_per_second{method="get"} 0.0019189661542898407
+# TYPE inventoryProcessingTime_seconds_max gauge
+inventoryProcessingTime_seconds_max{method="list",mp_scope="application",} 3.0375E-5
+inventoryProcessingTime_seconds_max{method="get",mp_scope="application",} 0.1997325
+# HELP inventoryProcessingTime_seconds Time needed to process the inventory
+# TYPE inventoryProcessingTime_seconds summary
+inventoryProcessingTime_seconds{method="list",mp_scope="application",quantile="0.5",} 0.0
+inventoryProcessingTime_seconds{method="list",mp_scope="application",quantile="0.75",} 0.0
 ...
-# TYPE application_inventoryProcessingTime_seconds summary
-# HELP application_inventoryProcessingTime_seconds Time needed to process the inventory
-application_inventoryProcessingTime_seconds_count{method="get"} 1
-application_inventoryProcessingTime_seconds{method="get",quantile="0.5"} 0.127965469
+inventoryProcessingTime_seconds_count{method="list",mp_scope="application",} 2.0
+inventoryProcessingTime_seconds_sum{method="list",mp_scope="application",} 3.6792E-5
+inventoryProcessingTime_seconds{method="get",mp_scope="application",quantile="0.5",} 0.0
+inventoryProcessingTime_seconds{method="get",mp_scope="application",quantile="0.75",} 0.0
 ...
-# TYPE application_inventoryProcessingTime_rate_per_second gauge
-application_inventoryProcessingTime_rate_per_second{method="list"} 0.0038379320982686884
+inventoryProcessingTime_seconds_count{method="get",mp_scope="application",} 1.0
+inventoryProcessingTime_seconds_sum{method="get",mp_scope="application",} 0.1997325
 ...
-# TYPE application_inventoryProcessingTime_seconds summary
-# HELP application_inventoryProcessingTime_seconds Time needed to process the inventory
-application_inventoryProcessingTime_seconds_count{method="list"} 2
-application_inventoryProcessingTime_seconds{method="list",quantile="0.5"} 2.2185000000000002E-5
+# HELP inventoryAddingTime_seconds_max Time needed to add system properties to the inventory
+# TYPE inventoryAddingTime_seconds_max gauge
+inventoryAddingTime_seconds_max{mp_scope="application",} 3.1E-5
+# HELP inventoryAddingTime_seconds Time needed to add system properties to the inventory
+# TYPE inventoryAddingTime_seconds summary
+inventoryAddingTime_seconds{mp_scope="application",quantile="0.5",} 0.0
+inventoryAddingTime_seconds{mp_scope="application",quantile="0.75",} 0.0
+...
+inventoryAddingTime_seconds_count{mp_scope="application",} 1.0
+inventoryAddingTime_seconds_sum{mp_scope="application",} 3.1E-5
 ...
 ```
+
 ```
-# TYPE application_inventorySizeGauge gauge
-# HELP application_inventorySizeGauge Number of systems in the inventory
-application_inventorySizeGauge 1
+# HELP inventorySizeGauge Number of systems in the inventory
+# TYPE inventorySizeGauge gauge
+inventorySizeGauge{mp_scope="application",} 1.0
 ```
+
 ```
-# TYPE application_inventoryAccessCount_total counter
-# HELP application_inventoryAccessCount_total Number of times the list of systems method is requested
-application_inventoryAccessCount_total 1
+# HELP inventoryAccessCount_total Number of times the list of systems method is requested
+# TYPE inventoryAccessCount_total counter
+inventoryAccessCount_total{mp_scope="application",} 2.0
 ```
 
 
@@ -134,14 +144,14 @@ curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=base
 See the following sample output:
 
 ```
-# TYPE base_jvm_uptime_seconds gauge
-# HELP base_jvm_uptime_seconds Displays the start time of the Java virtual machine in milliseconds. This attribute displays the approximate time when the Java virtual machine started.
-base_jvm_uptime_seconds 30.342000000000002
+# HELP jvm_uptime_seconds Displays the time from the start of the Java virtual machine in seconds.
+# TYPE jvm_uptime_seconds gauge
+jvm_uptime_seconds{mp_scope="base",} 730.705
 ```
 ```
-# TYPE base_classloader_loadedClasses_count gauge
-# HELP base_classloader_loadedClasses_count Displays the number of classes that are currently loaded in the Java virtual machine.
-base_classloader_loadedClasses_count 11231
+# HELP classloader_loadedClasses_count Displays the number of classes that are currently loaded in the Java virtual machine.
+# TYPE classloader_loadedClasses_count gauge
+classloader_loadedClasses_count{mp_scope="base",} 13033.0
 ```
 
 
@@ -153,14 +163,16 @@ curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=vendor
 See the following sample output:
 
 ```
-# TYPE vendor_threadpool_size gauge
-# HELP vendor_threadpool_size The size of the thread pool.
-vendor_threadpool_size{pool="Default_Executor"} 32
+# HELP threadpool_size The size of the thread pool.
+# TYPE threadpool_size gauge
+threadpool_size{mp_scope="vendor",pool="Default_Executor",} 24.0
 ```
 ```
-# TYPE vendor_servlet_request_total counter
-# HELP vendor_servlet_request_total The number of visits to this servlet from the start of the server.
-vendor_servlet_request_total{servlet="microprofile_metrics_io_openliberty_guides_inventory_InventoryApplication"} 1
+# HELP servlet_request_total The number of visits to this servlet ... the start of the server.
+# TYPE servlet_request_total counter
+servlet_request_total{mp_scope="vendor",servlet="guide_microprofile_metrics_io_openliberty_guides_system_SystemApplication",} 1.0
+servlet_request_total{mp_scope="vendor",servlet="guide_microprofile_metrics_io_openliberty_guides_inventory_InventoryApplication",} 3.0
+servlet_request_total{mp_scope="vendor",servlet="io_openliberty_microprofile_metrics_5_0_private_internal_PrivateMetricsRESTProxyServlet",} 3.0
 ```
 
 After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
@@ -209,13 +221,15 @@ Replace the Liberty ***server.xml*** configuration file.
 <server description="Sample Liberty server">
 
   <featureManager>
-    <feature>restfulWS-3.1</feature>
-    <feature>jsonp-2.1</feature>
-    <feature>jsonb-3.0</feature>
-    <feature>cdi-4.0</feature>
-    <feature>mpConfig-3.1</feature>
-   <feature>mpMetrics-5.1</feature>
-   <feature>mpRestClient-3.0</feature>
+    <platform>jakartaee-10.0</platform>
+    <platform>microprofile-7.0</platform>
+    <feature>restfulWS</feature>
+    <feature>jsonp</feature>
+    <feature>jsonb</feature>
+    <feature>cdi</feature>
+    <feature>mpConfig</feature>
+   <feature>mpMetrics</feature>
+   <feature>mpRestClient</feature>
  </featureManager>
 
   <variable name="http.port" defaultValue="9080"/>
@@ -346,7 +360,7 @@ Apply the ***@Gauge*** annotation to the ***getTotal()*** method to track the nu
 | ---| ---
 
 Additional information about these annotations, relevant metadata fields, and more are available at
-the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/latest/reference/javadoc/microprofile-6.1-javadoc.html?class=org/eclipse/microprofile/metrics/annotation/package-summary.html&package=allclasses-frame.html).
+the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/latest/reference/javadoc/microprofile-6.1-javadoc.html?class=org/eclipse/microprofile/metrics/annotation/package-summary.html&package=allclasses-frame.html&path=microprofile-6.1-javadoc/org/eclipse/microprofile/metrics/annotation/package-summary.html).
 
 
 ::page{title="Enabling vendor metrics for the microservices"}
