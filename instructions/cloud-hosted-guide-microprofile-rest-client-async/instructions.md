@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-502-instruction
-version-history-start-date: 2020-07-28 12:58:42 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Consuming RESTful services asynchronously with template interfaces guide!"}
