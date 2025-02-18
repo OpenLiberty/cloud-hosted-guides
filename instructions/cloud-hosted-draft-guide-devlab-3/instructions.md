@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Creating a RESTful web service guide!"}
+::page{title="Welcome to the Building a dynamic web application with integrated user interface and backend logic guide!"}
 
-Learn how to create a RESTful service with Jakarta Restful Web Services, JSON-B, and Open Liberty.
+Learn how to build a dynamic web application using Jakarta Faces, Jakarta Contexts and Dependency Injection, and Jakarta Expression Language.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -15,21 +15,15 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 ::page{title="What you'll learn"}
 
-You will learn how to build and test a simple RESTful service with Jakarta Restful Web Services and JSON-B, which will expose the JVM's system properties. The RESTful service responds to ***GET*** requests made to the ***http://localhost:9080/LibertyProject/system/properties*** URL.
+You'll learn how to build a dynamic web application using Jakarta Faces for the user interface (UI), Jakarta Contexts and Dependency Injection (CDI) for managing backend logic, and Jakarta Expression Language (EL) for data binding.
 
-The service responds to a ***GET*** request with a JSON representation of the system properties, where each property is a field in a JSON object, like this:
+Jakarta Faces is a framework for building component-based web applications that simplifies UI development by managing reusable components, handling user interactions, and binding data to backend logic. It provides built-in lifecycle management, event handling, and server-side validation, reducing the need for manual request processing. Jakarta Faces also includes tag libraries that allows developers define UI components using markup and connect them to backend objects without writing repetitive setup code.
 
-```
-{
-  "os.name":"Mac",
-  "java.version": "1.8"
-}
-```
+To further streamline development, Jakarta Faces works with CDI to manage backend components. CDI allows beans to be automatically created and injected where needed, making it easier to manage application logic. Jakarta Expression Language enables data binding between the UI and backend, allowing UI components to dynamically display data and trigger backend actions.
 
-The design of an HTTP API is an essential part of creating a web application. The REST API is the go-to architectural style for building an HTTP API. The Jakarta Restful Web Services API offers functions to create, read, update, and delete exposed resources. The Jakarta Restful Web Services API supports the creation of RESTful web services that are performant, scalable, and modifiable.
+The application you will build in this guide is a dynamic web application that displays system load data on demand. Using Jakarta Faces for the UI, you'll create a table to show the system CPU load and heap memory usage. You'll also learn how to use CDI to provide the system load data from a managed bean, and to use Jakarta Expression Language to bind this data to the UI components.
 
 ::page{title="Getting started"}
 
@@ -42,11 +36,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-jakarta-faces.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-rest-intro.git
-cd guide-rest-intro
+git clone https://github.com/openliberty/guide-jakarta-faces.git
+cd guide-jakarta-faces
 ```
 
 
@@ -56,36 +50,22 @@ The ***finish*** directory contains the finished project that you will build.
 
 ### Try what you'll build
 
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed. 
 
-To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
+To try out the application, first go to the ***finish*** directory and run Maven with the ***liberty:run*** goal to build the application and deploy it to Open Liberty:
 
 ```bash
 cd finish
 mvn liberty:run
 ```
 
-After you see the following message, your Liberty instance is ready:
+After you see the following message, your Liberty instance is ready.
 
 ```
 The defaultServer server is ready to run a smarter planet.
 ```
 
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-
-Check out the service at the ***http\://localhost:9080/LibertyProject/system/properties*** URL. 
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/LibertyProject/system/properties | jq
-```
-
-
+Check out the web application at the ***http\://localhost:9080/index.xhtml*** URL. Click the image:refresh.png[refresh icon, 18, 18] refresh button, located next to the table title, to update and display the latest system load data in the table.
 
 After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
@@ -93,13 +73,11 @@ After you are finished checking out the application, stop the Liberty instance b
 mvn liberty:stop
 ```
 
+::page{title="Creating a static Jakarta Faces page"}
 
-::page{title="Creating a RESTful application"}
+Start by creating a page that displays an empty table by using Jakarta Faces to extend standard HTML. The table will display the system load data and serves as the starting point for your application.
 
 Navigate to the ***start*** directory to begin.
-```bash
-cd /home/project/guide-rest-intro/start
-```
 
 When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
@@ -116,249 +94,436 @@ After you see the following message, your Liberty instance is ready in dev mode:
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-Jakarta Restful Web Services defines two key concepts for creating REST APIs. The most obvious one is the resource itself, which is modelled as a class. The second is a RESTful application, which groups all exposed resources under a common path. You can think of the RESTful application as a wrapper for all of your resources.
-
-
-Replace the ***SystemApplication*** class.
-
-> To open the SystemApplication.java file in your IDE, select
-> **File** > **Open** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java, or click the following button
-
-::openFile{path="/home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java"}
-
-
-
-```java
-package io.openliberty.guides.rest;
-
-import jakarta.ws.rs.core.Application;
-import jakarta.ws.rs.ApplicationPath;
-
-@ApplicationPath("system")
-public class SystemApplication extends Application {
-
-}
-```
-
-
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
-
-
-The ***SystemApplication*** class extends the ***Application*** class, which associates all RESTful resource classes in the WAR file with this RESTful application. These resources become available under the common path that's specified with the ***@ApplicationPath*** annotation. The ***@ApplicationPath*** annotation has a value that indicates the path in the WAR file that the RESTful application accepts requests from.
-
-
-::page{title="Creating the RESTful resource"}
-
-In a RESTful application, a single class represents a single resource, or a group of resources of the same type. In this application, a resource might be a system property, or a set of system properties. A single class can easily handle multiple different resources, but keeping a clean separation between types of resources helps with maintainability in the long run.
-
-Create the ***PropertiesResource*** class.
+Create the index.xhtml file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+touch /home/project/guide-jakarta-faces/start/src/main/webapp/index.xhtml
 ```
 
 
-> Then, to open the PropertiesResource.java file in your IDE, select
-> **File** > **Open** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java, or click the following button
+> Then, to open the index.xhtml file in your IDE, select
+> **File** > **Open** > guide-jakarta-faces/start/src/main/webapp/index.xhtml, or click the following button
 
-::openFile{path="/home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java"}
+::openFile{path="/home/project/guide-jakarta-faces/start/src/main/webapp/index.xhtml"}
 
 
 
-```java
-package io.openliberty.guides.rest;
+```
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
 
-import java.util.Properties;
+  <h:head>
+    <meta charset="UTF-8" />
+    <title>Open Liberty - Jakarta Faces Example</title>
+    <h:outputStylesheet library="css" name="styles.css" />
+    <link href="favicon.ico" rel="icon" />
+    <link href="favicon.ico" rel="shortcut icon" />
+  </h:head>
+  <h:body>
+    <section id="appIntro">
+      <div id="titleSection">
+        <h1 id="appTitle">Jakarta Faces Example</h1>
+        <div class="line"></div>
+        <div class="headerImage"></div>
+      </div>
 
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-
-@Path("properties")
-public class PropertiesResource {
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Properties getProperties() {
-        return System.getProperties();
-    }
-
-}
+      <div class="msSection" id="systemLoads">
+        <div class="headerRow">
+          <div class="headerIcon">
+            <img src="#{resource['img/sysProps.svg']}" />
+          </div>
+          <div class="headerTitleWithButton" id="sysPropTitle">
+            <h2>System Loads</h2>
+          </div>
+        </div>
+        <div class="sectionContent">
+          <h:dataTable id="systemLoadsTable">
+            <h:column>
+              <f:facet name="header">Time</f:facet>
+            </h:column>
+            <h:column>
+              <f:facet name="header">CPU Load (%)</f:facet>
+            </h:column>
+            <h:column>
+              <f:facet name="header">Heap Memory Usage (%)</f:facet>
+            </h:column>
+          </h:dataTable>
+        </div>
+      </div>
+    </section>
+    <ui:include src="/WEB-INF/includes/footer.xhtml" />
+  </h:body>
+</html>
 ```
 
 
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-The ***@Path*** annotation on the class indicates that this resource responds to the ***properties*** path in the RESTful Web Services application. The ***@ApplicationPath*** annotation in the ***SystemApplication*** class together with the ***@Path*** annotation in this class indicates that the resource is available at the ***system/properties*** path.
 
-Jakarta Restful Web Services maps the HTTP methods on the URL to the methods of the class by using annotations. Your application uses the ***GET*** annotation to map an HTTP ***GET*** request to the ***system/properties*** path.
+In the ***index.xhtml*** file, the ***xmlns*** attributes define the XML namespaces for various Jakarta Faces tag libraries. These namespaces allow the page to use Jakarta Faces tags for templating, creating UI components, and enabling core functionality, such as form submissions and data binding. For more information on the various tag libraries and their roles in Jakarta Faces, refer to the [Jakarta Faces Tag Libraries](https://jakarta.ee/learn/docs/jakartaee-tutorial/current/web/faces-facelets/faces-facelets.html#_tag_libraries_supported_by_facelets) and the [VDL Documentation Generator](https://jakarta.ee/specifications/faces/4.0/vdldoc) documentation.
 
-The ***@GET*** annotation on the method indicates that this method is called for the HTTP ***GET*** method. The ***@Produces*** annotation indicates the format of the content that is returned. The value of the ***@Produces*** annotation is specified in the HTTP ***Content-Type*** response header. This application returns a JSON structured. The desired ***Content-Type*** for a JSON response is ***application/json***, with ***MediaType.APPLICATION_JSON*** instead of the ***String*** content type. Using a constant such as ***MediaType.APPLICATION_JSON*** is better because a spelling error results in a compile failure.
+The ***index.xhtml*** file combines standard HTML elements with Jakarta Faces components, providing both static layout and dynamic functionality. Standard HTML elements, like ***div*** and ***section***, structure the page's layout. Jakarta Faces tags offer additional features beyond standard HTML, such as managing UI components, including resources, and binding data. For example, the ***h:outputStylesheet*** tag loads a CSS file for styling, and the ***ui:include*** tag incorporates reusable components, such as the provided ***footer.xhtml*** file, to streamline maintenance and reuse across multiple pages. The ***h:dataTable*** tag is used to display a table.
 
-Jakarta Restful Web Services supports a number of ways to marshal JSON. The Jakarta Restful Web Services specification mandates JSON-Binding (JSON-B). The method body returns the result of ***System.getProperties()***, which is of type ***java.util.Properties***. The method is annotated with ***@Produces(MediaType.APPLICATION_JSON)*** so Jakarta Restful Web Services uses JSON-B to automatically convert the returned object to JSON data in the HTTP response.
+At this point, the page defines a table that has no data entries. We'll add dynamic content in the following steps.
+
+::page{title="Configuring the Faces Servlet"}
+
+Before you can access the Jakarta Faces page, you need to configure a Faces servlet in your application. This servlet handles all requests for ***.xhtml*** pages and processes them using Jakarta Faces.
+
+Create the web.xml file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-jakarta-faces/start/src/main/webapp/WEB-INF/web.xml
+```
 
 
-::page{title="Configuring Liberty"}
+> Then, to open the web.xml file in your IDE, select
+> **File** > **Open** > guide-jakarta-faces/start/src/main/webapp/WEB-INF/web.xml, or click the following button
 
-To get the service running, the Liberty ***server.xml*** configuration file needs to be correctly configured.
-
-Replace the Liberty ***server.xml*** configuration file.
-
-> To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-rest-intro/start/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-rest-intro/start/src/main/liberty/config/server.xml"}
+::openFile{path="/home/project/guide-jakarta-faces/start/src/main/webapp/WEB-INF/web.xml"}
 
 
 
 ```xml
-<server description="Intro REST Guide Liberty server">
-  <featureManager>
-      <platform>jakartaee-10.0</platform>
-      <feature>restfulWS</feature>
-      <feature>jsonb</feature>
-  </featureManager>
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+         version="6.0">
 
-  <httpEndpoint httpPort="${http.port}" httpsPort="${https.port}"
-                id="defaultHttpEndpoint" host="*" />
+    <context-param>
+        <param-name>jakarta.faces.PROJECT_STAGE</param-name>
+        <param-value>Development</param-value>
+    </context-param>
 
-  <webApplication location="guide-rest-intro.war" contextRoot="${app.context.root}"/>
-</server>
+    <!-- Faces Servlet Configuration -->
+    <servlet>
+        <servlet-name>Faces Servlet</servlet-name>
+        <servlet-class>jakarta.faces.webapp.FacesServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <!-- Servlet Mapping -->
+    <servlet-mapping>
+        <servlet-name>Faces Servlet</servlet-name>
+        <url-pattern>*.xhtml</url-pattern>
+    </servlet-mapping>
+
+</web-app>
 ```
 
 
 
-The configuration does the following actions:
+The ***servlet*** element defines the Faces servlet that is responsible for processing requests for Jakarta Faces pages. The ***load-on-startup*** element with a value of ***1*** specifies that the servlet is loaded and initialized first when the application starts.
 
-* Configures Liberty to enable Jakarta Restful Web Services. This is specified in the ***featureManager*** element.
-* Configures Liberty to resolve the HTTP port numbers from variables, which are then specified in the Maven ***pom.xml*** file. This is specified in the ***httpEndpoint*** element. Variables use the ***${variableName}*** syntax.
-* Configures Liberty to run the produced web application on a context root specified in the ***pom.xml*** file. This is specified in the ***webApplication*** element.
+The ***servlet-mapping*** element specifies which URL patterns are routed to the Faces servlet. In this case, all URLs ending with ***.xhtml*** are mapped to be processed by Jakarta Faces. This ensures that any request for an ***.xhtml*** page is handled by the Faces servlet, which manages the lifecycle of Jakarta Faces components, processes the page, and renders the output. 
 
+By configuring both the servlet and the servlet mapping, you're ensuring that Jakarta Faces pages are properly processed and delivered in response to user requests.
 
-The variables that are being used in the ***server.xml*** file are provided by the properties set in the Maven ***pom.xml*** file. The properties must be formatted as ***liberty.var.variableName***.
+The ***jakarta.faces.PROJECT_STAGE*** context parameter determines the current stage of the application in its development lifecycle. Because it is currently set to ***Development***, you will see additional debugging information, including developer-friendly warning messages such as ***WARNING: Apache MyFaces Core is running in DEVELOPMENT mode.*** For more information about valid values and how to set the ***PROJECT_STAGE*** parameter, see the official [Jakarta Faces ProjectStage documentation](https://jakarta.ee/specifications/faces/4.1/apidocs/jakarta.faces/jakarta/faces/application/projectstage).
 
+In your dev mode console, type ***r*** and press the ***enter/return*** key to restart the Liberty instance so that Liberty reads the configuration changes. When you see the following message, your Liberty instance is ready in dev mode:
 
-::page{title="Running the application"}
-
-You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
-
-
-Check out the service that you created at the ***http\://localhost:9080/LibertyProject/system/properties*** URL. 
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/LibertyProject/system/properties | jq
+```
+**************************************************************
+*    Liberty is running in dev mode.
 ```
 
+Check out the web application that you created at the ***http\://localhost:9080/index.xhtml*** URL. You should see the static page with the system loads table displaying only the headers and no data.
 
+::page{title="Implementing backend logic with dependency injection"}
 
+To provide system load data to your web application, you'll create a CDI-managed bean that retrieves information about the system CPU load and memory usage. This bean is accessible from the Jakarta Faces page and supplies the data that is displayed.
 
-::page{title="Testing the service"}
-
-
-You can test this service manually by starting Liberty and visiting the http://localhost:9080/LibertyProject/system/properties URL. However, automated tests are a much better approach because they trigger a failure if a change introduces a bug. JUnit and the Jakarta Restful Web Services Client API provide a simple environment to test the application.
-
-You can write tests for the individual units of code outside of a running Liberty instance, or they can be written to call the Liberty instance directly. In this example, you will create a test that does the latter.
-
-Create the ***EndpointIT*** class.
+Create the SystemLoadBean class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+touch /home/project/guide-jakarta-faces/start/src/main/java/io/openliberty/guides/bean/SystemLoadBean.java
 ```
 
 
-> Then, to open the EndpointIT.java file in your IDE, select
-> **File** > **Open** > guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java, or click the following button
+> Then, to open the SystemLoadBean.java file in your IDE, select
+> **File** > **Open** > guide-jakarta-faces/start/src/main/java/io/openliberty/guides/bean/SystemLoadBean.java, or click the following button
 
-::openFile{path="/home/project/guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java"}
+::openFile{path="/home/project/guide-jakarta-faces/start/src/main/java/io/openliberty/guides/bean/SystemLoadBean.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.rest;
+package io.openliberty.guides.bean;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.io.Serializable;
 
-import java.util.Properties;
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Named;
 
-import jakarta.json.bind.Jsonb;
-import jakarta.json.bind.JsonbBuilder;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.Response;
+import com.sun.management.OperatingSystemMXBean;
 
-import org.junit.jupiter.api.Test;
+import io.openliberty.guides.bean.model.SystemLoadData;
 
-public class EndpointIT {
-    private static final Jsonb JSONB = JsonbBuilder.create();
-    @Test
-    public void testGetProperties() {
-        String port = System.getProperty("http.port");
-        String context = System.getProperty("context.root");
-        String url = "http://localhost:" + port + "/" + context + "/";
+@Named("systemLoadBean")
+@ApplicationScoped
+public class SystemLoadBean implements Serializable {
+    private static final long serialVersionUID = 1L;
 
-        Client client = ClientBuilder.newClient();
+    private List<SystemLoadData> systemLoads;
 
-        WebTarget target = client.target(url + "system/properties");
-        Response response = target.request().get();
+    private static final OperatingSystemMXBean OS =
+        (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
 
-        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus(),
-                     "Incorrect response code from " + url);
+    private static final MemoryMXBean MEM =
+        ManagementFactory.getMemoryMXBean();
 
-        String json = response.readEntity(String.class);
-        Properties sysProps = JSONB.fromJson(json, Properties.class);
+    @PostConstruct
+    public void init() {
+        systemLoads = new ArrayList<>();
+        fetchSystemLoad();
+    }
 
-        assertEquals(System.getProperty("os.name"), sysProps.getProperty("os.name"),
-                     "The system property for the local and remote JVM should match");
-        response.close();
-        client.close();
+    public void fetchSystemLoad() {
+        String time = Calendar.getInstance().getTime().toString();
+
+        double cpuLoad = OS.getCpuLoad() * 100;
+
+        long heapMax = MEM.getHeapMemoryUsage().getMax();
+        long heapUsed = MEM.getHeapMemoryUsage().getUsed();
+        double memoryUsage = heapUsed * 100.0 / heapMax;
+
+        SystemLoadData data = new SystemLoadData(time, cpuLoad, memoryUsage);
+
+        systemLoads.add(data);
+    }
+
+    public List<SystemLoadData> getSystemLoads() {
+        return systemLoads;
     }
 }
 ```
 
 
 
-This test class has more lines of code than the resource implementation. This situation is common. The test method is indicated with the ***@Test*** annotation.
+Annotate the ***SystemLoadBean*** class with a ***@Named*** annotation to make it accessible in the Jakarta Faces pages under the ***systemLoadBean*** name. Because the ***SystemLoadBean*** bean is a CDI-managed bean, a scope is necessary. Annotating it with the ***@ApplicationScoped*** annotation indicates that it is initialized once and is shared between all requests while the application runs. To learn more about CDI, see the [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html) guide.
+
+The ***@PostConstruct*** annotation ensures the ***init()*** method runs after the ***SystemLoadBean*** is initialized and dependencies are injected. The ***init()*** method sets up any required resources for the bean's lifecyccle.
+
+The ***fetchSystemLoad()*** method retrieves the current system load and memory usage, then updates the list of system load data.
+
+The ***getSystemLoads()*** method is a getter method for accessing the list of system load data from the Jakarta Faces page.
+
+::page{title="Binding data to the UI with expression language"}
+
+Now that you have implemented the backend logic with CDI, you'll update the Jakarta Faces page to display the dynamic system load data. You'll do this by using Jakarta Expression Language to bind the UI components to the backend data.
+
+Replace the index.xhtml file.
+
+> To open the index.xhtml file in your IDE, select
+> **File** > **Open** > guide-jakarta-faces/start/src/main/webapp/index.xhtml, or click the following button
+
+::openFile{path="/home/project/guide-jakarta-faces/start/src/main/webapp/index.xhtml"}
 
 
-The test code needs to know some information about the application to make requests. The server port and the application context root are key, and are dictated by the Liberty's configuration. While this information can be hardcoded, it is better to specify it in a single place like the Maven ***pom.xml*** file. Refer to the ***pom.xml*** file to see how the application information such as the ***http.port***, ***https.port*** and ***app.context.root*** elements are provided in the file.
+
+```
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+  <h:head>
+    <meta charset="UTF-8" />
+    <title>Open Liberty - Jakarta Faces Example</title>
+    <h:outputStylesheet library="css" name="styles.css" />
+    <link href="favicon.ico" rel="icon" />
+    <link href="favicon.ico" rel="shortcut icon" />
+  </h:head>
+  <h:body>
+    <section id="appIntro">
+      <div id="titleSection">
+        <h1 id="appTitle">Jakarta Faces Example</h1>
+        <div class="line"></div>
+        <div class="headerImage"></div>
+      </div>
+
+      <div class="msSection" id="systemLoads">
+        <h:form id="systemLoadForm">
+          <div class="headerRow">
+            <div class="headerIcon">
+              <img src="#{resource['img/sysProps.svg']}" />
+            </div>
+            <div class="headerTitleWithButton" id="sysPropTitle">
+              <h2>System Loads</h2>
+              <h:commandButton id="refreshButton" styleClass="refreshButton" value=""
+                               title="Refresh system load data"
+                               action="#{systemLoadBean.fetchSystemLoad}" >
+                <f:ajax render="systemLoadForm" />
+              </h:commandButton>
+            </div>
+          </div>
+          <div class="sectionContent">
+            <h:dataTable id="systemLoadsTable"
+                         value="#{systemLoadBean.systemLoads}"
+                         var="systemLoadData"
+                         styleClass = "systemLoadsTable"
+                         headerClass = "systemLoadsTableHeader"
+                         rowClasses = "systemLoadsTableOddRow,systemLoadsTableEvenRow">
+              <h:column>
+                <f:facet name="header">Time</f:facet>
+                <h:outputText value="#{systemLoadData.time}" />
+              </h:column>
+
+              <h:column>
+                <f:facet name="header">CPU Load (%)</f:facet>
+                <h:outputText
+                  value="#{systemLoadData.cpuLoad == null ? '-' : systemLoadData.cpuLoad}">
+                  <f:convertNumber pattern="#0.0000000" />
+                </h:outputText>
+              </h:column>
+
+              <h:column>
+                <f:facet name="header">Heap Memory Usage (%)</f:facet>
+                <h:outputText
+                  value="#{systemLoadData.memoryUsage == null ? '-' : systemLoadData.memoryUsage}">
+                  <f:convertNumber pattern="#0.00" />
+                </h:outputText>
+              </h:column>
+            </h:dataTable>
+          </div>
+        </h:form>
+      </div>
+    </section>
+    <ui:include src="/WEB-INF/includes/footer.xhtml" />
+  </h:body>
+</html>
+```
 
 
-These Maven properties are then passed to the Java test program as the ***systemPropertyVariables*** element in the ***pom.xml*** file.
 
-Getting the values to create a representation of the URL is simple. The test class uses the ***getProperty*** method to get the application details.
 
-To call the RESTful service using the Jakarta Restful Web Services client, first create a ***WebTarget*** object by calling the ***target*** method that provides the URL. To cause the HTTP request to occur, the ***request().get()*** method is called on the ***WebTarget*** object. The ***get*** method call is a synchronous call that blocks until a response is received. This call returns a ***Response*** object, which can be inspected to determine whether the request was successful.
 
-The first thing to check is that a ***200*** response was received. The JUnit ***assertEquals*** method can be used for this check.
+The ***index.xhtml*** uses an ***h:commandButton*** tag to create the refresh button. When the button is clicked, the ***#{systemLoadBean.fetchSystemLoad}*** action invokes the ***fetchSystemLoad()*** method using Jakarta Expression Language. This expression references the ***systemLoadBean*** managed bean, triggering the method to update the system load data. The ***f:ajax*** tag ensures that the ***systemLoadForm*** component is re-rendered without requiring a full page reload.
 
-Check the response body to ensure it returned the right information. The client and the server are running on the same machine so it is reasonable to expect that the system properties for the local and remote JVM would be the same. In this case, an ***assertEquals*** assertion is made so that the ***os.name*** system property for both JVMs is the same. You can write additional assertions to check for more values.
+The ***systemLoadsTable*** is populated using the ***h:dataTable*** tag, which iterates over the list of system load data provided by the ***systemLoadBean***. The ***#{systemLoadBean.systemLoads}*** expression calls the ***getSystemLoads()*** method from the managed bean, binding the data to the UI components. If the ***systemLoadBean*** isn't created yet, it is automatically initialized at this point. For each entry, the ***time***, ***cpuLoad***, and ***memoryUsage*** fields are displayed by using the ***h:outputText*** tag. The ***f:convertNumber*** tag formats ***cpuLoad*** to seven decimal places and ***memoryUsage*** to two decimal places.
+
+To format the table, set the ***styleClass***, ***headerClass***, and ***rowClasses*** attributes in the ***h:dataTable*** tag. The style elements are defined in the ***src/main/webapp/resources/css/styles.css*** file.
+
+::page{title="Running the application"}
+
+
+The required ***faces***, ***expressionLanguage***, and ***cdi*** features are enabled for you in the Liberty ***server.xml*** configuration file.
+
+Because you started the Open Liberty in dev mode at the beginning of the guide, all the changes were automatically picked up.
+
+Navigate to the ***http\://localhost:9080/index.xhtml*** URL to view your web application. Click on the image:refresh.png[refresh icon, 18, 18] refresh button to trigger an update on the system loads table.
+
+::page{title="Testing the application"}
+
+While you can manually verify the web application by visiting ***http\://localhost:9080/index.xhtml,*** automated tests are a much better approach because they are more reliable and trigger a failure if a breaking change is introduced. You can write unit tests for your CDI bean to ensure that the basic operations you implemented function correctly.
+
+Create the SystemLoadBeanTest class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-jakarta-faces/start/src/test/java/io/openliberty/guides/bean/SystemLoadBeanTest.java
+```
+
+
+> Then, to open the SystemLoadBeanTest.java file in your IDE, select
+> **File** > **Open** > guide-jakarta-faces/start/src/test/java/io/openliberty/guides/bean/SystemLoadBeanTest.java, or click the following button
+
+::openFile{path="/home/project/guide-jakarta-faces/start/src/test/java/io/openliberty/guides/bean/SystemLoadBeanTest.java"}
+
+
+
+```java
+package io.openliberty.guides.bean;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import io.openliberty.guides.bean.model.SystemLoadData;
+
+public class SystemLoadBeanTest {
+
+    private SystemLoadBean systemLoadBean;
+
+    @BeforeEach
+    public void setUp() {
+        systemLoadBean = new SystemLoadBean();
+        systemLoadBean.init();
+    }
+
+    @Test
+    public void testInitMethod() {
+        assertNotNull(systemLoadBean.getSystemLoads(),
+                      "System loads should not be null after initialization");
+        assertFalse(systemLoadBean.getSystemLoads().isEmpty(),
+                    "System loads should not be empty after initialization");
+    }
+
+    @Test
+    public void testFetchSystemLoad() {
+        int initialSize = systemLoadBean.getSystemLoads().size();
+        systemLoadBean.fetchSystemLoad();
+        int newSize = systemLoadBean.getSystemLoads().size();
+        assertEquals(initialSize + 1, newSize,
+                     "System loads size should increase by 1 after fetching new data");
+    }
+
+    @Test
+    public void testDataIntegrity() {
+        systemLoadBean.fetchSystemLoad();
+        SystemLoadData data = systemLoadBean.getSystemLoads().get(0);
+        assertNotNull(data.getTime(), "Time should not be null");
+        assertNotNull(data.getCpuLoad(), "Recent load should not be null");
+        assertNotNull(data.getMemoryUsage(), "Memory usage should not be null");
+    }
+}
+```
+
+
+
+The ***setUp()*** method is annotated with the ***@BeforeEach*** annotation, indicating that it is run before each test case to ensure a clean state for each test execution. In this case, it creates a new instance of ***SystemLoadBean*** and manually calls the ***init()*** method to initialize the list of system load data before each test.
+
+The ***testInitMethod()*** test case verifies that after initializing ***SystemLoadBean***, the list of system load data is not null and contains at least one entry.
+
+The ***testFetchSystemLoad()*** test case verifies that after calling the ***fetchSystemLoad()*** method, the size of the list of system load data increases by one.
+
+The ***testDataIntegrity()*** test case verifies that each ***SystemLoadData*** entry in the list of system load data contains valid values for ***time***, ***cpuLoad***, and ***memoryUsage***.
 
 ### Running the tests
 
 Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
 
-You will see the following output:
+You see the following output:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.rest.EndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.884 sec - in it.io.openliberty.guides.rest.EndpointIT
+Running io.openliberty.guides.bean.SystemLoadBeanTest
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.037 s -- in io.openliberty.guides.bean.SystemLoadBeanTest
 
-Results :
+Results:
 
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 ```
-
-To see whether the tests detect a failure, add an assertion that you know fails, or change the existing assertion to a constant value that doesn't match the ***os.name*** system property.
 
 When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
 
@@ -367,7 +532,8 @@ When you are done checking out the service, exit dev mode by pressing `Ctrl+C` i
 
 ### Nice Work!
 
-You just developed a RESTful service in Open Liberty by using Jakarta Restful Web Services and JSON-B.
+You just built a dynamic web application on Open Liberty by using Jakarta Faces for the user interface, CDI for managing beans, and Jakarta Expression Language for binding and handling data.
+
 
 
 
@@ -376,33 +542,32 @@ You just developed a RESTful service in Open Liberty by using Jakarta Restful We
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-rest-intro*** project by running the following commands:
+Delete the ***guide-jakarta-faces*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-rest-intro
+rm -fr guide-jakarta-faces
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20RESTful%20web%20service&guide-id=cloud-hosted-guide-rest-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Building%20a%20dynamic%20web%20application%20with%20integrated%20user%20interface%20and%20backend%20logic&guide-id=cloud-hosted-guide-jakarta-faces)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-jakarta-faces/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-jakarta-faces/pulls)
 
 
 
 ### Where to next?
 
-* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
-* [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
+* [Streaming messages between client and server services using gRPC](https://openliberty.io/guides/grpc-intro.html)
 
 
 ### Log out of the session
