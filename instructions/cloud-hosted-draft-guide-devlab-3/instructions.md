@@ -65,7 +65,12 @@ After you see the following message, your Liberty instance is ready.
 The defaultServer server is ready to run a smarter planet.
 ```
 
-Check out the web application at the ***http\://localhost:9080/index.xhtml*** URL. Click the image:refresh.png[refresh icon, 18, 18] refresh button, located next to the table title, to update and display the latest system load data in the table.
+
+Check out the web application by clicking the following button:
+
+::startApplication{port="9080" display="external" name="Launch application" route="/index.xhtml"}
+
+Click the image:refresh.png[refresh icon, 18, 18] refresh button, located next to the table title, to update and display the latest system load data in the table.
 
 After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
@@ -78,6 +83,10 @@ mvn liberty:stop
 Start by creating a page that displays an empty table by using Jakarta Faces to extend standard HTML. The table will display the system load data and serves as the starting point for your application.
 
 Navigate to the ***start*** directory to begin.
+
+```bash
+cd /home/project/guide-jakarta-faces/start
+```
 
 When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
@@ -235,7 +244,12 @@ In your dev mode console, type ***r*** and press the ***enter/return*** key to r
 *    Liberty is running in dev mode.
 ```
 
-Check out the web application that you created at the ***http\://localhost:9080/index.xhtml*** URL. You should see the static page with the system loads table displaying only the headers and no data.
+
+Check out the web application that you created by clicking the following button:
+
+::startApplication{port="9080" display="external" name="Launch application" route="/index.xhtml"}
+
+You should see the static page with the system loads table displaying only the headers and no data.
 
 ::page{title="Implementing backend logic with dependency injection"}
 
@@ -426,7 +440,12 @@ The required ***faces***, ***expressionLanguage***, and ***cdi*** features are e
 
 Because you started the Open Liberty in dev mode at the beginning of the guide, all the changes were automatically picked up.
 
-Navigate to the ***http\://localhost:9080/index.xhtml*** URL to view your web application. Click on the image:refresh.png[refresh icon, 18, 18] refresh button to trigger an update on the system loads table.
+
+Now, you can check out the web application that you created by clicking the following button:
+
+::startApplication{port="9080" display="external" name="Launch application" route="/index.xhtml"}
+
+Click on the image:refresh.png[refresh icon, 18, 18] refresh button to trigger an update on the system loads table.
 
 ::page{title="Testing the application"}
 
