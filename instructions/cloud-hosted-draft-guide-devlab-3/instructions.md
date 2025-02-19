@@ -70,7 +70,7 @@ Check out the web application by clicking the following button:
 
 ::startApplication{port="9080" display="external" name="Launch application" route="/index.xhtml"}
 
-Click the image:refresh.png[refresh icon, 18, 18] refresh button, located next to the table title, to update and display the latest system load data in the table.
+Click the <img src="https://raw.githubusercontent.com/OpenLiberty/guide-jakarta-faces/prod/assets/refresh.png" width="18" height="18" alt="refresh icon"> refresh button, located next to the table title, to update and display the latest system load data in the table.
 
 After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
@@ -445,7 +445,7 @@ Now, you can check out the web application that you created by clicking the foll
 
 ::startApplication{port="9080" display="external" name="Launch application" route="/index.xhtml"}
 
-Click on the image:refresh.png[refresh icon, 18, 18] refresh button to trigger an update on the system loads table.
+Click on the <img src="https://raw.githubusercontent.com/OpenLiberty/guide-jakarta-faces/prod/assets/refresh.png" width="18" height="18" alt="refresh icon"> refresh button to trigger an update on the system loads table.
 
 ::page{title="Testing the application"}
 
