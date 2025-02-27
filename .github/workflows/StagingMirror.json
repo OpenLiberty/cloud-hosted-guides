@@ -436,5 +436,12 @@
         "gitlab": "OpenLiberty-GPXX0XDOEN",
         "quicklab_id": 7015,
         "lab_id": 12550
+    },
+    {
+        "guide": "jakarta-faces",
+        "github": "cloud-hosted-guide-jakarta-faces",
+        "gitlab": "OpenLiberty GPXX0KQTEN",
+        "quicklab_id": 7634,
+        "lab_id": 12550
     }
 ]
