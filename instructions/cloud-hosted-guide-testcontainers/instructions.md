@@ -105,7 +105,7 @@ docker build -t postgres-sample .
 The PostgreSQL database is integral for the ***inventory*** microservice as it handles the persistence of data. Run the following command to start the PostgreSQL database, which runs the ***postgres-sample*** image in a Docker container and maps ***5432*** port from the container to your host machine:
 
 ```bash
-docker run --name postgres-container --rm -p 5432:5432 -d postgres-sample
+docker run --name postgres-container --rm -e POSTGRES_PASSWORD=adminpwd -p 5432:5432 -d postgres-sample
 ```
 
 Retrieve the PostgreSQL container IP address by running the following command:
@@ -444,6 +444,7 @@ public class SystemResourceIT {
 
     private static final String DB_HOST = "postgres";
     private static final int DB_PORT = 5432;
+    private static final String POSTGRES_PASSWORD = "adminpwd";
     private static ImageFromDockerfile postgresImage
         = new ImageFromDockerfile("postgres-sample")
               .withDockerfile(Paths.get("../postgres/Dockerfile"));
@@ -460,6 +461,7 @@ public class SystemResourceIT {
 
     private static GenericContainer<?> postgresContainer
         = new GenericContainer<>(postgresImage)
+              .withEnv("POSTGRES_PASSWORD", POSTGRES_PASSWORD)
               .withNetwork(network)
               .withExposedPorts(DB_PORT)
               .withNetworkAliases(DB_HOST)
