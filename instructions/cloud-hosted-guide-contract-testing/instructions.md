@@ -315,7 +315,7 @@ Replace the inventory Maven project file.
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
-            <version>2.0.16</version>
+            <version>2.0.17</version>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
@@ -331,7 +331,7 @@ Replace the inventory Maven project file.
             <plugin>
                 <groupId>au.com.dius.pact.provider</groupId>
                 <artifactId>maven</artifactId>
-                <version>4.6.16</version>
+                <version>4.6.17</version>
                 <configuration>
                     <serviceProviders>
                         <serviceProvider>
@@ -642,12 +642,12 @@ Replace the system Maven project file.
         <dependency>
             <groupId>au.com.dius.pact.provider</groupId>
             <artifactId>junit5</artifactId>
-            <version>4.6.16</version>
+            <version>4.6.17</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
-            <version>2.0.16</version>
+            <version>2.0.17</version>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
