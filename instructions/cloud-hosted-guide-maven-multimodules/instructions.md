@@ -235,7 +235,7 @@ Replace the ear/POM file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.11.4</version>
+            <version>5.12.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -393,7 +393,7 @@ Replace the start/POM file.
                 </plugin>
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.13.0</version>
+                    <version>3.14.0</version>
                 </plugin>
             </plugins>
         </pluginManagement>
