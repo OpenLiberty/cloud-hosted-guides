@@ -55,7 +55,7 @@ sudo usermod -d /home/project theia
 
 Liberty now offers an easier way to get started with developing your application: the Open Liberty Starter. This tool provides a simple and quick way to get the necessary files to start building an application on Liberty. Through this tool, you can specify your application and project name. You can also choose a build tool from either Maven or Gradle, and pick the Java SE, Jakarta EE, and MicroProfile versions for your application.
 
-In this workshop, the Open Liberty Starter is used to create the starting point of the application. Maven is used as the selected build tool and the application uses of Jakarta EE 10 and MicroProfile 6.
+In this workshop, the Open Liberty Starter is used to create the starting point of the application. Maven is used as the selected build tool and the application uses of Jakarta EE 10 and MicroProfile 7.
 
 To get started with this tool, see the Getting Started page: [https://openliberty.io/start/](https://openliberty.io/start/)
 
@@ -66,13 +66,13 @@ On that page, enter the following properties in the **Create a starter applicati
 * Under Build Tool select: ***Maven***
 * Under Java SE Version select: ***17***
 * Under Java EE/Jakarta EE Version select: ***10.0***
-* Under MicroProfile Version select: ***6.1***
+* Under MicroProfile Version select: ***7.0***
 
 
 In this Skills Network environment, instead of manually downloading and extracting the project, run the following commands:
 ```bash
 cd /home/project/guide-liberty-deep-dive/start
-curl -o inventory.zip 'https://start.openliberty.io/api/start?a=inventory&b=maven&e=10.0&g=io.openliberty.deepdive&j=17&m=6.1'
+curl -o inventory.zip 'https://start.openliberty.io/api/start?a=inventory&b=maven&e=10.0&g=io.openliberty.deepdive&j=17&m=7.0'
 unzip inventory.zip -d inventory
 ```
 
@@ -961,7 +961,7 @@ Replace the Liberty ***server.xml*** configuration file.
     <!-- Enable features -->
     <featureManager>
         <feature>jakartaee-10.0</feature>
-        <feature>microProfile-6.1</feature>
+        <feature>microProfile-7.0</feature>
     </featureManager>
 
     <variable name="http.port" defaultValue="9080" />
@@ -1037,7 +1037,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.1</version>
+            <version>7.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -1137,7 +1137,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.1</version>
+            <version>7.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -2057,7 +2057,7 @@ Replace the Liberty ***server.xml*** configuration file.
 
     <featureManager>
         <feature>jakartaee-10.0</feature>
-        <feature>microProfile-6.1</feature>
+        <feature>microProfile-7.0</feature>
     </featureManager>
 
     <variable name="http.port" defaultValue="9080" />
@@ -2148,7 +2148,7 @@ Replace the ***pom.xml*** configuration file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.1</version>
+            <version>7.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -2290,7 +2290,7 @@ Replace the Liberty ***server.xml*** configuration file.
 
     <featureManager>
         <feature>jakartaee-10.0</feature>
-        <feature>microProfile-6.1</feature>
+        <feature>microProfile-7.0</feature>
     </featureManager>
 
     <variable name="http.port" defaultValue="9080" />
@@ -3219,7 +3219,7 @@ Replace the Liberty ***server.xml*** configuration file.
 
     <featureManager>
         <feature>jakartaee-10.0</feature>
-        <feature>microProfile-6.1</feature>
+        <feature>microProfile-7.0</feature>
         <feature>jwtSso-1.0</feature>
     </featureManager>
 
@@ -3300,7 +3300,7 @@ Replace the Liberty ***server.xml*** configuration file.
 
 
 
-The ***jwtSso*** feature adds the libraries that are required for JWT SSO implementation. Configure the ***jwtSso*** feature by adding the ***jwtBuilder*** configuration to your ***server.xml*** file. Also, configure the MicroProfile ***JWT*** with the ***audiences*** and ***issuer*** properties that match the ***microprofile-config.properties*** defined at the ***system/src/main/webapp/META-INF*** directory under the ***system*** project. For more information, see the [JSON Web Token Single Sign-On feature](https://www.openliberty.io/docs/latest/reference/feature/jwtSso-1.0.html), [jwtSso element](https://www.openliberty.io/docs/latest/reference/config/jwtSso.html), and [jwtBuilder element](https://www.openliberty.io/docs/latest/reference/config/jwtBuilder.html) documentation.
+The ***jwtSso*** feature adds the libraries that are required for JWT SSO implementation. Configure the ***jwtSso*** feature by adding the ***jwtBuilder*** configuration to your ***server.xml*** file. Also, configure the MicroProfile ***JWT*** with the ***audiences*** and ***issuer*** properties that match the ***microprofile-config.properties*** defined at the ***system/src/main/resources/META-INF*** directory under the ***system*** project. For more information, see the [JSON Web Token Single Sign-On feature](https://www.openliberty.io/docs/latest/reference/feature/jwtSso-1.0.html), [jwtSso element](https://www.openliberty.io/docs/latest/reference/config/jwtSso.html), and [jwtBuilder element](https://www.openliberty.io/docs/latest/reference/config/jwtBuilder.html) documentation.
 
 The ***keyStore*** element is used to define the repository of security certificates used for SSL encryption. The ***id*** attribute is a unique configuration ID that is set to ***guideKeyStore***. The ***password*** attribute is used to load the keystore file, and its value can be stored in clear text or encoded form. To learn more about other attributes, see the [keyStore attribute documentation](https://openliberty.io/docs/latest/reference/config/keyStore.html#keyStore.html). 
 
@@ -3359,7 +3359,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.1</version>
+            <version>7.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -3718,8 +3718,9 @@ Replace the Liberty ***server.xml*** configuration file.
 
     <featureManager>
         <feature>jakartaee-10.0</feature>
-        <feature>microProfile-6.1</feature>
+        <feature>microProfile-7.0</feature>
         <feature>jwtSso-1.0</feature>
+        <feature>mpMetrics-5.1</feature>
     </featureManager>
 
     <variable name="http.port" defaultValue="9080" />
@@ -3801,6 +3802,8 @@ Replace the Liberty ***server.xml*** configuration file.
 ```
 
 
+
+Add the ***mpMetrics*** feature because MicroProfile Metric is a standalone feature in MicroProfile 7.
 
 The ***administrator-role*** configuration authorizes the ***bob*** user as an administrator.
 
@@ -4132,7 +4135,7 @@ public class SystemResource {
 
 Import the ***Counted*** annotation and apply it to the ***POST /api/systems***, ***PUT /api/systems/{hostname}***, ***DELETE /api/systems/{hostname}***, and ***POST /api/systems/client/{hostname}*** endpoints to monotonically count how many times that the endpoints are accessed. 
 
-Additional information about the annotations that MicroProfile metrics provides, relevant metadata fields, and more are available at the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/latest/reference/javadoc/microprofile-6.1-javadoc.html?package=org/eclipse/microprofile/metrics/annotation/package-frame.html&class=overview-summary.html).
+Additional information about the annotations that MicroProfile metrics provides, relevant metadata fields, and more are available at the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/latest/reference/javadoc/microprofile-7.0-javadoc.html?package=org/eclipse/microprofile/metrics/annotation/package-frame.html&class=overview-summary.html).
 
 
 Run the following commands to call some of the endpoints that you annotated:
@@ -4291,8 +4294,9 @@ Replace the Liberty ***server.xml*** configuraton file.
 
     <featureManager>
         <feature>jakartaee-10.0</feature>
-        <feature>microProfile-6.1</feature>
+        <feature>microProfile-7.0</feature>
         <feature>jwtSso-1.0</feature>
+        <feature>mpMetrics-5.1</feature>
     </featureManager>
 
     <variable name="http.port" defaultValue="9080" />
@@ -5020,7 +5024,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.1</version>
+            <version>7.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -5465,12 +5469,12 @@ In the ***pom.xml***, add the ***\<configuration\>*** element as the following:
   <plugin>
       <groupId>io.openliberty.tools</groupId>
       <artifactId>liberty-maven-plugin</artifactId>
-      <version>3.10.2</version>
+      <version>3.11.2</version>
       <configuration>
           <runtimeArtifact>
               <groupId>com.ibm.websphere.appserver.runtime</groupId>
               <artifactId>wlp-kernel</artifactId>
-               <version>[24.0.0.2,)</version>
+               <version>[25.0.0.2,)</version>
                <type>zip</type>
           </runtimeArtifact>
       </configuration>
