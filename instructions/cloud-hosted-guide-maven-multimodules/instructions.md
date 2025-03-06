@@ -79,7 +79,13 @@ To deploy your EAR application on Open Liberty, run the Maven ***liberty:run*** 
 mvn -pl ear liberty:run
 ```
 
-Once the Liberty instance is running, click the following button to check out your service by visiting the ***/converter*** endpoint.
+After you see the following message, your Liberty instance is ready:
+
+```
+The defaultServer server is ready to run a smarter planet.
+```
+
+When the Liberty instance is running, click the following button to check out your service by visiting the ***/converter*** endpoint.
 ::startApplication{port="9080" display="external" name="Visit application" route="/converter"}
 
 After you are finished checking out the application, stop the Open Liberty instance by pressing `Ctrl+C` in the command-line session where you ran the Liberty. Alternatively, you can run the ***liberty:stop*** goal using the ***-pl ear*** flag from the ***finish*** directory in another command-line session:
@@ -170,7 +176,7 @@ Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Comm
 
 The added ***dependency*** element is the Java library module that implements the functions that you need for the unit converter.
 
-Although the ***parent/child*** structure is not normally needed for multi-module applications, adding it helps us to better organize all of the projects. This structure allows all of the child projects to make use of the plugins that are defined in the parent ***pom.xml*** file, without having to define them again in the child ***pom.xml*** files.
+Although the ***parent/child*** structure is not normally needed for multi-module applications, adding it helps us to better organize all of the projects. This structure allows all of the child projects to make use of the plug-ins that are defined in the parent ***pom.xml*** file, without having to define them again in the child ***pom.xml*** files.
 
 
 ::page{title="Assembling multiple modules into an EAR file"}
@@ -561,12 +567,12 @@ public class Converter {
 
 
 
-Change the ***getFeet*** method so that it converts from centimetres to feet, and the ***getInches*** method so that it converts from centimetres to inches. Update the ***sum***, ***diff***, ***product*** and ***quotient*** functions so that they add, subtract, multiply, and divide 2 numbers respectively.
+Change the ***getFeet*** method so that it converts from centimeters to feet, and the ***getInches*** method so that it converts from centimeters to inches. Update the ***sum***, ***diff***, ***product***, and ***quotient*** functions so that they add, subtract, multiply, and divide 2 numbers respectively.
 
-Now revisit the application by visiting the ***/converter*** endpoint:
-::startApplication{port="9080" display="external" name="Visit application" route="/converter"}
+Now check out the application again at the ***/converter*** endpoint:
+::startApplication{port="9080" display="external" name="Check out the application" route="/converter"}
 
-Try entering a height in centimetres and see if it converts correctly.
+Try entering a height in centimeters and see whether it converts correctly.
 
 
 ### Testing the multi-module application
@@ -678,7 +684,7 @@ When you are done checking out the service, exit dev mode by pressing `Ctrl+C` i
 
 ::page{title="Building the multi-module application"}
 
-You aggregated and developed the application. Now, you can run ***mvn install*** once from the ***start*** directory and it will automatically build all your modules. This command creates a JAR file in the ***jar/target*** directory, a WAR file in the ***war/target*** directory, and an EAR file that contains the JAR and WAR files in the ***ear/target*** directory.
+You have aggregated and developed the application. Now, you can run ***mvn install*** from the ***start*** directory to build all your modules. This command creates a JAR file in the ***jar/target*** directory, a WAR file in the ***war/target*** directory, and an EAR file that contains the WAR file in the ***ear/target*** directory.
 
 Run the following commands to navigate to the start directory and build the entire application:
 ```bash
