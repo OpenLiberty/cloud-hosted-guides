@@ -85,8 +85,8 @@ After you see the following message, your Liberty instance is ready:
 The defaultServer server is ready to run a smarter planet.
 ```
 
-When the Liberty instance is running, click the following button to check out your service by visiting the ***/converter*** endpoint.
-::startApplication{port="9080" display="external" name="Visit application" route="/converter"}
+When the Liberty instance is running, click the following button to check out your service at the ***/converter*** endpoint.
+::startApplication{port="9080" display="external" name="Check out the application" route="/converter"}
 
 After you are finished checking out the application, stop the Open Liberty instance by pressing `Ctrl+C` in the command-line session where you ran the Liberty. Alternatively, you can run the ***liberty:stop*** goal using the ***-pl ear*** flag from the ***finish*** directory in another command-line session:
 
@@ -516,8 +516,8 @@ The ***getFeet(cm)*** invocation was added to the ***setHeightFeet*** method to 
 
 The ***getInches(cm)*** invocation was added to the ***setHeightInches*** method to convert a measurement into inches.
 
-Click the following button to check out the running application by visiting the ***/converter*** endpoint:
-::startApplication{port="9080" display="external" name="Visit application" route="/converter"}
+Click the following button to check out the running application at the ***/converter*** endpoint:
+::startApplication{port="9080" display="external" name="Check out the application" route="/converter"}
 
 Now try updating the converter so that it converts heights correctly, rather than returning 0.
 
