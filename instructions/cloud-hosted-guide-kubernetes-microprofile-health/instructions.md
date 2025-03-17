@@ -67,7 +67,7 @@ touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/mai
 
 
 > Then, to open the InventoryStartupCheck.java file in your IDE, select
-> **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java, or click the following button
+> ***File*** > ***Open*** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java, or click the following button
 
 ::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java"}
 
@@ -102,7 +102,7 @@ public class InventoryStartupCheck implements HealthCheck {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 A health check for startup allows applications to define startup probes that verify whether deployed application is fully initialized before the liveness probe takes over. This check is useful for applications that require additional startup time on their first initialization. The ***@Startup*** annotation must be applied on a HealthCheck implementation to define a startup check procedure. Otherwise, this annotation is ignored. This startup check verifies that the cpu usage is below 95%. If more than 95% of the cpu is used, a status of ***DOWN*** is returned. 
@@ -116,7 +116,7 @@ touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/mai
 
 
 > Then, to open the InventoryLivenessCheck.java file in your IDE, select
-> **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java, or click the following button
+> ***File*** > ***Open*** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java, or click the following button
 
 ::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java"}
 
@@ -166,7 +166,7 @@ touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/mai
 
 
 > Then, to open the InventoryReadinessCheck.java file in your IDE, select
-> **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java, or click the following button
+> ***File*** > ***Open*** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java, or click the following button
 
 ::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java"}
 
@@ -240,7 +240,7 @@ touch /home/project/guide-kubernetes-microprofile-health/start/kubernetes.yaml
 
 
 > Then, to open the kubernetes.yaml file in your IDE, select
-> **File** > **Open** > guide-kubernetes-microprofile-health/start/kubernetes.yaml, or click the following button
+> ***File*** > ***Open*** > guide-kubernetes-microprofile-health/start/kubernetes.yaml, or click the following button
 
 ::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/kubernetes.yaml"}
 
@@ -653,8 +653,6 @@ rm -fr guide-kubernetes-microprofile-health
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Checking%20the%20health%20of%20microservices%20on%20Kubernetes&guide-id=cloud-hosted-guide-kubernetes-microprofile-health)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

@@ -150,7 +150,7 @@ touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openli
 
 
 > Then, to open the SystemClient.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java"}
 
@@ -183,7 +183,7 @@ public interface SystemClient extends AutoCloseable {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 The MicroProfile Rest Client feature automatically builds and generates a client implementation based on what is defined in the ***SystemClient*** interface. There is no need to set up the client and connect with the remote service.
@@ -214,7 +214,7 @@ touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openli
 
 
 > Then, to open the UnknownUriException.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java"}
 
@@ -250,7 +250,7 @@ touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openli
 
 
 > Then, to open the UnknownUriExceptionMapper.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java"}
 
@@ -302,7 +302,7 @@ touch /home/project/guide-microprofile-rest-client/start/src/main/resources/META
 
 
 > Then, to open the microprofile-config.properties file in your IDE, select
-> **File** > **Open** > guide-microprofile-rest-client/start/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-rest-client/start/src/main/resources/META-INF/microprofile-config.properties"}
 
@@ -334,7 +334,7 @@ Inject the ***SystemClient*** interface into the ***InventoryManager*** class, w
 Replace the ***InventoryManager*** class.
 
 > To open the InventoryManager.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
 
@@ -502,7 +502,7 @@ touch /home/project/guide-microprofile-rest-client/start/src/test/java/it/io/ope
 
 
 > Then, to open the RestClientIT.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java"}
 
@@ -663,8 +663,6 @@ rm -fr guide-microprofile-rest-client
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20RESTful%20services%20with%20template%20interfaces&guide-id=cloud-hosted-guide-microprofile-rest-client)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

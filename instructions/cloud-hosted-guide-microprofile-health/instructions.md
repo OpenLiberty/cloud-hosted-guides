@@ -147,7 +147,7 @@ touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty
 
 
 > Then, to open the SystemStartupCheck.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemStartupCheck.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemStartupCheck.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemStartupCheck.java"}
 
@@ -182,7 +182,7 @@ public class SystemStartupCheck implements HealthCheck {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 The ***@Startup*** annotation indicates that this class is a startup health check procedure. In this case, you are checking the cpu usage. If more than 95% of the cpu is being used, a status of ***DOWN*** is returned.
@@ -196,7 +196,7 @@ touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty
 
 
 > Then, to open the SystemLivenessCheck.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemLivenessCheck.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemLivenessCheck.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemLivenessCheck.java"}
 
@@ -243,7 +243,7 @@ touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty
 
 
 > Then, to open the SystemReadinessCheck.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemReadinessCheck.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemReadinessCheck.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemReadinessCheck.java"}
 
@@ -293,7 +293,7 @@ touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty
 
 
 > Then, to open the InventoryStartupCheck.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java"}
 
@@ -341,7 +341,7 @@ touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty
 
 
 > Then, to open the InventoryLivenessCheck.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java"}
 
@@ -389,7 +389,7 @@ touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty
 
 
 > Then, to open the InventoryReadinessCheck.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java"}
 
@@ -538,7 +538,7 @@ touch /home/project/guide-microprofile-health/start/src/test/java/it/io/openlibe
 
 
 > Then, to open the HealthIT.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-health/start/src/test/java/it/io/openliberty/guides/health/HealthIT.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-health/start/src/test/java/it/io/openliberty/guides/health/HealthIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-health/start/src/test/java/it/io/openliberty/guides/health/HealthIT.java"}
 
@@ -713,8 +713,6 @@ rm -fr guide-microprofile-health
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Adding%20health%20reports%20to%20microservices&guide-id=cloud-hosted-guide-microprofile-health)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

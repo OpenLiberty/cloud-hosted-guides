@@ -172,7 +172,7 @@ touch /home/project/guide-rest-client-java/start/src/main/java/io/openliberty/gu
 
 
 > Then, to open the Consumer.java file in your IDE, select
-> **File** > **Open** > guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/Consumer.java, or click the following button
+> ***File*** > ***Open*** > guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/Consumer.java, or click the following button
 
 ::openFile{path="/home/project/guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/Consumer.java"}
 
@@ -243,7 +243,7 @@ public class Consumer {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 ### Processing JSON using JSON-B
@@ -266,7 +266,7 @@ Now that you can consume a JSON resource you can put that data to use.
 Replace the ***ArtistResource*** class.
 
 > To open the ArtistResource.java file in your IDE, select
-> **File** > **Open** > guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/service/ArtistResource.java, or click the following button
+> ***File*** > ***Open*** > guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/service/ArtistResource.java, or click the following button
 
 ::openFile{path="/home/project/guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/service/ArtistResource.java"}
 
@@ -385,7 +385,7 @@ touch /home/project/guide-rest-client-java/start/src/test/java/it/io/openliberty
 
 
 > Then, to open the ConsumingRestIT.java file in your IDE, select
-> **File** > **Open** > guide-rest-client-java/start/src/test/java/it/io/openliberty/guides/consumingrest/ConsumingRestIT.java, or click the following button
+> ***File*** > ***Open*** > guide-rest-client-java/start/src/test/java/it/io/openliberty/guides/consumingrest/ConsumingRestIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-rest-client-java/start/src/test/java/it/io/openliberty/guides/consumingrest/ConsumingRestIT.java"}
 
@@ -587,8 +587,6 @@ rm -fr guide-rest-client-java
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20a%20RESTful%20web%20service&guide-id=cloud-hosted-guide-rest-client-java)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

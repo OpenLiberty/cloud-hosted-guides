@@ -147,7 +147,7 @@ touch /home/project/guide-rest-client-angularjs/start/src/main/webapp/js/consume
 
 
 > Then, to open the consume-rest.js file in your IDE, select
-> **File** > **Open** > guide-rest-client-angularjs/start/src/main/webapp/js/consume-rest.js, or click the following button
+> ***File*** > ***Open*** > guide-rest-client-angularjs/start/src/main/webapp/js/consume-rest.js, or click the following button
 
 ::openFile{path="/home/project/guide-rest-client-angularjs/start/src/main/webapp/js/consume-rest.js"}
 
@@ -170,7 +170,7 @@ app.controller("ArtistsCtrl", function($scope, artists) {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 Run the following command to update the URL to access the ***artists.json*** in the ***consume-rest.js*** file:
@@ -204,7 +204,7 @@ touch /home/project/guide-rest-client-angularjs/start/src/main/webapp/index.html
 
 
 > Then, to open the index.html file in your IDE, select
-> **File** > **Open** > guide-rest-client-angularjs/start/src/main/webapp/index.html, or click the following button
+> ***File*** > ***Open*** > guide-rest-client-angularjs/start/src/main/webapp/index.html, or click the following button
 
 ::openFile{path="/home/project/guide-rest-client-angularjs/start/src/main/webapp/index.html"}
 
@@ -305,8 +305,6 @@ rm -fr guide-rest-client-angularjs
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20a%20RESTful%20web%20service%20with%20AngularJS&guide-id=cloud-hosted-guide-rest-client-angularjs)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

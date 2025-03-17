@@ -144,7 +144,7 @@ touch /home/project/guide-microprofile-config/start/src/main/java/io/openliberty
 
 
 > Then, to open the InventoryConfig.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java"}
 
@@ -178,7 +178,7 @@ public class InventoryConfig {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 Inject the ***io_openliberty_guides_port_number*** property, and add the ***getPortNumber()*** class method to the ***InventoryConfig.java*** file.
@@ -208,7 +208,7 @@ touch /home/project/guide-microprofile-config/start/src/main/java/io/openliberty
 
 
 > Then, to open the CustomConfigSource.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomConfigSource.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomConfigSource.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomConfigSource.java"}
 
@@ -330,7 +330,7 @@ touch /home/project/guide-microprofile-config/start/src/main/resources/META-INF/
 
 
 > Then, to open the org.eclipse.microprofile.config.spi.ConfigSource file in your IDE, select
-> **File** > **Open** > guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.ConfigSource, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.ConfigSource, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.ConfigSource"}
 
@@ -352,7 +352,7 @@ Now that the custom configuration source has successfully been set up, you can e
 replace the ***InventoryConfig.java*** class.
 
 > To open the InventoryConfig.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java"}
 
@@ -405,7 +405,7 @@ To convert configured Strings to an arbitrary class type, such as the ***Email**
 replace the ***Email*** Class.
 
 > To open the Email.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/Email.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/Email.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/Email.java"}
 
@@ -454,7 +454,7 @@ touch /home/project/guide-microprofile-config/start/src/main/java/io/openliberty
 
 
 > Then, to open the CustomEmailConverter.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomEmailConverter.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomEmailConverter.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomEmailConverter.java"}
 
@@ -489,7 +489,7 @@ touch /home/project/guide-microprofile-config/start/src/main/resources/META-INF/
 
 
 > Then, to open the org.eclipse.microprofile.config.spi.Converter file in your IDE, select
-> **File** > **Open** > guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.Converter, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.Converter, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.Converter"}
 
@@ -506,7 +506,7 @@ To use the custom ***Email*** converter,
 replace the ***InventoryConfig*** class.
 
 > To open the InventoryConfig.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java"}
 
@@ -559,7 +559,7 @@ To use externalized configuration in the ***inventory*** service,
 replace the ***InventoryResource*** class.
 
 > To open the InventoryResource.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java"}
 
@@ -692,7 +692,7 @@ touch /home/project/guide-microprofile-config/start/src/test/java/it/io/openlibe
 
 
 > Then, to open the ConfigurationIT.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-config/start/src/test/java/it/io/openliberty/guides/config/ConfigurationIT.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-config/start/src/test/java/it/io/openliberty/guides/config/ConfigurationIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-config/start/src/test/java/it/io/openliberty/guides/config/ConfigurationIT.java"}
 
@@ -880,8 +880,6 @@ rm -fr guide-microprofile-config
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Configuring%20microservices&guide-id=cloud-hosted-guide-microprofile-config)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
