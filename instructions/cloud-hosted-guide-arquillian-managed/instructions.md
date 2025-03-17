@@ -248,7 +248,7 @@ Configure your build to use the Arquillian Liberty Managed container and set up 
 First, configure your test build with Maven. All of the Maven configuration takes place in the ***pom.xml*** file, which is provided for you.
 
 
-> From the menu of the IDE, select **File** > **Open** > guide-arquillian-managed/start/pom.xml, or click the following button
+> From the menu of the IDE, select ***File*** > ***Open*** > guide-arquillian-managed/start/pom.xml, or click the following button
 
 ::openFile{path="/home/project/guide-arquillian-managed/start/pom.xml"}
 
@@ -273,7 +273,7 @@ Now that you're done configuring your Maven build, set up your Open Liberty to r
 Take a look at the ***server.xml*** file.
 
 
-> From the menu of the IDE, select **File** > **Open** > guide-arquillian-managed/start/src/main/liberty/config/server.xml, or click the following button
+> From the menu of the IDE, select ***File*** > ***Open*** > guide-arquillian-managed/start/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-arquillian-managed/start/src/main/liberty/config/server.xml"}
 
