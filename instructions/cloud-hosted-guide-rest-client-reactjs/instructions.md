@@ -134,7 +134,7 @@ Node.js is a server-side JavaScript runtime that is used for developing networki
 
 
 Take a look at the **pom.xml** file.
-> From the menu of the IDE, select **File** > **Open** > guide-rest-client-reactjs/start/pom.xml, or click the following button:
+> From the menu of the IDE, select ***File*** > ***Open*** > guide-rest-client-reactjs/start/pom.xml, or click the following button:
 
 ::openFile{path="/home/project/guide-rest-client-reactjs/start/pom.xml"}
 
