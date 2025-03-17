@@ -167,7 +167,7 @@ touch /home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/ope
 
 
 > Then, to open the Inventory.java file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/Inventory.java, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/Inventory.java, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/Inventory.java"}
 
@@ -222,7 +222,7 @@ public class Inventory {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 This ***Inventory*** class stores a record of all systems and their system properties. The ***getSystem()*** method within this class retrieves and returns the system data from the system. The ***add()*** method enables the addition of a system and its data to the inventory. The ***update()*** method enables a system and its data on the inventory to be updated. The ***removeSystem()*** method enables the deletion of a system from the inventory.
@@ -244,7 +244,7 @@ touch /home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/ope
 
 
 > Then, to open the SystemData.java file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/model/SystemData.java, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/model/SystemData.java, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/model/SystemData.java"}
 
@@ -335,7 +335,7 @@ touch /home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/ope
 
 
 > Then, to open the SystemResource.java file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/SystemResource.java, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/SystemResource.java, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/SystemResource.java"}
 
@@ -509,7 +509,7 @@ Because all Jakarta RESTful Web Services annotations are processed by default, y
 Replace the ***SystemResources*** class.
 
 > To open the SystemResource.java file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/SystemResource.java, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/SystemResource.java, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/SystemResource.java"}
 
@@ -812,7 +812,7 @@ OpenAPI annotations can also be added to POJOs to describe what they represent. 
 Replace the ***SystemData*** class.
 
 > To open the SystemData.java file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/model/SystemData.java, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/model/SystemData.java, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/model/SystemData.java"}
 
@@ -948,7 +948,7 @@ So far, you used hardcoded values to set the HTTP and HTTPS ports and the contex
 Replace the Liberty ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/main/liberty/config/server.xml"}
 
@@ -1000,7 +1000,7 @@ Add variables for the ***HTTP*** port, ***HTTPS*** port, and the ***context root
 Replace the ***pom.xml*** file.
 
 > To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/pom.xml, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/pom.xml, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/pom.xml"}
 
@@ -1100,7 +1100,7 @@ When you are finished trying out changing this configuration, change the variabl
 Replace the ***pom.xml*** file.
 
 > To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/pom.xml, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/pom.xml, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/pom.xml"}
 
@@ -1185,7 +1185,7 @@ First, you need to edit the ***SystemResource*** class to inject static configur
 Replace the ***SystemResource*** class.
 
 > To open the SystemResource.java file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/SystemResource.java, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/SystemResource.java, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/SystemResource.java"}
 
@@ -1471,7 +1471,7 @@ touch /home/project/guide-liberty-deep-dive/start/inventory/src/main/resources/M
 
 
 > Then, to open the microprofile-config.properties file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/main/resources/META-INF/microprofile-config.properties"}
 
@@ -1515,7 +1515,7 @@ The ***SystemData*** class is a data model that represents systems in the ***inv
 Replace the ***SystemData*** class.
 
 > To open the SystemData.java file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/model/SystemData.java, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/model/SystemData.java, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/model/SystemData.java"}
 
@@ -1651,7 +1651,7 @@ The create, retrieve, update, and delete (CRUD) operations are defined in the In
 Replace the ***Inventory*** class.
 
 > To open the Inventory.java file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/Inventory.java, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/Inventory.java, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/Inventory.java"}
 
@@ -1721,7 +1721,7 @@ Declare the endpoints with transaction management.
 Replace the ***SystemResource*** class.
 
 > To open the SystemResource.java file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/SystemResource.java, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/SystemResource.java, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/SystemResource.java"}
 
@@ -2005,7 +2005,7 @@ touch /home/project/guide-liberty-deep-dive/start/inventory/src/main/resources/M
 
 
 > Then, to open the persistence.xml file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/main/resources/META-INF/persistence.xml, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/main/resources/META-INF/persistence.xml, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/main/resources/META-INF/persistence.xml"}
 
@@ -2045,7 +2045,7 @@ Configure the ***jdbc/postgresql*** data source in the Liberty ***server.xml*** 
 Replace the Liberty ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/main/liberty/config/server.xml"}
 
@@ -2111,7 +2111,7 @@ To use a PostgreSQL database, you need to download its library and store it to t
 Replace the ***pom.xml*** configuration file.
 
 > To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/pom.xml, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/pom.xml, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/pom.xml"}
 
@@ -2278,7 +2278,7 @@ Begin by adding some users and user groups to your Liberty ***server.xml*** conf
 Replace the Liberty ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/main/liberty/config/server.xml"}
 
@@ -2367,7 +2367,7 @@ Now you can secure the ***inventory*** service.
 Replace the ***SystemResource*** class.
 
 > To open the SystemResource.java file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/SystemResource.java, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/SystemResource.java, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/SystemResource.java"}
 
@@ -2758,7 +2758,7 @@ touch /home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/ope
 
 
 > Then, to open the SystemClient.java file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/client/SystemClient.java, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/client/SystemClient.java, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/client/SystemClient.java"}
 
@@ -2807,7 +2807,7 @@ touch /home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/ope
 
 
 > Then, to open the UnknownUriException.java file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/client/UnknownUriException.java, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/client/UnknownUriException.java, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/client/UnknownUriException.java"}
 
@@ -2844,7 +2844,7 @@ touch /home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/ope
 
 
 > Then, to open the UnknownUriExceptionMapper.java file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/client/UnknownUriExceptionMapper.java, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/client/UnknownUriExceptionMapper.java, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/client/UnknownUriExceptionMapper.java"}
 
@@ -2888,7 +2888,7 @@ Now implement the ***/client/{hostname}*** POST endpoint of the ***SystemResourc
 Replace the ***SystemResource*** class.
 
 > To open the SystemResource.java file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/SystemResource.java, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/SystemResource.java, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/SystemResource.java"}
 
@@ -3207,7 +3207,7 @@ Next, add the JSON Web Token (Single Sign On) feature to the Liberty ***server.x
 Replace the Liberty ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/main/liberty/config/server.xml"}
 
@@ -3320,7 +3320,7 @@ Now configure the client https port in the ***pom.xml*** configuration file.
 Replace the ***pom.xml*** file.
 
 > To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/pom.xml, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/pom.xml, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/pom.xml"}
 
@@ -3530,7 +3530,7 @@ touch /home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/ope
 
 
 > Then, to open the StartupCheck.java file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/health/StartupCheck.java, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/health/StartupCheck.java, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/health/StartupCheck.java"}
 
@@ -3577,7 +3577,7 @@ touch /home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/ope
 
 
 > Then, to open the LivenessCheck.java file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/health/LivenessCheck.java, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/health/LivenessCheck.java, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/health/LivenessCheck.java"}
 
@@ -3628,7 +3628,7 @@ touch /home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/ope
 
 
 > Then, to open the ReadinessCheck.java file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/health/ReadinessCheck.java, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/health/ReadinessCheck.java, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/health/ReadinessCheck.java"}
 
@@ -3706,7 +3706,7 @@ Enable the ***bob*** user to access the ***/metrics*** endpoints.
 Replace the Liberty ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/main/liberty/config/server.xml"}
 
@@ -3812,7 +3812,7 @@ Use annotations that are provided by MicroProfile Metrics to instrument the ***i
 Replace the ***SystemResource*** class.
 
 > To open the SystemResource.java file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/SystemResource.java, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/SystemResource.java, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/SystemResource.java"}
 
@@ -4222,7 +4222,7 @@ Make sure to start your Docker daemon before you proceed.
 Replace the ***Dockerfile*** in the ***start/inventory*** directory.
 
 > To open the Dockerfile file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/Dockerfile, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/Dockerfile, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/Dockerfile"}
 
@@ -4282,7 +4282,7 @@ Make the PostgreSQL database configurable in the Liberty ***server.xml*** config
 Replace the Liberty ***server.xml*** configuraton file.
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/main/liberty/config/server.xml"}
 
@@ -4510,7 +4510,7 @@ touch /home/project/guide-liberty-deep-dive/start/inventory/src/test/java/it/io/
 
 
 > Then, to open the SystemResourceClient.java file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/test/java/it/io/openliberty/deepdive/rest/SystemResourceClient.java, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/test/java/it/io/openliberty/deepdive/rest/SystemResourceClient.java, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/test/java/it/io/openliberty/deepdive/rest/SystemResourceClient.java"}
 
@@ -4600,7 +4600,7 @@ touch /home/project/guide-liberty-deep-dive/start/inventory/src/test/java/it/io/
 
 
 > Then, to open the SystemData.java file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/test/java/it/io/openliberty/deepdive/rest/SystemData.java, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/test/java/it/io/openliberty/deepdive/rest/SystemData.java, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/test/java/it/io/openliberty/deepdive/rest/SystemData.java"}
 
@@ -4677,7 +4677,7 @@ touch /home/project/guide-liberty-deep-dive/start/inventory/src/test/java/it/io/
 
 
 > Then, to open the LibertyContainer.java file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/test/java/it/io/openliberty/deepdive/rest/LibertyContainer.java, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/test/java/it/io/openliberty/deepdive/rest/LibertyContainer.java, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/test/java/it/io/openliberty/deepdive/rest/LibertyContainer.java"}
 
@@ -4826,7 +4826,7 @@ touch /home/project/guide-liberty-deep-dive/start/inventory/src/test/java/it/io/
 
 
 > Then, to open the SystemResourceIT.java file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/test/java/it/io/openliberty/deepdive/rest/SystemResourceIT.java, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/test/java/it/io/openliberty/deepdive/rest/SystemResourceIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/test/java/it/io/openliberty/deepdive/rest/SystemResourceIT.java"}
 
@@ -4959,7 +4959,7 @@ touch /home/project/guide-liberty-deep-dive/start/inventory/src/test/resources/l
 
 
 > Then, to open the log4j.properties file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/src/test/resources/log4j.properties, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/src/test/resources/log4j.properties, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/src/test/resources/log4j.properties"}
 
@@ -4985,7 +4985,7 @@ Update the Maven configuration file with the required dependencies.
 Replace the ***pom.xml*** file.
 
 > To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/pom.xml, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/pom.xml, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/pom.xml"}
 
@@ -5227,7 +5227,7 @@ touch /home/project/guide-liberty-deep-dive/start/inventory/inventory.yaml
 
 
 > Then, to open the inventory.yaml file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/inventory.yaml, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/inventory.yaml, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/inventory.yaml"}
 
@@ -5349,7 +5349,7 @@ This command deploys a ConfigMap named ***inv-app-root*** to your cluster. It ha
 Replace the ***inventory.yaml*** file.
 
 > To open the inventory.yaml file in your IDE, select
-> **File** > **Open** > guide-liberty-deep-dive/start/inventory/inventory.yaml, or click the following button
+> ***File*** > ***Open*** > guide-liberty-deep-dive/start/inventory/inventory.yaml, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/inventory.yaml"}
 
@@ -5522,8 +5522,6 @@ rm -fr guide-liberty-deep-dive
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=A%20Technical%20Deep%20Dive%20on%20Liberty&guide-id=cloud-hosted-guide-liberty-deep-dive)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

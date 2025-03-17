@@ -104,7 +104,7 @@ touch /home/project/guide-spring-boot/start/Dockerfile
 
 
 > Then, to open the Dockerfile file in your IDE, select
-> **File** > **Open** > guide-spring-boot/start/Dockerfile, or click the following button
+> ***File*** > ***Open*** > guide-spring-boot/start/Dockerfile, or click the following button
 
 ::openFile{path="/home/project/guide-spring-boot/start/Dockerfile"}
 
@@ -151,7 +151,7 @@ RUN configure.sh
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 This Dockerfile is written in two main stages. For more information about multi-stage Dockerfiles, see the documentation on the [official Docker website](https://docs.docker.com/develop/develop-images/multistage-build/).
@@ -237,7 +237,7 @@ The ***pom.xml*** was created for you in this directory.
 Update the ***Maven POM*** file in the ***start*** directory.
 
 > To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-spring-boot/start/pom.xml, or click the following button
+> ***File*** > ***Open*** > guide-spring-boot/start/pom.xml, or click the following button
 
 ::openFile{path="/home/project/guide-spring-boot/start/pom.xml"}
 
@@ -336,7 +336,7 @@ touch /home/project/guide-spring-boot/start/src/main/liberty/config/server.xml
 
 
 > Then, to open the server.xml file in your IDE, select
-> **File** > **Open** > guide-spring-boot/start/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-spring-boot/start/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-spring-boot/start/src/main/liberty/config/server.xml"}
 
@@ -408,7 +408,7 @@ You can update the ***pom.xml*** file to bind more Open Liberty Maven goals to t
 Update the Maven POM file in the ***start*** directory.
 
 > To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-spring-boot/start/pom.xml, or click the following button
+> ***File*** > ***Open*** > guide-spring-boot/start/pom.xml, or click the following button
 
 ::openFile{path="/home/project/guide-spring-boot/start/pom.xml"}
 
@@ -555,8 +555,6 @@ rm -fr guide-spring-boot
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Containerizing,%20packaging,%20and%20running%20a%20Spring%20Boot%20application&guide-id=cloud-hosted-guide-spring-boot)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

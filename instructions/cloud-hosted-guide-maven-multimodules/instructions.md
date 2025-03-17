@@ -109,7 +109,7 @@ cd /home/project/guide-maven-multimodules/start
 Replace the war/POM file.
 
 > To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-maven-multimodules/start/war/pom.xml, or click the following button
+> ***File*** > ***Open*** > guide-maven-multimodules/start/war/pom.xml, or click the following button
 
 ::openFile{path="/home/project/guide-maven-multimodules/start/war/pom.xml"}
 
@@ -172,7 +172,7 @@ Replace the war/POM file.
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 The added ***dependency*** element is the Java library module that implements the functions that you need for the unit converter.
 
@@ -187,7 +187,7 @@ Navigate to the ***ear*** folder and find a template ***pom.xml*** file.
 Replace the ear/POM file.
 
 > To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-maven-multimodules/start/ear/pom.xml, or click the following button
+> ***File*** > ***Open*** > guide-maven-multimodules/start/ear/pom.xml, or click the following button
 
 ::openFile{path="/home/project/guide-maven-multimodules/start/ear/pom.xml"}
 
@@ -323,7 +323,7 @@ touch /home/project/guide-maven-multimodules/start/ear/src/main/liberty/config/s
 
 
 > Then, to open the server.xml file in your IDE, select
-> **File** > **Open** > guide-maven-multimodules/start/ear/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-maven-multimodules/start/ear/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-maven-multimodules/start/ear/src/main/liberty/config/server.xml"}
 
@@ -364,7 +364,7 @@ Create a parent ***pom.xml*** file under the ***start*** directory to link all o
 Replace the start/POM file.
 
 > To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-maven-multimodules/start/pom.xml, or click the following button
+> ***File*** > ***Open*** > guide-maven-multimodules/start/pom.xml, or click the following button
 
 ::openFile{path="/home/project/guide-maven-multimodules/start/pom.xml"}
 
@@ -457,7 +457,7 @@ Navigate to the ***start*** directory.
 Replace the ***HeightsBean*** class in the ***war*** directory.
 
 > To open the HeightsBean.java file in your IDE, select
-> **File** > **Open** > guide-maven-multimodules/start/war/src/main/java/io/openliberty/guides/multimodules/web/HeightsBean.java, or click the following button
+> ***File*** > ***Open*** > guide-maven-multimodules/start/war/src/main/java/io/openliberty/guides/multimodules/web/HeightsBean.java, or click the following button
 
 ::openFile{path="/home/project/guide-maven-multimodules/start/war/src/main/java/io/openliberty/guides/multimodules/web/HeightsBean.java"}
 
@@ -524,7 +524,7 @@ Now try updating the converter so that it converts heights correctly, rather tha
 Replace the ***Converter*** class in the ***jar*** directory.
 
 > To open the Converter.java file in your IDE, select
-> **File** > **Open** > guide-maven-multimodules/start/jar/src/main/java/io/openliberty/guides/multimodules/lib/Converter.java, or click the following button
+> ***File*** > ***Open*** > guide-maven-multimodules/start/jar/src/main/java/io/openliberty/guides/multimodules/lib/Converter.java, or click the following button
 
 ::openFile{path="/home/project/guide-maven-multimodules/start/jar/src/main/java/io/openliberty/guides/multimodules/lib/Converter.java"}
 
@@ -588,7 +588,7 @@ touch /home/project/guide-maven-multimodules/start/ear/src/test/java/it/io/openl
 
 
 > Then, to open the IT.java file in your IDE, select
-> **File** > **Open** > guide-maven-multimodules/start/ear/src/test/java/it/io/openliberty/guides/multimodules/IT.java, or click the following button
+> ***File*** > ***Open*** > guide-maven-multimodules/start/ear/src/test/java/it/io/openliberty/guides/multimodules/IT.java, or click the following button
 
 ::openFile{path="/home/project/guide-maven-multimodules/start/ear/src/test/java/it/io/openliberty/guides/multimodules/IT.java"}
 
@@ -723,8 +723,6 @@ rm -fr guide-maven-multimodules
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20multi-module%20application&guide-id=cloud-hosted-guide-maven-multimodules)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

@@ -211,7 +211,7 @@ The MicroProfile Metrics API is included in the MicroProfile dependency specifie
 Replace the Liberty ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-microprofile-metrics/start/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-metrics/start/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-metrics/start/src/main/liberty/config/server.xml"}
 
@@ -244,7 +244,7 @@ Replace the Liberty ***server.xml*** configuration file.
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
 The ***mpMetrics*** feature enables MicroProfile Metrics support in Open Liberty. Note that this feature requires SSL and the configuration has been provided for you.
@@ -257,7 +257,7 @@ The ***quickStartSecurity*** configuration element provides basic security to se
 Replace the ***InventoryManager*** class.
 
 > To open the InventoryManager.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-metrics/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-metrics/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-metrics/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
 
@@ -421,7 +421,7 @@ touch /home/project/guide-microprofile-metrics/start/src/test/java/it/io/openlib
 
 
 > Then, to open the MetricsIT.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-metrics/start/src/test/java/it/io/openliberty/guides/metrics/MetricsIT.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-metrics/start/src/test/java/it/io/openliberty/guides/metrics/MetricsIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-metrics/start/src/test/java/it/io/openliberty/guides/metrics/MetricsIT.java"}
 
@@ -700,8 +700,6 @@ rm -fr guide-microprofile-metrics
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Providing%20metrics%20from%20a%20microservice&guide-id=cloud-hosted-guide-microprofile-metrics)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

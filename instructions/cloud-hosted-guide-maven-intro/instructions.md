@@ -135,7 +135,7 @@ touch /home/project/guide-maven-intro/start/pom.xml
 
 
 > Then, to open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-maven-intro/start/pom.xml, or click the following button
+> ***File*** > ***Open*** > guide-maven-intro/start/pom.xml, or click the following button
 
 ::openFile{path="/home/project/guide-maven-intro/start/pom.xml"}
 
@@ -225,7 +225,7 @@ touch /home/project/guide-maven-intro/start/pom.xml
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 The ***pom.xml*** file starts with a root ***project*** element and a ***modelversion*** element, which is always set to ***4.0.0***. 
@@ -293,7 +293,7 @@ touch /home/project/guide-maven-intro/start/src/test/java/io/openliberty/guides/
 
 
 > Then, to open the EndpointIT.java file in your IDE, select
-> **File** > **Open** > guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java, or click the following button
+> ***File*** > ***Open*** > guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java"}
 
@@ -439,8 +439,6 @@ rm -fr guide-maven-intro
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Building%20a%20web%20application%20with%20Maven&guide-id=cloud-hosted-guide-maven-intro)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

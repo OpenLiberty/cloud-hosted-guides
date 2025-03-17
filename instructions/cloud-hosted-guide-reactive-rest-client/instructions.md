@@ -76,7 +76,7 @@ touch /home/project/guide-reactive-rest-client/start/query/src/main/java/io/open
 
 
 > Then, to open the InventoryClient.java file in your IDE, select
-> **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java, or click the following button
+> ***File*** > ***Open*** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java, or click the following button
 
 ::openFile{path="/home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java"}
 
@@ -131,7 +131,7 @@ public class InventoryClient {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 The ***getSystem()*** method returns the ***CompletionStage*** interface. This interface represents a unit or stage of a computation. When the associated computation completes, the value can be retrieved. The ***rx()*** method calls the ***CompletionStage*** interface. It retrieves the ***CompletionStageRxInvoker*** class and allows these methods to function correctly with the ***CompletionStage*** interface return type.
@@ -145,7 +145,7 @@ touch /home/project/guide-reactive-rest-client/start/query/src/main/java/io/open
 
 
 > Then, to open the QueryResource.java file in your IDE, select
-> **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java, or click the following button
+> ***File*** > ***Open*** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java, or click the following button
 
 ::openFile{path="/home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java"}
 
@@ -332,7 +332,7 @@ Although JAX-RS provides the default reactive provider that returns ***Completio
 Replace the Maven configuration file.
 
 > To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-reactive-rest-client/start/query/pom.xml, or click the following button
+> ***File*** > ***Open*** > guide-reactive-rest-client/start/query/pom.xml, or click the following button
 
 ::openFile{path="/home/project/guide-reactive-rest-client/start/query/pom.xml"}
 
@@ -538,7 +538,7 @@ Update the client to accommodate the custom object types that you are trying to 
 Replace the ***InventoryClient*** interface.
 
 > To open the InventoryClient.java file in your IDE, select
-> **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java, or click the following button
+> ***File*** > ***Open*** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java, or click the following button
 
 ::openFile{path="/home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java"}
 
@@ -611,7 +611,7 @@ Now that the client methods return the ***Observable*** class, you must update t
 Replace the ***QueryResource*** class.
 
 > To open the QueryResource.java file in your IDE, select
-> **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java, or click the following button
+> ***File*** > ***Open*** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java, or click the following button
 
 ::openFile{path="/home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java"}
 
@@ -775,7 +775,7 @@ touch /home/project/guide-reactive-rest-client/start/query/src/test/java/it/io/o
 
 
 > Then, to open the QueryServiceIT.java file in your IDE, select
-> **File** > **Open** > guide-reactive-rest-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java, or click the following button
+> ***File*** > ***Open*** > guide-reactive-rest-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-reactive-rest-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java"}
 
@@ -1053,8 +1053,6 @@ rm -fr guide-reactive-rest-client
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20RESTful%20services%20using%20the%20reactive%20JAX-RS%20client&guide-id=cloud-hosted-guide-reactive-rest-client)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

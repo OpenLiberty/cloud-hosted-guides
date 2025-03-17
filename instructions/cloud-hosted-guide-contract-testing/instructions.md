@@ -121,7 +121,7 @@ touch /home/project/guide-contract-testing/start/inventory/src/test/java/io/open
 
 
 > Then, to open the InventoryPactIT.java file in your IDE, select
-> **File** > **Open** > guide-contract-testing/start/inventory/src/test/java/io/openliberty/guides/inventory/InventoryPactIT.java, or click the following button
+> ***File*** > ***Open*** > guide-contract-testing/start/inventory/src/test/java/io/openliberty/guides/inventory/InventoryPactIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-contract-testing/start/inventory/src/test/java/io/openliberty/guides/inventory/InventoryPactIT.java"}
 
@@ -253,7 +253,7 @@ public class InventoryPactIT {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 The ***InventoryPactIT*** class contains a ***PactProviderRule*** mock provider that mimics the HTTP responses from the ***system*** microservice. The ***@Pact*** annotation takes the name of the microservice as a parameter, which makes it easier to differentiate microservices from each other when you have multiple applications.
@@ -265,7 +265,7 @@ The test sends a real request with the ***getUrl()*** method of the mock provide
 Replace the inventory Maven project file.
 
 > To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-contract-testing/start/inventory/pom.xml, or click the following button
+> ***File*** > ***Open*** > guide-contract-testing/start/inventory/pom.xml, or click the following button
 
 ::openFile{path="/home/project/guide-contract-testing/start/inventory/pom.xml"}
 
@@ -515,7 +515,7 @@ touch /home/project/guide-contract-testing/start/system/src/test/java/it/io/open
 
 
 > Then, to open the SystemBrokerIT.java file in your IDE, select
-> **File** > **Open** > guide-contract-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemBrokerIT.java, or click the following button
+> ***File*** > ***Open*** > guide-contract-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemBrokerIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-contract-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemBrokerIT.java"}
 
@@ -595,7 +595,7 @@ The ***@State*** annotation must match the ***given()*** parameter that was prov
 Replace the system Maven project file.
 
 > To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-contract-testing/start/system/pom.xml, or click the following button
+> ***File*** > ***Open*** > guide-contract-testing/start/system/pom.xml, or click the following button
 
 ::openFile{path="/home/project/guide-contract-testing/start/system/pom.xml"}
 
@@ -719,7 +719,7 @@ Correct the value of the ***system.properties.version*** property to a decimal.
 Replace the SystemResource class file.
 
 > To open the SystemResource.java file in your IDE, select
-> **File** > **Open** > guide-contract-testing/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java, or click the following button
+> ***File*** > ***Open*** > guide-contract-testing/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java, or click the following button
 
 ::openFile{path="/home/project/guide-contract-testing/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java"}
 
@@ -865,8 +865,6 @@ rm -fr guide-contract-testing
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Testing%20microservices%20with%20consumer-driven%20contracts&guide-id=cloud-hosted-guide-contract-testing)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

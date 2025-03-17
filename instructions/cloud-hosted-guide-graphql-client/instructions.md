@@ -71,7 +71,7 @@ touch /home/project/guide-graphql-client/start/query/src/main/java/io/openlibert
 
 
 > Then, to open the GraphQlClient.java file in your IDE, select
-> **File** > **Open** > guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/client/GraphQlClient.java, or click the following button
+> ***File*** > ***Open*** > guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/client/GraphQlClient.java, or click the following button
 
 ::openFile{path="/home/project/guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/client/GraphQlClient.java"}
 
@@ -103,7 +103,7 @@ public interface GraphQlClient {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 The ***GraphQlClient*** interface is annotated with the ***@GraphQlClientApi*** annotation. This annotation denotes that this interface is used to create a typesafe GraphQL client.
@@ -125,7 +125,7 @@ touch /home/project/guide-graphql-client/start/query/src/main/java/io/openlibert
 
 
 > Then, to open the QueryResource.java file in your IDE, select
-> **File** > **Open** > guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java, or click the following button
+> ***File*** > ***Open*** > guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java, or click the following button
 
 ::openFile{path="/home/project/guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java"}
 
@@ -196,7 +196,7 @@ Add the SmallRye GraphQL client dependency to the project configuration file.
 Replace the Maven project file.
 
 > To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-graphql-client/start/query/pom.xml, or click the following button
+> ***File*** > ***Open*** > guide-graphql-client/start/query/pom.xml, or click the following button
 
 ::openFile{path="/home/project/guide-graphql-client/start/query/pom.xml"}
 
@@ -365,7 +365,7 @@ To run the service, you must correctly configure the Liberty.
 Replace the Liberty server.xml configuration file.
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-graphql-client/start/query/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-graphql-client/start/query/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-graphql-client/start/query/src/main/liberty/config/server.xml"}
 
@@ -546,7 +546,7 @@ touch /home/project/guide-graphql-client/start/query/src/test/java/it/io/openlib
 
 
 > Then, to open the QueryResourceClient.java file in your IDE, select
-> **File** > **Open** > guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceClient.java, or click the following button
+> ***File*** > ***Open*** > guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceClient.java, or click the following button
 
 ::openFile{path="/home/project/guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceClient.java"}
 
@@ -607,7 +607,7 @@ touch /home/project/guide-graphql-client/start/query/src/test/java/it/io/openlib
 
 
 > Then, to open the LibertyContainer.java file in your IDE, select
-> **File** > **Open** > guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/LibertyContainer.java, or click the following button
+> ***File*** > ***Open*** > guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/LibertyContainer.java, or click the following button
 
 ::openFile{path="/home/project/guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/LibertyContainer.java"}
 
@@ -678,7 +678,7 @@ touch /home/project/guide-graphql-client/start/query/src/test/java/it/io/openlib
 
 
 > Then, to open the QueryResourceIT.java file in your IDE, select
-> **File** > **Open** > guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceIT.java, or click the following button
+> ***File*** > ***Open*** > guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceIT.java"}
 
@@ -859,8 +859,6 @@ rm -fr guide-graphql-client
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Running%20GraphQL%20queries%20and%20mutations%20using%20a%20GraphQL%20client&guide-id=cloud-hosted-guide-graphql-client)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

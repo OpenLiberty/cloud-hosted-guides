@@ -83,7 +83,7 @@ touch /home/project/guide-microprofile-graphql/start/models/src/main/java/io/ope
 
 
 > Then, to open the JavaInfo.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-graphql/start/models/src/main/java/io/openliberty/guides/graphql/models/JavaInfo.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-graphql/start/models/src/main/java/io/openliberty/guides/graphql/models/JavaInfo.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-graphql/start/models/src/main/java/io/openliberty/guides/graphql/models/JavaInfo.java"}
 
@@ -127,7 +127,7 @@ public class JavaInfo {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 The ***JavaInfo*** class is annotated with a ***@Type*** annotation. The ***@Type("java")*** annotation maps this class to define the ***java*** object type in GraphQL. The ***java*** object type gives information on the Java installation of the system. 
@@ -147,7 +147,7 @@ touch /home/project/guide-microprofile-graphql/start/models/src/main/java/io/ope
 
 
 > Then, to open the SystemMetrics.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-graphql/start/models/src/main/java/io/openliberty/guides/graphql/models/SystemMetrics.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-graphql/start/models/src/main/java/io/openliberty/guides/graphql/models/SystemMetrics.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-graphql/start/models/src/main/java/io/openliberty/guides/graphql/models/SystemMetrics.java"}
 
@@ -213,7 +213,7 @@ touch /home/project/guide-microprofile-graphql/start/models/src/main/java/io/ope
 
 
 > Then, to open the SystemInfo.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-graphql/start/models/src/main/java/io/openliberty/guides/graphql/models/SystemInfo.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-graphql/start/models/src/main/java/io/openliberty/guides/graphql/models/SystemInfo.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-graphql/start/models/src/main/java/io/openliberty/guides/graphql/models/SystemInfo.java"}
 
@@ -336,7 +336,7 @@ touch /home/project/guide-microprofile-graphql/start/system/src/main/java/io/ope
 
 
 > Then, to open the SystemPropertiesResource.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-graphql/start/system/src/main/java/io/openliberty/guides/system/SystemPropertiesResource.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-graphql/start/system/src/main/java/io/openliberty/guides/system/SystemPropertiesResource.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-graphql/start/system/src/main/java/io/openliberty/guides/system/SystemPropertiesResource.java"}
 
@@ -403,7 +403,7 @@ touch /home/project/guide-microprofile-graphql/start/system/src/main/java/io/ope
 
 
 > Then, to open the SystemMetricsResource.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-graphql/start/system/src/main/java/io/openliberty/guides/system/SystemMetricsResource.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-graphql/start/system/src/main/java/io/openliberty/guides/system/SystemMetricsResource.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-graphql/start/system/src/main/java/io/openliberty/guides/system/SystemMetricsResource.java"}
 
@@ -475,7 +475,7 @@ touch /home/project/guide-microprofile-graphql/start/graphql/src/main/java/io/op
 
 
 > Then, to open the GraphQLService.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-graphql/start/graphql/src/main/java/io/openliberty/guides/graphql/GraphQLService.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-graphql/start/graphql/src/main/java/io/openliberty/guides/graphql/GraphQLService.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-graphql/start/graphql/src/main/java/io/openliberty/guides/graphql/GraphQLService.java"}
 
@@ -641,7 +641,7 @@ To use GraphQL, the MicroProfile GraphQL dependencies and features need to be in
 Replace the Maven project file.
 
 > To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-microprofile-graphql/start/graphql/pom.xml, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-graphql/start/graphql/pom.xml, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-graphql/start/graphql/pom.xml"}
 
@@ -773,7 +773,7 @@ The Open Liberty needs to be configured to support the GraphQL query language.
 Replace the Liberty server.xml configuration file.
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-microprofile-graphql/start/graphql/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-graphql/start/graphql/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-graphql/start/graphql/src/main/liberty/config/server.xml"}
 
@@ -1017,8 +1017,6 @@ rm -fr guide-microprofile-graphql
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Optimizing%20REST%20queries%20for%20microservices%20with%20GraphQL&guide-id=cloud-hosted-guide-microprofile-graphql)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
