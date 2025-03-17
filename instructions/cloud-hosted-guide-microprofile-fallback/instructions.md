@@ -82,7 +82,7 @@ You see the system properties for this host. When you run this curl command, som
 Update the ***CustomConfigSource*** configuration file. Change the ***io_openliberty_guides_system_inMaintenance*** property from ***false*** to ***true*** and save the file.
 
 > To open the CustomConfigSource.json file in your IDE, select 
-> **File** > **Open** > guide-microprofile-fallback/finish/resources/CustomConfigSource.json, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-fallback/finish/resources/CustomConfigSource.json, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-fallback/finish/resources/CustomConfigSource.json"}
 
@@ -105,7 +105,7 @@ When you are done checking out the application, go to the ***CustomConfigSource.
 Update the ***CustomConfigSource*** configuration file. Change the ***io_openliberty_guides_system_inMaintenance*** property from ***true*** to ***false*** to set this condition back to its original value.
 
 > To open the CustomConfigSource.json file in your IDE, select 
-> **File** > **Open** > guide-microprofile-fallback/finish/resources/CustomConfigSource.json, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-fallback/finish/resources/CustomConfigSource.json, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-fallback/finish/resources/CustomConfigSource.json"}
 
@@ -311,7 +311,7 @@ You can test the fault tolerance mechanism of your microservices by dynamically 
 Update the configuration file. Change the ***io_openliberty_guides_system_inMaintenance*** property from ***false*** to ***true*** and save the file.
 
 > To open the CustomConfigSource.json file in your IDE, select 
-> **File** > **Open** > guide-microprofile-fallback/start/resources/CustomConfigSource.json, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-fallback/start/resources/CustomConfigSource.json, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-fallback/start/resources/CustomConfigSource.json"}
 
@@ -361,7 +361,7 @@ From the output, the ***base_ft_invocations_total{fallback="notApplied",*** ***m
 Update the configuration file. After you finish, change the ***io_openliberty_guides_system_inMaintenance*** property value back to ***false*** in the ***resources/CustomConfigSource.json*** file.
 
 > To open the CustomConfigSource.json file in your IDE, select 
-> **File** > **Open** > guide-microprofile-fallback/start/resources/CustomConfigSource.json, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-fallback/start/resources/CustomConfigSource.json, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-fallback/start/resources/CustomConfigSource.json"}
 
