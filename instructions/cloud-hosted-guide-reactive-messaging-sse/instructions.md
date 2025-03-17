@@ -80,7 +80,7 @@ touch /home/project/guide-reactive-messaging-sse/start/bff/src/main/java/io/open
 
 
 > Then, to open the BFFResource.java file in your IDE, select
-> **File** > **Open** > guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java, or click the following button
+> ***File*** > ***Open*** > guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java, or click the following button
 
 ::openFile{path="/home/project/guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java"}
 
@@ -153,7 +153,7 @@ public class BFFResource {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 ### Creating the SSE API endpoint
@@ -191,7 +191,7 @@ touch /home/project/guide-reactive-messaging-sse/start/bff/src/main/resources/ME
 
 
 > Then, to open the microprofile-config.properties file in your IDE, select
-> **File** > **Open** > guide-reactive-messaging-sse/start/bff/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+> ***File*** > ***Open*** > guide-reactive-messaging-sse/start/bff/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
 ::openFile{path="/home/project/guide-reactive-messaging-sse/start/bff/src/main/resources/META-INF/microprofile-config.properties"}
 
@@ -228,7 +228,7 @@ touch /home/project/guide-reactive-messaging-sse/start/frontend/src/main/webapp/
 
 
 > Then, to open the index.js file in your IDE, select
-> **File** > **Open** > guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js, or click the following button
+> ***File*** > ***Open*** > guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js, or click the following button
 
 ::openFile{path="/home/project/guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js"}
 
@@ -366,8 +366,6 @@ rm -fr guide-reactive-messaging-sse
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Streaming%20updates%20to%20a%20client%20using%20Server-Sent%20Events&guide-id=cloud-hosted-guide-reactive-messaging-sse)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

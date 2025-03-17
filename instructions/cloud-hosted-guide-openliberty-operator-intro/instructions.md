@@ -136,7 +136,7 @@ touch /home/project/guide-openliberty-operator-intro/start/deploy.yaml
 
 
 > Then, to open the deploy.yaml file in your IDE, select
-> **File** > **Open** > guide-openliberty-operator-intro/start/deploy.yaml, or click the following button
+> ***File*** > ***Open*** > guide-openliberty-operator-intro/start/deploy.yaml, or click the following button
 
 ::openFile{path="/home/project/guide-openliberty-operator-intro/start/deploy.yaml"}
 
@@ -164,7 +164,7 @@ spec:
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 The ***deploy.yaml*** file is configured to deploy one ***OpenLibertyApplication*** resource, ***system***, which is controlled by the Open Liberty Operator.
@@ -247,7 +247,7 @@ To configure the Kubernetes liveness, readiness and startup probes by using the 
 Replace the ***deploy.yaml*** configuration file.
 
 > To open the deploy.yaml file in your IDE, select
-> **File** > **Open** > guide-openliberty-operator-intro/start/deploy.yaml, or click the following button
+> ***File*** > ***Open*** > guide-openliberty-operator-intro/start/deploy.yaml, or click the following button
 
 ::openFile{path="/home/project/guide-openliberty-operator-intro/start/deploy.yaml"}
 
@@ -373,8 +373,6 @@ rm -fr guide-openliberty-operator-intro
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Deploying%20a%20microservice%20to%20Kubernetes%20using%20Open%20Liberty%20Operator&guide-id=cloud-hosted-guide-openliberty-operator-intro)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

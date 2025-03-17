@@ -130,7 +130,7 @@ Because all Jakarta Restful Web Services annotations are processed by default, y
 Replace the ***InventoryResource*** class.
 
 > To open the InventoryResource.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java"}
 
@@ -218,7 +218,7 @@ public class InventoryResource {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
 Add OpenAPI ***@APIResponse***, ***@APIResponseSchema***, ***@Operation***, and ***@Parameter*** annotations to the two JAX-RS endpoint methods, ***getPropertiesForHost()*** and ***listContents()***.
@@ -286,7 +286,7 @@ OpenAPI annotations can also be added to POJOs to describe what they represent. 
 Replace the ***InventoryList*** class.
 
 > To open the InventoryList.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/model/InventoryList.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/model/InventoryList.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/model/InventoryList.java"}
 
@@ -329,7 +329,7 @@ Likewise, annotate the ***src/main/java/io/openliberty/guides/inventory/model/Sy
 Replace the ***SystemData*** class.
 
 > To open the SystemData.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/model/SystemData.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/model/SystemData.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/model/SystemData.java"}
 
@@ -428,7 +428,7 @@ touch /home/project/guide-microprofile-openapi/start/src/main/java/io/openlibert
 
 
 > Then, to open the InventoryOASFilter.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/filter/InventoryOASFilter.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/filter/InventoryOASFilter.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/filter/InventoryOASFilter.java"}
 
@@ -503,7 +503,7 @@ touch /home/project/guide-microprofile-openapi/start/src/main/resources/META-INF
 
 
 > Then, to open the microprofile-config.properties file in your IDE, select
-> **File** > **Open** > guide-microprofile-openapi/start/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-openapi/start/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-openapi/start/src/main/resources/META-INF/microprofile-config.properties"}
 
@@ -570,7 +570,7 @@ touch /home/project/guide-microprofile-openapi/start/src/main/resources/META-INF
 
 
 > Then, to open the openapi.yaml file in your IDE, select
-> **File** > **Open** > guide-microprofile-openapi/start/src/main/resources/META-INF/openapi.yaml, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-openapi/start/src/main/resources/META-INF/openapi.yaml, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-openapi/start/src/main/resources/META-INF/openapi.yaml"}
 
@@ -671,7 +671,7 @@ This document is the same as your current OpenAPI document with extra APIs for t
 Replace the configuration file.
 
 > To open the microprofile-config.properties file in your IDE, select
-> **File** > **Open** > guide-microprofile-openapi/start/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-openapi/start/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-openapi/start/src/main/resources/META-INF/microprofile-config.properties"}
 
@@ -775,8 +775,6 @@ rm -fr guide-microprofile-openapi
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Documenting%20RESTful%20APIs&guide-id=cloud-hosted-guide-microprofile-openapi)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

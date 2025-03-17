@@ -107,7 +107,7 @@ Configure the Liberty to allow the ***/configurations/simple*** endpoint to acce
 Replace the Liberty ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-cors/start/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-cors/start/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-cors/start/src/main/liberty/config/server.xml"}
 
@@ -141,7 +141,7 @@ Replace the Liberty ***server.xml*** configuration file.
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
 The CORS configuration contains the following attributes:
@@ -165,7 +165,7 @@ Now, test the simple CORS configuration that you added. Add the ***testSimpleCor
 Replace the ***CorsIT*** class.
 
 > To open the CorsIT.java file in your IDE, select
-> **File** > **Open** > guide-cors/start/src/test/java/it/io/openliberty/guides/cors/CorsIT.java, or click the following button
+> ***File*** > ***Open*** > guide-cors/start/src/test/java/it/io/openliberty/guides/cors/CorsIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-cors/start/src/test/java/it/io/openliberty/guides/cors/CorsIT.java"}
 
@@ -270,7 +270,7 @@ Configure the Liberty to allow the ***/configurations/preflight*** endpoint to a
 Replace the Liberty ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-cors/start/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-cors/start/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-cors/start/src/main/liberty/config/server.xml"}
 
@@ -332,7 +332,7 @@ Add another test to the ***CorsIT.java*** file to test the preflight CORS config
 Replace the ***CorsIT*** class.
 
 > To open the CorsIT.java file in your IDE, select
-> **File** > **Open** > guide-cors/start/src/test/java/it/io/openliberty/guides/cors/CorsIT.java, or click the following button
+> ***File*** > ***Open*** > guide-cors/start/src/test/java/it/io/openliberty/guides/cors/CorsIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-cors/start/src/test/java/it/io/openliberty/guides/cors/CorsIT.java"}
 
@@ -477,8 +477,6 @@ rm -fr guide-cors
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Enabling%20Cross-Origin%20Resource%20Sharing%20(CORS)&guide-id=cloud-hosted-guide-cors)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

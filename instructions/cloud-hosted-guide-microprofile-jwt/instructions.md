@@ -160,7 +160,7 @@ touch /home/project/guide-microprofile-jwt/start/system/src/main/java/io/openlib
 
 
 > Then, to open the SystemResource.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java"}
 
@@ -215,7 +215,7 @@ public class SystemResource {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 This class has role-based access control. The role names that are used in the ***@RolesAllowed*** annotations are mapped to group names in the ***groups*** claim of the JWT, which results in an authorization decision wherever the security constraint is applied.
@@ -240,7 +240,7 @@ touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openl
 
 
 > Then, to open the SystemClient.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java"}
 
@@ -300,7 +300,7 @@ touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openl
 
 
 > Then, to open the ApplicationBean.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java"}
 
@@ -377,7 +377,7 @@ touch /home/project/guide-microprofile-jwt/start/system/src/main/resources/META-
 
 
 > Then, to open the microprofile-config.properties file in your IDE, select
-> **File** > **Open** > guide-microprofile-jwt/start/system/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-jwt/start/system/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/main/resources/META-INF/microprofile-config.properties"}
 
@@ -411,7 +411,7 @@ Next, add the MicroProfile JSON Web Token feature to the Liberty ***server.xml**
 Replace the system ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-microprofile-jwt/start/system/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-jwt/start/system/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/main/liberty/config/server.xml"}
 
@@ -522,7 +522,7 @@ touch /home/project/guide-microprofile-jwt/start/system/src/test/java/it/io/open
 
 
 > Then, to open the SystemEndpointIT.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java"}
 
@@ -692,8 +692,6 @@ rm -fr guide-microprofile-jwt
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Securing%20microservices%20with%20JSON%20Web%20Tokens&guide-id=cloud-hosted-guide-microprofile-jwt)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

@@ -157,7 +157,7 @@ touch /home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guide
 
 
 > Then, to open the MongoProducer.java file in your IDE, select
-> **File** > **Open** > guide-mongodb-intro/start/src/main/java/io/openliberty/guides/mongo/MongoProducer.java, or click the following button
+> ***File*** > ***Open*** > guide-mongodb-intro/start/src/main/java/io/openliberty/guides/mongo/MongoProducer.java, or click the following button
 
 ::openFile{path="/home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/mongo/MongoProducer.java"}
 
@@ -249,7 +249,7 @@ public class MongoProducer {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 
@@ -278,7 +278,7 @@ touch /home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guide
 
 
 > Then, to open the CrewService.java file in your IDE, select
-> **File** > **Open** > guide-mongodb-intro/start/src/main/java/io/openliberty/guides/application/CrewService.java, or click the following button
+> ***File*** > ***Open*** > guide-mongodb-intro/start/src/main/java/io/openliberty/guides/application/CrewService.java, or click the following button
 
 ::openFile{path="/home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/application/CrewService.java"}
 
@@ -587,7 +587,7 @@ touch /home/project/guide-mongodb-intro/start/src/main/resources/META-INF/microp
 
 
 > Then, to open the microprofile-config.properties file in your IDE, select
-> **File** > **Open** > guide-mongodb-intro/start/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+> ***File*** > ***Open*** > guide-mongodb-intro/start/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
 ::openFile{path="/home/project/guide-mongodb-intro/start/src/main/resources/META-INF/microprofile-config.properties"}
 
@@ -610,7 +610,7 @@ To create a CDI producer for MongoDB and connect over TLS, the Open Liberty need
 Replace the Liberty ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-mongodb-intro/start/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-mongodb-intro/start/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-mongodb-intro/start/src/main/liberty/config/server.xml"}
 
@@ -796,7 +796,7 @@ touch /home/project/guide-mongodb-intro/start/src/test/java/it/io/openliberty/gu
 
 
 > Then, to open the CrewServiceIT.java file in your IDE, select
-> **File** > **Open** > guide-mongodb-intro/start/src/test/java/it/io/openliberty/guides/application/CrewServiceIT.java, or click the following button
+> ***File*** > ***Open*** > guide-mongodb-intro/start/src/test/java/it/io/openliberty/guides/application/CrewServiceIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-mongodb-intro/start/src/test/java/it/io/openliberty/guides/application/CrewServiceIT.java"}
 
@@ -1036,8 +1036,6 @@ rm -fr guide-mongodb-intro
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Persisting%20data%20with%20MongoDB&guide-id=cloud-hosted-guide-mongodb-intro)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

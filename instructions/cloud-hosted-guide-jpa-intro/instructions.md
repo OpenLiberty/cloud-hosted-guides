@@ -137,7 +137,7 @@ touch /home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openl
 
 
 > Then, to open the Event.java file in your IDE, select
-> **File** > **Open** > guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/models/Event.java, or click the following button
+> ***File*** > ***Open*** > guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/models/Event.java, or click the following button
 
 ::openFile{path="/home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/models/Event.java"}
 
@@ -276,7 +276,7 @@ public class Event implements Serializable {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 The following table breaks down the new annotations:
@@ -304,7 +304,7 @@ touch /home/project/guide-jpa-intro/start/backendServices/src/main/resources/MET
 
 
 > Then, to open the persistence.xml file in your IDE, select
-> **File** > **Open** > guide-jpa-intro/start/backendServices/src/main/resources/META-INF/persistence.xml, or click the following button
+> ***File*** > ***Open*** > guide-jpa-intro/start/backendServices/src/main/resources/META-INF/persistence.xml, or click the following button
 
 ::openFile{path="/home/project/guide-jpa-intro/start/backendServices/src/main/resources/META-INF/persistence.xml"}
 
@@ -354,7 +354,7 @@ touch /home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openl
 
 
 > Then, to open the EventDao.java file in your IDE, select
-> **File** > **Open** > guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/dao/EventDao.java, or click the following button
+> ***File*** > ***Open*** > guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/dao/EventDao.java, or click the following button
 
 ::openFile{path="/home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/dao/EventDao.java"}
 
@@ -434,7 +434,7 @@ To use a Derby database, you need to download its libraries and store them to th
 Replace the ***backendServices/pom.xml*** configuration file.
 
 > To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-jpa-intro/start/backendServices/pom.xml, or click the following button
+> ***File*** > ***Open*** > guide-jpa-intro/start/backendServices/pom.xml, or click the following button
 
 ::openFile{path="/home/project/guide-jpa-intro/start/backendServices/pom.xml"}
 
@@ -611,7 +611,7 @@ touch /home/project/guide-jpa-intro/start/backendServices/src/test/java/it/io/op
 
 
 > Then, to open the EventEntityIT.java file in your IDE, select
-> **File** > **Open** > guide-jpa-intro/start/backendServices/src/test/java/it/io/openliberty/guides/event/EventEntityIT.java, or click the following button
+> ***File*** > ***Open*** > guide-jpa-intro/start/backendServices/src/test/java/it/io/openliberty/guides/event/EventEntityIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-jpa-intro/start/backendServices/src/test/java/it/io/openliberty/guides/event/EventEntityIT.java"}
 
@@ -797,8 +797,6 @@ rm -fr guide-jpa-intro
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Accessing%20and%20persisting%20data%20in%20microservices%20using%20Java%20Persistence%20API%20(JPA)&guide-id=cloud-hosted-guide-jpa-intro)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

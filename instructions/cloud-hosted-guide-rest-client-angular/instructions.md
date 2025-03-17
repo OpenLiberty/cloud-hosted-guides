@@ -160,7 +160,7 @@ touch /home/project/guide-rest-client-angular/start/src/main/frontend/src/app/ap
 
 
 > Then, to open the app.module.ts file in your IDE, select
-> **File** > **Open** > guide-rest-client-angular/start/src/main/frontend/src/app/app.module.ts, or click the following button
+> ***File*** > ***Open*** > guide-rest-client-angular/start/src/main/frontend/src/app/app.module.ts, or click the following button
 
 ::openFile{path="/home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.module.ts"}
 
@@ -187,7 +187,7 @@ export class AppModule { }
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 The ***HttpClientModule*** imports the class into the file. By using the ***@NgModule*** tag, you can declare a module and organize  your dependencies within the Angular framework. The ***imports*** array is a declaration array that imports the ***HttpClientModule*** so that you can use the HTTP Client module in your application.
@@ -208,7 +208,7 @@ touch /home/project/guide-rest-client-angular/start/src/main/frontend/src/app/ap
 
 
 > Then, to open the app.component.ts file in your IDE, select
-> **File** > **Open** > guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts, or click the following button
+> ***File*** > ***Open*** > guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts, or click the following button
 
 ::openFile{path="/home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts"}
 
@@ -274,7 +274,7 @@ Update the ***AppComponent*** class to use the artists service to fetch the arti
 Update the ***app.component.ts*** file.
 
 > To open the app.component.ts file in your IDE, select
-> **File** > **Open** > guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts, or click the following button
+> ***File*** > ***Open*** > guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts, or click the following button
 
 ::openFile{path="/home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts"}
 
@@ -346,7 +346,7 @@ touch /home/project/guide-rest-client-angular/start/src/main/frontend/src/app/ap
 
 
 > Then, to open the app.component.html file in your IDE, select
-> **File** > **Open** > guide-rest-client-angular/start/src/main/frontend/src/app/app.component.html, or click the following button
+> ***File*** > ***Open*** > guide-rest-client-angular/start/src/main/frontend/src/app/app.component.html, or click the following button
 
 ::openFile{path="/home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.component.html"}
 
@@ -435,8 +435,6 @@ rm -fr guide-rest-client-angular
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20a%20RESTful%20web%20service%20with%20Angular&guide-id=cloud-hosted-guide-rest-client-angular)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

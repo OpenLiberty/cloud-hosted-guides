@@ -172,7 +172,7 @@ To add the MicroProfile Health feature to the Liberty instance, include the ***m
 Replace the Liberty ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-getting-started/start/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-getting-started/start/src/main/liberty/config/server.xml"}
 
@@ -208,7 +208,7 @@ Replace the Liberty ***server.xml*** configuration file.
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
 After you make the file changes, Open Liberty automatically reloads its configuration. When enabled, the ***mpHealth*** feature automatically adds a ***/health*** endpoint to the application. You can see the instance being updated in the Liberty log displayed in your command-line session:
@@ -268,7 +268,7 @@ touch /home/project/guide-getting-started/start/src/main/java/io/openliberty/sam
 
 
 > Then, to open the SystemReadinessCheck.java file in your IDE, select
-> **File** > **Open** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java, or click the following button
+> ***File*** > ***Open*** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java, or click the following button
 
 ::openFile{path="/home/project/guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java"}
 
@@ -323,7 +323,7 @@ touch /home/project/guide-getting-started/start/src/main/java/io/openliberty/sam
 
 
 > Then, to open the SystemLivenessCheck.java file in your IDE, select
-> **File** > **Open** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java, or click the following button
+> ***File*** > ***Open*** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java, or click the following button
 
 ::openFile{path="/home/project/guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java"}
 
@@ -450,7 +450,7 @@ Try enabling detailed logging of the MicroProfile Health feature by adding the *
 Replace the Liberty ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-getting-started/start/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-getting-started/start/src/main/liberty/config/server.xml"}
 
@@ -631,7 +631,7 @@ Update the ***server.xml*** file to change the context root from ***/*** to ***/
 Replace the Liberty ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-getting-started/start/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-getting-started/start/src/main/liberty/config/server.xml"}
 
@@ -700,7 +700,7 @@ Update the ***pom.xml*** file to change the context root from ***/*** to ***/dev
 Replace the pom.xml file.
 
 > To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-getting-started/start/pom.xml, or click the following button
+> ***File*** > ***Open*** > guide-getting-started/start/pom.xml, or click the following button
 
 ::openFile{path="/home/project/guide-getting-started/start/pom.xml"}
 
@@ -890,8 +890,6 @@ rm -fr guide-getting-started
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Getting%20started%20with%20Open%20Liberty&guide-id=cloud-hosted-guide-getting-started)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

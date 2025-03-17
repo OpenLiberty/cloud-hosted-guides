@@ -140,7 +140,7 @@ element, where the ***contextRoot*** attribute is specified as ***"/"***. You'll
 Replace the ***server.xml*** file.
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-kubernetes-microprofile-config/start/system/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-kubernetes-microprofile-config/start/system/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-kubernetes-microprofile-config/start/system/src/main/liberty/config/server.xml"}
 
@@ -180,7 +180,7 @@ Replace the ***server.xml*** file.
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
 The ***contextRoot*** attribute in the ***webApplication*** element now gets its value from the ***context.root*** variable. To find a value for the ***context.root*** variable, Open Liberty looks for the following environment variables, in order:
@@ -197,7 +197,7 @@ The ***inventory*** service is hardcoded to use ***bob*** and ***bobpwd*** as th
 Replace the ***SystemClient*** class.
 
 > To open the SystemClient.java file in your IDE, select
-> **File** > **Open** > guide-kubernetes-microprofile-config/start/inventory/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java, or click the following button
+> ***File*** > ***Open*** > guide-kubernetes-microprofile-config/start/inventory/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java, or click the following button
 
 ::openFile{path="/home/project/guide-kubernetes-microprofile-config/start/inventory/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java"}
 
@@ -332,7 +332,7 @@ Next, you will update your Kubernetes deployments to set the environment variabl
 Replace the kubernetes file.
 
 > To open the kubernetes.yaml file in your IDE, select
-> **File** > **Open** > guide-kubernetes-microprofile-config/start/kubernetes.yaml, or click the following button
+> ***File*** > ***Open*** > guide-kubernetes-microprofile-config/start/kubernetes.yaml, or click the following button
 
 ::openFile{path="/home/project/guide-kubernetes-microprofile-config/start/kubernetes.yaml"}
 
@@ -680,8 +680,6 @@ rm -fr guide-kubernetes-microprofile-config
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Configuring%20microservices%20running%20in%20Kubernetes&guide-id=cloud-hosted-guide-kubernetes-microprofile-config)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

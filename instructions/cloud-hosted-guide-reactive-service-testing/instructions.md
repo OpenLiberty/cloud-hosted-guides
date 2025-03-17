@@ -186,7 +186,7 @@ touch /home/project/guide-reactive-service-testing/start/system/src/test/java/it
 
 
 > Then, to open the SystemServiceIT.java file in your IDE, select
-> **File** > **Open** > guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java, or click the following button
+> ***File*** > ***Open*** > guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java"}
 
@@ -334,7 +334,7 @@ public class SystemServiceIT {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 
@@ -441,7 +441,7 @@ touch /home/project/guide-reactive-service-testing/start/inventory/src/test/java
 
 
 > Then, to open the InventoryResourceClient.java file in your IDE, select
-> **File** > **Open** > guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java, or click the following button
+> ***File*** > ***Open*** > guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java, or click the following button
 
 ::openFile{path="/home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java"}
 
@@ -490,7 +490,7 @@ touch /home/project/guide-reactive-service-testing/start/inventory/src/test/java
 
 
 > Then, to open the InventoryServiceIT.java file in your IDE, select
-> **File** > **Open** > guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java, or click the following button
+> ***File*** > ***Open*** > guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java"}
 
@@ -756,8 +756,6 @@ rm -fr guide-reactive-service-testing
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Testing%20reactive%20Java%20microservices&guide-id=cloud-hosted-guide-reactive-service-testing)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

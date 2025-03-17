@@ -110,7 +110,7 @@ touch /home/project/guide-openliberty-operator-openshift/start/build.yaml
 
 
 > Then, to open the build.yaml file in your IDE, select
-> **File** > **Open** > guide-openliberty-operator-openshift/start/build.yaml, or click the following button
+> ***File*** > ***Open*** > guide-openliberty-operator-openshift/start/build.yaml, or click the following button
 
 ::openFile{path="/home/project/guide-openliberty-operator-openshift/start/build.yaml"}
 
@@ -149,7 +149,7 @@ objects:
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 The ***build.yaml*** template includes two objects. The ***ImageStream*** object provides an abstraction from the image in the image registry, which allows you to reference and tag the image. The image registry is the integrated internal OpenShift Container Registry.
@@ -248,7 +248,7 @@ touch /home/project/guide-openliberty-operator-openshift/start/deploy.yaml
 
 
 > Then, to open the deploy.yaml file in your IDE, select
-> **File** > **Open** > guide-openliberty-operator-openshift/start/deploy.yaml, or click the following button
+> ***File*** > ***Open*** > guide-openliberty-operator-openshift/start/deploy.yaml, or click the following button
 
 ::openFile{path="/home/project/guide-openliberty-operator-openshift/start/deploy.yaml"}
 
@@ -368,7 +368,7 @@ To configure the Kubernetes liveness, readiness and startup probes by using the 
 Replace the ***deploy.yaml*** configuration file.
 
 > To open the deploy.yaml file in your IDE, select
-> **File** > **Open** > guide-openliberty-operator-openshift/start/deploy.yaml, or click the following button
+> ***File*** > ***Open*** > guide-openliberty-operator-openshift/start/deploy.yaml, or click the following button
 
 ::openFile{path="/home/project/guide-openliberty-operator-openshift/start/deploy.yaml"}
 
@@ -488,8 +488,6 @@ rm -fr guide-openliberty-operator-openshift
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Deploying%20a%20microservice%20to%20OpenShift%204%20using%20Open%20Liberty%20Operator&guide-id=cloud-hosted-guide-openliberty-operator-openshift)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

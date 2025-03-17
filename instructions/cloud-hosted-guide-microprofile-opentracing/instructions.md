@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-497-instruction
-version-history-start-date: 2020-10-05 09:33:58 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Enabling distributed tracing in microservices with Zipkin guide!"}
@@ -169,7 +166,7 @@ Enable tracing of the ***list()*** non-JAX-RS method by adding the ***@Traced***
 Replace the ***InventoryManager*** class.
 
 > To open the InventoryManager.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-opentracing/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-opentracing/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-opentracing/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
 
@@ -222,7 +219,7 @@ public class InventoryManager {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
 The ***@Traced*** annotation can be configured with the following two parameters:
@@ -251,7 +248,7 @@ Now, disable tracing on the ***InventoryResource*** class by setting ***@Traced(
 Replace the ***InventoryResource*** class.
 
 > To open the InventoryResource.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-opentracing/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-opentracing/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-opentracing/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java"}
 
@@ -331,7 +328,7 @@ After injecting it, the ***Tracer*** will be used to build a ***Span***. The ***
 Replace the ***InventoryManager*** class.
 
 > To open the InventoryManager.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-opentracing/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-opentracing/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-opentracing/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
 
@@ -470,8 +467,6 @@ rm -fr guide-microprofile-opentracing
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Enabling%20distributed%20tracing%20in%20microservices%20with%20Zipkin&guide-id=cloud-hosted-guide-microprofile-opentracing)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

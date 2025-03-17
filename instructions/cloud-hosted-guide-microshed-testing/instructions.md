@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-478-instruction
-version-history-start-date: 2020-04-22 13:18:21 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Testing a MicroProfile or Jakarta EE application guide!"}
@@ -138,7 +135,7 @@ The ***PersonServiceIT*** class outlines some basic information that informs how
 Replace the ***PersonServiceIT*** class.
 
 > To open the PersonServiceIT.java file in your IDE, select
-> **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java, or click the following button
+> ***File*** > ***Open*** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java"}
 
@@ -173,7 +170,7 @@ public class PersonServiceIT {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
 Import the ***ApplicationContainer*** class and the ***Container*** annotation, create the ***ApplicationContainer*** application, and annotate the application with ***@Container*** annotation.
@@ -216,7 +213,7 @@ Now that the setup is complete, you can write your first test case. Start by tes
 Replace the ***PersonServiceIT*** class.
 
 > To open the PersonServiceIT.java file in your IDE, select
-> **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java, or click the following button
+> ***File*** > ***Open*** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java"}
 
@@ -269,7 +266,7 @@ Next, add more tests.
 Replace the ***PersonServiceIT*** class.
 
 > To open the PersonServiceIT.java file in your IDE, select
-> **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java, or click the following button
+> ***File*** > ***Open*** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java"}
 
@@ -404,7 +401,7 @@ touch /home/project/guide-microshed-testing/start/src/test/java/io/openliberty/g
 
 
 > Then, to open the ErrorPathIT.java file in your IDE, select
-> **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java, or click the following button
+> ***File*** > ***Open*** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java"}
 
@@ -484,7 +481,7 @@ touch /home/project/guide-microshed-testing/start/src/test/java/io/openliberty/g
 
 
 > Then, to open the AppDeploymentConfig.java file in your IDE, select
-> **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/AppDeploymentConfig.java, or click the following button
+> ***File*** > ***Open*** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/AppDeploymentConfig.java, or click the following button
 
 ::openFile{path="/home/project/guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/AppDeploymentConfig.java"}
 
@@ -521,7 +518,7 @@ Next, annotate the ***PersonServiceIT*** class with the ***@SharedContainerConfi
 Replace the ***PersonServiceIT*** class.
 
 > To open the PersonServiceIT.java file in your IDE, select
-> **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java, or click the following button
+> ***File*** > ***Open*** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java"}
 
@@ -628,7 +625,7 @@ Next, annotate the ***ErrorPathIT*** class with the ***@SharedContainerConfig***
 Replace the ***ErrorPathIT*** class.
 
 > To open the ErrorPathIT.java file in your IDE, select
-> **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java, or click the following button
+> ***File*** > ***Open*** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java"}
 
@@ -714,8 +711,6 @@ rm -fr guide-microshed-testing
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Testing%20a%20MicroProfile%20or%20Jakarta%20EE%20application&guide-id=cloud-hosted-guide-microshed-testing)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

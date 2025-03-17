@@ -91,7 +91,7 @@ touch /home/project/guide-docker/start/Dockerfile
 
 
 > Then, to open the Dockerfile file in your IDE, select
-> **File** > **Open** > guide-docker/start/Dockerfile, or click the following button
+> ***File*** > ***Open*** > guide-docker/start/Dockerfile, or click the following button
 
 ::openFile{path="/home/project/guide-docker/start/Dockerfile"}
 
@@ -126,7 +126,7 @@ USER 1001
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 The ***FROM*** instruction initializes a new build stage and indicates the parent image from which your image is built. If you don't need a parent image, then use ***FROM scratch***, which makes your image a base image. In this case, you’re using the ***icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi*** image as your parent image, which comes with the latest Open Liberty runtime.
@@ -202,7 +202,7 @@ With your container running, make the following update to the source code:
 Update the ***PropertiesResource*** class.
 
 > To open the PropertiesResource.java file in your IDE, select
-> **File** > **Open** > guide-docker/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java, or click the following button
+> ***File*** > ***Open*** > guide-docker/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java, or click the following button
 
 ::openFile{path="/home/project/guide-docker/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java"}
 
@@ -267,7 +267,7 @@ touch /home/project/guide-docker/start/src/test/java/it/io/openliberty/guides/re
 
 
 > Then, to open the EndpointIT.java file in your IDE, select
-> **File** > **Open** > guide-docker/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java, or click the following button
+> ***File*** > ***Open*** > guide-docker/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-docker/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java"}
 
@@ -389,8 +389,6 @@ rm -fr guide-docker
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Using%20Docker%20containers%20to%20develop%20microservices&guide-id=cloud-hosted-guide-docker)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
