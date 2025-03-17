@@ -140,7 +140,7 @@ touch /home/project/guide-bean-validation/start/src/main/java/io/openliberty/gui
 
 
 > Then, to open the Astronaut.java file in your IDE, select
-> **File** > **Open** > guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/Astronaut.java, or click the following button
+> ***File*** > ***Open*** > guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/Astronaut.java, or click the following button
 
 ::openFile{path="/home/project/guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/Astronaut.java"}
 
@@ -199,7 +199,7 @@ public class Astronaut implements Serializable {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 The bean stores the attributes of an astronaut, ***name***, ***age***, and ***emailAddress***, and provides getters and setters to access and set the values.
@@ -223,7 +223,7 @@ touch /home/project/guide-bean-validation/start/src/main/java/io/openliberty/gui
 
 
 > Then, to open the Spacecraft.java file in your IDE, select
-> **File** > **Open** > guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/Spacecraft.java, or click the following button
+> ***File*** > ***Open*** > guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/Spacecraft.java, or click the following button
 
 ::openFile{path="/home/project/guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/Spacecraft.java"}
 
@@ -319,7 +319,7 @@ To create the custom constraint for ***@SerialNumber***, begin by creating an an
 Replace the annotation.
 
 > To open the SerialNumber.java file in your IDE, select
-> **File** > **Open** > guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/SerialNumber.java, or click the following button
+> ***File*** > ***Open*** > guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/SerialNumber.java, or click the following button
 
 ::openFile{path="/home/project/guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/SerialNumber.java"}
 
@@ -367,7 +367,7 @@ Now, create the class that provides the validation for the ***@SerialNumber*** c
 Replace the ***SerialNumberValidator*** class.
 
 > To open the SerialNumberValidator.java file in your IDE, select
-> **File** > **Open** > guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/SerialNumberValidator.java, or click the following button
+> ***File*** > ***Open*** > guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/SerialNumberValidator.java, or click the following button
 
 ::openFile{path="/home/project/guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/SerialNumberValidator.java"}
 
@@ -420,7 +420,7 @@ touch /home/project/guide-bean-validation/start/src/main/java/io/openliberty/gui
 
 
 > Then, to open the BeanValidationEndpoint.java file in your IDE, select
-> **File** > **Open** > guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/BeanValidationEndpoint.java, or click the following button
+> ***File*** > ***Open*** > guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/BeanValidationEndpoint.java, or click the following button
 
 ::openFile{path="/home/project/guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/BeanValidationEndpoint.java"}
 
@@ -518,7 +518,7 @@ Finally, add the Bean Validation feature in the application by updating the Libe
 Replace the Liberty ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-bean-validation/start/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-bean-validation/start/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-bean-validation/start/src/main/liberty/config/server.xml"}
 
@@ -609,7 +609,7 @@ touch /home/project/guide-bean-validation/start/src/test/java/it/io/openliberty/
 
 
 > Then, to open the BeanValidationIT.java file in your IDE, select
-> **File** > **Open** > guide-bean-validation/start/src/test/java/it/io/openliberty/guides/beanvalidation/BeanValidationIT.java, or click the following button
+> ***File*** > ***Open*** > guide-bean-validation/start/src/test/java/it/io/openliberty/guides/beanvalidation/BeanValidationIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-bean-validation/start/src/test/java/it/io/openliberty/guides/beanvalidation/BeanValidationIT.java"}
 
@@ -811,8 +811,6 @@ rm -fr guide-bean-validation
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Validating%20constraints%20with%20microservices&guide-id=cloud-hosted-guide-bean-validation)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

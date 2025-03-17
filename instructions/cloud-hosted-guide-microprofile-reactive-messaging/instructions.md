@@ -72,7 +72,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/
 
 
 > Then, to open the SystemService.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
 
@@ -124,7 +124,7 @@ public class SystemService {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 
@@ -148,7 +148,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/inventory/src/ma
 
 
 > Then, to open the InventoryResource.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-reactive-messaging/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-reactive-messaging/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-reactive-messaging/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java"}
 
@@ -265,7 +265,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/
 
 
 > Then, to open the microprofile-config.properties file in your IDE, select
-> **File** > **Open** > guide-microprofile-reactive-messaging/start/system/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-reactive-messaging/start/system/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-reactive-messaging/start/system/src/main/resources/META-INF/microprofile-config.properties"}
 
@@ -295,7 +295,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/inventory/src/ma
 
 
 > Then, to open the microprofile-config.properties file in your IDE, select
-> **File** > **Open** > guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties"}
 
@@ -328,7 +328,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/
 
 
 > Then, to open the server.xml file in your IDE, select
-> **File** > **Open** > guide-microprofile-reactive-messaging/start/system/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-reactive-messaging/start/system/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-reactive-messaging/start/system/src/main/liberty/config/server.xml"}
 
@@ -377,7 +377,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
 
 
 > Then, to open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-microprofile-reactive-messaging/start/system/pom.xml, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-reactive-messaging/start/system/pom.xml, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-reactive-messaging/start/system/pom.xml"}
 
@@ -662,8 +662,6 @@ rm -fr guide-microprofile-reactive-messaging
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20reactive%20Java%20microservices&guide-id=cloud-hosted-guide-microprofile-reactive-messaging)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

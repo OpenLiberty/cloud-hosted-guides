@@ -133,7 +133,7 @@ touch /home/project/guide-containerize/start/inventory/Dockerfile
 
 
 > Then, to open the Dockerfile file in your IDE, select
-> **File** > **Open** > guide-containerize/start/inventory/Dockerfile, or click the following button
+> ***File*** > ***Open*** > guide-containerize/start/inventory/Dockerfile, or click the following button
 
 ::openFile{path="/home/project/guide-containerize/start/inventory/Dockerfile"}
 
@@ -170,7 +170,7 @@ RUN configure.sh
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 The ***FROM*** instruction initializes a new build stage, which indicates the parent image of the built image. If you don't need a parent image, then you can use ***FROM scratch***, which makes your image a base image. 
@@ -194,7 +194,7 @@ touch /home/project/guide-containerize/start/system/Dockerfile
 
 
 > Then, to open the Dockerfile file in your IDE, select
-> **File** > **Open** > guide-containerize/start/system/Dockerfile, or click the following button
+> ***File*** > ***Open*** > guide-containerize/start/system/Dockerfile, or click the following button
 
 ::openFile{path="/home/project/guide-containerize/start/system/Dockerfile"}
 
@@ -377,7 +377,7 @@ As mentioned previously, the parent image that is used in each ***Dockerfile*** 
 Replace the ***Dockerfile*** for the inventory service.
 
 > To open the Dockerfile file in your IDE, select
-> **File** > **Open** > guide-containerize/start/inventory/Dockerfile, or click the following button
+> ***File*** > ***Open*** > guide-containerize/start/inventory/Dockerfile, or click the following button
 
 ::openFile{path="/home/project/guide-containerize/start/inventory/Dockerfile"}
 
@@ -426,7 +426,7 @@ Ensure that you repeat these instructions for the ***system*** service.
 Replace the ***Dockerfile*** for the system service.
 
 > To open the Dockerfile file in your IDE, select
-> **File** > **Open** > guide-containerize/start/system/Dockerfile, or click the following button
+> ***File*** > ***Open*** > guide-containerize/start/system/Dockerfile, or click the following button
 
 ::openFile{path="/home/project/guide-containerize/start/system/Dockerfile"}
 
@@ -543,7 +543,7 @@ touch /home/project/guide-containerize/start/system/src/test/java/it/io/openlibe
 
 
 > Then, to open the SystemEndpointIT.java file in your IDE, select
-> **File** > **Open** > guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java, or click the following button
+> ***File*** > ***Open*** > guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java"}
 
@@ -622,7 +622,7 @@ touch /home/project/guide-containerize/start/inventory/src/test/java/it/io/openl
 
 
 > Then, to open the InventoryEndpointIT.java file in your IDE, select
-> **File** > **Open** > guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java, or click the following button
+> ***File*** > ***Open*** > guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java"}
 
@@ -874,8 +874,6 @@ rm -fr guide-containerize
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Containerizing%20microservices&guide-id=cloud-hosted-guide-containerize)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

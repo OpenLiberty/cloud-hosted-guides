@@ -79,7 +79,7 @@ Update the ***SystemService.sendProperty*** method to use the ***MANUAL*** ackno
 Replace the ***SystemService*** class.
 
 > To open the SystemService.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-reactive-messaging-acknowledgment/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-reactive-messaging-acknowledgment/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-reactive-messaging-acknowledgment/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
 
@@ -164,7 +164,7 @@ public class SystemService {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
 The ***sendProperty()*** method needs to manually acknowledge the incoming messages, so it is annotated with the ***@Acknowledgment(Acknowledgment.Strategy.MANUAL)*** annotation. This annotation sets the method up to expect an incoming message. To meet the requirements of acknowledgment, the method parameter is updated to receive and return a ***Message*** of type ***String***, rather than just a ***String***. Then, the ***propertyName*** is extracted from the ***propertyMessage*** incoming message using the ***getPayload()*** method and checked for validity. One of the following outcomes occurs:
@@ -180,7 +180,7 @@ The ***inventory*** service contains an endpoint that accepts ***PUT*** requests
 Replace the ***InventoryResource*** class.
 
 > To open the InventoryResource.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-reactive-messaging-acknowledgment/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-reactive-messaging-acknowledgment/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-reactive-messaging-acknowledgment/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java"}
 
@@ -470,8 +470,6 @@ rm -fr guide-microprofile-reactive-messaging-acknowledgment
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Acknowledging%20messages%20using%20MicroProfile%20Reactive%20Messaging&guide-id=cloud-hosted-guide-microprofile-reactive-messaging-acknowledgment)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

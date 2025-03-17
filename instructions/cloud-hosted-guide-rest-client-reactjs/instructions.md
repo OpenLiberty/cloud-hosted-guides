@@ -158,7 +158,7 @@ touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/pa
 
 
 > Then, to open the page.jsx file in your IDE, select
-> **File** > **Open** > guide-rest-client-reactjs/start/src/main/frontend/src/app/page.jsx, or click the following button
+> ***File*** > ***Open*** > guide-rest-client-reactjs/start/src/main/frontend/src/app/page.jsx, or click the following button
 
 ::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/page.jsx"}
 
@@ -177,7 +177,7 @@ export default function Home() {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 The ***page.jsx*** file is a container for all other components. When the ***Home*** React component  is rendered, the ***ArtistTable*** components content are displayed.
@@ -193,7 +193,7 @@ touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/la
 
 
 > Then, to open the layout.jsx file in your IDE, select
-> **File** > **Open** > guide-rest-client-reactjs/start/src/main/frontend/src/app/layout.jsx, or click the following button
+> ***File*** > ***Open*** > guide-rest-client-reactjs/start/src/main/frontend/src/app/layout.jsx, or click the following button
 
 ::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/layout.jsx"}
 
@@ -234,7 +234,7 @@ touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/Ar
 
 
 > Then, to open the ArtistTable.jsx file in your IDE, select
-> **File** > **Open** > guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx, or click the following button
+> ***File*** > ***Open*** > guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx, or click the following button
 
 ::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx"}
 
@@ -424,7 +424,7 @@ The ***GetArtistsInfo()*** function uses the Axios API to fetch data from your b
 Update the ***ArtistTable.jsx*** file.
 
 > To open the ArtistTable.jsx file in your IDE, select
-> **File** > **Open** > guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx, or click the following button
+> ***File*** > ***Open*** > guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx, or click the following button
 
 ::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx"}
 
@@ -653,7 +653,7 @@ Click the following button to view the front end of your application:
 Update the ***pom.xml*** file.
 
 > To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-rest-client-reactjs/start/pom.xml, or click the following button
+> ***File*** > ***Open*** > guide-rest-client-reactjs/start/pom.xml, or click the following button
 
 ::openFile{path="/home/project/guide-rest-client-reactjs/start/pom.xml"}
 
@@ -852,8 +852,6 @@ rm -fr guide-rest-client-reactjs
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20a%20RESTful%20web%20service%20with%20ReactJS&guide-id=cloud-hosted-guide-rest-client-reactjs)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

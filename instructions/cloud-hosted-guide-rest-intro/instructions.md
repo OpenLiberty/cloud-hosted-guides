@@ -122,7 +122,7 @@ Jakarta Restful Web Services defines two key concepts for creating REST APIs. Th
 Replace the ***SystemApplication*** class.
 
 > To open the SystemApplication.java file in your IDE, select
-> **File** > **Open** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java, or click the following button
+> ***File*** > ***Open*** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java, or click the following button
 
 ::openFile{path="/home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java"}
 
@@ -141,7 +141,7 @@ public class SystemApplication extends Application {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
 The ***SystemApplication*** class extends the ***Application*** class, which associates all RESTful resource classes in the WAR file with this RESTful application. These resources become available under the common path that's specified with the ***@ApplicationPath*** annotation. The ***@ApplicationPath*** annotation has a value that indicates the path in the WAR file that the RESTful application accepts requests from.
@@ -160,7 +160,7 @@ touch /home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/r
 
 
 > Then, to open the PropertiesResource.java file in your IDE, select
-> **File** > **Open** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java, or click the following button
+> ***File*** > ***Open*** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java, or click the following button
 
 ::openFile{path="/home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java"}
 
@@ -207,7 +207,7 @@ To get the service running, the Liberty ***server.xml*** configuration file need
 Replace the Liberty ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-rest-intro/start/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-rest-intro/start/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-rest-intro/start/src/main/liberty/config/server.xml"}
 
@@ -273,7 +273,7 @@ touch /home/project/guide-rest-intro/start/src/test/java/it/io/openliberty/guide
 
 
 > Then, to open the EndpointIT.java file in your IDE, select
-> **File** > **Open** > guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java, or click the following button
+> ***File*** > ***Open*** > guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java"}
 
@@ -388,8 +388,6 @@ rm -fr guide-rest-intro
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20RESTful%20web%20service&guide-id=cloud-hosted-guide-rest-intro)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

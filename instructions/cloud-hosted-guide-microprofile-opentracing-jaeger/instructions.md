@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-494-instruction
-version-history-start-date: 2021-04-16 13:57:46 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Enabling distributed tracing in microservices with Jaeger guide!"}
@@ -233,7 +230,7 @@ The ***@Traced*** annotation can be configured with the following two parameters
 Replace the ***InventoryManager*** class.
 
 > To open the InventoryManager.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
 
@@ -297,7 +294,7 @@ public class InventoryManager {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
 Enable tracing of the ***list()*** non-JAX-RS endpoint method by updating ***@Traced*** as shown.
@@ -326,7 +323,7 @@ You can use the ***@Traced*** annotation with a value of ***false*** to disable 
 Replace the ***InventoryResource*** class.
 
 > To open the InventoryResource.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java"}
 
@@ -421,7 +418,7 @@ Inject the ***Tracer*** object into the ***inventory/src/main/java/io/openlibert
 Replace the ***InventoryManager*** class.
 
 > To open the InventoryManager.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
 
@@ -562,8 +559,6 @@ rm -fr guide-microprofile-opentracing-jaeger
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Enabling%20distributed%20tracing%20in%20microservices%20with%20Jaeger&guide-id=cloud-hosted-guide-microprofile-opentracing-jaeger)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

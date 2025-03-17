@@ -136,7 +136,7 @@ touch /home/project/guide-kubernetes-intro/start/kubernetes.yaml
 
 
 > Then, to open the kubernetes.yaml file in your IDE, select
-> **File** > **Open** > guide-kubernetes-intro/start/kubernetes.yaml, or click the following button
+> ***File*** > ***Open*** > guide-kubernetes-intro/start/kubernetes.yaml, or click the following button
 
 ::openFile{path="/home/project/guide-kubernetes-intro/start/kubernetes.yaml"}
 
@@ -219,7 +219,7 @@ spec:
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 This file defines four Kubernetes resources. It defines two deployments and two services. A Kubernetes deployment is a resource that controls the creation and management of pods. A service exposes your deployment so that you can make requests to your containers. Three key items to look at when creating the deployments are the ***labels***, ***image***, and ***containerPort*** fields. The ***labels*** is a way for a Kubernetes service to reference specific deployments. The ***image*** is the name and tag of the Docker image that you want to use for this container. Finally, the ***containerPort*** is the port that your container exposes to access your application. For the services, the key point to understand is that they expose your deployments. The binding between deployments and services is specified by labels -- in this case the ***app*** label. You will also notice the service has a type of ***NodePort***. This means you can access these services from outside of your cluster via a specific port. In this case, the ports are ***31000*** and ***32000***, but port numbers can also be randomized if the ***nodePort*** field is not used.
@@ -312,7 +312,7 @@ Without continuous updates, a Kubernetes cluster is susceptible to a denial of a
 Replace the Kubernetes configuration file
 
 > To open the kubernetes.yaml file in your IDE, select
-> **File** > **Open** > guide-kubernetes-intro/start/kubernetes.yaml, or click the following button
+> ***File*** > ***Open*** > guide-kubernetes-intro/start/kubernetes.yaml, or click the following button
 
 ::openFile{path="/home/project/guide-kubernetes-intro/start/kubernetes.yaml"}
 
@@ -594,8 +594,6 @@ rm -fr guide-kubernetes-intro
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Deploying%20microservices%20to%20Kubernetes&guide-id=cloud-hosted-guide-kubernetes-intro)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 

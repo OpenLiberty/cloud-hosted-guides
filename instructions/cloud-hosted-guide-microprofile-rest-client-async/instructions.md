@@ -71,7 +71,7 @@ The ***query*** service uses a MicroProfile Rest Client to access the ***invento
 Replace the ***InventoryClient*** interface.
 
 > To open the InventoryClient.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-rest-client-async/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-rest-client-async/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-rest-client-async/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java"}
 
@@ -111,7 +111,7 @@ public interface InventoryClient extends AutoCloseable {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
 The changes involve the ***getSystem*** method. Change the return type to ***CompletionStage\<Properties\>*** to make the method asynchronous. The method now has the return type of ***CompletionStage\<Properties\>*** so you aren't able to directly manipulate the ***Properties*** inner type. As you will see in the next section, you're able to indirectly use the ***Properties*** by chaining callbacks.
@@ -123,7 +123,7 @@ To reduce the processing time, you will update the ***/query/systemLoad*** endpo
 Replace the ***QueryResource*** class.
 
 > To open the QueryResource.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-rest-client-async/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-rest-client-async/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-rest-client-async/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java"}
 
@@ -320,7 +320,7 @@ touch /home/project/guide-microprofile-rest-client-async/start/query/src/test/ja
 
 
 > Then, to open the QueryServiceIT.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-rest-client-async/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-rest-client-async/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-rest-client-async/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java"}
 
@@ -558,8 +558,6 @@ rm -fr guide-microprofile-rest-client-async
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20RESTful%20services%20asynchronously%20with%20template%20interfaces&guide-id=cloud-hosted-guide-microprofile-rest-client-async)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
