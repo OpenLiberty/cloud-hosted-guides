@@ -1,10 +1,13 @@
 ---
 markdown-version: v1
+title: cloud-hosted-guide-jakarta-websocket
+branch: lab-5932-instruction
+version-history-start-date: 2023-01-05T10:56:36Z
 tool-type: theia
 ---
-::page{title="Welcome to the Building a dynamic web application with integrated user interface and backend logic guide!"}
+::page{title="Welcome to the Bidirectional communication between services using Jakarta WebSocket guide!"}
 
-Learn how to build a dynamic web application using Jakarta Faces, Jakarta Contexts and Dependency Injection, and Jakarta Expression Language.
+Learn how to use Jakarta WebSocket to send and receive messages between services without closing the connection.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -17,13 +20,14 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You'll learn how to build a dynamic web application using Jakarta Faces for the user interface (UI), Jakarta Contexts and Dependency Injection (CDI) for managing backend logic, and Jakarta Expression Language (EL) for data binding.
+Jakarta WebSocket enables two-way communication between client and server endpoints. First, each client makes an HTTP connection to a Jakarta WebSocket server. The server can then broadcast messages to the clients. link:[Server-Sent Events (SSE)](link:https://openliberty.io/guides/reactive-messaging-sse.html) also enables a client to receive automatic updates from a server via an HTTP connection however WebSocket differs from Server-Sent Events in that SSE is unidirectional from server to client, whereas WebSocket is bidirectional. WebSocket also enables real-time updates over a smaller bandwidth than SSE. The connection isn't closed meaning that the client can continue to send and receive messages with the server, without having to poll the server to receive any replies.
 
-Jakarta Faces is a framework for building component-based web applications that simplifies UI development by managing reusable components, handling user interactions, and binding data to backend logic. It provides built-in lifecycle management, event handling, and server-side validation, reducing the need for manual request processing. Jakarta Faces also includes tag libraries that allows developers define UI components using markup and connect them to backend objects without writing repetitive setup code.
+The application that you will build in this guide consists of the ***client*** service and the ***system*** server service. The following diagram depicts the application that is used in this guide. 
 
-To further streamline development, Jakarta Faces works with CDI to manage backend components. CDI allows beans to be automatically created and injected where needed, making it easier to manage application logic. Jakarta Expression Language enables data binding between the UI and backend, allowing UI components to dynamically display data and trigger backend actions.
+![Application architecture where system and client services use the Jakarta Websocket API to connect and communicate.](https://raw.githubusercontent.com/OpenLiberty/guide-jakarta-websocket/prod/assets/architecture.png)
 
-The application you will build in this guide is a dynamic web application that displays system load data on demand. Using Jakarta Faces for the UI, you'll create a table to show the system CPU load and heap memory usage. You'll also learn how to use CDI to provide the system load data from a managed bean, and to use Jakarta Expression Language to bind this data to the UI components.
+
+You'll learn how to use the link:[Jakarta WebSocket API](link:https://openliberty.io/docs/latest/reference/javadoc/liberty-jakartaee9.1-javadoc.html?package=jakarta/websocket/package-frame.html&class=overview-summary.html) to build the ***system*** service and the scheduler in the ***client*** service. The scheduler pushes messages to the system service every 10 seconds, then the system service broadcasts the messages to any connected clients. You will also learn how to use a JavaScript ***WebSocket*** object in an HTML file to build a WebSocket connection, subscribe to different events, and display the broadcasting messages from the ***system*** service in a table.
 
 ::page{title="Getting started"}
 
@@ -36,11 +40,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-jakarta-faces.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-jakarta-websocket.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-jakarta-faces.git
-cd guide-jakarta-faces
+git clone https://github.com/openliberty/guide-jakarta-websocket.git
+cd guide-jakarta-websocket
 ```
 
 
@@ -52,506 +56,731 @@ The ***finish*** directory contains the finished project that you will build.
 
 The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed. 
 
-To try out the application, first go to the ***finish*** directory and run Maven with the ***liberty:run*** goal to build the application and deploy it to Open Liberty:
+To try out the application, go to the finish directory and run the following Maven goal to build the ***system*** service and deploy it to Open Liberty:
 
 ```bash
-cd finish
-mvn liberty:run
-```
-
-After you see the following message, your Liberty instance is ready.
+mvn -pl system liberty:run
 
 ```
-The defaultServer server is ready to run a smarter planet.
-```
 
-
-Check out the web application by clicking the following button:
-
-::startApplication{port="9080" display="external" name="Launch application" route="/index.xhtml"}
-
-Click the <img src="https://raw.githubusercontent.com/OpenLiberty/guide-jakarta-faces/prod/assets/refresh.png" width="18" height="18" alt="refresh icon"> refresh button, located next to the table title, to update and display the latest system load data in the table.
-
-After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+Next, open another command-line session and run the following command to start the ***client*** service:
 
 ```bash
-mvn liberty:stop
+mvn -pl client liberty:run
 ```
 
-::page{title="Creating a static Jakarta Faces page"}
+After you see the following message in both command-line sessions, both your services are ready.
 
-Start by creating a page that displays an empty table by using Jakarta Faces to extend standard HTML. The table will display the system load data and serves as the starting point for your application.
+```
+The defaultServer is ready to run a smarter planet. 
+```
+
+Check out the service at the http://localhost:9080 URL. See that the table is being updated for every 10 seconds. 
+
+After you are finished checking out the application, stop both the ***system*** and ***client*** services by pressing `Ctrl+C` in the command-line sessions where you ran them. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
+
+```bash
+mvn -pl system liberty:stop
+mvn -pl client liberty:stop
+```
+ 
+
+::page{title="Creating the WebSocket server service"}
+
+In this section, you will create the ***system*** WebSocket server service that broadcasts messages to clients.
 
 Navigate to the ***start*** directory to begin.
 
 ```bash
-cd /home/project/guide-jakarta-faces/start
+cd /home/project/guide-jakarta-websocket/start
 ```
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following command to start the ***system*** service in dev mode:
 
 ```bash
-mvn liberty:dev
+mvn -pl system liberty:dev
 ```
 
-After you see the following message, your Liberty instance is ready in dev mode:
+After you see the following message, your runtime in dev mode is ready:
 
 ```
-**************************************************************
-*    Liberty is running in dev mode.
+**************************************************
+*     Liberty is running in dev mode.
 ```
 
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+The ***system*** service is responsible for handling the messages produced by the ***client*** scheduler, building system load messages, and forwarding them to clients.
 
-Create the index.xhtml file.
+Create the SystemService class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-jakarta-faces/start/src/main/webapp/index.xhtml
+touch /home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
 ```
 
 
-> Then, to open the index.xhtml file in your IDE, select
-> **File** > **Open** > guide-jakarta-faces/start/src/main/webapp/index.xhtml, or click the following button
+> Then, to open the SystemService.java file in your IDE, select
+> **File** > **Open** > guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
 
-::openFile{path="/home/project/guide-jakarta-faces/start/src/main/webapp/index.xhtml"}
+::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
 
 
 
-```
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="jakarta.faces.html"
-      xmlns:f="jakarta.faces.core"
-      xmlns:ui="jakarta.faces.facelets">
+```java
+package io.openliberty.guides.system;
 
-  <h:head>
-    <meta charset="UTF-8" />
-    <title>Open Liberty - Jakarta Faces Example</title>
-    <h:outputStylesheet library="css" name="styles.css" />
-    <link href="favicon.ico" rel="icon" />
-    <link href="favicon.ico" rel="shortcut icon" />
-  </h:head>
-  <h:body>
-    <section id="appIntro">
-      <div id="titleSection">
-        <h1 id="appTitle">Jakarta Faces Example</h1>
-        <div class="line"></div>
-        <div class="headerImage"></div>
-      </div>
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.OperatingSystemMXBean;
+import java.util.Calendar;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.logging.Logger;
 
-      <div class="msSection" id="systemLoads">
-        <div class="headerRow">
-          <div class="headerIcon">
-            <img src="#{resource['img/sysProps.svg']}" />
-          </div>
-          <div class="headerTitleWithButton" id="sysPropTitle">
-            <h2>System Loads</h2>
-          </div>
-        </div>
-        <div class="sectionContent">
-          <h:dataTable id="systemLoadsTable">
-            <h:column>
-              <f:facet name="header">Time</f:facet>
-            </h:column>
-            <h:column>
-              <f:facet name="header">CPU Load (%)</f:facet>
-            </h:column>
-            <h:column>
-              <f:facet name="header">Heap Memory Usage (%)</f:facet>
-            </h:column>
-          </h:dataTable>
-        </div>
-      </div>
-    </section>
-    <ui:include src="/WEB-INF/includes/footer.xhtml" />
-  </h:body>
-</html>
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.OnClose;
+import jakarta.websocket.OnError;
+import jakarta.websocket.OnMessage;
+import jakarta.websocket.OnOpen;
+import jakarta.websocket.Session;
+import jakarta.websocket.server.ServerEndpoint;
+
+@ServerEndpoint(value = "/systemLoad",
+                decoders = { SystemLoadDecoder.class },
+                encoders = { SystemLoadEncoder.class })
+public class SystemService {
+
+    private static Logger logger = Logger.getLogger(SystemService.class.getName());
+
+    private static Set<Session> sessions = new HashSet<>();
+
+    private static final OperatingSystemMXBean OS =
+        ManagementFactory.getOperatingSystemMXBean();
+
+    private static final MemoryMXBean MEM =
+        ManagementFactory.getMemoryMXBean();
+
+    public static void sendToAllSessions(JsonObject systemLoad) {
+        for (Session session : sessions) {
+            try {
+                session.getBasicRemote().sendObject(systemLoad);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @OnOpen
+    public void onOpen(Session session) {
+        logger.info("Server connected to session: " + session.getId());
+        sessions.add(session);
+    }
+
+    @OnMessage
+    public void onMessage(String option, Session session) {
+        logger.info("Server received message \"" + option + "\" "
+                    + "from session: " + session.getId());
+        try {
+            JsonObjectBuilder builder = Json.createObjectBuilder();
+            builder.add("time", Calendar.getInstance().getTime().toString());
+            if (option.equalsIgnoreCase("loadAverage")
+                || option.equalsIgnoreCase("both")) {
+                builder.add("loadAverage", Double.valueOf(OS.getSystemLoadAverage()));
+            }
+            if (option.equalsIgnoreCase("memoryUsage")
+                || option.equalsIgnoreCase("both")) {
+                long heapMax = MEM.getHeapMemoryUsage().getMax();
+                long heapUsed = MEM.getHeapMemoryUsage().getUsed();
+                builder.add("memoryUsage", Double.valueOf(heapUsed * 100.0 / heapMax));
+            }
+            JsonObject systemLoad = builder.build();
+            sendToAllSessions(systemLoad);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @OnClose
+    public void onClose(Session session, CloseReason closeReason) {
+        logger.info("Session " + session.getId()
+                    + " was closed with reason " + closeReason.getCloseCode());
+        sessions.remove(session);
+    }
+
+    @OnError
+    public void onError(Session session, Throwable throwable) {
+        logger.info("WebSocket error for " + session.getId() + " "
+                    + throwable.getMessage());
+    }
+}
 ```
 
 
 Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
+Annotate the ***SystemService*** class with a ***@ServerEndpoint*** annotation to make it a WebSocket server. The ***@ServerEndpoint***  ***value*** attribute specifies the URI where the endpoint will be deployed. The ***encoders*** attribute specifies the classes to encode messages and the ***decoders*** attribute specifies the classes to decode messages. Provide methods that define the parts of the WebSocket lifecycle like establishing a connection, receiving a message, and closing the connection by annotating them with the ***@OnOpen***, ***@OnMessage*** and ***@OnClose*** annotations respectively. The method that is annotated with the ***@OnError*** annotation is responsible for tackling errors.
 
-In the ***index.xhtml*** file, the ***xmlns*** attributes define the XML namespaces for various Jakarta Faces tag libraries. These namespaces allow the page to use Jakarta Faces tags for templating, creating UI components, and enabling core functionality, such as form submissions and data binding. For more information on the various tag libraries and their roles in Jakarta Faces, refer to the [Jakarta Faces Tag Libraries](https://jakarta.ee/learn/docs/jakartaee-tutorial/current/web/faces-facelets/faces-facelets.html#_tag_libraries_supported_by_facelets) and the [VDL Documentation Generator](https://jakarta.ee/specifications/faces/4.0/vdldoc) documentation.
+The ***onOpen()*** method stores up the client sessions. The ***onClose()*** method displays the reason for closing the connection and removes the closing session from the client sessions.
 
-The ***index.xhtml*** file combines standard HTML elements with Jakarta Faces components, providing both static layout and dynamic functionality. Standard HTML elements, like ***div*** and ***section***, structure the page's layout. Jakarta Faces tags offer additional features beyond standard HTML, such as managing UI components, including resources, and binding data. For example, the ***h:outputStylesheet*** tag loads a CSS file for styling, and the ***ui:include*** tag incorporates reusable components, such as the provided ***footer.xhtml*** file, to streamline maintenance and reuse across multiple pages. The ***h:dataTable*** tag is used to display a table.
+The ***onMessage()*** method is called when receiving a message through the ***option*** parameter. The ***option*** parameter signifies which message to construct, either system load, memory usage data, or both, and sends out the ***JsonObject*** message. The ***sendToAllSessions()*** method uses the WebSocket API to broadcast the message to all client sessions.
 
-At this point, the page defines a table that has no data entries. We'll add dynamic content in the following steps.
-
-::page{title="Configuring the Faces Servlet"}
-
-Before you can access the Jakarta Faces page, you need to configure a Faces servlet in your application. This servlet handles all requests for ***.xhtml*** pages and processes them using Jakarta Faces.
-
-Create the web.xml file.
+Create the SystemLoadEncoder class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-jakarta-faces/start/src/main/webapp/WEB-INF/web.xml
+touch /home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadEncoder.java
 ```
 
 
-> Then, to open the web.xml file in your IDE, select
-> **File** > **Open** > guide-jakarta-faces/start/src/main/webapp/WEB-INF/web.xml, or click the following button
+> Then, to open the SystemLoadEncoder.java file in your IDE, select
+> **File** > **Open** > guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadEncoder.java, or click the following button
 
-::openFile{path="/home/project/guide-jakarta-faces/start/src/main/webapp/WEB-INF/web.xml"}
-
-
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
-         version="6.0">
-
-    <context-param>
-        <param-name>jakarta.faces.PROJECT_STAGE</param-name>
-        <param-value>Development</param-value>
-    </context-param>
-
-    <!-- Faces Servlet Configuration -->
-    <servlet>
-        <servlet-name>Faces Servlet</servlet-name>
-        <servlet-class>jakarta.faces.webapp.FacesServlet</servlet-class>
-        <load-on-startup>1</load-on-startup>
-    </servlet>
-
-    <!-- Servlet Mapping -->
-    <servlet-mapping>
-        <servlet-name>Faces Servlet</servlet-name>
-        <url-pattern>*.xhtml</url-pattern>
-    </servlet-mapping>
-
-</web-app>
-```
-
-
-
-The ***servlet*** element defines the Faces servlet that is responsible for processing requests for Jakarta Faces pages. The ***load-on-startup*** element with a value of ***1*** specifies that the servlet is loaded and initialized first when the application starts.
-
-The ***servlet-mapping*** element specifies which URL patterns are routed to the Faces servlet. In this case, all URLs ending with ***.xhtml*** are mapped to be processed by Jakarta Faces. This ensures that any request for an ***.xhtml*** page is handled by the Faces servlet, which manages the lifecycle of Jakarta Faces components, processes the page, and renders the output. 
-
-By configuring both the servlet and the servlet mapping, you're ensuring that Jakarta Faces pages are properly processed and delivered in response to user requests.
-
-The ***jakarta.faces.PROJECT_STAGE*** context parameter determines the current stage of the application in its development lifecycle. Because it is currently set to ***Development***, you will see additional debugging information, including developer-friendly warning messages such as ***WARNING: Apache MyFaces Core is running in DEVELOPMENT mode.*** For more information about valid values and how to set the ***PROJECT_STAGE*** parameter, see the official [Jakarta Faces ProjectStage documentation](https://jakarta.ee/specifications/faces/4.1/apidocs/jakarta.faces/jakarta/faces/application/projectstage).
-
-In your dev mode console, type ***r*** and press the ***enter/return*** key to restart the Liberty instance so that Liberty reads the configuration changes. When you see the following message, your Liberty instance is ready in dev mode:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-
-Check out the web application that you created by clicking the following button:
-
-::startApplication{port="9080" display="external" name="Launch application" route="/index.xhtml"}
-
-You should see the static page with the system loads table displaying only the headers and no data.
-
-::page{title="Implementing backend logic with dependency injection"}
-
-To provide system load data to your web application, you'll create a CDI-managed bean that retrieves information about the system CPU load and memory usage. This bean is accessible from the Jakarta Faces page and supplies the data that is displayed.
-
-Create the SystemLoadBean class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-jakarta-faces/start/src/main/java/io/openliberty/guides/bean/SystemLoadBean.java
-```
-
-
-> Then, to open the SystemLoadBean.java file in your IDE, select
-> **File** > **Open** > guide-jakarta-faces/start/src/main/java/io/openliberty/guides/bean/SystemLoadBean.java, or click the following button
-
-::openFile{path="/home/project/guide-jakarta-faces/start/src/main/java/io/openliberty/guides/bean/SystemLoadBean.java"}
+::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadEncoder.java"}
 
 
 
 ```java
-package io.openliberty.guides.bean;
+package io.openliberty.guides.system;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-import java.io.Serializable;
+import jakarta.json.JsonObject;
+import jakarta.websocket.EncodeException;
+import jakarta.websocket.Encoder;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Named;
+public class SystemLoadEncoder implements Encoder.Text<JsonObject> {
 
-import com.sun.management.OperatingSystemMXBean;
-
-import io.openliberty.guides.bean.model.SystemLoadData;
-
-@Named("systemLoadBean")
-@ApplicationScoped
-public class SystemLoadBean implements Serializable {
-    private static final long serialVersionUID = 1L;
-
-    private List<SystemLoadData> systemLoads;
-
-    private static final OperatingSystemMXBean OS =
-        (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-
-    private static final MemoryMXBean MEM =
-        ManagementFactory.getMemoryMXBean();
-
-    @PostConstruct
-    public void init() {
-        systemLoads = new ArrayList<>();
-        fetchSystemLoad();
-    }
-
-    public void fetchSystemLoad() {
-        String time = Calendar.getInstance().getTime().toString();
-
-        double cpuLoad = OS.getCpuLoad() * 100;
-
-        long heapMax = MEM.getHeapMemoryUsage().getMax();
-        long heapUsed = MEM.getHeapMemoryUsage().getUsed();
-        double memoryUsage = heapUsed * 100.0 / heapMax;
-
-        SystemLoadData data = new SystemLoadData(time, cpuLoad, memoryUsage);
-
-        systemLoads.add(data);
-    }
-
-    public List<SystemLoadData> getSystemLoads() {
-        return systemLoads;
+    @Override
+    public String encode(JsonObject object) throws EncodeException {
+        return object.toString();
     }
 }
 ```
 
 
 
-Annotate the ***SystemLoadBean*** class with a ***@Named*** annotation to make it accessible in the Jakarta Faces pages under the ***systemLoadBean*** name. Because the ***SystemLoadBean*** bean is a CDI-managed bean, a scope is necessary. Annotating it with the ***@ApplicationScoped*** annotation indicates that it is initialized once and is shared between all requests while the application runs. To learn more about CDI, see the [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html) guide.
+The ***SystemLoadEncoder*** class implements the ***Encoder.Text*** interface. Override the ***encode()*** method that accepts the ***JsonObject*** message and converts the message to a string.
 
-The ***@PostConstruct*** annotation ensures the ***init()*** method runs after the ***SystemLoadBean*** is initialized and dependencies are injected. The ***init()*** method sets up any required resources for the bean's lifecyccle.
+Create the SystemLoadDecoder class.
 
-The ***fetchSystemLoad()*** method retrieves the current system load and memory usage, then updates the list of system load data.
-
-The ***getSystemLoads()*** method is a getter method for accessing the list of system load data from the Jakarta Faces page.
-
-::page{title="Binding data to the UI with expression language"}
-
-Now that you have implemented the backend logic with CDI, you'll update the Jakarta Faces page to display the dynamic system load data. You'll do this by using Jakarta Expression Language to bind the UI components to the backend data.
-
-Replace the index.xhtml file.
-
-> To open the index.xhtml file in your IDE, select
-> **File** > **Open** > guide-jakarta-faces/start/src/main/webapp/index.xhtml, or click the following button
-
-::openFile{path="/home/project/guide-jakarta-faces/start/src/main/webapp/index.xhtml"}
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadDecoder.java
+```
 
 
+> Then, to open the SystemLoadDecoder.java file in your IDE, select
+> **File** > **Open** > guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadDecoder.java, or click the following button
+
+::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadDecoder.java"}
+
+
+
+```java
+package io.openliberty.guides.system;
+
+import java.io.StringReader;
+
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonReader;
+import jakarta.websocket.DecodeException;
+import jakarta.websocket.Decoder;
+
+public class SystemLoadDecoder implements Decoder.Text<JsonObject> {
+
+    @Override
+    public JsonObject decode(String s) throws DecodeException {
+        try (JsonReader reader = Json.createReader(new StringReader(s))) {
+            return reader.readObject();
+        } catch (Exception e) {
+            JsonObject error = Json.createObjectBuilder()
+                    .add("error", e.getMessage())
+                    .build();
+            return error;
+        }
+    }
+
+    @Override
+    public boolean willDecode(String s) {
+        try (JsonReader reader = Json.createReader(new StringReader(s))) {
+            reader.readObject();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+}
+```
+
+
+
+The ***SystemLoadDecoder*** class implements the ***Decoder.Text*** interface.
+Override the ***decode()*** method that accepts string message and decodes the string back into a ***JsonObject***. The ***willDecode()*** override method checks out whether the string can be decoded into a JSON object and returns a Boolean value.
+
+
+The required ***websocket*** and ***jsonb*** features for the ***system*** service have been enabled for you in the ***server.xml*** configuration file.
+
+
+::page{title="Creating the client service"}
+
+In this section, you will create the WebSocket client that communicates with the WebSocket server and the scheduler that uses the WebSocket client to send messages to the server. You'll also create an HTML file that uses a JavaScript ***WebSocket*** object to build a WebSocket connection, subscribe to different events, and display the broadcasting messages from the ***system*** service in a table.
+
+On another command-line session, navigate to the ***start*** directory and run the following goal to start the ***client*** service in dev mode:
+
+```bash
+mvn -pl client liberty:dev
+```
+
+After you see the following message, your runtime in dev mode is ready:
 
 ```
+**************************************************
+*     Liberty is running in dev mode.
+```
+
+Create the SystemClient class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemClient.java
+```
+
+
+> Then, to open the SystemClient.java file in your IDE, select
+> **File** > **Open** > guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemClient.java, or click the following button
+
+::openFile{path="/home/project/guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemClient.java"}
+
+
+
+```java
+package io.openliberty.guides.client.scheduler;
+
+import java.io.IOException;
+import java.net.URI;
+import java.util.logging.Logger;
+
+import jakarta.websocket.ClientEndpoint;
+import jakarta.websocket.ContainerProvider;
+import jakarta.websocket.OnMessage;
+import jakarta.websocket.OnOpen;
+import jakarta.websocket.Session;
+import jakarta.websocket.WebSocketContainer;
+
+@ClientEndpoint()
+public class SystemClient {
+
+    private static Logger logger = Logger.getLogger(SystemClient.class.getName());
+
+    private Session session;
+
+    public SystemClient(URI endpoint) {
+        try {
+            WebSocketContainer container = ContainerProvider.getWebSocketContainer();
+            container.connectToServer(this, endpoint);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @OnOpen
+    public void onOpen(Session session) {
+        this.session = session;
+        logger.info("Scheduler connected to the server.");
+    }
+
+    @OnMessage
+    public void onMessage(String message, Session session) throws Exception {
+        logger.info("Scheduler received message from the server: " + message);
+    }
+
+    public void sendMessage(String message) {
+        session.getAsyncRemote().sendText(message);
+        logger.info("Scheduler sent message \"" + message + "\" to the server.");
+    }
+
+    public void close() {
+        try {
+            session.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        logger.info("Scheduler closed the session.");
+    }
+
+}
+```
+
+
+
+Annotate the ***SystemClient*** class with ***@ClientEndpoint*** annotation to make it as a WebSocket client. Create a constructor that uses the ***websocket*** APIs to establish connection with the server. Provide a method with the ***@OnOpen*** annotation that persists the client session when the connection is established. The ***onMessage()*** method that is annotated with the ***@OnMessage*** annotation handles messages from the server.
+
+Create the SystemLoadScheduler class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemLoadScheduler.java
+```
+
+
+> Then, to open the SystemLoadScheduler.java file in your IDE, select
+> **File** > **Open** > guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemLoadScheduler.java, or click the following button
+
+::openFile{path="/home/project/guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemLoadScheduler.java"}
+
+
+
+```java
+package io.openliberty.guides.client.scheduler;
+
+import java.net.URI;
+import java.util.Random;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import jakarta.ejb.Schedule;
+import jakarta.ejb.Singleton;
+
+@Singleton
+public class SystemLoadScheduler {
+
+    private SystemClient client;
+    private static final String[] MESSAGES = new String[] {
+        "loadAverage", "memoryUsage", "both" };
+
+    @PostConstruct
+    public void init() {
+        try {
+            client = new SystemClient(new URI("ws://localhost:9081/systemLoad"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Schedule(second = "*/10", minute = "*", hour = "*", persistent = false)
+    public void sendSystemLoad() {
+        Random r = new Random();
+        client.sendMessage(MESSAGES[r.nextInt(MESSAGES.length)]);
+    }
+
+    @PreDestroy
+    public void close() {
+        client.close();
+    }
+}
+```
+
+
+
+
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+
+The ***SystemLoadScheduler*** class uses the ***SystemClient*** class to establish a connection to the server by the ***ws://localhost:9081/systemLoad*** URI at the ***@PostConstruct*** annotated method. The ***sendSystemLoad()*** method calls the client to send a random string from either ***loadAverage***, ***memoryUsage***, or ***both*** to the ***system*** service. Using the link:[Jakarta Enterprise Beans Timer Service](link:https://openliberty.io/docs/latest/reference/javadoc/liberty-jakartaee9.1-javadoc.html?package=jakarta/ejb/package-frame.html&class=jakarta/ejb/TimerService.html), annotate the ***sendSystemLoad()*** method with the ***@Schedule*** annotation so that it sends out a message every 10 seconds.
+
+Now, create the front-end UI. The images and styles for the UI are provided for you. 
+
+Create the index.html file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-jakarta-websocket/start/client/src/main/webapp/index.html
+```
+
+
+> Then, to open the index.html file in your IDE, select
+> **File** > **Open** > guide-jakarta-websocket/start/client/src/main/webapp/index.html, or click the following button
+
+::openFile{path="/home/project/guide-jakarta-websocket/start/client/src/main/webapp/index.html"}
+
+
+
+```html
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="jakarta.faces.html"
-      xmlns:f="jakarta.faces.core"
-      xmlns:ui="jakarta.faces.facelets">
-  <h:head>
-    <meta charset="UTF-8" />
-    <title>Open Liberty - Jakarta Faces Example</title>
-    <h:outputStylesheet library="css" name="styles.css" />
-    <link href="favicon.ico" rel="icon" />
-    <link href="favicon.ico" rel="shortcut icon" />
-  </h:head>
-  <h:body>
-    <section id="appIntro">
-      <div id="titleSection">
-        <h1 id="appTitle">Jakarta Faces Example</h1>
-        <div class="line"></div>
-        <div class="headerImage"></div>
-      </div>
-
-      <div class="msSection" id="systemLoads">
-        <h:form id="systemLoadForm">
-          <div class="headerRow">
-            <div class="headerIcon">
-              <img src="#{resource['img/sysProps.svg']}" />
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Open Liberty System Load</title>
+        <link href="https://fonts.googleapis.com/css?family=Asap" rel="stylesheet">
+        <link rel="stylesheet" href="css/styles.css">
+        <link href="favicon.ico" rel="icon" />
+        <link href="favicon.ico" rel="shortcut icon" />
+    </head>
+    <body>
+        <section id="appIntro">
+            <div id="titleSection">
+                <h1 id="appTitle">Open Liberty System Load</h1>
+                <div class="line"></div>
+                <div class="headerImage"></div>
             </div>
-            <div class="headerTitleWithButton" id="sysPropTitle">
-              <h2>System Loads</h2>
-              <h:commandButton id="refreshButton" styleClass="refreshButton" value=""
-                               title="Refresh system load data"
-                               action="#{systemLoadBean.fetchSystemLoad}" >
-                <f:ajax render="systemLoadForm" />
-              </h:commandButton>
+
+            <div class="msSection" id="systemLoads">
+                <div class="headerRow">
+                    <div class="headerIcon">
+                      <img src="img/sysProps.svg"/>
+                    </div>
+                    <div class="headerTitle" id="sysPropTitle">
+                      <h2>System Loads</h2>
+                    </div>
+                </div>
+                <div class="sectionContent">
+                    <table id="systemLoadsTable">
+                        <tbody id="systemLoadsTableBody">
+                            <tr>
+                                <th>Time</th><th>System Load</th>
+                                <th>Memory Usage (%)</th>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-          </div>
-          <div class="sectionContent">
-            <h:dataTable id="systemLoadsTable"
-                         value="#{systemLoadBean.systemLoads}"
-                         var="systemLoadData"
-                         styleClass = "systemLoadsTable"
-                         headerClass = "systemLoadsTableHeader"
-                         rowClasses = "systemLoadsTableOddRow,systemLoadsTableEvenRow">
-              <h:column>
-                <f:facet name="header">Time</f:facet>
-                <h:outputText value="#{systemLoadData.time}" />
-              </h:column>
+        </section>
+        <footer class="bodyFooter">
+            <div class="bodyFooterLink">
+                <a id="licenseLink"
+                   href="https://github.com/OpenLiberty/open-liberty/blob/release/LICENSE"
+                >License</a>
+                <a href="https://twitter.com/OpenLibertyIO">Twitter</a>
+                <a href="https://github.com/OpenLiberty">GitHub</a>
+                <a href="https://openliberty.io/">openliberty.io</a>
+            </div>
+            <p id="footer_text">an IBM open source project</p>
+            <p id="footer_copyright">&copy;Copyright IBM Corp. 2022</p>
+        </footer>
+        <script>
+    const webSocket = new WebSocket('ws://localhost:9081/systemLoad')
 
-              <h:column>
-                <f:facet name="header">CPU Load (%)</f:facet>
-                <h:outputText
-                  value="#{systemLoadData.cpuLoad == null ? '-' : systemLoadData.cpuLoad}">
-                  <f:convertNumber pattern="#0.0000000" />
-                </h:outputText>
-              </h:column>
+    webSocket.onopen = function (event) {
+        console.log(event);
+    };
 
-              <h:column>
-                <f:facet name="header">Heap Memory Usage (%)</f:facet>
-                <h:outputText
-                  value="#{systemLoadData.memoryUsage == null ? '-' : systemLoadData.memoryUsage}">
-                  <f:convertNumber pattern="#0.00" />
-                </h:outputText>
-              </h:column>
-            </h:dataTable>
-          </div>
-        </h:form>
-      </div>
-    </section>
-    <ui:include src="/WEB-INF/includes/footer.xhtml" />
-  </h:body>
+    webSocket.onmessage = function (event) {
+        var data = JSON.parse(event.data);
+        var tableRow = document.createElement('tr');
+        var loadAverage = data.loadAverage == null ? '-' : data.loadAverage.toFixed(2);
+        var memoryUsage = data.memoryUsage == null ? '-' : data.memoryUsage.toFixed(2);
+        tableRow.innerHTML = '<td>' + data.time + '</td>' +
+                             '<td>' + loadAverage + '</td>' +
+                             '<td>' + memoryUsage + '</td>';
+        document.getElementById('systemLoadsTableBody').appendChild(tableRow);
+    };
+    
+    webSocket.onerror = function (event) {
+        console.log(event);
+    };
+        </script>
+    </body>
 </html>
 ```
 
 
 
+The ***index.html*** front-end UI displays a table in which each row contains a time, system load, and the memory usage of the ***system*** service. Use a JavaScript ***WebSocket*** object to establish a connection to the server by the ***ws://localhost:9081/systemLoad*** URI. The ***webSocket.onopen*** event is triggered when the connection is established. The ***webSocket.onmessage*** event receives messages from the server and inserts a row with the data from the message into the table. The ***webSocket.onerror*** event defines how to tackle errors.
 
 
-The ***index.xhtml*** uses an ***h:commandButton*** tag to create the refresh button. When the button is clicked, the ***#{systemLoadBean.fetchSystemLoad}*** action invokes the ***fetchSystemLoad()*** method using Jakarta Expression Language. This expression references the ***systemLoadBean*** managed bean, triggering the method to update the system load data. The ***f:ajax*** tag ensures that the ***systemLoadForm*** component is re-rendered without requiring a full page reload.
+The required features for the ***client*** service are enabled for you in the ***server.xml*** configuration file.
 
-The ***systemLoadsTable*** is populated using the ***h:dataTable*** tag, which iterates over the list of system load data provided by the ***systemLoadBean***. The ***#{systemLoadBean.systemLoads}*** expression calls the ***getSystemLoads()*** method from the managed bean, binding the data to the UI components. If the ***systemLoadBean*** isn't created yet, it is automatically initialized at this point. For each entry, the ***time***, ***cpuLoad***, and ***memoryUsage*** fields are displayed by using the ***h:outputText*** tag. The ***f:convertNumber*** tag formats ***cpuLoad*** to seven decimal places and ***memoryUsage*** to two decimal places.
-
-To format the table, set the ***styleClass***, ***headerClass***, and ***rowClasses*** attributes in the ***h:dataTable*** tag. The style elements are defined in the ***src/main/webapp/resources/css/styles.css*** file.
 
 ::page{title="Running the application"}
 
+Because you are running the ***system*** and ***client*** services in dev mode, the changes that you made are automatically picked up. You're now ready to check out your application in your browser.
 
-The required ***faces***, ***expressionLanguage***, and ***cdi*** features are enabled for you in the Liberty ***server.xml*** configuration file.
+Point your browser to the http://localhost:9080 URL to test out the ***client*** service. Notice that the table is updated every 10 seconds.
 
-Because you started the Open Liberty in dev mode at the beginning of the guide, all the changes were automatically picked up.
+Visit the http://localhost:9080 URL again on a different tab or browser and verify that both sessions are updated every 10 seconds.
 
-
-Now, you can check out the web application that you created by clicking the following button:
-
-::startApplication{port="9080" display="external" name="Launch application" route="/index.xhtml"}
-
-Click on the <img src="https://raw.githubusercontent.com/OpenLiberty/guide-jakarta-faces/prod/assets/refresh.png" width="18" height="18" alt="refresh icon"> refresh button to trigger an update on the system loads table.
 
 ::page{title="Testing the application"}
 
-While you can manually verify the web application by visiting ***http\://localhost:9080/index.xhtml,*** automated tests are a much better approach because they are more reliable and trigger a failure if a breaking change is introduced. You can write unit tests for your CDI bean to ensure that the basic operations you implemented function correctly.
-
-Create the SystemLoadBeanTest class.
+Create the SystemClient class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-jakarta-faces/start/src/test/java/io/openliberty/guides/bean/SystemLoadBeanTest.java
+touch /home/project/guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemClient.java
 ```
 
 
-> Then, to open the SystemLoadBeanTest.java file in your IDE, select
-> **File** > **Open** > guide-jakarta-faces/start/src/test/java/io/openliberty/guides/bean/SystemLoadBeanTest.java, or click the following button
+> Then, to open the SystemClient.java file in your IDE, select
+> **File** > **Open** > guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemClient.java, or click the following button
 
-::openFile{path="/home/project/guide-jakarta-faces/start/src/test/java/io/openliberty/guides/bean/SystemLoadBeanTest.java"}
+::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemClient.java"}
 
 
 
 ```java
-package io.openliberty.guides.bean;
+package it.io.openliberty.guides.system;
+
+import java.net.URI;
+
+import io.openliberty.guides.system.SystemLoadDecoder;
+import jakarta.json.JsonObject;
+import jakarta.websocket.ClientEndpoint;
+import jakarta.websocket.ContainerProvider;
+import jakarta.websocket.OnMessage;
+import jakarta.websocket.OnOpen;
+import jakarta.websocket.Session;
+import jakarta.websocket.WebSocketContainer;
+
+@ClientEndpoint()
+public class SystemClient {
+
+    private Session session;
+
+    public SystemClient(URI endpoint) {
+        try {
+            WebSocketContainer container = ContainerProvider.getWebSocketContainer();
+            container.connectToServer(this, endpoint);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @OnOpen
+    public void onOpen(Session session) {
+        this.session = session;
+    }
+
+    @OnMessage
+    public void onMessage(String message, Session userSession) throws Exception {
+        SystemLoadDecoder decoder = new SystemLoadDecoder();
+        JsonObject systemLoad = decoder.decode(message);
+        SystemServiceIT.verify(systemLoad);
+    }
+
+    public void sendMessage(String message) {
+        session.getAsyncRemote().sendText(message);
+    }
+
+    public void close() throws Exception {
+        session.close();
+    }
+
+}
+```
+
+
+
+The ***SystemClient*** class is used to communicate and test the ***system*** service. Its implementation is similar to the client class from the ***client*** service that you created in the previous section. At the ***onMessage()*** method, decode and verify the message. 
+
+Create the SystemServiceIT class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java
+```
+
+
+> Then, to open the SystemServiceIT.java file in your IDE, select
+> **File** > **Open** > guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java, or click the following button
+
+::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.jupiter.api.BeforeEach;
+import java.net.URI;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 
-import io.openliberty.guides.bean.model.SystemLoadData;
+import jakarta.json.JsonObject;
 
-public class SystemLoadBeanTest {
+@TestMethodOrder(OrderAnnotation.class)
+public class SystemServiceIT {
 
-    private SystemLoadBean systemLoadBean;
+    private static CountDownLatch countDown;
 
-    @BeforeEach
-    public void setUp() {
-        systemLoadBean = new SystemLoadBean();
-        systemLoadBean.init();
+    @Test
+    @Order(1)
+    public void testSystem() throws Exception {
+        startCountDown(1);
+        URI uri = new URI("ws://localhost:9081/systemLoad");
+        SystemClient client = new SystemClient(uri);
+        client.sendMessage("both");
+        countDown.await(5, TimeUnit.SECONDS);
+        client.close();
+        assertEquals(0, countDown.getCount(),
+                "The countDown was not 0.");
     }
 
     @Test
-    public void testInitMethod() {
-        assertNotNull(systemLoadBean.getSystemLoads(),
-                      "System loads should not be null after initialization");
-        assertFalse(systemLoadBean.getSystemLoads().isEmpty(),
-                    "System loads should not be empty after initialization");
+    @Order(2)
+    public void testSystemMultipleSessions() throws Exception {
+        startCountDown(3);
+        URI uri = new URI("ws://localhost:9081/systemLoad");
+        SystemClient client1 = new SystemClient(uri);
+        SystemClient client2 = new SystemClient(uri);
+        SystemClient client3 = new SystemClient(uri);
+        client2.sendMessage("loadAverage");
+        countDown.await(5, TimeUnit.SECONDS);
+        client1.close();
+        client2.close();
+        client3.close();
+        assertEquals(0, countDown.getCount(),
+            "The countDown was not 0.");
     }
 
-    @Test
-    public void testFetchSystemLoad() {
-        int initialSize = systemLoadBean.getSystemLoads().size();
-        systemLoadBean.fetchSystemLoad();
-        int newSize = systemLoadBean.getSystemLoads().size();
-        assertEquals(initialSize + 1, newSize,
-                     "System loads size should increase by 1 after fetching new data");
+    private static void startCountDown(int count) {
+        countDown = new CountDownLatch(count);
     }
 
-    @Test
-    public void testDataIntegrity() {
-        systemLoadBean.fetchSystemLoad();
-        SystemLoadData data = systemLoadBean.getSystemLoads().get(0);
-        assertNotNull(data.getTime(), "Time should not be null");
-        assertNotNull(data.getCpuLoad(), "Recent load should not be null");
-        assertNotNull(data.getMemoryUsage(), "Memory usage should not be null");
+    public static void verify(JsonObject systemLoad) {
+        assertNotNull(systemLoad.getString("time"));
+        assertTrue(
+            systemLoad.getJsonNumber("loadAverage") != null
+            || systemLoad.getJsonNumber("memoryUsage") != null
+        );
+        countDown.countDown();
     }
 }
 ```
 
 
 
-The ***setUp()*** method is annotated with the ***@BeforeEach*** annotation, indicating that it is run before each test case to ensure a clean state for each test execution. In this case, it creates a new instance of ***SystemLoadBean*** and manually calls the ***init()*** method to initialize the list of system load data before each test.
-
-The ***testInitMethod()*** test case verifies that after initializing ***SystemLoadBean***, the list of system load data is not null and contains at least one entry.
-
-The ***testFetchSystemLoad()*** test case verifies that after calling the ***fetchSystemLoad()*** method, the size of the list of system load data increases by one.
-
-The ***testDataIntegrity()*** test case verifies that each ***SystemLoadData*** entry in the list of system load data contains valid values for ***time***, ***cpuLoad***, and ***memoryUsage***.
+There are two test cases to ensure correct functionality of the ***system*** service. The ***testSystem()*** method verifies one client connection and the ***testSystemMultipleSessions()*** method verifies multiple client connections. 
 
 ### Running the tests
 
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
-
-You see the following output:
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started the ***system*** service.
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running io.openliberty.guides.bean.SystemLoadBeanTest
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.037 s -- in io.openliberty.guides.bean.SystemLoadBeanTest
+Running it.io.openliberty.guides.system.SystemServiceIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.247 s - in it.io.openliberty.guides.system.SystemServiceIT
 
 Results:
 
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
+When you are done checking out the services, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***client*** services, or by typing ***q*** and then pressing the ***enter/return*** key. Alternatively, you can run the ***liberty:stop*** goal from the ***start*** directory in another command-line session for the ***system*** and ***client*** services:
+```bash
+cd /home/project/guide-jakarta-websocket/start
+mvn -pl system liberty:stop
+mvn -pl client liberty:stop
+```
 
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just built a dynamic web application on Open Liberty by using Jakarta Faces for the user interface, CDI for managing beans, and Jakarta Expression Language for binding and handling data.
+You developed an application that subscribes to real time updates by using Jakarta WebSocket and Open Liberty.
 
 
 
@@ -561,26 +790,26 @@ You just built a dynamic web application on Open Liberty by using Jakarta Faces 
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-jakarta-faces*** project by running the following commands:
+Delete the ***guide-jakarta-websocket*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-jakarta-faces
+rm -fr guide-jakarta-websocket
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Building%20a%20dynamic%20web%20application%20with%20integrated%20user%20interface%20and%20backend%20logic&guide-id=cloud-hosted-guide-jakarta-faces)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Bidirectional%20communication%20between%20services%20using%20Jakarta%20WebSocket&guide-id=cloud-hosted-guide-jakarta-websocket)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-jakarta-faces/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-jakarta-faces/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-jakarta-websocket/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-jakarta-websocket/pulls)
 
 
 
@@ -591,4 +820,4 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 ### Log out of the session
 
-Log out of the cloud-hosted guides by selecting **Account** :fa-user: > **Logout** from the Skills Network left-sided menu.
+Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
