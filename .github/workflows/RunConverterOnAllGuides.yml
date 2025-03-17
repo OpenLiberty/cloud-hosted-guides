@@ -58,20 +58,20 @@ jobs:
       - uses: actions/checkout@master
         
       - name: Checkout Guide Converter repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: OpenLiberty/cloud-hosted-guide-converter
           ref: ${{ github.event.inputs.GuideConverterBranch }}
           path: GuideConverter
         
       - name: Checkout guide repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: OpenLiberty/${{matrix.guides.guide}}
           path: GuideConverter/${{matrix.guides.guide}}
         
       - name: Checkout guides-common repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: OpenLiberty/guides-common
           path: GuideConverter/guides-common
@@ -102,12 +102,12 @@ jobs:
           rm -rf GuideConverter
           bash .github/workflows/draftRemoval.sh ${{matrix.guides.guide}}
           cd instructions/${{matrix.guides.instructionDir}}
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{matrix.guides.instructionDir}}
           path: |
             instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: cloud-hosted-${{matrix.guides.guide}}
@@ -121,7 +121,7 @@ jobs:
     if: github.event.inputs.PRNumber != 0
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       # Download all artifacts
       # https://github.com/actions/download-artifact#download-all-artifacts
@@ -130,7 +130,7 @@ jobs:
           path: instructions/
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v3
+        uses: peter-evans/create-pull-request@v7
         with:
           title: "To Prod: Change to multiple Guides"
           token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
@@ -145,7 +145,7 @@ jobs:
     if: github.event.inputs.PRNumber == 0
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       # Download all artifacts
       # https://github.com/actions/download-artifact#download-all-artifacts
@@ -154,7 +154,7 @@ jobs:
           path: instructions/
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v3
+        uses: peter-evans/create-pull-request@v7
         with:
           title: "To Prod: Change to All Guides (Manually triggered)"
           token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
@@ -178,21 +178,21 @@ jobs:
       - uses: actions/checkout@master
 
       - name: Checkout Guide Converter repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: OpenLiberty/cloud-hosted-guide-converter
           ref: ${{ github.event.inputs.GuideConverterBranch }}
           path: GuideConverter
 
       - name: Checkout guide repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: staging
           repository: OpenLiberty/${{matrix.guides.guide}}
           path: GuideConverter/${{matrix.guides.guide}}
 
       - name: Checkout guides-common repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: OpenLiberty/guides-common
           path: GuideConverter/guides-common
@@ -222,12 +222,12 @@ jobs:
           rm -rf GuideConverter
           bash .github/workflows/draftRemoval.sh ${{matrix.guides.guide}}
           cd instructions/${{matrix.guides.instructionDir}}
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{matrix.guides.instructionDir}}
           path: |
             instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: cloud-hosted-${{matrix.guides.guide}}
@@ -242,7 +242,7 @@ jobs:
     if: github.event.inputs.PRNumber != 0
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       # Download all artifacts
       # https://github.com/actions/download-artifact#download-all-artifacts
@@ -251,7 +251,7 @@ jobs:
           path: instructions/
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v3
+        uses: peter-evans/create-pull-request@v7
         with:
           title: "To Staging: Change to multiple Guides"
           token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
@@ -268,7 +268,7 @@ jobs:
     if: github.event.inputs.PRNumber == 0
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       # Download all artifacts
       # https://github.com/actions/download-artifact#download-all-artifacts
@@ -277,7 +277,7 @@ jobs:
           path: instructions/
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v3
+        uses: peter-evans/create-pull-request@v7
         with:
           title: "To Staging: Change to multiple Guides (Manually triggered)"
           token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
