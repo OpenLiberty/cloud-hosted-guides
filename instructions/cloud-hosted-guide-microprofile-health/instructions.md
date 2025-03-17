@@ -488,7 +488,7 @@ curl -s http://localhost:9080/health/ready | jq
 Put the ***inventory*** service in maintenance by setting the ***io_openliberty_guides_inventory_inMaintenance*** property to ***true*** in the ***resources/CustomConfigSource.json*** file. 
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-health/start/resources/CustomConfigSource.json, or click the following button
+ ***File*** > ***Open*** > guide-microprofile-health/start/resources/CustomConfigSource.json, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-health/start/resources/CustomConfigSource.json"}
 
@@ -512,7 +512,7 @@ curl -s http://localhost:9080/inventory/systems | jq
 Set the ***io_openliberty_guides_inventory_inMaintenance*** property back to **false** after you are done.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-health/start/resources/CustomConfigSource.json, or click the following button
+ ***File*** > ***Open*** > guide-microprofile-health/start/resources/CustomConfigSource.json, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-health/start/resources/CustomConfigSource.json"}
 
