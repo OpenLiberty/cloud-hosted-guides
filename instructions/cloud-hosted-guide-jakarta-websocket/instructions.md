@@ -116,7 +116,7 @@ touch /home/project/guide-jakarta-websocket/start/system/src/main/java/io/openli
 
 
 > Then, to open the SystemService.java file in your IDE, select
-> **File** > **Open** > guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
+> ***File*** > ***Open*** > guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
 
 ::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
 
@@ -216,7 +216,7 @@ public class SystemService {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 Annotate the ***SystemService*** class with a ***@ServerEndpoint*** annotation to make it a WebSocket server. The ***@ServerEndpoint***  ***value*** attribute specifies the URI where the endpoint will be deployed. The ***encoders*** attribute specifies the classes to encode messages and the ***decoders*** attribute specifies the classes to decode messages. Provide methods that define the parts of the WebSocket lifecycle like establishing a connection, receiving a message, and closing the connection by annotating them with the ***@OnOpen***, ***@OnMessage*** and ***@OnClose*** annotations respectively. The method that is annotated with the ***@OnError*** annotation is responsible for tackling errors.
@@ -234,7 +234,7 @@ touch /home/project/guide-jakarta-websocket/start/system/src/main/java/io/openli
 
 
 > Then, to open the SystemLoadEncoder.java file in your IDE, select
-> **File** > **Open** > guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadEncoder.java, or click the following button
+> ***File*** > ***Open*** > guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadEncoder.java, or click the following button
 
 ::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadEncoder.java"}
 
@@ -269,7 +269,7 @@ touch /home/project/guide-jakarta-websocket/start/system/src/main/java/io/openli
 
 
 > Then, to open the SystemLoadDecoder.java file in your IDE, select
-> **File** > **Open** > guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadDecoder.java, or click the following button
+> ***File*** > ***Open*** > guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadDecoder.java, or click the following button
 
 ::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadDecoder.java"}
 
@@ -348,7 +348,7 @@ touch /home/project/guide-jakarta-websocket/start/client/src/main/java/io/openli
 
 
 > Then, to open the SystemClient.java file in your IDE, select
-> **File** > **Open** > guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemClient.java, or click the following button
+> ***File*** > ***Open*** > guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemClient.java, or click the following button
 
 ::openFile{path="/home/project/guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemClient.java"}
 
@@ -425,7 +425,7 @@ touch /home/project/guide-jakarta-websocket/start/client/src/main/java/io/openli
 
 
 > Then, to open the SystemLoadScheduler.java file in your IDE, select
-> **File** > **Open** > guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemLoadScheduler.java, or click the following button
+> ***File*** > ***Open*** > guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemLoadScheduler.java, or click the following button
 
 ::openFile{path="/home/project/guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemLoadScheduler.java"}
 
@@ -490,7 +490,7 @@ touch /home/project/guide-jakarta-websocket/start/client/src/main/webapp/index.h
 
 
 > Then, to open the index.html file in your IDE, select
-> **File** > **Open** > guide-jakarta-websocket/start/client/src/main/webapp/index.html, or click the following button
+> ***File*** > ***Open*** > guide-jakarta-websocket/start/client/src/main/webapp/index.html, or click the following button
 
 ::openFile{path="/home/project/guide-jakarta-websocket/start/client/src/main/webapp/index.html"}
 
@@ -603,7 +603,7 @@ touch /home/project/guide-jakarta-websocket/start/system/src/test/java/it/io/ope
 
 
 > Then, to open the SystemClient.java file in your IDE, select
-> **File** > **Open** > guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemClient.java, or click the following button
+> ***File*** > ***Open*** > guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemClient.java, or click the following button
 
 ::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemClient.java"}
 
@@ -673,7 +673,7 @@ touch /home/project/guide-jakarta-websocket/start/system/src/test/java/it/io/ope
 
 
 > Then, to open the SystemServiceIT.java file in your IDE, select
-> **File** > **Open** > guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java, or click the following button
+> ***File*** > ***Open*** > guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java"}
 
@@ -796,8 +796,6 @@ rm -fr guide-jakarta-websocket
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Bidirectional%20communication%20between%20services%20using%20Jakarta%20WebSocket&guide-id=cloud-hosted-guide-jakarta-websocket)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
