@@ -115,7 +115,7 @@ This approach involves directly associating individual configuration properties 
 Replace the ***microprofile-config.properties*** file.
 
 > To open the microprofile-config.properties file in your IDE, select
-> **File** > **Open** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties"}
 
@@ -134,7 +134,7 @@ system.contextRoot=system
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
 
@@ -166,7 +166,7 @@ touch /home/project/guide-microprofile-config-profile/start/query/src/main/resou
 
 
 > Then, to open the microprofile-config-dev.properties file in your IDE, select
-> **File** > **Open** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-dev.properties, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-dev.properties, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-dev.properties"}
 
@@ -187,7 +187,7 @@ Define the ***system.**** properties in the ***microprofile-config-dev.propertie
 Replace the ***microprofile-config.properties*** file.
 
 > To open the microprofile-config.properties file in your IDE, select
-> **File** > **Open** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties"}
 
@@ -232,7 +232,7 @@ touch /home/project/guide-microprofile-config-profile/start/query/src/main/resou
 
 
 > Then, to open the microprofile-config-test.properties file in your IDE, select
-> **File** > **Open** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-test.properties, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-test.properties, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-test.properties"}
 
@@ -259,7 +259,7 @@ touch /home/project/guide-microprofile-config-profile/start/query/src/test/java/
 
 
 > Then, to open the QueryEndpointIT.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-config-profile/start/query/src/test/java/it/io/openliberty/guides/query/QueryEndpointIT.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/test/java/it/io/openliberty/guides/query/QueryEndpointIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/test/java/it/io/openliberty/guides/query/QueryEndpointIT.java"}
 
@@ -523,8 +523,6 @@ rm -fr guide-microprofile-config-profile
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Externalizing%20environment-specific%20microservice%20configuration%20for%20CI/CD&guide-id=cloud-hosted-guide-microprofile-config-profile)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
