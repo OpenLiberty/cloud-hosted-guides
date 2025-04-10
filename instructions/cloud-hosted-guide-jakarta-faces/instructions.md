@@ -112,7 +112,7 @@ touch /home/project/guide-jakarta-faces/start/src/main/webapp/index.xhtml
 
 
 > Then, to open the index.xhtml file in your IDE, select
-> **File** > **Open** > guide-jakarta-faces/start/src/main/webapp/index.xhtml, or click the following button
+> ***File*** > ***Open*** > guide-jakarta-faces/start/src/main/webapp/index.xhtml, or click the following button
 
 ::openFile{path="/home/project/guide-jakarta-faces/start/src/main/webapp/index.xhtml"}
 
@@ -170,7 +170,7 @@ touch /home/project/guide-jakarta-faces/start/src/main/webapp/index.xhtml
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 
@@ -193,7 +193,7 @@ touch /home/project/guide-jakarta-faces/start/src/main/webapp/WEB-INF/web.xml
 
 
 > Then, to open the web.xml file in your IDE, select
-> **File** > **Open** > guide-jakarta-faces/start/src/main/webapp/WEB-INF/web.xml, or click the following button
+> ***File*** > ***Open*** > guide-jakarta-faces/start/src/main/webapp/WEB-INF/web.xml, or click the following button
 
 ::openFile{path="/home/project/guide-jakarta-faces/start/src/main/webapp/WEB-INF/web.xml"}
 
@@ -264,7 +264,7 @@ touch /home/project/guide-jakarta-faces/start/src/main/java/io/openliberty/guide
 
 
 > Then, to open the SystemLoadBean.java file in your IDE, select
-> **File** > **Open** > guide-jakarta-faces/start/src/main/java/io/openliberty/guides/bean/SystemLoadBean.java, or click the following button
+> ***File*** > ***Open*** > guide-jakarta-faces/start/src/main/java/io/openliberty/guides/bean/SystemLoadBean.java, or click the following button
 
 ::openFile{path="/home/project/guide-jakarta-faces/start/src/main/java/io/openliberty/guides/bean/SystemLoadBean.java"}
 
@@ -344,7 +344,7 @@ Now that you have implemented the backend logic with CDI, you'll update the Jaka
 Replace the index.xhtml file.
 
 > To open the index.xhtml file in your IDE, select
-> **File** > **Open** > guide-jakarta-faces/start/src/main/webapp/index.xhtml, or click the following button
+> ***File*** > ***Open*** > guide-jakarta-faces/start/src/main/webapp/index.xhtml, or click the following button
 
 ::openFile{path="/home/project/guide-jakarta-faces/start/src/main/webapp/index.xhtml"}
 
@@ -460,7 +460,7 @@ touch /home/project/guide-jakarta-faces/start/src/test/java/io/openliberty/guide
 
 
 > Then, to open the SystemLoadBeanTest.java file in your IDE, select
-> **File** > **Open** > guide-jakarta-faces/start/src/test/java/io/openliberty/guides/bean/SystemLoadBeanTest.java, or click the following button
+> ***File*** > ***Open*** > guide-jakarta-faces/start/src/test/java/io/openliberty/guides/bean/SystemLoadBeanTest.java, or click the following button
 
 ::openFile{path="/home/project/guide-jakarta-faces/start/src/test/java/io/openliberty/guides/bean/SystemLoadBeanTest.java"}
 
@@ -573,8 +573,6 @@ rm -fr guide-jakarta-faces
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Building%20a%20dynamic%20web%20application%20with%20integrated%20user%20interface%20and%20backend%20logic&guide-id=cloud-hosted-guide-jakarta-faces)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
