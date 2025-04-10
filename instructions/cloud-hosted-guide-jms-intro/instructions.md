@@ -179,7 +179,7 @@ touch /home/project/guide-jms-intro/start/inventory/src/main/java/io/openliberty
 
 
 > Then, to open the InventoryQueueListener.java file in your IDE, select
-> **File** > **Open** > guide-jms-intro/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryQueueListener.java, or click the following button
+> ***File*** > ***Open*** > guide-jms-intro/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryQueueListener.java, or click the following button
 
 ::openFile{path="/home/project/guide-jms-intro/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryQueueListener.java"}
 
@@ -242,7 +242,7 @@ public class InventoryQueueListener implements MessageListener {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 The ***inventory*** microservice receives the messages from the ***system*** microservice. Implement the ***InventoryQueueListener*** class with the ***MessageListener*** interface and annotate with ***@MessageDriven*** to monitor the ***jms/InventoryQueue*** message queue. Implement the ***onMessage()*** method that processes the incoming messages, updates the inventory by using the ***InventoryManager*** bean, and logs the action. Use the ***SystemLoad.fromJson()*** method to convert the JSON message string to the ***SystemLoad*** object.
@@ -252,7 +252,7 @@ Next, configure the ***inventory*** microservice with an embedded messaging serv
 Replace the inventory's ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-jms-intro/start/inventory/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-jms-intro/start/inventory/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-jms-intro/start/inventory/src/main/liberty/config/server.xml"}
 
@@ -354,7 +354,7 @@ touch /home/project/guide-jms-intro/start/system/src/main/java/io/openliberty/gu
 
 
 > Then, to open the SystemService.java file in your IDE, select
-> **File** > **Open** > guide-jms-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
+> ***File*** > ***Open*** > guide-jms-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
 
 ::openFile{path="/home/project/guide-jms-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
 
@@ -425,7 +425,7 @@ Next, configure the ***system*** microservice to access the message queue.
 Replace the system's ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-jms-intro/start/system/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-jms-intro/start/system/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-jms-intro/start/system/src/main/liberty/config/server.xml"}
 
@@ -519,7 +519,7 @@ touch /home/project/guide-jms-intro/start/inventory/src/test/java/it/io/openlibe
 
 
 > Then, to open the InventoryEndpointIT.java file in your IDE, select
-> **File** > **Open** > guide-jms-intro/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java, or click the following button
+> ***File*** > ***Open*** > guide-jms-intro/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-jms-intro/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java"}
 
@@ -724,7 +724,7 @@ docker ps
 Replace the ***pom.xml*** file of the inventory service.
 
 > To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-jms-intro/start/inventory/pom.xml, or click the following button
+> ***File*** > ***Open*** > guide-jms-intro/start/inventory/pom.xml, or click the following button
 
 ::openFile{path="/home/project/guide-jms-intro/start/inventory/pom.xml"}
 
@@ -784,19 +784,19 @@ Replace the ***pom.xml*** file of the inventory service.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.12.0</version>
+            <version>5.12.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>6.2.11.Final</version>
+            <version>6.2.12.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-json-binding-provider</artifactId>
-            <version>6.2.11.Final</version>
+            <version>6.2.12.Final</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -817,21 +817,21 @@ Replace the ***pom.xml*** file of the inventory service.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.11.2</version>
+                <version>3.11.3</version>
             </plugin>
 
             <!-- Plugin to run unit tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.2</version>
+                <version>3.5.3</version>
             </plugin>
 
             <!-- Plugin to run integration tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.2</version>
+                <version>3.5.3</version>
                 <configuration>
                     <systemPropertyVariables>
                         <http.port>${liberty.var.http.port}</http.port>
@@ -861,7 +861,7 @@ Add the ***liberty.var.ibmmq-**** properties for the IBM MQ container. You can c
 Replace the ***server.xml*** file of the inventory service.
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-jms-intro/start/inventory/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-jms-intro/start/inventory/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-jms-intro/start/inventory/src/main/liberty/config/server.xml"}
 
@@ -929,7 +929,7 @@ Refine the ***jmsQueue*** and ***jmsActivationSpec*** configurations with the va
 Replace the ***pom.xml*** file of the system service.
 
 > To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-jms-intro/start/system/pom.xml, or click the following button
+> ***File*** > ***Open*** > guide-jms-intro/start/system/pom.xml, or click the following button
 
 ::openFile{path="/home/project/guide-jms-intro/start/system/pom.xml"}
 
@@ -1002,7 +1002,7 @@ Replace the ***pom.xml*** file of the system service.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.12.0</version>
+            <version>5.12.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -1023,21 +1023,21 @@ Replace the ***pom.xml*** file of the system service.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.11.2</version>
+                <version>3.11.3</version>
             </plugin>
 
             <!-- Plugin to run unit tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.2</version>
+                <version>3.5.3</version>
             </plugin>
 
             <!-- Plugin to run integration tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.2</version>
+                <version>3.5.3</version>
                 <executions>
                     <execution>
                         <id>integration-test</id>
@@ -1070,7 +1070,7 @@ Add the ***liberty.var.ibmmq-**** properties for the IBM MQ container as you did
 Replace the ***server.xml*** file of the system service.
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-jms-intro/start/system/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-jms-intro/start/system/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-jms-intro/start/system/src/main/liberty/config/server.xml"}
 
@@ -1218,8 +1218,6 @@ rm -fr guide-jms-intro
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Producing%20and%20consuming%20messages%20in%20Java%20microservices&guide-id=cloud-hosted-guide-jms-intro)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
