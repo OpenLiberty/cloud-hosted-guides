@@ -185,7 +185,7 @@ MicroProfile Telemetry allows you to observe traces without modifying the source
 Replace the ***server.xml*** file of the system service:
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-microprofile-telemetry-jaeger/start/system/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-telemetry-jaeger/start/system/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/system/src/main/liberty/config/server.xml"}
 
@@ -215,7 +215,7 @@ Replace the ***server.xml*** file of the system service:
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
 The ***mpTelemetry*** feature is now enabled in the ***server.xml*** of the ***system*** service.
@@ -223,7 +223,7 @@ The ***mpTelemetry*** feature is now enabled in the ***server.xml*** of the ***s
 Replace the ***server.xml*** file of the inventory service:
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main/liberty/config/server.xml"}
 
@@ -270,7 +270,7 @@ touch /home/project/guide-microprofile-telemetry-jaeger/start/system/src/main/re
 
 
 > Then, to open the microprofile-config.properties file in your IDE, select
-> **File** > **Open** > guide-microprofile-telemetry-jaeger/start/system/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-telemetry-jaeger/start/system/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/system/src/main/resources/META-INF/microprofile-config.properties"}
 
@@ -291,7 +291,7 @@ The MicroProfile properties file sets the ***otel.service.name*** property with 
 Replace the ***microprofile-config.properties*** file of the inventory service:
 
 > To open the microprofile-config.properties file in your IDE, select
-> **File** > **Open** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main/resources/META-INF/microprofile-config.properties"}
 
@@ -343,7 +343,7 @@ The MicroProfile Telemetry feature has been enabled to trace all REST endpoints 
 Replace the ***server.xml*** file of the inventory service:
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/liberty/config/server.xml, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main/liberty/config/server.xml"}
 
@@ -388,7 +388,7 @@ You can trace your Jakarta CDI beans by annotating their methods with a ***@With
 Replace the ***InventoryManager*** class:
 
 > To open the InventoryManager.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
 
@@ -522,7 +522,7 @@ The MicroProfile Telemetry specification makes the underlying OpenTelemetry Trac
 Replace the ***InventoryResource*** class:
 
 > To open the InventoryResource.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java"}
 
@@ -710,8 +710,6 @@ rm -fr guide-microprofile-telemetry-jaeger
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Enabling%20distributed%20tracing%20in%20microservices%20with%20OpenTelemetry%20and%20Jaeger&guide-id=cloud-hosted-guide-microprofile-telemetry-jaeger)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
