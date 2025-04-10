@@ -187,7 +187,7 @@ touch /home/project/guide-maven-intro/start/pom.xml
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.12.0</version>
+            <version>5.12.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -203,7 +203,7 @@ touch /home/project/guide-maven-intro/start/pom.xml
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.11.2</version>
+                <version>3.11.3</version>
                 <configuration>
                     <serverName>guideServer</serverName>
                 </configuration>
@@ -211,7 +211,7 @@ touch /home/project/guide-maven-intro/start/pom.xml
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.2</version>
+                <version>3.5.3</version>
                 <configuration>
                     <systemPropertyVariables>
                         <http.port>${liberty.var.http.port}</http.port>
