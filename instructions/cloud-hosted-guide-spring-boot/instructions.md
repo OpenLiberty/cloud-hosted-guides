@@ -25,9 +25,9 @@ You will also learn how to run the Spring Boot application locally with Open Lib
 ::page{title="Getting started"}
 
 To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
+select ***Terminal*** > ***New Terminal*** from the menu of the IDE.
 
-Run the following command to navigate to the **/home/project** directory:
+Run the following command to navigate to the ***/home/project*** directory:
 
 ```bash
 cd /home/project
@@ -251,7 +251,7 @@ Update the ***Maven POM*** file in the ***start*** directory.
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.3</version>
+        <version>3.4.4</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.example</groupId>
@@ -293,7 +293,7 @@ Update the ***Maven POM*** file in the ***start*** directory.
       <plugin>
         <groupId>io.openliberty.tools</groupId>
         <artifactId>liberty-maven-plugin</artifactId>
-        <version>3.11.2</version>
+        <version>3.11.3</version>
         <configuration>
           <appsDirectory>apps</appsDirectory>
           <installAppPackages>spring-boot-project</installAppPackages>
@@ -422,7 +422,7 @@ Update the Maven POM file in the ***start*** directory.
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.3</version>
+        <version>3.4.4</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.example</groupId>
@@ -464,7 +464,7 @@ Update the Maven POM file in the ***start*** directory.
       <plugin>
         <groupId>io.openliberty.tools</groupId>
         <artifactId>liberty-maven-plugin</artifactId>
-        <version>3.11.2</version>
+        <version>3.11.3</version>
         <configuration>
           <appsDirectory>apps</appsDirectory>
           <installAppPackages>spring-boot-project</installAppPackages>
