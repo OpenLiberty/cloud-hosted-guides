@@ -32,9 +32,9 @@ The microservice that you'll be working with is called ***inventory***. The ***i
 ::page{title="Getting started"}
 
 To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
+select ***Terminal*** > ***New Terminal*** from the menu of the IDE.
 
-Run the following command to navigate to the **/home/project** directory:
+Run the following command to navigate to the ***/home/project*** directory:
 
 ```bash
 cd /home/project
@@ -179,7 +179,7 @@ touch /home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/g
 
 
 > Then, to open the SystemResourceClient.java file in your IDE, select
-> **File** > **Open** > guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceClient.java, or click the following button
+> ***File*** > ***Open*** > guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceClient.java, or click the following button
 
 ::openFile{path="/home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceClient.java"}
 
@@ -248,7 +248,7 @@ public interface SystemResourceClient {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 The ***SystemResourceClient*** interface declares the ***listContents()***, ***getSystem()***, ***addSystem()***, ***updateSystem()***, and ***removeSystem()*** methods for accessing the corresponding endpoints within the ***inventory*** microservice.
@@ -264,7 +264,7 @@ touch /home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/g
 
 
 > Then, to open the SystemData.java file in your IDE, select
-> **File** > **Open** > guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemData.java, or click the following button
+> ***File*** > ***Open*** > guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemData.java, or click the following button
 
 ::openFile{path="/home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemData.java"}
 
@@ -345,7 +345,7 @@ touch /home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/g
 
 
 > Then, to open the LibertyContainer.java file in your IDE, select
-> **File** > **Open** > guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/LibertyContainer.java, or click the following button
+> ***File*** > ***Open*** > guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/LibertyContainer.java, or click the following button
 
 ::openFile{path="/home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/LibertyContainer.java"}
 
@@ -402,7 +402,7 @@ touch /home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/g
 
 
 > Then, to open the SystemResourceIT.java file in your IDE, select
-> **File** > **Open** > guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceIT.java, or click the following button
+> ***File*** > ***Open*** > guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceIT.java"}
 
@@ -611,7 +611,7 @@ touch /home/project/guide-testcontainers/start/src/test/resources/log4j.properti
 
 
 > Then, to open the log4j.properties file in your IDE, select
-> **File** > **Open** > guide-testcontainers/start/src/test/resources/log4j.properties, or click the following button
+> ***File*** > ***Open*** > guide-testcontainers/start/src/test/resources/log4j.properties, or click the following button
 
 ::openFile{path="/home/project/guide-testcontainers/start/src/test/resources/log4j.properties"}
 
@@ -642,7 +642,7 @@ Next, prepare your Maven project for test execution by adding the necessary depe
 Replace the ***pom.xml*** file.
 
 > To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-testcontainers/start/pom.xml, or click the following button
+> ***File*** > ***Open*** > guide-testcontainers/start/pom.xml, or click the following button
 
 ::openFile{path="/home/project/guide-testcontainers/start/pom.xml"}
 
@@ -695,19 +695,19 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.12.0</version>
+            <version>5.12.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>6.2.11.Final</version>
+            <version>6.2.12.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-json-binding-provider</artifactId>
-            <version>6.2.11.Final</version>
+            <version>6.2.12.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -725,7 +725,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.20.5</version>
+            <version>1.20.6</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -763,12 +763,12 @@ Replace the ***pom.xml*** file.
                         </dependencyGroup>
                     </copyDependencies>
                 </configuration>
-                <version>3.11.2</version>
+                <version>3.11.3</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.2</version>
+                <version>3.5.3</version>
                 <configuration>
                     <systemPropertyVariables>
                         <http.port>${liberty.var.http.port}</http.port>
@@ -888,8 +888,6 @@ rm -fr guide-testcontainers
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Building%20true-to-production%20integration%20tests%20with%20Testcontainers&guide-id=cloud-hosted-guide-testcontainers)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
