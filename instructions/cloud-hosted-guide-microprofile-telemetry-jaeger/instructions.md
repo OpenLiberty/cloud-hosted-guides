@@ -32,9 +32,9 @@ The diagram shows multiple services, which is where distributed tracing is valua
 ::page{title="Getting started"}
 
 To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
+select ***Terminal*** > ***New Terminal*** from the menu of the IDE.
 
-Run the following command to navigate to the **/home/project** directory:
+Run the following command to navigate to the ***/home/project*** directory:
 
 ```bash
 cd /home/project
@@ -208,7 +208,7 @@ Replace the ***server.xml*** file of the system service:
                   httpsPort="${https.port}"
                   id="defaultHttpEndpoint" host="*" />
 
-    <webApplication location="guide-microprofile-telemetry-system.war"
+    <webApplication location="guide-microprofile-telemetry-jaeger-system.war"
                     contextRoot="/" />
 
 </server>
@@ -247,7 +247,7 @@ Replace the ***server.xml*** file of the inventory service:
                   httpsPort="${https.port}"
                   id="defaultHttpEndpoint" host="*" />
 
-    <webApplication location="guide-microprofile-telemetry-inventory.war"
+    <webApplication location="guide-microprofile-telemetry-jaeger-inventory.war"
                     contextRoot="/">
     </webApplication>
 
@@ -367,7 +367,7 @@ Replace the ***server.xml*** file of the inventory service:
                   httpsPort="${https.port}"
                   id="defaultHttpEndpoint" host="*" />
 
-    <webApplication location="guide-microprofile-telemetry-inventory.war"
+    <webApplication location="guide-microprofile-telemetry-jaeger-inventory.war"
                     contextRoot="/">
         <!-- enable visibility to third party apis -->
         <classloader apiTypeVisibility="+third-party"/>
