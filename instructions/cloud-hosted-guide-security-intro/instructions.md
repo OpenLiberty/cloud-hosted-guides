@@ -123,7 +123,7 @@ touch /home/project/guide-security-intro/start/src/main/java/io/openliberty/guid
 
 
 > Then, to open the HomeServlet.java file in your IDE, select
-> **File** > **Open** > guide-security-intro/start/src/main/java/io/openliberty/guides/ui/HomeServlet.java, or click the following button
+> ***File*** > ***Open*** > guide-security-intro/start/src/main/java/io/openliberty/guides/ui/HomeServlet.java, or click the following button
 
 ::openFile{path="/home/project/guide-security-intro/start/src/main/java/io/openliberty/guides/ui/HomeServlet.java"}
 
@@ -175,7 +175,7 @@ public class HomeServlet extends HttpServlet {
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 The ***HomeServlet*** servlet is the entry point of the application. To enable form authentication for the ***HomeServlet*** class, define the ***@FormAuthenticationMechanismDefinition*** annotation and set its ***loginToContinue*** attribute with a ***@LoginToContinue*** annotation. This ***@FormAuthenticationMechanismDefinition*** annotation defines ***welcome.html*** as the login page and ***error.html*** as the error page.
@@ -211,7 +211,7 @@ touch /home/project/guide-security-intro/start/src/main/liberty/config/userRegis
 
 
 > Then, to open the userRegistry.xml file in your IDE, select
-> **File** > **Open** > guide-security-intro/start/src/main/liberty/config/userRegistry.xml, or click the following button
+> ***File*** > ***Open*** > guide-security-intro/start/src/main/liberty/config/userRegistry.xml, or click the following button
 
 ::openFile{path="/home/project/guide-security-intro/start/src/main/liberty/config/userRegistry.xml"}
 
@@ -304,7 +304,7 @@ touch /home/project/guide-security-intro/start/src/test/java/it/io/openliberty/g
 
 
 > Then, to open the SecurityIT.java file in your IDE, select
-> **File** > **Open** > guide-security-intro/start/src/test/java/it/io/openliberty/guides/security/SecurityIT.java, or click the following button
+> ***File*** > ***Open*** > guide-security-intro/start/src/test/java/it/io/openliberty/guides/security/SecurityIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-security-intro/start/src/test/java/it/io/openliberty/guides/security/SecurityIT.java"}
 
@@ -487,8 +487,6 @@ rm -fr guide-security-intro
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Securing%20a%20web%20application&guide-id=cloud-hosted-guide-security-intro)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
