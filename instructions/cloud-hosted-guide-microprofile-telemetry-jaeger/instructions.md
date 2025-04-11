@@ -208,7 +208,7 @@ Replace the ***server.xml*** file of the system service:
                   httpsPort="${https.port}"
                   id="defaultHttpEndpoint" host="*" />
 
-    <webApplication location="guide-microprofile-telemetry-system.war"
+    <webApplication location="guide-microprofile-telemetry-jaeger-system.war"
                     contextRoot="/" />
 
 </server>
@@ -247,7 +247,7 @@ Replace the ***server.xml*** file of the inventory service:
                   httpsPort="${https.port}"
                   id="defaultHttpEndpoint" host="*" />
 
-    <webApplication location="guide-microprofile-telemetry-inventory.war"
+    <webApplication location="guide-microprofile-telemetry-jaeger-inventory.war"
                     contextRoot="/">
     </webApplication>
 
@@ -367,7 +367,7 @@ Replace the ***server.xml*** file of the inventory service:
                   httpsPort="${https.port}"
                   id="defaultHttpEndpoint" host="*" />
 
-    <webApplication location="guide-microprofile-telemetry-inventory.war"
+    <webApplication location="guide-microprofile-telemetry-jaeger-inventory.war"
                     contextRoot="/">
         <!-- enable visibility to third party apis -->
         <classloader apiTypeVisibility="+third-party"/>
