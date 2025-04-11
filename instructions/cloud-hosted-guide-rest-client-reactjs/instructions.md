@@ -31,9 +31,9 @@ To learn more about REST services and how you can write them, see the [Creating 
 ::page{title="Getting started"}
 
 To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
+select ***Terminal*** > ***New Terminal*** from the menu of the IDE.
 
-Run the following command to navigate to the **/home/project** directory:
+Run the following command to navigate to the ***/home/project*** directory:
 
 ```bash
 cd /home/project
@@ -700,7 +700,7 @@ Update the ***pom.xml*** file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.12.0</version>
+            <version>5.12.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -717,7 +717,7 @@ Update the ***pom.xml*** file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.11.2</version>            
+                <version>3.11.3</version>            
             </plugin>
             <!-- Frontend resources -->
             <plugin>
