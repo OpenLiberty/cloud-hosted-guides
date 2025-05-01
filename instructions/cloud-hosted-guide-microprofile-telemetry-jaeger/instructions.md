@@ -16,6 +16,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 ::page{title="What you'll learn"}
+
 The complexity of microservices architecture can make it more difficult to understand how services depend on or affect each other and to identify sources of latency or inaccuracies.
 
 One way to increase the observability of an application is by emitting traces. [OpenTelemetry](https://opentelemetry.io/) is a set of APIs, SDKs, tooling, and integrations designed to create and manage telemetry data such as traces, metrics, and logs. MicroProfile Telemetry adopts OpenTelemetry so your Java applications can benefit from both manual and automatic traces.
@@ -32,9 +33,9 @@ The diagram shows multiple services, which is where distributed tracing is valua
 ::page{title="Getting started"}
 
 To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
+select ***Terminal*** > ***New Terminal*** from the menu of the IDE.
 
-Run the following command to navigate to the **/home/project** directory:
+Run the following command to navigate to the ***/home/project*** directory:
 
 ```bash
 cd /home/project
