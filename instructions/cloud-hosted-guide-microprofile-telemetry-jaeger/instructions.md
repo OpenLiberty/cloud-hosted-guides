@@ -56,7 +56,7 @@ The ***finish*** directory contains the finished project that you will build.
 ### Try what you'll build
 
 Run the following `docker` command to start the Jaeger server:
-```bash 
+```bash
 docker run -d --name jaeger \
   -e COLLECTOR_ZIPKIN_HOST_PORT=:9411 \
   -e COLLECTOR_OTLP_ENABLED=true \
