@@ -29,9 +29,9 @@ The results of the requests will be displayed at REST endpoints. OpenAPI will be
 ::page{title="Getting started"}
 
 To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
+select ***Terminal*** > ***New Terminal*** from the menu of the IDE.
 
-Run the following command to navigate to the **/home/project** directory:
+Run the following command to navigate to the ***/home/project*** directory:
 
 ```bash
 cd /home/project
@@ -261,7 +261,7 @@ Replace the Maven project file.
         <dependency>
             <groupId>io.smallrye.stork</groupId>
             <artifactId>stork-core</artifactId>
-            <version>2.7.1</version>
+            <version>2.7.3</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -273,7 +273,7 @@ Replace the Maven project file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.12.1</version>
+            <version>5.12.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -297,13 +297,13 @@ Replace the Maven project file.
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.20.6</version>
+            <version>1.21.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>1.20.6</version>
+            <version>1.21.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
