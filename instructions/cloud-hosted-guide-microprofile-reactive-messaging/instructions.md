@@ -34,9 +34,9 @@ The application in this guide consists of two microservices, ***system*** and **
 ::page{title="Getting started"}
 
 To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
+select ***Terminal*** > ***New Terminal*** from the menu of the IDE.
 
-Run the following command to navigate to the **/home/project** directory:
+Run the following command to navigate to the ***/home/project*** directory:
 
 ```bash
 cd /home/project
@@ -456,19 +456,19 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>kafka</artifactId>
-            <version>1.20.6</version>
+            <version>1.21.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.12.1</version>
+            <version>5.12.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>1.20.6</version>
+            <version>1.21.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -571,7 +571,7 @@ The application might take some time to become available. After the application 
 
 
 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
 
 
 Visit the ***http\://localhost:9085/health*** URL to confirm that the ***inventory*** microservice is up and running.
