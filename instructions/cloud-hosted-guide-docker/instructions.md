@@ -47,9 +47,9 @@ To avoid this kind of problem, you can instead choose to develop your applicatio
 ::page{title="Getting started"}
 
 To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
+select ***Terminal*** > ***New Terminal*** from the menu of the IDE.
 
-Run the following command to navigate to the **/home/project** directory:
+Run the following command to navigate to the ***/home/project*** directory:
 
 ```bash
 cd /home/project
