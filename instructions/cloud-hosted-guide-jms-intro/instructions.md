@@ -34,9 +34,9 @@ You will then, optionally, reconfigure the application, without changing the app
 ::page{title="Getting started"}
 
 To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
+select ***Terminal*** > ***New Terminal*** from the menu of the IDE.
 
-Run the following command to navigate to the **/home/project** directory:
+Run the following command to navigate to the ***/home/project*** directory:
 
 ```bash
 cd /home/project
@@ -88,7 +88,7 @@ The defaultServer server is ready to run a smarter planet.
 
 
 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
 
 
 Visit the ***http\://localhost:9081/health*** URL to confirm that the ***inventory*** microservice is up and running.
@@ -784,7 +784,7 @@ Replace the ***pom.xml*** file of the inventory service.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.12.1</version>
+            <version>5.12.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -1002,7 +1002,7 @@ Replace the ***pom.xml*** file of the system service.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.12.1</version>
+            <version>5.12.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
