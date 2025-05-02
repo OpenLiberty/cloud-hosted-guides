@@ -29,9 +29,9 @@ You'll learn how to use the link:[Jakarta WebSocket API](link:https://openlibert
 ::page{title="Getting started"}
 
 To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
+select ***Terminal*** > ***New Terminal*** from the menu of the IDE.
 
-Run the following command to navigate to the **/home/project** directory:
+Run the following command to navigate to the ***/home/project*** directory:
 
 ```bash
 cd /home/project
@@ -475,7 +475,7 @@ public class SystemLoadScheduler {
 
 
 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
 
 The ***SystemLoadScheduler*** class uses the ***SystemClient*** class to establish a connection to the server by the ***ws://localhost:9081/systemLoad*** URI at the ***@PostConstruct*** annotated method. The ***sendSystemLoad()*** method calls the client to send a random string from either ***cpuLoad***, ***memoryUsage***, or ***both*** to the ***system*** service. Using the link:[Jakarta Enterprise Beans Schedule](link:https://openliberty.io/docs/latest/reference/javadoc/liberty-jakartaee10-javadoc.html?path=liberty-jakartaee10-javadoc/jakarta/ejb/Schedule.html), annotate the ***sendSystemLoad()*** method with the ***@Schedule*** annotation so that it sends out a message every 10 seconds.
 
