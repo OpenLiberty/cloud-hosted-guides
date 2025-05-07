@@ -1,13 +1,10 @@
 ---
 markdown-version: v1
-title: cloud-hosted-guide-jakarta-websocket
-branch: lab-5932-instruction
-version-history-start-date: 2023-01-05T10:56:36Z
 tool-type: theia
 ---
-::page{title="Welcome to the Bidirectional communication between services using Jakarta WebSocket guide!"}
+::page{title="Welcome to the Checking the health of microservices on Kubernetes guide!"}
 
-Learn how to use Jakarta WebSocket to send and receive messages between services without closing the connection.
+Learn how to check the health of microservices on Kubernetes by setting up startup, liveness, and readiness probes to inspect MicroProfile Health Check endpoints.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -18,33 +15,37 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 ::page{title="What you'll learn"}
 
-Jakarta WebSocket enables two-way communication between client and server endpoints. First, each client makes an HTTP connection to a Jakarta WebSocket server. The server can then broadcast messages to the clients. link:[Server-Sent Events (SSE)](link:https://openliberty.io/guides/reactive-messaging-sse.html) also enables a client to receive automatic updates from a server via an HTTP connection however WebSocket differs from Server-Sent Events in that SSE is unidirectional from server to client, whereas WebSocket is bidirectional. WebSocket also enables real-time updates over a smaller bandwidth than SSE. The connection isn't closed meaning that the client can continue to send and receive messages with the server, without having to poll the server to receive any replies.
+You will learn how to create health check endpoints for your microservices. Then, you will configure Kubernetes to use these endpoints to keep your microservices running smoothly. 
 
-The application that you will build in this guide consists of the ***client*** service and the ***system*** server service. The following diagram depicts the application that is used in this guide. 
+MicroProfile Health allows services to report their health, and it publishes the overall health status to defined endpoints. If a service reports ***UP***, then it's available. If the service reports ***DOWN***, then it's unavailable. MicroProfile Health reports an individual service status at the endpoint and indicates the overall status as ***UP*** if all the services are ***UP***. A service orchestrator can then use the health statuses to make decisions.
 
-![Application architecture where system and client services use the Jakarta Websocket API to connect and communicate.](https://raw.githubusercontent.com/OpenLiberty/guide-jakarta-websocket/prod/assets/architecture.png)
+Kubernetes provides startup, liveness, and readiness probes that are used to check the health of your containers. These probes can check certain files in your containers, check a TCP socket, or make HTTP requests. MicroProfile Health exposes startup, liveness, and readiness endpoints on your microservices. Kubernetes polls these endpoints as specified by the probes to react appropriately to any change in the microservice's status. Read the [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html) guide to learn more about MicroProfile Health.
+
+The two microservices you will work with are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of the running container and it returns the pod's name in the HTTP header making replicas easy to distinguish from each other. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This demonstrates how communication can be established between pods inside a cluster.
 
 
-You'll learn how to use the link:[Jakarta WebSocket API](link:https://openliberty.io/docs/latest/reference/javadoc/liberty-jakartaee9.1-javadoc.html?package=jakarta/websocket/package-frame.html&class=overview-summary.html) to build the ***system*** service and the scheduler in the ***client*** service. The scheduler pushes messages to the system service every 10 seconds, then the system service broadcasts the messages to any connected clients. You will also learn how to use a JavaScript ***WebSocket*** object in an HTML file to build a WebSocket connection, subscribe to different events, and display the broadcasting messages from the ***system*** service in a table.
+
+
 
 ::page{title="Getting started"}
 
 To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
+select ***Terminal*** > ***New Terminal*** from the menu of the IDE.
 
-Run the following command to navigate to the **/home/project** directory:
+Run the following command to navigate to the ***/home/project*** directory:
 
 ```bash
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-jakarta-websocket.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-microprofile-health.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-jakarta-websocket.git
-cd guide-jakarta-websocket
+git clone https://github.com/openliberty/guide-kubernetes-microprofile-health.git
+cd guide-kubernetes-microprofile-health
 ```
 
 
@@ -52,735 +53,585 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-### Try what you'll build
 
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed. 
+::page{title="Adding health checks to the inventory microservice"}
 
-To try out the application, go to the finish directory and run the following Maven goal to build the ***system*** service and deploy it to Open Liberty:
+Navigate to ***start*** directory to begin.
 
-```bash
-mvn -pl system liberty:run
-
-```
-
-Next, open another command-line session and run the following command to start the ***client*** service:
-
-```bash
-mvn -pl client liberty:run
-```
-
-After you see the following message in both command-line sessions, both your services are ready.
-
-```
-The defaultServer is ready to run a smarter planet. 
-```
-
-Check out the service at the http://localhost:9080 URL. See that the table is being updated for every 10 seconds. 
-
-After you are finished checking out the application, stop both the ***system*** and ***client*** services by pressing `Ctrl+C` in the command-line sessions where you ran them. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
-
-```bash
-mvn -pl system liberty:stop
-mvn -pl client liberty:stop
-```
- 
-
-::page{title="Creating the WebSocket server service"}
-
-In this section, you will create the ***system*** WebSocket server service that broadcasts messages to clients.
-
-Navigate to the ***start*** directory to begin.
-
-```bash
-cd /home/project/guide-jakarta-websocket/start
-```
-
-When you run Open Liberty in dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following command to start the ***system*** service in dev mode:
-
-```bash
-mvn -pl system liberty:dev
-```
-
-After you see the following message, your runtime in dev mode is ready:
-
-```
-**************************************************
-*     Liberty is running in dev mode.
-```
-
-The ***system*** service is responsible for handling the messages produced by the ***client*** scheduler, building system load messages, and forwarding them to clients.
-
-Create the SystemService class.
+Create the ***InventoryStartupCheck*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
+touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java
 ```
 
 
-> Then, to open the SystemService.java file in your IDE, select
-> **File** > **Open** > guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
+> Then, to open the InventoryStartupCheck.java file in your IDE, select
+> ***File*** > ***Open*** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java, or click the following button
 
-::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
+::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java"}
 
 
 
 ```java
-package io.openliberty.guides.system;
+package io.openliberty.guides.inventory;
 
 import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
-import java.lang.management.OperatingSystemMXBean;
-import java.util.Calendar;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.logging.Logger;
+import com.sun.management.OperatingSystemMXBean;
+import jakarta.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.health.Startup;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
 
-import jakarta.json.Json;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonObjectBuilder;
-import jakarta.websocket.CloseReason;
-import jakarta.websocket.OnClose;
-import jakarta.websocket.OnError;
-import jakarta.websocket.OnMessage;
-import jakarta.websocket.OnOpen;
-import jakarta.websocket.Session;
-import jakarta.websocket.server.ServerEndpoint;
+@Startup
+@ApplicationScoped
+public class InventoryStartupCheck implements HealthCheck {
 
-@ServerEndpoint(value = "/systemLoad",
-                decoders = { SystemLoadDecoder.class },
-                encoders = { SystemLoadEncoder.class })
-public class SystemService {
-
-    private static Logger logger = Logger.getLogger(SystemService.class.getName());
-
-    private static Set<Session> sessions = new HashSet<>();
-
-    private static final OperatingSystemMXBean OS =
+    @Override
+    public HealthCheckResponse call() {
+        OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean)
         ManagementFactory.getOperatingSystemMXBean();
+        double cpuUsed = bean.getSystemCpuLoad();
+        String cpuUsage = String.valueOf(cpuUsed);
+        return HealthCheckResponse.named(InventoryResource.class
+                                            .getSimpleName() + " Startup Check")
+                                            .status(cpuUsed < 0.95).build();
+    }
+}
 
-    private static final MemoryMXBean MEM =
-        ManagementFactory.getMemoryMXBean();
+```
 
-    public static void sendToAllSessions(JsonObject systemLoad) {
-        for (Session session : sessions) {
-            try {
-                session.getBasicRemote().sendObject(systemLoad);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
+
+A health check for startup allows applications to define startup probes that verify whether deployed application is fully initialized before the liveness probe takes over. This check is useful for applications that require additional startup time on their first initialization. The ***@Startup*** annotation must be applied on a HealthCheck implementation to define a startup check procedure. Otherwise, this annotation is ignored. This startup check verifies that the cpu usage is below 95%. If more than 95% of the cpu is used, a status of ***DOWN*** is returned. 
+
+Create the ***InventoryLivenessCheck*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
+```
+
+
+> Then, to open the InventoryLivenessCheck.java file in your IDE, select
+> ***File*** > ***Open*** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java, or click the following button
+
+::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java"}
+
+
+
+```java
+package io.openliberty.guides.inventory;
+
+import jakarta.enterprise.context.ApplicationScoped;
+
+import java.lang.management.MemoryMXBean;
+import java.lang.management.ManagementFactory;
+
+import org.eclipse.microprofile.health.Liveness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Liveness
+@ApplicationScoped
+public class InventoryLivenessCheck implements HealthCheck {
+
+  @Override
+  public HealthCheckResponse call() {
+      MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
+      long memUsed = memBean.getHeapMemoryUsage().getUsed();
+      long memMax = memBean.getHeapMemoryUsage().getMax();
+
+      return HealthCheckResponse.named(InventoryResource.class.getSimpleName()
+                                      + " Liveness Check")
+                                .status(memUsed < memMax * 0.9).build();
+  }
+}
+```
+
+
+
+A health check for liveness allows third party services to determine whether the application is running. If this procedure fails, the application can be stopped. The ***@Liveness*** annotation must be applied on a HealthCheck implementation to define a Liveness check procedure. Otherwise, this annotation is ignored. This liveness check verifies that the heap memory usage is below 90% of the maximum memory. If more than 90% of the maximum memory is used, a status of ***DOWN*** is returned. 
+
+The ***inventory*** microservice is healthy only when the ***system*** microservice is available. To add this check to the ***/health/ready*** endpoint, create a class that is annotated with the ***@Readiness*** annotation and implements the ***HealthCheck*** interface. A Health Check for readiness allows third party services to know whether the application is ready to process requests. The ***@Readiness*** annotation must be applied on a HealthCheck implementation to define a readiness check procedure. Otherwise, this annotation is ignored.
+
+Create the ***InventoryReadinessCheck*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
+```
+
+
+> Then, to open the InventoryReadinessCheck.java file in your IDE, select
+> ***File*** > ***Open*** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java, or click the following button
+
+::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java"}
+
+
+
+```java
+package io.openliberty.guides.inventory;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.health.Readiness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Readiness
+@ApplicationScoped
+public class InventoryReadinessCheck implements HealthCheck {
+
+    private static final String READINESS_CHECK = InventoryResource.class
+                                                .getSimpleName()
+                                                + " Readiness Check";
+
+    @Inject
+    @ConfigProperty(name = "SYS_APP_HOSTNAME")
+    private String hostname;
+
+    public HealthCheckResponse call() {
+        if (isSystemServiceReachable()) {
+            return HealthCheckResponse.up(READINESS_CHECK);
+        } else {
+            return HealthCheckResponse.down(READINESS_CHECK);
         }
     }
 
-    @OnOpen
-    public void onOpen(Session session) {
-        logger.info("Server connected to session: " + session.getId());
-        sessions.add(session);
-    }
-
-    @OnMessage
-    public void onMessage(String option, Session session) {
-        logger.info("Server received message \"" + option + "\" "
-                    + "from session: " + session.getId());
+    private boolean isSystemServiceReachable() {
         try {
-            JsonObjectBuilder builder = Json.createObjectBuilder();
-            builder.add("time", Calendar.getInstance().getTime().toString());
-            if (option.equalsIgnoreCase("loadAverage")
-                || option.equalsIgnoreCase("both")) {
-                builder.add("loadAverage", Double.valueOf(OS.getSystemLoadAverage()));
-            }
-            if (option.equalsIgnoreCase("memoryUsage")
-                || option.equalsIgnoreCase("both")) {
-                long heapMax = MEM.getHeapMemoryUsage().getMax();
-                long heapUsed = MEM.getHeapMemoryUsage().getUsed();
-                builder.add("memoryUsage", Double.valueOf(heapUsed * 100.0 / heapMax));
-            }
-            JsonObject systemLoad = builder.build();
-            sendToAllSessions(systemLoad);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+            Client client = ClientBuilder.newClient();
+            client
+                .target("http://" + hostname + ":9090/system/properties")
+                .request()
+                .post(null);
 
-    @OnClose
-    public void onClose(Session session, CloseReason closeReason) {
-        logger.info("Session " + session.getId()
-                    + " was closed with reason " + closeReason.getCloseCode());
-        sessions.remove(session);
-    }
-
-    @OnError
-    public void onError(Session session, Throwable throwable) {
-        logger.info("WebSocket error for " + session.getId() + " "
-                    + throwable.getMessage());
-    }
-}
-```
-
-
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
-
-
-Annotate the ***SystemService*** class with a ***@ServerEndpoint*** annotation to make it a WebSocket server. The ***@ServerEndpoint***  ***value*** attribute specifies the URI where the endpoint will be deployed. The ***encoders*** attribute specifies the classes to encode messages and the ***decoders*** attribute specifies the classes to decode messages. Provide methods that define the parts of the WebSocket lifecycle like establishing a connection, receiving a message, and closing the connection by annotating them with the ***@OnOpen***, ***@OnMessage*** and ***@OnClose*** annotations respectively. The method that is annotated with the ***@OnError*** annotation is responsible for tackling errors.
-
-The ***onOpen()*** method stores up the client sessions. The ***onClose()*** method displays the reason for closing the connection and removes the closing session from the client sessions.
-
-The ***onMessage()*** method is called when receiving a message through the ***option*** parameter. The ***option*** parameter signifies which message to construct, either system load, memory usage data, or both, and sends out the ***JsonObject*** message. The ***sendToAllSessions()*** method uses the WebSocket API to broadcast the message to all client sessions.
-
-Create the SystemLoadEncoder class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadEncoder.java
-```
-
-
-> Then, to open the SystemLoadEncoder.java file in your IDE, select
-> **File** > **Open** > guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadEncoder.java, or click the following button
-
-::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadEncoder.java"}
-
-
-
-```java
-package io.openliberty.guides.system;
-
-import jakarta.json.JsonObject;
-import jakarta.websocket.EncodeException;
-import jakarta.websocket.Encoder;
-
-public class SystemLoadEncoder implements Encoder.Text<JsonObject> {
-
-    @Override
-    public String encode(JsonObject object) throws EncodeException {
-        return object.toString();
-    }
-}
-```
-
-
-
-The ***SystemLoadEncoder*** class implements the ***Encoder.Text*** interface. Override the ***encode()*** method that accepts the ***JsonObject*** message and converts the message to a string.
-
-Create the SystemLoadDecoder class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadDecoder.java
-```
-
-
-> Then, to open the SystemLoadDecoder.java file in your IDE, select
-> **File** > **Open** > guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadDecoder.java, or click the following button
-
-::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadDecoder.java"}
-
-
-
-```java
-package io.openliberty.guides.system;
-
-import java.io.StringReader;
-
-import jakarta.json.Json;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonReader;
-import jakarta.websocket.DecodeException;
-import jakarta.websocket.Decoder;
-
-public class SystemLoadDecoder implements Decoder.Text<JsonObject> {
-
-    @Override
-    public JsonObject decode(String s) throws DecodeException {
-        try (JsonReader reader = Json.createReader(new StringReader(s))) {
-            return reader.readObject();
-        } catch (Exception e) {
-            JsonObject error = Json.createObjectBuilder()
-                    .add("error", e.getMessage())
-                    .build();
-            return error;
-        }
-    }
-
-    @Override
-    public boolean willDecode(String s) {
-        try (JsonReader reader = Json.createReader(new StringReader(s))) {
-            reader.readObject();
             return true;
-        } catch (Exception e) {
+        } catch (Exception ex) {
             return false;
         }
     }
-
 }
 ```
 
 
 
-The ***SystemLoadDecoder*** class implements the ***Decoder.Text*** interface.
-Override the ***decode()*** method that accepts string message and decodes the string back into a ***JsonObject***. The ***willDecode()*** override method checks out whether the string can be decoded into a JSON object and returns a Boolean value.
+This health check verifies that the ***system*** microservice is available at ***http://system-service:9090/***. The ***system-service*** host name is accessible only from inside the cluster; you can't access it yourself. If it's available, then it returns an ***UP*** status. Similarly, if it's unavailable then it returns a ***DOWN*** status. When the status is ***DOWN***, the microservice is considered to be unhealthy.
 
+The health checks for the ***system*** microservice were already been implemented. The ***system*** microservice was set up to become unhealthy for 60 seconds when a specific endpoint is called. This endpoint has been provided for you to observe the results of an unhealthy pod and how Kubernetes reacts.
 
-The required ***websocket*** and ***jsonb*** features for the ***system*** service have been enabled for you in the ***server.xml*** configuration file.
+::page{title="Configuring startup, liveness, and readiness probes"}
 
+You will configure Kubernetes startup, liveness, and readiness probes. Startup probes determine whether your application is fully initialized. Liveness probes determine whether a container needs to be restarted. Readiness probes determine whether your application is ready to accept requests. If it's not ready, no traffic is routed to the container.
 
-::page{title="Creating the client service"}
-
-In this section, you will create the WebSocket client that communicates with the WebSocket server and the scheduler that uses the WebSocket client to send messages to the server. You'll also create an HTML file that uses a JavaScript ***WebSocket*** object to build a WebSocket connection, subscribe to different events, and display the broadcasting messages from the ***system*** service in a table.
-
-On another command-line session, navigate to the ***start*** directory and run the following goal to start the ***client*** service in dev mode:
-
-```bash
-mvn -pl client liberty:dev
-```
-
-After you see the following message, your runtime in dev mode is ready:
-
-```
-**************************************************
-*     Liberty is running in dev mode.
-```
-
-Create the SystemClient class.
+Create the kubernetes configuration file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemClient.java
+touch /home/project/guide-kubernetes-microprofile-health/start/kubernetes.yaml
 ```
 
 
-> Then, to open the SystemClient.java file in your IDE, select
-> **File** > **Open** > guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemClient.java, or click the following button
+> Then, to open the kubernetes.yaml file in your IDE, select
+> ***File*** > ***Open*** > guide-kubernetes-microprofile-health/start/kubernetes.yaml, or click the following button
 
-::openFile{path="/home/project/guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemClient.java"}
+::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/kubernetes.yaml"}
 
 
 
-```java
-package io.openliberty.guides.client.scheduler;
-
-import java.io.IOException;
-import java.net.URI;
-import java.util.logging.Logger;
-
-import jakarta.websocket.ClientEndpoint;
-import jakarta.websocket.ContainerProvider;
-import jakarta.websocket.OnMessage;
-import jakarta.websocket.OnOpen;
-import jakarta.websocket.Session;
-import jakarta.websocket.WebSocketContainer;
-
-@ClientEndpoint()
-public class SystemClient {
-
-    private static Logger logger = Logger.getLogger(SystemClient.class.getName());
-
-    private Session session;
-
-    public SystemClient(URI endpoint) {
-        try {
-            WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-            container.connectToServer(this, endpoint);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @OnOpen
-    public void onOpen(Session session) {
-        this.session = session;
-        logger.info("Scheduler connected to the server.");
-    }
-
-    @OnMessage
-    public void onMessage(String message, Session session) throws Exception {
-        logger.info("Scheduler received message from the server: " + message);
-    }
-
-    public void sendMessage(String message) {
-        session.getAsyncRemote().sendText(message);
-        logger.info("Scheduler sent message \"" + message + "\" to the server.");
-    }
-
-    public void close() {
-        try {
-            session.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        logger.info("Scheduler closed the session.");
-    }
-
-}
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: system-deployment
+  labels:
+    app: system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: system
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: system
+    spec:
+      containers:
+      - name: system-container
+        image: system:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9090
+        # system probes
+        startupProbe:
+          httpGet:
+            path: /health/started
+            port: 9090
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 9090
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-deployment
+  labels:
+    app: inventory
+spec:
+  selector:
+    matchLabels:
+      app: inventory
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: inventory
+    spec:
+      containers:
+      - name: inventory-container
+        image: inventory:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9090
+        env:
+        - name: SYS_APP_HOSTNAME
+          value: system-service
+        # inventory probes
+        startupProbe:
+          httpGet:
+            path: /health/started
+            port: 9090
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 9090
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: system-service
+spec:
+  type: NodePort
+  selector:
+    app: system
+  ports:
+  - protocol: TCP
+    port: 9090
+    targetPort: 9090
+    nodePort: 31000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service
+spec:
+  type: NodePort
+  selector:
+    app: inventory
+  ports:
+  - protocol: TCP
+    port: 9090
+    targetPort: 9090
+    nodePort: 32000
 ```
 
 
 
-Annotate the ***SystemClient*** class with ***@ClientEndpoint*** annotation to make it as a WebSocket client. Create a constructor that uses the ***websocket*** APIs to establish connection with the server. Provide a method with the ***@OnOpen*** annotation that persists the client session when the connection is established. The ***onMessage()*** method that is annotated with the ***@OnMessage*** annotation handles messages from the server.
+The startup, liveness, and readiness probes are configured for the containers that are running the ***system*** and ***inventory*** microservices.
 
-Create the SystemLoadScheduler class.
+The startup probes are configured to poll the ***/health/started*** endpoint. The startup probe determines whether a container is started.
 
-> Run the following touch command in your terminal
+The liveness probes are configured to poll the ***/health/live*** endpoint. The liveness probes determine whether a container needs to be restarted. The ***initialDelaySeconds*** field defines the duration that the probe waits before it starts to poll so that it does not make requests before the server is started. The ***periodSeconds*** option defines how often the probe polls the given endpoint. The ***timeoutSeconds*** option defines how many seconds before the probe times out. The ***failureThreshold*** option defines how many times the probe fails before the state changes from ready to not ready.
+
+The readiness probes are configured to poll the ***/health/ready*** endpoint. The readiness probe determines the READY status of the container, as seen in the ***kubectl get pods*** output. Similar to the liveness probes, the readiness probes also define ***initialDelaySeconds***, ***periodSeconds***, ***timeoutSeconds***, and ***failureThreshold***.
+
+::page{title="Deploying the microservices"}
+
+To build these microservices, navigate to the ***start*** directory and run the following command.
+
+
 ```bash
-touch /home/project/guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemLoadScheduler.java
-```
-
-
-> Then, to open the SystemLoadScheduler.java file in your IDE, select
-> **File** > **Open** > guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemLoadScheduler.java, or click the following button
-
-::openFile{path="/home/project/guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemLoadScheduler.java"}
-
-
-
-```java
-package io.openliberty.guides.client.scheduler;
-
-import java.net.URI;
-import java.util.Random;
-
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
-import jakarta.ejb.Schedule;
-import jakarta.ejb.Singleton;
-
-@Singleton
-public class SystemLoadScheduler {
-
-    private SystemClient client;
-    private static final String[] MESSAGES = new String[] {
-        "loadAverage", "memoryUsage", "both" };
-
-    @PostConstruct
-    public void init() {
-        try {
-            client = new SystemClient(new URI("ws://localhost:9081/systemLoad"));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Schedule(second = "*/10", minute = "*", hour = "*", persistent = false)
-    public void sendSystemLoad() {
-        Random r = new Random();
-        client.sendMessage(MESSAGES[r.nextInt(MESSAGES.length)]);
-    }
-
-    @PreDestroy
-    public void close() {
-        client.close();
-    }
-}
+cd /home/project/guide-kubernetes-microprofile-health/start
+./mvnw package
 ```
 
 
 
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-The ***SystemLoadScheduler*** class uses the ***SystemClient*** class to establish a connection to the server by the ***ws://localhost:9081/systemLoad*** URI at the ***@PostConstruct*** annotated method. The ***sendSystemLoad()*** method calls the client to send a random string from either ***loadAverage***, ***memoryUsage***, or ***both*** to the ***system*** service. Using the link:[Jakarta Enterprise Beans Timer Service](link:https://openliberty.io/docs/latest/reference/javadoc/liberty-jakartaee9.1-javadoc.html?package=jakarta/ejb/package-frame.html&class=jakarta/ejb/TimerService.html), annotate the ***sendSystemLoad()*** method with the ***@Schedule*** annotation so that it sends out a message every 10 seconds.
-
-Now, create the front-end UI. The images and styles for the UI are provided for you. 
-
-Create the index.html file.
-
-> Run the following touch command in your terminal
+Next, run the ***docker build*** commands to build container images for your application:
 ```bash
-touch /home/project/guide-jakarta-websocket/start/client/src/main/webapp/index.html
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
 ```
 
+The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
 
-> Then, to open the index.html file in your IDE, select
-> **File** > **Open** > guide-jakarta-websocket/start/client/src/main/webapp/index.html, or click the following button
+Push your images to the container registry on IBM Cloud with the following commands:
 
-::openFile{path="/home/project/guide-jakarta-websocket/start/client/src/main/webapp/index.html"}
-
-
-
-```html
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="UTF-8">
-        <title>Open Liberty System Load</title>
-        <link href="https://fonts.googleapis.com/css?family=Asap" rel="stylesheet">
-        <link rel="stylesheet" href="css/styles.css">
-        <link href="favicon.ico" rel="icon" />
-        <link href="favicon.ico" rel="shortcut icon" />
-    </head>
-    <body>
-        <section id="appIntro">
-            <div id="titleSection">
-                <h1 id="appTitle">Open Liberty System Load</h1>
-                <div class="line"></div>
-                <div class="headerImage"></div>
-            </div>
-
-            <div class="msSection" id="systemLoads">
-                <div class="headerRow">
-                    <div class="headerIcon">
-                      <img src="img/sysProps.svg"/>
-                    </div>
-                    <div class="headerTitle" id="sysPropTitle">
-                      <h2>System Loads</h2>
-                    </div>
-                </div>
-                <div class="sectionContent">
-                    <table id="systemLoadsTable">
-                        <tbody id="systemLoadsTableBody">
-                            <tr>
-                                <th>Time</th><th>System Load</th>
-                                <th>Memory Usage (%)</th>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-        <footer class="bodyFooter">
-            <div class="bodyFooterLink">
-                <a id="licenseLink"
-                   href="https://github.com/OpenLiberty/open-liberty/blob/release/LICENSE"
-                >License</a>
-                <a href="https://twitter.com/OpenLibertyIO">Twitter</a>
-                <a href="https://github.com/OpenLiberty">GitHub</a>
-                <a href="https://openliberty.io/">openliberty.io</a>
-            </div>
-            <p id="footer_text">an IBM open source project</p>
-            <p id="footer_copyright">&copy;Copyright IBM Corp. 2022</p>
-        </footer>
-        <script>
-    const webSocket = new WebSocket('ws://localhost:9081/systemLoad')
-
-    webSocket.onopen = function (event) {
-        console.log(event);
-    };
-
-    webSocket.onmessage = function (event) {
-        var data = JSON.parse(event.data);
-        var tableRow = document.createElement('tr');
-        var loadAverage = data.loadAverage == null ? '-' : data.loadAverage.toFixed(2);
-        var memoryUsage = data.memoryUsage == null ? '-' : data.memoryUsage.toFixed(2);
-        tableRow.innerHTML = '<td>' + data.time + '</td>' +
-                             '<td>' + loadAverage + '</td>' +
-                             '<td>' + memoryUsage + '</td>';
-        document.getElementById('systemLoadsTableBody').appendChild(tableRow);
-    };
-    
-    webSocket.onerror = function (event) {
-        console.log(event);
-    };
-        </script>
-    </body>
-</html>
-```
-
-
-
-The ***index.html*** front-end UI displays a table in which each row contains a time, system load, and the memory usage of the ***system*** service. Use a JavaScript ***WebSocket*** object to establish a connection to the server by the ***ws://localhost:9081/systemLoad*** URI. The ***webSocket.onopen*** event is triggered when the connection is established. The ***webSocket.onmessage*** event receives messages from the server and inserts a row with the data from the message into the table. The ***webSocket.onerror*** event defines how to tackle errors.
-
-
-The required features for the ***client*** service are enabled for you in the ***server.xml*** configuration file.
-
-
-::page{title="Running the application"}
-
-Because you are running the ***system*** and ***client*** services in dev mode, the changes that you made are automatically picked up. You're now ready to check out your application in your browser.
-
-Point your browser to the http://localhost:9080 URL to test out the ***client*** service. Notice that the table is updated every 10 seconds.
-
-Visit the http://localhost:9080 URL again on a different tab or browser and verify that both sessions are updated every 10 seconds.
-
-
-::page{title="Testing the application"}
-
-Create the SystemClient class.
-
-> Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemClient.java
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
 ```
 
-
-> Then, to open the SystemClient.java file in your IDE, select
-> **File** > **Open** > guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemClient.java, or click the following button
-
-::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemClient.java"}
-
-
-
-```java
-package it.io.openliberty.guides.system;
-
-import java.net.URI;
-
-import io.openliberty.guides.system.SystemLoadDecoder;
-import jakarta.json.JsonObject;
-import jakarta.websocket.ClientEndpoint;
-import jakarta.websocket.ContainerProvider;
-import jakarta.websocket.OnMessage;
-import jakarta.websocket.OnOpen;
-import jakarta.websocket.Session;
-import jakarta.websocket.WebSocketContainer;
-
-@ClientEndpoint()
-public class SystemClient {
-
-    private Session session;
-
-    public SystemClient(URI endpoint) {
-        try {
-            WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-            container.connectToServer(this, endpoint);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @OnOpen
-    public void onOpen(Session session) {
-        this.session = session;
-    }
-
-    @OnMessage
-    public void onMessage(String message, Session userSession) throws Exception {
-        SystemLoadDecoder decoder = new SystemLoadDecoder();
-        JsonObject systemLoad = decoder.decode(message);
-        SystemServiceIT.verify(systemLoad);
-    }
-
-    public void sendMessage(String message) {
-        session.getAsyncRemote().sendText(message);
-    }
-
-    public void close() throws Exception {
-        session.close();
-    }
-
-}
-```
-
-
-
-The ***SystemClient*** class is used to communicate and test the ***system*** service. Its implementation is similar to the client class from the ***client*** service that you created in the previous section. At the ***onMessage()*** method, decode and verify the message. 
-
-Create the SystemServiceIT class.
-
-> Run the following touch command in your terminal
+Update the image names so that the images in your IBM Cloud container registry are used. Set the image pull policy to ***Always*** and remove the ***nodePort*** fields so that the ports can be automatically generated:
 ```bash
-touch /home/project/guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=nodePort: 31000==g' kubernetes.yaml
+sed -i 's=nodePort: 32000==g' kubernetes.yaml
+```
+
+When the builds succeed, run the following command to deploy the necessary Kubernetes resources to serve the applications.
+
+```bash
+kubectl apply -f kubernetes.yaml
+```
+
+Use the following command to view the status of the pods. There will be two ***system*** pods and one ***inventory*** pod, later you'll observe their behavior as the ***system*** pods become unhealthy. 
+
+```bash
+kubectl get pods
+```
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     1/1       Running   0          59s
+system-deployment-694c7b74f7-lrlf7     1/1       Running   0          59s
+inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          59s
+```
+
+Wait until the pods are ready. After the pods are ready, you will make requests to your services.
+
+
+In this IBM cloud environment, you need to access the services by using the Kubernetes API. Run the following command to start a proxy to the Kubernetes API server:
+
+```bash
+kubectl proxy
+```
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following commands to store the proxy path of the ***system*** and ***inventory*** services.
+```bash
+SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/system-service/proxy
+INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/inventory-service/proxy
+```
+
+Run the following echo commands to verify the variables:
+
+```bash
+echo $SYSTEM_PROXY && echo $INVENTORY_PROXY
+```
+
+The output appears as shown in the following example:
+
+```
+localhost:8001/api/v1/namespaces/sn-labs-yourname/services/system-service/proxy
+localhost:8001/api/v1/namespaces/sn-labs-yourname/services/inventory-service/proxy
+```
+
+Make a request to the system service to see the JVM system properties with the following ***curl*** command:
+```bash
+curl -s http://$SYSTEM_PROXY/system/properties | jq
+```
+
+The readiness probe ensures the READY state won't be ***1/1*** until the container is available to accept requests. Without a readiness probe, you might notice an unsuccessful response from the server. This scenario can occur when the container is started, but the application server isn't fully initialized. With the readiness probe, you can be certain the pod accepts traffic only when the microservice is fully started.
+
+Similarly, access the inventory service and observe the successful request with the following command:
+```bash
+curl -s http://$INVENTORY_PROXY/inventory/systems/system-service | jq
+```
+
+::page{title="Changing the ready state of the system microservice"}
+
+An ***unhealthy*** endpoint has been provided under the ***system*** microservice to set it to an unhealthy state. The unhealthy state causes the readiness probe to fail. A request to the ***unhealthy*** endpoint puts the service in an unhealthy state as a simulation.
+
+
+Run the following ***curl*** command to invoke the unhealthy endpoint:
+```bash
+curl http://$SYSTEM_PROXY/system/unhealthy
+```
+
+Run the following command to view the state of the pods:
+
+```bash
+kubectl get pods
+```
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     1/1       Running   0          1m
+system-deployment-694c7b74f7-lrlf7     0/1       Running   0          1m
+inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          1m
 ```
 
 
-> Then, to open the SystemServiceIT.java file in your IDE, select
-> **File** > **Open** > guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java, or click the following button
-
-::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java"}
-
-
-
-```java
-package it.io.openliberty.guides.system;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.net.URI;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
-
-import jakarta.json.JsonObject;
-
-@TestMethodOrder(OrderAnnotation.class)
-public class SystemServiceIT {
-
-    private static CountDownLatch countDown;
-
-    @Test
-    @Order(1)
-    public void testSystem() throws Exception {
-        startCountDown(1);
-        URI uri = new URI("ws://localhost:9081/systemLoad");
-        SystemClient client = new SystemClient(uri);
-        client.sendMessage("both");
-        countDown.await(5, TimeUnit.SECONDS);
-        client.close();
-        assertEquals(0, countDown.getCount(),
-                "The countDown was not 0.");
-    }
-
-    @Test
-    @Order(2)
-    public void testSystemMultipleSessions() throws Exception {
-        startCountDown(3);
-        URI uri = new URI("ws://localhost:9081/systemLoad");
-        SystemClient client1 = new SystemClient(uri);
-        SystemClient client2 = new SystemClient(uri);
-        SystemClient client3 = new SystemClient(uri);
-        client2.sendMessage("loadAverage");
-        countDown.await(5, TimeUnit.SECONDS);
-        client1.close();
-        client2.close();
-        client3.close();
-        assertEquals(0, countDown.getCount(),
-            "The countDown was not 0.");
-    }
-
-    private static void startCountDown(int count) {
-        countDown = new CountDownLatch(count);
-    }
-
-    public static void verify(JsonObject systemLoad) {
-        assertNotNull(systemLoad.getString("time"));
-        assertTrue(
-            systemLoad.getJsonNumber("loadAverage") != null
-            || systemLoad.getJsonNumber("memoryUsage") != null
-        );
-        countDown.countDown();
-    }
-}
+You will notice that one of the two ***system*** pods is no longer in the ready state. Make a request to the ***/system/properties*** endpoint with the following command:
+```bash
+curl -s http://$SYSTEM_PROXY/system/properties | jq
 ```
 
+Your request is successful because you have two replicas and one is still healthy.
+
+### Observing the effects on the inventory microservice
 
 
-There are two test cases to ensure correct functionality of the ***system*** service. The ***testSystem()*** method verifies one client connection and the ***testSystemMultipleSessions()*** method verifies multiple client connections. 
+Wait until the ***system-service*** pod is ready again. Make several requests to the ***/system/unhealthy*** endpoint of the ***system*** service until you see two pods are unhealthy.
+```bash
+curl http://$SYSTEM_PROXY/system/unhealthy
+```
 
-### Running the tests
+Observe the output of ***kubectl get pods***.
+```bash
+kubectl get pods
+```
 
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started the ***system*** service.
+You will see both pods are no longer ready. During this process, the readiness probe for the ***inventory*** microservice will also fail. Observe that it's no longer in the ready state either.
+
+First, both ***system*** pods will no longer be ready because the readiness probe failed.
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     0/1       Running   0          5m
+system-deployment-694c7b74f7-lrlf7     0/1       Running   0          5m
+inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          5m
+```
+
+Next, the ***inventory*** pod is no longer ready because the readiness probe failed. The probe failed because ***system-service*** is now unavailable.
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     0/1       Running   0          6m
+system-deployment-694c7b74f7-lrlf7     0/1       Running   0          6m
+inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          6m
+```
+
+Then, the ***system*** pods will start to become healthy again after 60 seconds.
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     1/1       Running   0          7m
+system-deployment-694c7b74f7-lrlf7     0/1       Running   0          7m
+inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          7m
+```
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     1/1       Running   0          7m
+system-deployment-694c7b74f7-lrlf7     1/1       Running   0          7m
+inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          7m
+```
+
+Finally, you will see all of the pods have recovered.
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     1/1       Running   0          8m
+system-deployment-694c7b74f7-lrlf7     1/1       Running   0          8m
+inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          8m
+```
+
+::page{title="Testing the microservices"}
+
+
+Run the following commands to store the proxy path of the ***system*** and ***inventory*** services.
+```bash
+cd /home/project/guide-kubernetes-microprofile-health/start
+SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/system-service/proxy
+INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/inventory-service/proxy
+```
+
+Run the integration tests by using the following command:
+```bash
+./mvnw failsafe:integration-test \
+    -Dsystem.service.root=$SYSTEM_PROXY \
+    -Dinventory.service.root=$INVENTORY_PROXY
+```
+
+A few tests are included for you to test the basic functions of the microservices. If a test fails, then you might have introduced a bug into the code. Wait for all pods to be in the ready state before you run the tests. 
+
+When the tests succeed, you should see output similar to the following in your console.
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.system.SystemServiceIT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.247 s - in it.io.openliberty.guides.system.SystemServiceIT
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.65 s - in it.io.openliberty.guides.system.SystemEndpointIT
 
 Results:
 
 Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-When you are done checking out the services, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***client*** services, or by typing ***q*** and then pressing the ***enter/return*** key. Alternatively, you can run the ***liberty:stop*** goal from the ***start*** directory in another command-line session for the ***system*** and ***client*** services:
-```bash
-cd /home/project/guide-jakarta-websocket/start
-mvn -pl system liberty:stop
-mvn -pl client liberty:stop
 ```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.542 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+
+Results:
+
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+```
+
+::page{title="Tearing down the environment"}
+
+Press **CTRL+C** to stop the proxy server that was started at step 6 ***Deploying the microservices***.
+
+To remove all of the resources created during this guide, run the following command to delete all of the resources that you created.
+
+```bash
+kubectl delete -f kubernetes.yaml
+```
+
+
 
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You developed an application that subscribes to real time updates by using Jakarta WebSocket and Open Liberty.
+You have used MicroProfile Health and Open Liberty to create endpoints that report on your microservice's status. Then, you observed how Kubernetes uses the **/health/started**, **/health/live**, and **/health/ready** endpoints to keep your microservices running smoothly.
 
 
 
@@ -790,34 +641,33 @@ You developed an application that subscribes to real time updates by using Jakar
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-jakarta-websocket*** project by running the following commands:
+Delete the ***guide-kubernetes-microprofile-health*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-jakarta-websocket
+rm -fr guide-kubernetes-microprofile-health
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Bidirectional%20communication%20between%20services%20using%20Jakarta%20WebSocket&guide-id=cloud-hosted-guide-jakarta-websocket)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Checking%20the%20health%20of%20microservices%20on%20Kubernetes&guide-id=cloud-hosted-guide-kubernetes-microprofile-health)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-jakarta-websocket/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-jakarta-websocket/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health/pulls)
 
 
 
 ### Where to next?
 
-* [Streaming messages between client and server services using gRPC](https://openliberty.io/guides/grpc-intro.html)
+* [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
+* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
 
 
 ### Log out of the session
 
-Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
+Log out of the cloud-hosted guides by selecting **Account** :fa-user: > **Logout** from the Skills Network left-sided menu.
