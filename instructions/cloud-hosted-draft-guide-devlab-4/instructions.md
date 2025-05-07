@@ -1,13 +1,10 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-5933-instruction
-version-history-start-date: 2023-04-14T18:24:15Z
 tool-type: theia
 ---
-::page{title="Welcome to the Containerizing, packaging, and running a Spring Boot application guide!"}
+::page{title="Welcome to the Checking the health of microservices on Kubernetes guide!"}
 
-Learn how to containerize, package, and run a Spring Boot application on Open Liberty without modification.
+Learn how to check the health of microservices on Kubernetes by setting up startup, liveness, and readiness probes to inspect MicroProfile Health Check endpoints.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -17,30 +14,38 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
+
 ::page{title="What you'll learn"}
 
-The starting point of this guide is the finished application from the [Building an Application with Spring Boot](https://spring.io/guides/gs/spring-boot/) guide. If you are not familiar with Spring Boot, complete that guide first. Java 17 is required to run this project.
+You will learn how to create health check endpoints for your microservices. Then, you will configure Kubernetes to use these endpoints to keep your microservices running smoothly. 
 
-You will learn how to use the ***springBootUtility*** command to deploy a Spring Boot application in Docker on Open Liberty without modification. This command stores the dependent library JAR files of the application to the target library cache, and packages the remaining application artifacts into a thin application JAR file.
+MicroProfile Health allows services to report their health, and it publishes the overall health status to defined endpoints. If a service reports ***UP***, then it's available. If the service reports ***DOWN***, then it's unavailable. MicroProfile Health reports an individual service status at the endpoint and indicates the overall status as ***UP*** if all the services are ***UP***. A service orchestrator can then use the health statuses to make decisions.
 
-You will also learn how to run the Spring Boot application locally with Open Liberty, and how to package it so that it is embedded with an Open Liberty server package.
+Kubernetes provides startup, liveness, and readiness probes that are used to check the health of your containers. These probes can check certain files in your containers, check a TCP socket, or make HTTP requests. MicroProfile Health exposes startup, liveness, and readiness endpoints on your microservices. Kubernetes polls these endpoints as specified by the probes to react appropriately to any change in the microservice's status. Read the [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html) guide to learn more about MicroProfile Health.
+
+The two microservices you will work with are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of the running container and it returns the pod's name in the HTTP header making replicas easy to distinguish from each other. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This demonstrates how communication can be established between pods inside a cluster.
+
+
+
+
 
 ::page{title="Getting started"}
 
 To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
+select ***Terminal*** > ***New Terminal*** from the menu of the IDE.
 
-Run the following command to navigate to the **/home/project** directory:
+Run the following command to navigate to the ***/home/project*** directory:
 
 ```bash
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-spring-boot.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-microprofile-health.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-spring-boot.git
-cd guide-spring-boot
+git clone https://github.com/openliberty/guide-kubernetes-microprofile-health.git
+cd guide-kubernetes-microprofile-health
 ```
 
 
@@ -49,484 +54,585 @@ The ***start*** directory contains the starting project that you will build upon
 The ***finish*** directory contains the finished project that you will build.
 
 
-::page{title="Building and running the application"}
+::page{title="Adding health checks to the inventory microservice"}
 
-First, build the initial Spring Boot application into an executable JAR file. Navigate to the ***start*** directory and run the Maven package command:
+Navigate to ***start*** directory to begin.
 
-
-```bash
-cd start
-./mvnw package
-```
-
-You can now run the application in the embedded Tomcat web container by executing the JAR file that you built:
-
-```bash
-java -jar target/guide-spring-boot-0.1.0.jar
-```
-
-After you see the following messages, the application is ready:
-```
-... INFO ... [ main] com.example.springboot.Application : Started Application in 2.511 seconds (process running for 3.24)
-Let's inspect the beans provided by Spring Boot:
-application
-...
-welcomePageHandlerMapping
-welcomePageNotAcceptableHandlerMapping
-```
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following command to access the application:
-```bash
-curl http://localhost:8080/hello
-```
-
-The following output is returned:
-```
-Greetings from Spring Boot!
-```
-
-When you need to stop the application, press `Ctrl+C` in the command-line session where you ran the application.
-
-::page{title="Building and running the application in a Docker container"}
-
-You will build an Open Liberty Docker image to run the Spring Boot application. Using Docker, you can run your thinned application with a few simple commands. For more information on using Open Liberty with Docker, see the [Containerizing microservices](https://openliberty.io/guides/containerize.html) guide.
-
-Learn more about Docker on the [official Docker website](https://www.docker.com/why-docker).
-
-Install Docker by following the instructions in the [official Docker documentation](https://docs.docker.com/engine/install).
-
-Navigate to the ***start*** directory. 
-
-Create the ***Dockerfile*** in the ***start*** directory.
+Create the ***InventoryStartupCheck*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-spring-boot/start/Dockerfile
+touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java
 ```
 
 
-> Then, to open the Dockerfile file in your IDE, select
-> **File** > **Open** > guide-spring-boot/start/Dockerfile, or click the following button
+> Then, to open the InventoryStartupCheck.java file in your IDE, select
+> ***File*** > ***Open*** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java, or click the following button
 
-::openFile{path="/home/project/guide-spring-boot/start/Dockerfile"}
+::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java"}
 
 
 
-```
-FROM icr.io/appcafe/open-liberty:full-java17-openj9-ubi as staging
+```java
+package io.openliberty.guides.inventory;
 
-COPY --chown=1001:0 target/guide-spring-boot-0.1.0.jar \
-                    /staging/fat-guide-spring-boot-0.1.0.jar
+import java.lang.management.ManagementFactory;
+import com.sun.management.OperatingSystemMXBean;
+import jakarta.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.health.Startup;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
 
-RUN springBootUtility thin \
- --sourceAppPath=/staging/fat-guide-spring-boot-0.1.0.jar \
- --targetThinAppPath=/staging/thin-guide-spring-boot-0.1.0.jar \
- --targetLibCachePath=/staging/lib.index.cache
+@Startup
+@ApplicationScoped
+public class InventoryStartupCheck implements HealthCheck {
 
-FROM icr.io/appcafe/open-liberty:kernel-slim-java17-openj9-ubi
+    @Override
+    public HealthCheckResponse call() {
+        OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean)
+        ManagementFactory.getOperatingSystemMXBean();
+        double cpuUsed = bean.getSystemCpuLoad();
+        String cpuUsage = String.valueOf(cpuUsed);
+        return HealthCheckResponse.named(InventoryResource.class
+                                            .getSimpleName() + " Startup Check")
+                                            .status(cpuUsed < 0.95).build();
+    }
+}
 
-ARG VERSION=1.0
-ARG REVISION=SNAPSHOT
-
-LABEL \
-  org.opencontainers.image.authors="Your Name" \
-  org.opencontainers.image.vendor="Open Liberty" \
-  org.opencontainers.image.url="local" \
-  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-spring-boot" \
-  org.opencontainers.image.version="$VERSION" \
-  org.opencontainers.image.revision="$REVISION" \
-  vendor="Open Liberty" \
-  name="hello app" \
-  version="$VERSION-$REVISION" \
-  summary="The hello application from the Spring Boot guide" \
-  description="This image contains the hello application running with the Open Liberty runtime."
-
-RUN cp /opt/ol/wlp/templates/servers/springBoot3/server.xml /config/server.xml
-
-RUN features.sh
-
-COPY --chown=1001:0 --from=staging /staging/lib.index.cache /lib.index.cache
-COPY --chown=1001:0 --from=staging /staging/thin-guide-spring-boot-0.1.0.jar \
-                    /config/dropins/spring/thin-guide-spring-boot-0.1.0.jar
-
-RUN configure.sh 
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-This Dockerfile is written in two main stages. For more information about multi-stage Dockerfiles, see the documentation on the [official Docker website](https://docs.docker.com/develop/develop-images/multistage-build/).
+A health check for startup allows applications to define startup probes that verify whether deployed application is fully initialized before the liveness probe takes over. This check is useful for applications that require additional startup time on their first initialization. The ***@Startup*** annotation must be applied on a HealthCheck implementation to define a startup check procedure. Otherwise, this annotation is ignored. This startup check verifies that the cpu usage is below 95%. If more than 95% of the cpu is used, a status of ***DOWN*** is returned. 
 
-The first stage copies the ***guide-spring-boot-0.1.0.jar*** Spring Boot application to the ***/staging*** temporary directory, 
-and then uses the Open Liberty ***springBootUtility*** command to thin the application. For more information about the ***springBootUtility*** command, see the [springBootUtility documentation](https://openliberty.io/docs/latest/reference/command/springbootUtility-thin.html).
-
-The second stage begins with the ***Open Liberty Docker image***. The Dockerfile copies the Liberty ***server.xml*** configuration file from the ***/opt/ol/wlp/templates*** directory, which enables Spring Boot and TLS support. Then, the Dockerfile copies the Spring Boot dependent library JAR files that are at the ***lib.index.cache*** directory and the ***thin-guide-spring-boot-0.1.0.jar*** file. The ***lib.index.cache*** directory and the ***thin-guide-spring-boot-0.1.0.jar*** file were both generated in the first stage.
-
-
-
-Use the following command to build the Docker image:
-```bash
-docker build -t springboot .
-```
-
-To verify that the images are built, run the ***docker images*** command to list all local Docker images:
-
-```bash
-docker images
-```
-
-Your ***springboot*** image appears in the list of Docker images:
-```
-REPOSITORY    TAG       IMAGE ID         CREATED           SIZE
-springboot    latest    d3ffdaa81854     27 seconds ago    596MB
-```
-
-Now, you can run the Spring Boot application in a Docker container:
-```bash
-docker run -d --name springBootContainer -p 9080:9080 -p 9443:9443 springboot
-```
-
-Before you access your application from the browser, run the ***docker ps*** command to make sure that your container is running:
-
-```bash
-docker ps
-```
-
-You see an entry similar to the following example:
-```
-CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                                            NAMES
-e33532aa07d6        springboot          "/opt/ibm/docker/doc…"   7 seconds ago       Up 2 seconds        0.0.0.0:9080->9080/tcp, 0.0.0.0:9443->9443/tcp   springBootContainer
-```
-
-You can watch the application start by monitoring the logs:
-```bash
-docker logs springBootContainer
-```
-
-
-After the application starts, run the following command to access the application:
-
-```bash
-curl http://localhost:9080/hello
-```
-
-### Tearing down the Docker container
-
-To stop and remove your container, run the following commands:
-
-```bash
-docker stop springBootContainer
-docker rm springBootContainer
-```
-
-::page{title="Running the application on Open Liberty"}
-
-Next, you will run the Spring Boot application locally on Open Liberty by updating the ***pom.xml*** file.
-
-The ***pom.xml*** was created for you in this directory. 
-
-Update the ***Maven POM*** file in the ***start*** directory.
-
-> To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-spring-boot/start/pom.xml, or click the following button
-
-::openFile{path="/home/project/guide-spring-boot/start/pom.xml"}
-
-
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.1.0</version>
-        <relativePath/> <!-- lookup parent from repository -->
-    </parent>
-    <groupId>com.example</groupId>
-    <artifactId>guide-spring-boot</artifactId>
-    <version>0.1.0</version>
-    <name>spring-boot-complete</name>
-    <description>Demo project for Spring Boot</description>
-
-    <properties>
-        <java.version>17</java.version>
-    </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-
-      <!-- Enable Liberty Maven plugin -->
-      <plugin>
-        <groupId>io.openliberty.tools</groupId>
-        <artifactId>liberty-maven-plugin</artifactId>
-        <version>3.9</version>
-        <configuration>
-          <appsDirectory>apps</appsDirectory>
-          <installAppPackages>spring-boot-project</installAppPackages>
-        </configuration>
-        <executions>
-          <execution>
-            <id>package-server</id>
-            <phase>package</phase>
-            <goals>
-              <goal>create</goal>
-              <goal>install-feature</goal>
-              <goal>deploy</goal>
-              <goal>package</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <!-- End of Liberty Maven plugin -->
-
-        </plugins>
-    </build>
-
-</project>
-```
-
-
-
-Add the ***liberty-maven-plugin*** to the ***pom.xml*** file.
-
-The ***liberty-maven-plugin*** downloads and installs Open Liberty to the ***target/liberty*** directory. The ***installAppPackages*** configuration element in the ***pom.xml*** file typically takes in the following parameters: ***dependencies***, ***project***, or ***all***. The default value is ***dependencies***, but to install the Spring Boot application to Open Liberty, the value must be ***spring-boot-project***. This value allows Maven to package, thin, and copy the ***guide-spring-boot-0.1.0.jar*** application to the Open Liberty runtime ***applications*** directory and shared library directory.
-
-To run the Spring Boot application, the Open Liberty instance needs to be correctly configured. By default, the ***liberty-maven-plugin*** picks up the Liberty ***server.xml*** configuration file from the ***src/main/liberty/config*** directory.
-
-Create the Liberty ***server.xml*** configuration file.
+Create the ***InventoryLivenessCheck*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-spring-boot/start/src/main/liberty/config/server.xml
+touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
 ```
 
 
-> Then, to open the server.xml file in your IDE, select
-> **File** > **Open** > guide-spring-boot/start/src/main/liberty/config/server.xml, or click the following button
+> Then, to open the InventoryLivenessCheck.java file in your IDE, select
+> ***File*** > ***Open*** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java, or click the following button
 
-::openFile{path="/home/project/guide-spring-boot/start/src/main/liberty/config/server.xml"}
+::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java"}
 
 
 
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<server description="new server">
+```java
+package io.openliberty.guides.inventory;
 
-    <featureManager>
-        <feature>servlet-6.0</feature>
-        <feature>springBoot-3.0</feature>
-    </featureManager>
+import jakarta.enterprise.context.ApplicationScoped;
 
-    <httpEndpoint id="defaultHttpEndpoint"
-                  host="*"
-                  httpPort="9080"
-                  httpsPort="9443" />
+import java.lang.management.MemoryMXBean;
+import java.lang.management.ManagementFactory;
 
-    <springBootApplication id="guide-spring-boot" 
-                           location="thin-guide-spring-boot-0.1.0.jar"
-                           name="guide-spring-boot" />
+import org.eclipse.microprofile.health.Liveness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
 
-</server>
+@Liveness
+@ApplicationScoped
+public class InventoryLivenessCheck implements HealthCheck {
+
+  @Override
+  public HealthCheckResponse call() {
+      MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
+      long memUsed = memBean.getHeapMemoryUsage().getUsed();
+      long memMax = memBean.getHeapMemoryUsage().getMax();
+
+      return HealthCheckResponse.named(InventoryResource.class.getSimpleName()
+                                      + " Liveness Check")
+                                .status(memUsed < memMax * 0.9).build();
+  }
+}
 ```
 
 
 
-The ***servlet*** and ***springBoot*** features are required for the Liberty instance to run the Spring Boot application. The application port is specified as ***9080*** and the application is configured as a ***springBootApplication*** element. For more information, see the [springBootApplication element documentation](https://www.openliberty.io/docs/latest/reference/config/springBootApplication.html).
+A health check for liveness allows third party services to determine whether the application is running. If this procedure fails, the application can be stopped. The ***@Liveness*** annotation must be applied on a HealthCheck implementation to define a Liveness check procedure. Otherwise, this annotation is ignored. This liveness check verifies that the heap memory usage is below 90% of the maximum memory. If more than 90% of the maximum memory is used, a status of ***DOWN*** is returned. 
 
-If you didn't build the Spring Boot application, run the ***package*** goal:
+The ***inventory*** microservice is healthy only when the ***system*** microservice is available. To add this check to the ***/health/ready*** endpoint, create a class that is annotated with the ***@Readiness*** annotation and implements the ***HealthCheck*** interface. A Health Check for readiness allows third party services to know whether the application is ready to process requests. The ***@Readiness*** annotation must be applied on a HealthCheck implementation to define a readiness check procedure. Otherwise, this annotation is ignored.
+
+Create the ***InventoryReadinessCheck*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
+```
+
+
+> Then, to open the InventoryReadinessCheck.java file in your IDE, select
+> ***File*** > ***Open*** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java, or click the following button
+
+::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java"}
+
+
+
+```java
+package io.openliberty.guides.inventory;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.health.Readiness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Readiness
+@ApplicationScoped
+public class InventoryReadinessCheck implements HealthCheck {
+
+    private static final String READINESS_CHECK = InventoryResource.class
+                                                .getSimpleName()
+                                                + " Readiness Check";
+
+    @Inject
+    @ConfigProperty(name = "SYS_APP_HOSTNAME")
+    private String hostname;
+
+    public HealthCheckResponse call() {
+        if (isSystemServiceReachable()) {
+            return HealthCheckResponse.up(READINESS_CHECK);
+        } else {
+            return HealthCheckResponse.down(READINESS_CHECK);
+        }
+    }
+
+    private boolean isSystemServiceReachable() {
+        try {
+            Client client = ClientBuilder.newClient();
+            client
+                .target("http://" + hostname + ":9090/system/properties")
+                .request()
+                .post(null);
+
+            return true;
+        } catch (Exception ex) {
+            return false;
+        }
+    }
+}
+```
+
+
+
+This health check verifies that the ***system*** microservice is available at ***http://system-service:9090/***. The ***system-service*** host name is accessible only from inside the cluster; you can't access it yourself. If it's available, then it returns an ***UP*** status. Similarly, if it's unavailable then it returns a ***DOWN*** status. When the status is ***DOWN***, the microservice is considered to be unhealthy.
+
+The health checks for the ***system*** microservice were already been implemented. The ***system*** microservice was set up to become unhealthy for 60 seconds when a specific endpoint is called. This endpoint has been provided for you to observe the results of an unhealthy pod and how Kubernetes reacts.
+
+::page{title="Configuring startup, liveness, and readiness probes"}
+
+You will configure Kubernetes startup, liveness, and readiness probes. Startup probes determine whether your application is fully initialized. Liveness probes determine whether a container needs to be restarted. Readiness probes determine whether your application is ready to accept requests. If it's not ready, no traffic is routed to the container.
+
+Create the kubernetes configuration file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-kubernetes-microprofile-health/start/kubernetes.yaml
+```
+
+
+> Then, to open the kubernetes.yaml file in your IDE, select
+> ***File*** > ***Open*** > guide-kubernetes-microprofile-health/start/kubernetes.yaml, or click the following button
+
+::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/kubernetes.yaml"}
+
+
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: system-deployment
+  labels:
+    app: system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: system
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: system
+    spec:
+      containers:
+      - name: system-container
+        image: system:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9090
+        # system probes
+        startupProbe:
+          httpGet:
+            path: /health/started
+            port: 9090
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 9090
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-deployment
+  labels:
+    app: inventory
+spec:
+  selector:
+    matchLabels:
+      app: inventory
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: inventory
+    spec:
+      containers:
+      - name: inventory-container
+        image: inventory:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9090
+        env:
+        - name: SYS_APP_HOSTNAME
+          value: system-service
+        # inventory probes
+        startupProbe:
+          httpGet:
+            path: /health/started
+            port: 9090
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 9090
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: system-service
+spec:
+  type: NodePort
+  selector:
+    app: system
+  ports:
+  - protocol: TCP
+    port: 9090
+    targetPort: 9090
+    nodePort: 31000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service
+spec:
+  type: NodePort
+  selector:
+    app: inventory
+  ports:
+  - protocol: TCP
+    port: 9090
+    targetPort: 9090
+    nodePort: 32000
+```
+
+
+
+The startup, liveness, and readiness probes are configured for the containers that are running the ***system*** and ***inventory*** microservices.
+
+The startup probes are configured to poll the ***/health/started*** endpoint. The startup probe determines whether a container is started.
+
+The liveness probes are configured to poll the ***/health/live*** endpoint. The liveness probes determine whether a container needs to be restarted. The ***initialDelaySeconds*** field defines the duration that the probe waits before it starts to poll so that it does not make requests before the server is started. The ***periodSeconds*** option defines how often the probe polls the given endpoint. The ***timeoutSeconds*** option defines how many seconds before the probe times out. The ***failureThreshold*** option defines how many times the probe fails before the state changes from ready to not ready.
+
+The readiness probes are configured to poll the ***/health/ready*** endpoint. The readiness probe determines the READY status of the container, as seen in the ***kubectl get pods*** output. Similar to the liveness probes, the readiness probes also define ***initialDelaySeconds***, ***periodSeconds***, ***timeoutSeconds***, and ***failureThreshold***.
+
+::page{title="Deploying the microservices"}
+
+To build these microservices, navigate to the ***start*** directory and run the following command.
 
 
 ```bash
+cd /home/project/guide-kubernetes-microprofile-health/start
 ./mvnw package
 ```
 
-Next, run the ***liberty:run*** goal. This goal creates the Open Liberty instance, installs required features, deploys the Spring Boot application to the Open Liberty instance, and starts the application.
 
+
+Next, run the ***docker build*** commands to build container images for your application:
+```bash
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+```
+
+The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
+
+Push your images to the container registry on IBM Cloud with the following commands:
 
 ```bash
-./mvnw liberty:run
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
 ```
 
-After you see the following message, your Liberty instance is ready:
-```
-The defaultServer server is ready to run a smarter planet.
+Update the image names so that the images in your IBM Cloud container registry are used. Set the image pull policy to ***Always*** and remove the ***nodePort*** fields so that the ports can be automatically generated:
+```bash
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=nodePort: 31000==g' kubernetes.yaml
+sed -i 's=nodePort: 32000==g' kubernetes.yaml
 ```
 
-
-In another command-line sesssion, run the following command to access the application:
+When the builds succeed, run the following command to deploy the necessary Kubernetes resources to serve the applications.
 
 ```bash
-curl http://localhost:9080/hello
+kubectl apply -f kubernetes.yaml
 ```
 
-After you finish exploring the application, press `Ctrl+C` to stop the Open Liberty instance. Alternatively, you can run the ***liberty:stop*** goal from the ***start*** directory in a separate command-line session:
-
+Use the following command to view the status of the pods. There will be two ***system*** pods and one ***inventory*** pod, later you'll observe their behavior as the ***system*** pods become unhealthy. 
 
 ```bash
-./mvnw liberty:stop
+kubectl get pods
 ```
 
-::page{title="Packaging the application embedded with Open Liberty"}
-
-You can update the ***pom.xml*** file to bind more Open Liberty Maven goals to the package phase. Binding these goals to the package phase allows the Maven ***package*** goal to build a Spring Boot application that is embedded with Open Liberty.
-
-Update the Maven POM file in the ***start*** directory.
-
-> To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-spring-boot/start/pom.xml, or click the following button
-
-::openFile{path="/home/project/guide-spring-boot/start/pom.xml"}
-
-
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.1.0</version>
-        <relativePath/> <!-- lookup parent from repository -->
-    </parent>
-    <groupId>com.example</groupId>
-    <artifactId>guide-spring-boot</artifactId>
-    <version>0.1.0</version>
-    <name>spring-boot-complete</name>
-    <description>Demo project for Spring Boot</description>
-
-    <properties>
-        <java.version>17</java.version>
-    </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-
-      <!-- Enable Liberty Maven plugin -->
-      <plugin>
-        <groupId>io.openliberty.tools</groupId>
-        <artifactId>liberty-maven-plugin</artifactId>
-        <version>3.9</version>
-        <configuration>
-          <appsDirectory>apps</appsDirectory>
-          <installAppPackages>spring-boot-project</installAppPackages>
-          <include>minify,runnable</include>
-          <packageName>GSSpringBootApp</packageName>
-        </configuration>
-        <executions>
-          <execution>
-            <id>package-server</id>
-            <phase>package</phase>
-            <goals>
-              <goal>create</goal>
-              <goal>install-feature</goal>
-              <goal>deploy</goal>
-              <goal>package</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <!-- End of Liberty Maven plugin -->
-
-        </plugins>
-    </build>
-
-</project>
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     1/1       Running   0          59s
+system-deployment-694c7b74f7-lrlf7     1/1       Running   0          59s
+inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          59s
 ```
 
+Wait until the pods are ready. After the pods are ready, you will make requests to your services.
 
 
-Add the ***include*** and ***packageName*** configuration elements, and the ***executions*** element to the ***pom.xml*** file. 
-
-The ***include*** configuration element specifies the ***minify, runnable*** values. The ***runnable*** value allows the application to be generated as a runnable JAR file. The ***minify*** value packages only what you need from your configuration files without bundling the entire Open Liberty install.
-
-The ***packageName*** configuration element specifies that the application is generated as a ***GSSpringBootApp.jar*** file.
-
-The ***executions*** element specifies the required Open Liberty Maven goals to generate the application that is embedded with Open Liberty. 
-
-Next, run the Maven ***package*** goal:
-
+In this IBM cloud environment, you need to access the services by using the Kubernetes API. Run the following command to start a proxy to the Kubernetes API server:
 
 ```bash
-./mvnw package
+kubectl proxy
 ```
 
-Run the repackaged Spring Boot application. This JAR file was defined previously in the ***pom.xml*** file.
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following commands to store the proxy path of the ***system*** and ***inventory*** services.
+```bash
+SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/system-service/proxy
+INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/inventory-service/proxy
+```
+
+Run the following echo commands to verify the variables:
 
 ```bash
-java -jar target/GSSpringBootApp.jar
+echo $SYSTEM_PROXY && echo $INVENTORY_PROXY
 ```
 
-After you see the following message, your Liberty instance is ready:
+The output appears as shown in the following example:
 
 ```
-The defaultServer server is ready to run a smarter planet.
+localhost:8001/api/v1/namespaces/sn-labs-yourname/services/system-service/proxy
+localhost:8001/api/v1/namespaces/sn-labs-yourname/services/inventory-service/proxy
 ```
 
-
-In another command-line sesssion, run the following command to access the application:
+Make a request to the system service to see the JVM system properties with the following ***curl*** command:
 ```bash
-curl http://localhost:9080/hello
+curl -s http://$SYSTEM_PROXY/system/properties | jq
 ```
 
-When you need to stop the application, press `Ctrl+C`.
+The readiness probe ensures the READY state won't be ***1/1*** until the container is available to accept requests. Without a readiness probe, you might notice an unsuccessful response from the server. This scenario can occur when the container is started, but the application server isn't fully initialized. With the readiness probe, you can be certain the pod accepts traffic only when the microservice is fully started.
+
+Similarly, access the inventory service and observe the successful request with the following command:
+```bash
+curl -s http://$INVENTORY_PROXY/inventory/systems/system-service | jq
+```
+
+::page{title="Changing the ready state of the system microservice"}
+
+An ***unhealthy*** endpoint has been provided under the ***system*** microservice to set it to an unhealthy state. The unhealthy state causes the readiness probe to fail. A request to the ***unhealthy*** endpoint puts the service in an unhealthy state as a simulation.
+
+
+Run the following ***curl*** command to invoke the unhealthy endpoint:
+```bash
+curl http://$SYSTEM_PROXY/system/unhealthy
+```
+
+Run the following command to view the state of the pods:
+
+```bash
+kubectl get pods
+```
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     1/1       Running   0          1m
+system-deployment-694c7b74f7-lrlf7     0/1       Running   0          1m
+inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          1m
+```
+
+
+You will notice that one of the two ***system*** pods is no longer in the ready state. Make a request to the ***/system/properties*** endpoint with the following command:
+```bash
+curl -s http://$SYSTEM_PROXY/system/properties | jq
+```
+
+Your request is successful because you have two replicas and one is still healthy.
+
+### Observing the effects on the inventory microservice
+
+
+Wait until the ***system-service*** pod is ready again. Make several requests to the ***/system/unhealthy*** endpoint of the ***system*** service until you see two pods are unhealthy.
+```bash
+curl http://$SYSTEM_PROXY/system/unhealthy
+```
+
+Observe the output of ***kubectl get pods***.
+```bash
+kubectl get pods
+```
+
+You will see both pods are no longer ready. During this process, the readiness probe for the ***inventory*** microservice will also fail. Observe that it's no longer in the ready state either.
+
+First, both ***system*** pods will no longer be ready because the readiness probe failed.
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     0/1       Running   0          5m
+system-deployment-694c7b74f7-lrlf7     0/1       Running   0          5m
+inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          5m
+```
+
+Next, the ***inventory*** pod is no longer ready because the readiness probe failed. The probe failed because ***system-service*** is now unavailable.
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     0/1       Running   0          6m
+system-deployment-694c7b74f7-lrlf7     0/1       Running   0          6m
+inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          6m
+```
+
+Then, the ***system*** pods will start to become healthy again after 60 seconds.
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     1/1       Running   0          7m
+system-deployment-694c7b74f7-lrlf7     0/1       Running   0          7m
+inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          7m
+```
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     1/1       Running   0          7m
+system-deployment-694c7b74f7-lrlf7     1/1       Running   0          7m
+inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          7m
+```
+
+Finally, you will see all of the pods have recovered.
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     1/1       Running   0          8m
+system-deployment-694c7b74f7-lrlf7     1/1       Running   0          8m
+inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          8m
+```
+
+::page{title="Testing the microservices"}
+
+
+Run the following commands to store the proxy path of the ***system*** and ***inventory*** services.
+```bash
+cd /home/project/guide-kubernetes-microprofile-health/start
+SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/system-service/proxy
+INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/inventory-service/proxy
+```
+
+Run the integration tests by using the following command:
+```bash
+./mvnw failsafe:integration-test \
+    -Dsystem.service.root=$SYSTEM_PROXY \
+    -Dinventory.service.root=$INVENTORY_PROXY
+```
+
+A few tests are included for you to test the basic functions of the microservices. If a test fails, then you might have introduced a bug into the code. Wait for all pods to be in the ready state before you run the tests. 
+
+When the tests succeed, you should see output similar to the following in your console.
+
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.65 s - in it.io.openliberty.guides.system.SystemEndpointIT
+
+Results:
+
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+```
+
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.542 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+
+Results:
+
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+```
+
+::page{title="Tearing down the environment"}
+
+Press **CTRL+C** to stop the proxy server that was started at step 6 ***Deploying the microservices***.
+
+To remove all of the resources created during this guide, run the following command to delete all of the resources that you created.
+
+```bash
+kubectl delete -f kubernetes.yaml
+```
+
+
 
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just ran a basic Spring Boot application with Open Liberty.
+You have used MicroProfile Health and Open Liberty to create endpoints that report on your microservice's status. Then, you observed how Kubernetes uses the **/health/started**, **/health/live**, and **/health/ready** endpoints to keep your microservices running smoothly.
+
 
 
 
@@ -535,35 +641,33 @@ You just ran a basic Spring Boot application with Open Liberty.
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-spring-boot*** project by running the following commands:
+Delete the ***guide-kubernetes-microprofile-health*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-spring-boot
+rm -fr guide-kubernetes-microprofile-health
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Containerizing,%20packaging,%20and%20running%20a%20Spring%20Boot%20application&guide-id=cloud-hosted-guide-spring-boot)
-
-Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Checking%20the%20health%20of%20microservices%20on%20Kubernetes&guide-id=cloud-hosted-guide-kubernetes-microprofile-health)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-spring-boot/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-spring-boot/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health/pulls)
 
 
 
 ### Where to next?
 
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Containerizing microservices](https://openliberty.io/guides/containerize.html)
+* [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
+* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
 
 
 ### Log out of the session
 
-Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
+Log out of the cloud-hosted guides by selecting **Account** :fa-user: > **Logout** from the Skills Network left-sided menu.
