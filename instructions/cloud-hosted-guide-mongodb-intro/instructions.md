@@ -687,7 +687,7 @@ Click the following button to see the OpenAPI user interface (UI) that provides 
 
 From the OpenAPI UI, test the create operation at the ***POST /api/crew*** endpoint by using the following code as the request body:
 
-```bash
+```
 {
   "name": "Member1",
   "rank": "Officer",
@@ -737,7 +737,7 @@ You'll receive a response that contains an array of all the members in your crew
 
 From the OpenAPI UI, test the update operation at the ***PUT /api/crew/{id}*** endpoint, where the ***{id}*** parameter is the ***\<\<ID\>\>*** that you saved from the create operation. Use the following code as the request body:
 
-```bash
+```
 {
   "name": "Member1",
   "rank": "Captain",
