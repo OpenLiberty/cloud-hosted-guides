@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Checking the health of microservices on Kubernetes guide!"}
+::page{title="Welcome to the Creating a RESTful web service guide!"}
 
-Learn how to check the health of microservices on Kubernetes by setting up startup, liveness, and readiness probes to inspect MicroProfile Health Check endpoints.
+Learn how to create a RESTful service with Jakarta Restful Web Services, JSON-B, and Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -18,17 +18,18 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You will learn how to create health check endpoints for your microservices. Then, you will configure Kubernetes to use these endpoints to keep your microservices running smoothly. 
+You will learn how to build and test a simple RESTful service with Jakarta Restful Web Services and JSON-B, which will expose the JVM's system properties. The RESTful service responds to ***GET*** requests made to the ***http://localhost:9080/LibertyProject/system/properties*** URL.
 
-MicroProfile Health allows services to report their health, and it publishes the overall health status to defined endpoints. If a service reports ***UP***, then it's available. If the service reports ***DOWN***, then it's unavailable. MicroProfile Health reports an individual service status at the endpoint and indicates the overall status as ***UP*** if all the services are ***UP***. A service orchestrator can then use the health statuses to make decisions.
+The service responds to a ***GET*** request with a JSON representation of the system properties, where each property is a field in a JSON object, like this:
 
-Kubernetes provides startup, liveness, and readiness probes that are used to check the health of your containers. These probes can check certain files in your containers, check a TCP socket, or make HTTP requests. MicroProfile Health exposes startup, liveness, and readiness endpoints on your microservices. Kubernetes polls these endpoints as specified by the probes to react appropriately to any change in the microservice's status. Read the [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html) guide to learn more about MicroProfile Health.
+```
+{
+  "os.name":"Mac",
+  "java.version": "1.8"
+}
+```
 
-The two microservices you will work with are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of the running container and it returns the pod's name in the HTTP header making replicas easy to distinguish from each other. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This demonstrates how communication can be established between pods inside a cluster.
-
-
-
-
+The design of an HTTP API is an essential part of creating a web application. The REST API is the go-to architectural style for building an HTTP API. The Jakarta Restful Web Services API offers functions to create, read, update, and delete exposed resources. The Jakarta Restful Web Services API supports the creation of RESTful web services that are performant, scalable, and modifiable.
 
 ::page{title="Getting started"}
 
@@ -41,11 +42,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-microprofile-health.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-intro.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-kubernetes-microprofile-health.git
-cd guide-kubernetes-microprofile-health
+git clone https://github.com/openliberty/guide-rest-intro.git
+cd guide-rest-intro
 ```
 
 
@@ -53,586 +54,320 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
+### Try what you'll build
 
-::page{title="Adding health checks to the inventory microservice"}
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-Navigate to ***start*** directory to begin.
+To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
 
-Create the ***InventoryStartupCheck*** class.
-
-> Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java
+cd finish
+mvn liberty:run
+```
+
+After you see the following message, your Liberty instance is ready:
+
+```
+The defaultServer server is ready to run a smarter planet.
 ```
 
 
-> Then, to open the InventoryStartupCheck.java file in your IDE, select
-> ***File*** > ***Open*** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java, or click the following button
 
-::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java"}
+Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
+
+
+Check out the service at the ***http\://localhost:9080/LibertyProject/system/properties*** URL. 
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl -s http://localhost:9080/LibertyProject/system/properties | jq
+```
+
+
+
+After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+
+```bash
+mvn liberty:stop
+```
+
+
+::page{title="Creating a RESTful application"}
+
+Navigate to the ***start*** directory to begin.
+```bash
+cd /home/project/guide-rest-intro/start
+```
+
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+
+```bash
+mvn liberty:dev
+```
+
+After you see the following message, your Liberty instance is ready in dev mode:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+
+Jakarta Restful Web Services defines two key concepts for creating REST APIs. The most obvious one is the resource itself, which is modelled as a class. The second is a RESTful application, which groups all exposed resources under a common path. You can think of the RESTful application as a wrapper for all of your resources.
+
+
+Replace the ***SystemApplication*** class.
+
+> To open the SystemApplication.java file in your IDE, select
+> ***File*** > ***Open*** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java, or click the following button
+
+::openFile{path="/home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java"}
 
 
 
 ```java
-package io.openliberty.guides.inventory;
+package io.openliberty.guides.rest;
 
-import java.lang.management.ManagementFactory;
-import com.sun.management.OperatingSystemMXBean;
-import jakarta.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.health.Startup;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
+import jakarta.ws.rs.core.Application;
+import jakarta.ws.rs.ApplicationPath;
 
-@Startup
-@ApplicationScoped
-public class InventoryStartupCheck implements HealthCheck {
+@ApplicationPath("system")
+public class SystemApplication extends Application {
 
-    @Override
-    public HealthCheckResponse call() {
-        OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean)
-        ManagementFactory.getOperatingSystemMXBean();
-        double cpuUsed = bean.getSystemCpuLoad();
-        String cpuUsage = String.valueOf(cpuUsed);
-        return HealthCheckResponse.named(InventoryResource.class
-                                            .getSimpleName() + " Startup Check")
-                                            .status(cpuUsed < 0.95).build();
+}
+```
+
+
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+
+
+The ***SystemApplication*** class extends the ***Application*** class, which associates all RESTful resource classes in the WAR file with this RESTful application. These resources become available under the common path that's specified with the ***@ApplicationPath*** annotation. The ***@ApplicationPath*** annotation has a value that indicates the path in the WAR file that the RESTful application accepts requests from.
+
+
+::page{title="Creating the RESTful resource"}
+
+In a RESTful application, a single class represents a single resource, or a group of resources of the same type. In this application, a resource might be a system property, or a set of system properties. A single class can easily handle multiple different resources, but keeping a clean separation between types of resources helps with maintainability in the long run.
+
+Create the ***PropertiesResource*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+```
+
+
+> Then, to open the PropertiesResource.java file in your IDE, select
+> ***File*** > ***Open*** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java, or click the following button
+
+::openFile{path="/home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java"}
+
+
+
+```java
+package io.openliberty.guides.rest;
+
+import java.util.Properties;
+
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+
+@Path("properties")
+public class PropertiesResource {
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Properties getProperties() {
+        return System.getProperties();
     }
-}
 
-```
-
-
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
-
-
-A health check for startup allows applications to define startup probes that verify whether deployed application is fully initialized before the liveness probe takes over. This check is useful for applications that require additional startup time on their first initialization. The ***@Startup*** annotation must be applied on a HealthCheck implementation to define a startup check procedure. Otherwise, this annotation is ignored. This startup check verifies that the cpu usage is below 95%. If more than 95% of the cpu is used, a status of ***DOWN*** is returned. 
-
-Create the ***InventoryLivenessCheck*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
-```
-
-
-> Then, to open the InventoryLivenessCheck.java file in your IDE, select
-> ***File*** > ***Open*** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java, or click the following button
-
-::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java"}
-
-
-
-```java
-package io.openliberty.guides.inventory;
-
-import jakarta.enterprise.context.ApplicationScoped;
-
-import java.lang.management.MemoryMXBean;
-import java.lang.management.ManagementFactory;
-
-import org.eclipse.microprofile.health.Liveness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
-
-@Liveness
-@ApplicationScoped
-public class InventoryLivenessCheck implements HealthCheck {
-
-  @Override
-  public HealthCheckResponse call() {
-      MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
-      long memUsed = memBean.getHeapMemoryUsage().getUsed();
-      long memMax = memBean.getHeapMemoryUsage().getMax();
-
-      return HealthCheckResponse.named(InventoryResource.class.getSimpleName()
-                                      + " Liveness Check")
-                                .status(memUsed < memMax * 0.9).build();
-  }
 }
 ```
 
 
 
-A health check for liveness allows third party services to determine whether the application is running. If this procedure fails, the application can be stopped. The ***@Liveness*** annotation must be applied on a HealthCheck implementation to define a Liveness check procedure. Otherwise, this annotation is ignored. This liveness check verifies that the heap memory usage is below 90% of the maximum memory. If more than 90% of the maximum memory is used, a status of ***DOWN*** is returned. 
 
-The ***inventory*** microservice is healthy only when the ***system*** microservice is available. To add this check to the ***/health/ready*** endpoint, create a class that is annotated with the ***@Readiness*** annotation and implements the ***HealthCheck*** interface. A Health Check for readiness allows third party services to know whether the application is ready to process requests. The ***@Readiness*** annotation must be applied on a HealthCheck implementation to define a readiness check procedure. Otherwise, this annotation is ignored.
+The ***@Path*** annotation on the class indicates that this resource responds to the ***properties*** path in the RESTful Web Services application. The ***@ApplicationPath*** annotation in the ***SystemApplication*** class together with the ***@Path*** annotation in this class indicates that the resource is available at the ***system/properties*** path.
 
-Create the ***InventoryReadinessCheck*** class.
+Jakarta Restful Web Services maps the HTTP methods on the URL to the methods of the class by using annotations. Your application uses the ***GET*** annotation to map an HTTP ***GET*** request to the ***system/properties*** path.
 
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
+The ***@GET*** annotation on the method indicates that this method is called for the HTTP ***GET*** method. The ***@Produces*** annotation indicates the format of the content that is returned. The value of the ***@Produces*** annotation is specified in the HTTP ***Content-Type*** response header. This application returns a JSON structured. The desired ***Content-Type*** for a JSON response is ***application/json***, with ***MediaType.APPLICATION_JSON*** instead of the ***String*** content type. Using a constant such as ***MediaType.APPLICATION_JSON*** is better because a spelling error results in a compile failure.
+
+Jakarta Restful Web Services supports a number of ways to marshal JSON. The Jakarta Restful Web Services specification mandates JSON-Binding (JSON-B). The method body returns the result of ***System.getProperties()***, which is of type ***java.util.Properties***. The method is annotated with ***@Produces(MediaType.APPLICATION_JSON)*** so Jakarta Restful Web Services uses JSON-B to automatically convert the returned object to JSON data in the HTTP response.
+
+
+::page{title="Configuring Liberty"}
+
+To get the service running, the Liberty ***server.xml*** configuration file needs to be correctly configured.
+
+Replace the Liberty ***server.xml*** configuration file.
+
+> To open the server.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-rest-intro/start/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-rest-intro/start/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="Intro REST Guide Liberty server">
+  <featureManager>
+      <platform>jakartaee-10.0</platform>
+      <feature>restfulWS</feature>
+      <feature>jsonb</feature>
+  </featureManager>
+
+  <httpEndpoint httpPort="${http.port}" httpsPort="${https.port}"
+                id="defaultHttpEndpoint" host="*" />
+
+  <webApplication location="guide-rest-intro.war" contextRoot="${app.context.root}"/>
+</server>
 ```
 
 
-> Then, to open the InventoryReadinessCheck.java file in your IDE, select
-> ***File*** > ***Open*** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java, or click the following button
 
-::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java"}
+The configuration does the following actions:
+
+* Configures Liberty to enable Jakarta Restful Web Services. This is specified in the ***featureManager*** element.
+* Configures Liberty to resolve the HTTP port numbers from variables, which are then specified in the Maven ***pom.xml*** file. This is specified in the ***httpEndpoint*** element. Variables use the ***${variableName}*** syntax.
+* Configures Liberty to run the produced web application on a context root specified in the ***pom.xml*** file. This is specified in the ***webApplication*** element.
+
+
+The variables that are being used in the ***server.xml*** file are provided by the properties set in the Maven ***pom.xml*** file. The properties must be formatted as ***liberty.var.variableName***.
+
+
+::page{title="Running the application"}
+
+You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+
+
+Check out the service that you created at the ***http\://localhost:9080/LibertyProject/system/properties*** URL. 
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl -s http://localhost:9080/LibertyProject/system/properties | jq
+```
+
+
+
+
+::page{title="Testing the service"}
+
+
+You can test this service manually by starting Liberty and visiting the http://localhost:9080/LibertyProject/system/properties URL. However, automated tests are a much better approach because they trigger a failure if a change introduces a bug. JUnit and the Jakarta Restful Web Services Client API provide a simple environment to test the application.
+
+You can write tests for the individual units of code outside of a running Liberty instance, or they can be written to call the Liberty instance directly. In this example, you will create a test that does the latter.
+
+Create the ***EndpointIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+```
+
+
+> Then, to open the EndpointIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java, or click the following button
+
+::openFile{path="/home/project/guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java"}
 
 
 
 ```java
-package io.openliberty.guides.inventory;
+package it.io.openliberty.guides.rest;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.Properties;
+
+import jakarta.json.bind.Jsonb;
+import jakarta.json.bind.JsonbBuilder;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.Response;
 
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.health.Readiness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
+import org.junit.jupiter.api.Test;
 
-@Readiness
-@ApplicationScoped
-public class InventoryReadinessCheck implements HealthCheck {
+public class EndpointIT {
+    private static final Jsonb JSONB = JsonbBuilder.create();
+    @Test
+    public void testGetProperties() {
+        String port = System.getProperty("http.port");
+        String context = System.getProperty("context.root");
+        String url = "http://localhost:" + port + "/" + context + "/";
 
-    private static final String READINESS_CHECK = InventoryResource.class
-                                                .getSimpleName()
-                                                + " Readiness Check";
+        Client client = ClientBuilder.newClient();
 
-    @Inject
-    @ConfigProperty(name = "SYS_APP_HOSTNAME")
-    private String hostname;
+        WebTarget target = client.target(url + "system/properties");
+        Response response = target.request().get();
 
-    public HealthCheckResponse call() {
-        if (isSystemServiceReachable()) {
-            return HealthCheckResponse.up(READINESS_CHECK);
-        } else {
-            return HealthCheckResponse.down(READINESS_CHECK);
-        }
-    }
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus(),
+                     "Incorrect response code from " + url);
 
-    private boolean isSystemServiceReachable() {
-        try {
-            Client client = ClientBuilder.newClient();
-            client
-                .target("http://" + hostname + ":9090/system/properties")
-                .request()
-                .post(null);
+        String json = response.readEntity(String.class);
+        Properties sysProps = JSONB.fromJson(json, Properties.class);
 
-            return true;
-        } catch (Exception ex) {
-            return false;
-        }
+        assertEquals(System.getProperty("os.name"), sysProps.getProperty("os.name"),
+                     "The system property for the local and remote JVM should match");
+        response.close();
+        client.close();
     }
 }
 ```
 
 
 
-This health check verifies that the ***system*** microservice is available at ***http://system-service:9090/***. The ***system-service*** host name is accessible only from inside the cluster; you can't access it yourself. If it's available, then it returns an ***UP*** status. Similarly, if it's unavailable then it returns a ***DOWN*** status. When the status is ***DOWN***, the microservice is considered to be unhealthy.
+This test class has more lines of code than the resource implementation. This situation is common. The test method is indicated with the ***@Test*** annotation.
 
-The health checks for the ***system*** microservice were already been implemented. The ***system*** microservice was set up to become unhealthy for 60 seconds when a specific endpoint is called. This endpoint has been provided for you to observe the results of an unhealthy pod and how Kubernetes reacts.
 
-::page{title="Configuring startup, liveness, and readiness probes"}
+The test code needs to know some information about the application to make requests. The server port and the application context root are key, and are dictated by the Liberty's configuration. While this information can be hardcoded, it is better to specify it in a single place like the Maven ***pom.xml*** file. Refer to the ***pom.xml*** file to see how the application information such as the ***http.port***, ***https.port*** and ***app.context.root*** elements are provided in the file.
 
-You will configure Kubernetes startup, liveness, and readiness probes. Startup probes determine whether your application is fully initialized. Liveness probes determine whether a container needs to be restarted. Readiness probes determine whether your application is ready to accept requests. If it's not ready, no traffic is routed to the container.
 
-Create the kubernetes configuration file.
+These Maven properties are then passed to the Java test program as the ***systemPropertyVariables*** element in the ***pom.xml*** file.
 
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-kubernetes-microprofile-health/start/kubernetes.yaml
-```
+Getting the values to create a representation of the URL is simple. The test class uses the ***getProperty*** method to get the application details.
 
+To call the RESTful service using the Jakarta Restful Web Services client, first create a ***WebTarget*** object by calling the ***target*** method that provides the URL. To cause the HTTP request to occur, the ***request().get()*** method is called on the ***WebTarget*** object. The ***get*** method call is a synchronous call that blocks until a response is received. This call returns a ***Response*** object, which can be inspected to determine whether the request was successful.
 
-> Then, to open the kubernetes.yaml file in your IDE, select
-> ***File*** > ***Open*** > guide-kubernetes-microprofile-health/start/kubernetes.yaml, or click the following button
+The first thing to check is that a ***200*** response was received. The JUnit ***assertEquals*** method can be used for this check.
 
-::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/kubernetes.yaml"}
+Check the response body to ensure it returned the right information. The client and the server are running on the same machine so it is reasonable to expect that the system properties for the local and remote JVM would be the same. In this case, an ***assertEquals*** assertion is made so that the ***os.name*** system property for both JVMs is the same. You can write additional assertions to check for more values.
 
+### Running the tests
 
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: system-deployment
-  labels:
-    app: system
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: system
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
-  template:
-    metadata:
-      labels:
-        app: system
-    spec:
-      containers:
-      - name: system-container
-        image: system:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9090
-        # system probes
-        startupProbe:
-          httpGet:
-            path: /health/started
-            port: 9090
-        livenessProbe:
-          httpGet:
-            path: /health/live
-            port: 9090
-          initialDelaySeconds: 60
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
-        readinessProbe:
-          httpGet:
-            path: /health/ready
-            port: 9090
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: inventory-deployment
-  labels:
-    app: inventory
-spec:
-  selector:
-    matchLabels:
-      app: inventory
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
-  template:
-    metadata:
-      labels:
-        app: inventory
-    spec:
-      containers:
-      - name: inventory-container
-        image: inventory:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9090
-        env:
-        - name: SYS_APP_HOSTNAME
-          value: system-service
-        # inventory probes
-        startupProbe:
-          httpGet:
-            path: /health/started
-            port: 9090
-        livenessProbe:
-          httpGet:
-            path: /health/live
-            port: 9090
-          initialDelaySeconds: 60
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
-        readinessProbe:
-          httpGet:
-            path: /health/ready
-            port: 9090
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: system-service
-spec:
-  type: NodePort
-  selector:
-    app: system
-  ports:
-  - protocol: TCP
-    port: 9090
-    targetPort: 9090
-    nodePort: 31000
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: inventory-service
-spec:
-  type: NodePort
-  selector:
-    app: inventory
-  ports:
-  - protocol: TCP
-    port: 9090
-    targetPort: 9090
-    nodePort: 32000
-```
-
-
-
-The startup, liveness, and readiness probes are configured for the containers that are running the ***system*** and ***inventory*** microservices.
-
-The startup probes are configured to poll the ***/health/started*** endpoint. The startup probe determines whether a container is started.
-
-The liveness probes are configured to poll the ***/health/live*** endpoint. The liveness probes determine whether a container needs to be restarted. The ***initialDelaySeconds*** field defines the duration that the probe waits before it starts to poll so that it does not make requests before the server is started. The ***periodSeconds*** option defines how often the probe polls the given endpoint. The ***timeoutSeconds*** option defines how many seconds before the probe times out. The ***failureThreshold*** option defines how many times the probe fails before the state changes from ready to not ready.
-
-The readiness probes are configured to poll the ***/health/ready*** endpoint. The readiness probe determines the READY status of the container, as seen in the ***kubectl get pods*** output. Similar to the liveness probes, the readiness probes also define ***initialDelaySeconds***, ***periodSeconds***, ***timeoutSeconds***, and ***failureThreshold***.
-
-::page{title="Deploying the microservices"}
-
-To build these microservices, navigate to the ***start*** directory and run the following command.
-
-
-```bash
-cd /home/project/guide-kubernetes-microprofile-health/start
-./mvnw package
-```
-
-
-
-Next, run the ***docker build*** commands to build container images for your application:
-```bash
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-```
-
-The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
-
-Push your images to the container registry on IBM Cloud with the following commands:
-
-```bash
-docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
-docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
-```
-
-Update the image names so that the images in your IBM Cloud container registry are used. Set the image pull policy to ***Always*** and remove the ***nodePort*** fields so that the ports can be automatically generated:
-```bash
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=nodePort: 31000==g' kubernetes.yaml
-sed -i 's=nodePort: 32000==g' kubernetes.yaml
-```
-
-When the builds succeed, run the following command to deploy the necessary Kubernetes resources to serve the applications.
-
-```bash
-kubectl apply -f kubernetes.yaml
-```
-
-Use the following command to view the status of the pods. There will be two ***system*** pods and one ***inventory*** pod, later you'll observe their behavior as the ***system*** pods become unhealthy. 
-
-```bash
-kubectl get pods
-```
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          59s
-system-deployment-694c7b74f7-lrlf7     1/1       Running   0          59s
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          59s
-```
-
-Wait until the pods are ready. After the pods are ready, you will make requests to your services.
-
-
-In this IBM cloud environment, you need to access the services by using the Kubernetes API. Run the following command to start a proxy to the Kubernetes API server:
-
-```bash
-kubectl proxy
-```
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following commands to store the proxy path of the ***system*** and ***inventory*** services.
-```bash
-SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/system-service/proxy
-INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/inventory-service/proxy
-```
-
-Run the following echo commands to verify the variables:
-
-```bash
-echo $SYSTEM_PROXY && echo $INVENTORY_PROXY
-```
-
-The output appears as shown in the following example:
-
-```
-localhost:8001/api/v1/namespaces/sn-labs-yourname/services/system-service/proxy
-localhost:8001/api/v1/namespaces/sn-labs-yourname/services/inventory-service/proxy
-```
-
-Make a request to the system service to see the JVM system properties with the following ***curl*** command:
-```bash
-curl -s http://$SYSTEM_PROXY/system/properties | jq
-```
-
-The readiness probe ensures the READY state won't be ***1/1*** until the container is available to accept requests. Without a readiness probe, you might notice an unsuccessful response from the server. This scenario can occur when the container is started, but the application server isn't fully initialized. With the readiness probe, you can be certain the pod accepts traffic only when the microservice is fully started.
-
-Similarly, access the inventory service and observe the successful request with the following command:
-```bash
-curl -s http://$INVENTORY_PROXY/inventory/systems/system-service | jq
-```
-
-::page{title="Changing the ready state of the system microservice"}
-
-An ***unhealthy*** endpoint has been provided under the ***system*** microservice to set it to an unhealthy state. The unhealthy state causes the readiness probe to fail. A request to the ***unhealthy*** endpoint puts the service in an unhealthy state as a simulation.
-
-
-Run the following ***curl*** command to invoke the unhealthy endpoint:
-```bash
-curl http://$SYSTEM_PROXY/system/unhealthy
-```
-
-Run the following command to view the state of the pods:
-
-```bash
-kubectl get pods
-```
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          1m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          1m
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          1m
-```
-
-
-You will notice that one of the two ***system*** pods is no longer in the ready state. Make a request to the ***/system/properties*** endpoint with the following command:
-```bash
-curl -s http://$SYSTEM_PROXY/system/properties | jq
-```
-
-Your request is successful because you have two replicas and one is still healthy.
-
-### Observing the effects on the inventory microservice
-
-
-Wait until the ***system-service*** pod is ready again. Make several requests to the ***/system/unhealthy*** endpoint of the ***system*** service until you see two pods are unhealthy.
-```bash
-curl http://$SYSTEM_PROXY/system/unhealthy
-```
-
-Observe the output of ***kubectl get pods***.
-```bash
-kubectl get pods
-```
-
-You will see both pods are no longer ready. During this process, the readiness probe for the ***inventory*** microservice will also fail. Observe that it's no longer in the ready state either.
-
-First, both ***system*** pods will no longer be ready because the readiness probe failed.
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     0/1       Running   0          5m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          5m
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          5m
-```
-
-Next, the ***inventory*** pod is no longer ready because the readiness probe failed. The probe failed because ***system-service*** is now unavailable.
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     0/1       Running   0          6m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          6m
-inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          6m
-```
-
-Then, the ***system*** pods will start to become healthy again after 60 seconds.
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          7m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          7m
-inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          7m
-```
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          7m
-system-deployment-694c7b74f7-lrlf7     1/1       Running   0          7m
-inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          7m
-```
-
-Finally, you will see all of the pods have recovered.
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          8m
-system-deployment-694c7b74f7-lrlf7     1/1       Running   0          8m
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          8m
-```
-
-::page{title="Testing the microservices"}
-
-
-Run the following commands to store the proxy path of the ***system*** and ***inventory*** services.
-```bash
-cd /home/project/guide-kubernetes-microprofile-health/start
-SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/system-service/proxy
-INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/inventory-service/proxy
-```
-
-Run the integration tests by using the following command:
-```bash
-./mvnw failsafe:integration-test \
-    -Dsystem.service.root=$SYSTEM_PROXY \
-    -Dinventory.service.root=$INVENTORY_PROXY
-```
-
-A few tests are included for you to test the basic functions of the microservices. If a test fails, then you might have introduced a bug into the code. Wait for all pods to be in the ready state before you run the tests. 
-
-When the tests succeed, you should see output similar to the following in your console.
+You will see the following output:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.65 s - in it.io.openliberty.guides.system.SystemEndpointIT
+Running it.io.openliberty.guides.rest.EndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.884 sec - in it.io.openliberty.guides.rest.EndpointIT
 
-Results:
+Results :
 
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.542 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+To see whether the tests detect a failure, add an assertion that you know fails, or change the existing assertion to a constant value that doesn't match the ***os.name*** system property.
 
-Results:
-
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
-```
-
-::page{title="Tearing down the environment"}
-
-Press **CTRL+C** to stop the proxy server that was started at step 6 ***Deploying the microservices***.
-
-To remove all of the resources created during this guide, run the following command to delete all of the resources that you created.
-
-```bash
-kubectl delete -f kubernetes.yaml
-```
-
-
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
 
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You have used MicroProfile Health and Open Liberty to create endpoints that report on your microservice's status. Then, you observed how Kubernetes uses the **/health/started**, **/health/live**, and **/health/ready** endpoints to keep your microservices running smoothly.
-
+You just developed a RESTful service in Open Liberty by using Jakarta Restful Web Services and JSON-B.
 
 
 
@@ -641,31 +376,31 @@ You have used MicroProfile Health and Open Liberty to create endpoints that repo
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-kubernetes-microprofile-health*** project by running the following commands:
+Delete the ***guide-rest-intro*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-kubernetes-microprofile-health
+rm -fr guide-rest-intro
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Checking%20the%20health%20of%20microservices%20on%20Kubernetes&guide-id=cloud-hosted-guide-kubernetes-microprofile-health)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20RESTful%20web%20service&guide-id=cloud-hosted-guide-rest-intro)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-intro/pulls)
 
 
 
 ### Where to next?
 
-* [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
-* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
+* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
+* [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
 
 
 ### Log out of the session
