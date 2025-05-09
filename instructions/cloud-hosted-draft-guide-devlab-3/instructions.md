@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Testing microservices with consumer-driven contracts guide!"}
+::page{title="Welcome to the Securing microservices with JSON Web Tokens guide!"}
 
-Learn how to test Java microservices with consumer-driven contracts in Open Liberty.
+You'll explore how to control user and role access to microservices with MicroProfile JSON Web Token (MicroProfile JWT).
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,25 +14,27 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 ::page{title="What you'll learn"}
 
-With a microservices-based architecture, you need robust testing to ensure that microservices that depend on one another are able to communicate effectively.  Typically, to prevent multiple points of failure at different integration points, a combination of unit, integration, and end-to-end tests are used. While unit tests are fast, they are less trustworthy because they run in isolation and usually rely on mock data.
+You will add token-based authentication mechanisms to authenticate, authorize, and verify users by implementing MicroProfile JWT in the ***system*** microservice.
 
-Integration tests address this issue by testing against real running services. However, they tend to be slow as the tests depend on other microservices and are less reliable because they are prone to external changes.
+A JSON Web Token (JWT) is a self-contained token that is designed to securely transmit information as a JSON object. The information in this JSON object is digitally signed and can be trusted and verified by the recipient.
 
-Usually, end-to-end tests are more trustworthy because they verify functionality from the perspective of a user. However, a graphical user interface (GUI) component is often required to perform end-to-end tests, and GUI components rely on third-party software, such as Selenium, which requires heavy computation time and resources.
+For microservices, a token-based authentication mechanism offers a lightweight way for security controls and security tokens to propagate user identities across different services. JSON Web Token is becoming the most common token format because it follows well-defined and known standards.
 
-*What is contract testing?*
+MicroProfile JWT standards define the required format of JWT for authentication and authorization. The standards also map JWT claims to various Jakarta EE container APIs and make the set of claims available through getter methods.
 
-Contract testing bridges the gaps among the shortcomings of these different testing methodologies. Contract testing is a technique for testing an integration point by isolating each microservice and checking whether the HTTP requests and responses that the microservice transmits conform to a shared understanding that is documented in a contract. This way, contract testing ensures that microservices can communicate with each other.
+In this guide, the application uses JWTs to authenticate a user, allowing them to make authorized requests to a secure backend service.
 
-[Pact](https://docs.pact.io/) is an open source contract testing tool for testing HTTP requests, responses, and message integrations by using contract tests.
+You will be working with two services, a ***frontend*** service and a secure ***system*** backend service. The ***frontend*** service logs a user in, builds a JWT, and makes authorized requests to the secure ***system*** service for JVM system properties. The following diagram depicts the application that is used in this guide:
 
-The [Pact Broker](https://docs.pact.io/pact_broker/docker_images) is an application for sharing Pact contracts and verification results. The Pact Broker is also an important piece for integrating Pact into continuous integration and continuous delivery (CI/CD) pipelines.
+![JWT frontend and system services](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-jwt/prod/assets/JWT_Diagram.png)
 
-The two microservices you will interact with are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of its host. The ***inventory*** microservice retrieves specific properties from the ***system*** microservice.
 
-You will learn how to use the Pact framework to write contract tests for the ***inventory*** microservice that will then be verified by the ***system*** microservice.
+The user signs in to the ***frontend*** service with a username and a password, at which point a JWT is created. The ***frontend*** service then makes requests, with the JWT included, to the ***system*** backend service. The secure ***system*** service verifies the JWT to ensure that the request came from the authorized ***frontend*** service. After the JWT is validated, the information in the claims, such as the user's role, can be trusted and used to determine which system properties the user has access to.
+
+To learn more about JSON Web Tokens, check out the [jwt.io website](https://jwt.io/introduction/). If you want to learn more about how JWTs can be used for user authentication and authorization, check out the Open Liberty [Single Sign-on documentation](https://openliberty.io/docs/latest/single-sign-on.html).
 
 ::page{title="Getting started"}
 
@@ -45,11 +47,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-contract-testing.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-jwt.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-contract-testing.git
-cd guide-contract-testing
+git clone https://github.com/openliberty/guide-microprofile-jwt.git
+cd guide-microprofile-jwt
 ```
 
 
@@ -57,48 +59,85 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-### Starting the Pact Broker
+### Try what you'll build
 
-Run the following command to start the Pact Broker:
-```bash
-docker-compose -f "pact-broker/docker-compose.yml" up -d --build
-```
+The ***finish*** directory contains the finished JWT security implementation for the services in the application. Try the finished application before you build your own.
 
-When the Pact Broker is running, you'll see the following output:
-```
-...
-Container pact-broker-postgres-1      Started
-Container pact-broker-pact-broker-1   Started
-```
-
-
-Click the following button to visit the Pact Broker to confirm that it is working. The Pact Broker can be found at the `https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai` URL, where ***accountname*** is your account name.
-
-::startApplication{port="9292" display="external" name="Visit Pact Broker" route="/"}
-
-Confirm that you can access the user interface of the Pact Broker. The Pact Broker interface is similar to the following image:
-
-![Pact Broker webpage](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/prod/assets/pact-broker-webpage.png)
-
-
-
-
-
-You can refer to the [official Pact Broker documentation](https://docs.pact.io/pact_broker/docker_images/pactfoundation) for more information about the components of the Docker Compose file.
-
-::page{title="Implementing pact testing in the inventory service"}
-
-Navigate to the ***start*** directory to begin.
+To try out the application, run the following commands to navigate to the ***finish/frontend*** directory and deploy the ***frontend*** service to Open Liberty:
 
 ```bash
-cd /home/project/guide-contract-testing/start
+cd finish/frontend
+mvn liberty:run
 ```
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
-
+Open another command-line session and run the following commands to navigate to the ***finish/system*** directory and deploy the ***system*** service to Open Liberty:
 
 ```bash
-./mvnw -f inventory/pom.xml liberty:dev
+cd finish/system
+mvn liberty:run
+```
+
+After you see the following message in both command-line sessions, both of your services are ready:
+
+```
+The defaultServer server is ready to run a smarter planet.
+```
+
+
+To launch the front-end web application, click the following button. From here, you can log in to the application with the form-based login.
+::startApplication{port="9090" display="external" name="Launch Application" route="/login.jsf"}
+
+Log in with one of the following usernames and its corresponding password:
+
+| *Username* | *Password* | *Role*
+| --- | --- | ---
+| bob | bobpwd | admin, user
+| alice | alicepwd | user
+| carl | carlpwd | user
+
+You're redirected to a page that displays information that the front end requested from the ***system*** service, such as the system username. If you log in as an ***admin***, you can also see the current OS. Click ***Log Out*** and log in as a ***user***. You'll see the message ***You are not authorized to access this system property*** because the ***user*** role doesn't have sufficient privileges to view current OS information. 
+
+Additionally, the ***groups*** claim of the JWT is read by the ***system*** service and requested by the front end to be displayed.
+
+
+You can try accessing these services without a JWT by going to the ***system*** endpoint. Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following curl command from the terminal in the IDE:
+```bash
+curl -k https://localhost:8443/system/properties/os
+```
+
+The response is empty because you don't have access. Access is granted if a valid JWT is sent with the request. The following error also appears in the command-line session of the ***system*** service:
+
+```
+[ERROR] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
+```
+
+When you are done with the application, stop both the ***frontend*** and ***system*** services by pressing `Ctrl+C` in the command-line sessions where you ran them. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
+
+```bash
+mvn -pl system liberty:stop
+mvn -pl frontend liberty:stop
+```
+
+
+::page{title="Creating the secure system service"}
+
+
+To begin, run the following command to navigate to the ***start*** directory:
+```bash
+cd /home/project/guide-microprofile-jwt/start
+```
+
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following commands to navigate to the ***frontend*** directory and start the ***frontend*** service in dev mode:
+
+```bash
+cd frontend
+mvn liberty:dev
+```
+
+Open another command-line session and run the following commands to navigate to the ***system*** directory and start the ***system*** service in dev mode:
+```bash
+cd system
+mvn liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
@@ -108,145 +147,70 @@ After you see the following message, your Liberty instance is ready in dev mode:
 *    Liberty is running in dev mode.
 ```
 
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+The ***system*** service provides endpoints for the ***frontend*** service to use to request system properties. This service is secure and requires a valid JWT to be included in requests that are made to it. The claims in the JWT are used to determine what properties the user has access to.
 
-Create the InventoryPactIT class file.
+Create the secure ***system*** service.
+
+Create the ***SystemResource*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-contract-testing/start/inventory/src/test/java/io/openliberty/guides/inventory/InventoryPactIT.java
+touch /home/project/guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java
 ```
 
 
-> Then, to open the InventoryPactIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-contract-testing/start/inventory/src/test/java/io/openliberty/guides/inventory/InventoryPactIT.java, or click the following button
+> Then, to open the SystemResource.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java, or click the following button
 
-::openFile{path="/home/project/guide-contract-testing/start/inventory/src/test/java/io/openliberty/guides/inventory/InventoryPactIT.java"}
+::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java"}
 
 
 
 ```java
+package io.openliberty.guides.system;
 
-package io.openliberty.guides.inventory;
+import jakarta.json.JsonArray;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.annotation.security.RolesAllowed;
 
-import au.com.dius.pact.consumer.dsl.PactDslJsonArray;
-import au.com.dius.pact.consumer.dsl.PactDslJsonBody;
-import au.com.dius.pact.consumer.dsl.PactDslWithProvider;
-import au.com.dius.pact.consumer.junit.PactProviderRule;
-import au.com.dius.pact.consumer.junit.PactVerification;
-import au.com.dius.pact.core.model.RequestResponsePact;
-import au.com.dius.pact.core.model.annotations.Pact;
+import org.eclipse.microprofile.jwt.Claim;
 
-import org.junit.Rule;
-import org.junit.Test;
+@RequestScoped
+@Path("/properties")
+public class SystemResource {
 
-import static org.junit.Assert.assertEquals;
+    @Inject
+    @Claim("groups")
+    private JsonArray roles;
 
-import java.util.HashMap;
-import java.util.Map;
+    @GET
+    @Path("/username")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({ "admin", "user" })
+    public String getUsername() {
+        return System.getProperties().getProperty("user.name");
+    }
 
-public class InventoryPactIT {
-  @Rule
-  public PactProviderRule mockProvider = new PactProviderRule("System", this);
+    @GET
+    @Path("/os")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({ "admin" })
+    public String getOS() {
+        return System.getProperties().getProperty("os.name");
+    }
 
-  @Pact(consumer = "Inventory")
-  public RequestResponsePact createPactServer(PactDslWithProvider builder) {
-    Map<String, String> headers = new HashMap<String, String>();
-    headers.put("Content-Type", "application/json");
-
-    return builder
-      .given("wlp.server.name is defaultServer")
-      .uponReceiving("a request for server name")
-      .path("/system/properties/key/wlp.server.name")
-      .method("GET")
-      .willRespondWith()
-      .headers(headers)
-      .status(200)
-      .body(new PactDslJsonArray().object()
-        .stringValue("wlp.server.name", "defaultServer"))
-      .toPact();
-  }
-
-  @Pact(consumer = "Inventory")
-  public RequestResponsePact createPactEdition(PactDslWithProvider builder) {
-    Map<String, String> headers = new HashMap<String, String>();
-    headers.put("Content-Type", "application/json");
-
-    return builder
-      .given("Default directory is true")
-      .uponReceiving("a request to check for the default directory")
-      .path("/system/properties/key/wlp.user.dir.isDefault")
-      .method("GET")
-      .willRespondWith()
-      .headers(headers)
-      .status(200)
-      .body(new PactDslJsonArray().object()
-        .stringValue("wlp.user.dir.isDefault", "true"))
-      .toPact();
-  }
-
-  @Pact(consumer = "Inventory")
-  public RequestResponsePact createPactVersion(PactDslWithProvider builder) {
-    Map<String, String> headers = new HashMap<String, String>();
-    headers.put("Content-Type", "application/json");
-
-    return builder
-      .given("version is 1.1")
-      .uponReceiving("a request for the version")
-      .path("/system/properties/version")
-      .method("GET")
-      .willRespondWith()
-      .headers(headers)
-      .status(200)
-      .body(new PactDslJsonBody()
-        .decimalType("system.properties.version", 1.1))
-      .toPact();
-  }
-
-  @Pact(consumer = "Inventory")
-  public RequestResponsePact createPactInvalid(PactDslWithProvider builder) {
-
-    return builder
-      .given("invalid property")
-      .uponReceiving("a request with an invalid property")
-      .path("/system/properties/invalidProperty")
-      .method("GET")
-      .willRespondWith()
-      .status(404)
-      .toPact();
-  }
-
-  @Test
-  @PactVerification(value = "System", fragment = "createPactServer")
-  public void runServerTest() {
-    String serverName = new Inventory(mockProvider.getUrl()).getServerName();
-    assertEquals("Expected server name does not match",
-      "[{\"wlp.server.name\":\"defaultServer\"}]", serverName);
-  }
-
-  @Test
-  @PactVerification(value = "System", fragment = "createPactEdition")
-  public void runEditionTest() {
-    String edition = new Inventory(mockProvider.getUrl()).getEdition();
-    assertEquals("Expected edition does not match",
-      "[{\"wlp.user.dir.isDefault\":\"true\"}]", edition);
-  }
-
-  @Test
-  @PactVerification(value = "System", fragment = "createPactVersion")
-  public void runVersionTest() {
-    String version = new Inventory(mockProvider.getUrl()).getVersion();
-    assertEquals("Expected version does not match",
-      "{\"system.properties.version\":1.1}", version);
-  }
-
-  @Test
-  @PactVerification(value = "System", fragment = "createPactInvalid")
-  public void runInvalidTest() {
-    String invalid = new Inventory(mockProvider.getUrl()).getInvalidProperty();
-    assertEquals("Expected invalid property response does not match",
-      "", invalid);
-  }
+    @GET
+    @Path("/jwtroles")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({ "admin", "user" })
+    public String getRoles() {
+        return roles.toString();
+    }
 }
 ```
 
@@ -254,599 +218,460 @@ public class InventoryPactIT {
 Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-The ***InventoryPactIT*** class contains a ***PactProviderRule*** mock provider that mimics the HTTP responses from the ***system*** microservice. The ***@Pact*** annotation takes the name of the microservice as a parameter, which makes it easier to differentiate microservices from each other when you have multiple applications.
+This class has role-based access control. The role names that are used in the ***@RolesAllowed*** annotations are mapped to group names in the ***groups*** claim of the JWT, which results in an authorization decision wherever the security constraint is applied.
 
-The ***createPactServer()*** method defines the minimal expected responses for a specific endpoint, which is known as an interaction. For each interaction, the expected request and the response are registered with the mock service by using the ***@PactVerification*** annotation.
+The ***/username*** endpoint returns the system's username and is annotated with the ***@RolesAllowed({"admin, "user"})*** annotation. Only authenticated users with the role of ***admin*** or ***user*** can access this endpoint.
 
-The test sends a real request with the ***getUrl()*** method of the mock provider. The mock provider compares the actual request with the expected request and confirms whether the comparison is successful. Finally, the ***assertEquals()*** method confirms that the response is correct.
+The ***/os*** endpoint returns the system's current OS. Here, the ***@RolesAllowed*** annotation is limited to ***admin***, meaning that only authenticated users with the role of ***admin*** are able to access the endpoint.
 
-Replace the inventory Maven project file.
-
-> To open the pom.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-contract-testing/start/inventory/pom.xml, or click the following button
-
-::openFile{path="/home/project/guide-contract-testing/start/inventory/pom.xml"}
+While the ***@RolesAllowed*** annotation automatically reads from the ***groups*** claim of the JWT to make an authorization decision, you can also manually access the claims of the JWT by using the ***@Claim*** annotation. In this case, the ***groups*** claim is injected into the ***roles*** JSON array. The roles that are parsed from the ***groups*** claim of the JWT are then exposed back to the front end at the ***/jwtroles*** endpoint. To read more about different claims and ways to access them, check out the [MicroProfile JWT documentation](https://github.com/eclipse/microprofile-jwt-auth/blob/master/spec/src/main/asciidoc/interoperability.asciidoc).
 
 
+::page{title="Creating a client to access the secure system service"}
 
-```xml
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+Create a RESTful client interface for the ***frontend*** service.
 
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>guide-contract-testing-inventory</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>war</packaging>
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <!-- Liberty configuration -->
-        <liberty.var.http.port>9091</liberty.var.http.port>
-        <liberty.var.https.port>9454</liberty.var.https.port>
-    </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>7.0</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>10.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <!-- For tests -->
-        <dependency>
-            <groupId>au.com.dius</groupId>
-            <artifactId>pact-jvm-consumer-junit</artifactId>
-            <version>4.0.10</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>2.0.17</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-client</artifactId>
-            <version>6.2.12.Final</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <plugin>
-                <groupId>au.com.dius.pact.provider</groupId>
-                <artifactId>maven</artifactId>
-                <version>4.6.17</version>
-                <configuration>
-                    <serviceProviders>
-                        <serviceProvider>
-                            <name>System</name>
-                            <protocol>http</protocol>
-                            <host>localhost</host>
-                            <port>9090</port>
-                            <path>/</path>
-                            <pactFileDirectory>target/pacts</pactFileDirectory>
-                        </serviceProvider>
-                    </serviceProviders>
-                    <projectVersion>${project.version}</projectVersion>
-                    <skipPactPublish>false</skipPactPublish>
-                    <pactBrokerUrl>http://localhost:9292</pactBrokerUrl>
-                    <tags>
-                        <tag>open-liberty-pact</tag>
-                    </tags>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.4.0</version>
-            </plugin>
-            <!-- Plugin to run functional tests -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.3</version>
-                <configuration>
-                    <systemPropertyVariables>
-                        <http.port>${liberty.var.http.port}</http.port>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
-            <!-- Enable liberty-maven plugin -->
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.11.3</version>
-            </plugin>
-        </plugins>
-    </build>
-</project>
-```
-
-
-
-The Pact framework provides a ***Maven*** plugin that can be added to the build section of the ***pom.xml*** file. The ***serviceProvider*** element defines the endpoint URL for the ***system*** microservice and the ***pactFileDirectory*** directory where you want to store the pact file. The ***pact-jvm-consumer-junit*** dependency provides the base test class that you can use with JUnit to build unit tests.
-
-After you create the ***InventoryPactIT.java*** class and replace the ***pom.xml*** file, Open Liberty automatically reloads its configuration.
-
-The contract between the ***inventory*** and ***system*** microservices is known as a pact. Each pact is a collection of interactions. In this guide, those interactions are defined in the ***InventoryPactIT*** class.
-
-Press the ***enter/return*** key to run the tests and generate the pact file from the command-line session where you started the ***inventory*** microservice.
-
-When completed, you'll see a similar output to the following example:
-```
-[INFO] -------------------------------------------------------
-[INFO]  T E S T S
-[INFO] -------------------------------------------------------
-[INFO] Running io.openliberty.guides.inventory.InventoryPactIT
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.631 s - in io.openliberty.guides.inventory.InventoryPactIT
-[INFO]
-[INFO] Results:
-[INFO]
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-```
-
-When you integrate the Pact framework in a CI/CD build pipeline, you can use the Maven ***failsafe:integration-test*** goal to generate the pact file. The Maven failsafe plug-in provides a lifecycle phase for running integration tests that run after unit tests. By default, it looks for classes that are suffixed with ***IT***, which stands for Integration Test. You can refer to the [Maven failsafe plug-in documentation](https://maven.apache.org/surefire/maven-failsafe-plugin/) for more information.
-
-The generated pact file is named ***Inventory-System.json*** and is located in the ***inventory/target/pacts*** directory. The pact file contains the defined interactions in JSON format:
-
-```
-{
-...
-"interactions": [
-{
-      "description": "a request for server name",
-      "request": {
-        "method": "GET",
-        "path": "/system/properties/key/wlp.server.name"
-      },
-      "response": {
-        "status": 200,
-        "headers": {
-          "Content-Type": "application/json"
-        },
-        "body": [
-          {
-            "wlp.server.name": "defaultServer"
-          }
-        ]
-      },
-      "providerStates": [
-        {
-          "name": "wlp.server.name is defaultServer"
-        }
-      ]
-    }
-...
-  ]
-}
-```
-
-
-Open a new command-line session and navigate to the `start` directory.
-
-```bash
-cd /home/project/guide-contract-testing/start
-```
-
-Publish the generated pact file to the Pact Broker by running the following command:
-
-
-```bash
-./mvnw -f inventory/pom.xml pact:publish
-```
-
-After the file is published, you'll see a similar output to the following example:
-```
---- maven:4.1.21:publish (default-cli) @ inventory ---
-Publishing 'Inventory-System.json' with tags 'open-liberty-pact' ... OK
-```
-
-::page{title="Verifying the pact in the Pact Broker"}
-
-
-Refresh the Pact Broker at the `https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai` URL, where ***accountname*** is your account name.
-
-::startApplication{port="9292" display="external" name="Visit Pact Broker" route="/"}
-
-The last verified column doesn't show a timestamp because the ***system*** microservice hasn't verified the pact yet.
-
-![Pact Broker webpage for new entry](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/prod/assets/pact-broker-webpage-refresh.png)
-
-
-
-
-
-
-You can see detailed insights about each interaction by clicking the following button or going to the `https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai/pacts/provider/System/consumer/Inventory/latest` URL, where ***accountname*** is your account name.
-
-::startApplication{port="9292" display="external" name="Visit Pact Broker" route="/pacts/provider/System/consumer/Inventory/latest"}
-
-The insights look similar to the following image:
-
-![Pact Broker webpage for Interactions](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/prod/assets/pact-broker-interactions.png)
-
-
-::page{title="Implementing pact testing in the system service"}
-
-
-Open another command-line session and navigate to the ***start*** directory.
-
-```bash
-cd /home/project/guide-contract-testing/start
-```
-
-Start Open Liberty in dev mode for the ***system*** microservice:
-
-
-```bash
-./mvnw -f system/pom.xml liberty:dev
-```
-
-After you see the following message, your Liberty instance is ready in dev mode:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-
-
-
-Open a new command-line session.
-
-Create the SystemBrokerIT class file.
+Create the ***SystemClient*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-contract-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemBrokerIT.java
+touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java
 ```
 
 
-> Then, to open the SystemBrokerIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-contract-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemBrokerIT.java, or click the following button
+> Then, to open the SystemClient.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java, or click the following button
 
-::openFile{path="/home/project/guide-contract-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemBrokerIT.java"}
+::openFile{path="/home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.system;
-
-import au.com.dius.pact.provider.junit5.HttpTestTarget;
-import au.com.dius.pact.provider.junit5.PactVerificationContext;
-import au.com.dius.pact.provider.junit5.PactVerificationInvocationContextProvider;
-import au.com.dius.pact.provider.junitsupport.Consumer;
-import au.com.dius.pact.provider.junitsupport.Provider;
-import au.com.dius.pact.provider.junitsupport.State;
-import au.com.dius.pact.provider.junitsupport.loader.PactBroker;
-import au.com.dius.pact.provider.junitsupport.loader.VersionSelector;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.TestTemplate;
-import org.junit.jupiter.api.extension.ExtendWith;
-
-@Provider("System")
-@Consumer("Inventory")
-@PactBroker(
-  host = "localhost",
-  port = "9292",
-  consumerVersionSelectors = {
-    @VersionSelector(tag = "open-liberty-pact")
-  })
-public class SystemBrokerIT {
-  @TestTemplate
-  @ExtendWith(PactVerificationInvocationContextProvider.class)
-  void pactVerificationTestTemplate(PactVerificationContext context) {
-    context.verifyInteraction();
-  }
-
-  @BeforeAll
-  static void enablePublishingPact() {
-    System.setProperty("pact.verifier.publishResults", "true");
-  }
-
-  @BeforeEach
-  void before(PactVerificationContext context) {
-    int port = Integer.parseInt(System.getProperty("http.port"));
-    context.setTarget(new HttpTestTarget("localhost", port));
-  }
-
-  @State("wlp.server.name is defaultServer")
-  public void validServerName() {
-  }
-
-  @State("Default directory is true")
-  public void validEdition() {
-  }
-
-  @State("version is 1.1")
-  public void validVersion() {
-  }
-
-  @State("invalid property")
-  public void invalidProperty() {
-  }
-}
-```
-
-
-
-
-The connection information for the Pact Broker is provided with the ***@PactBroker*** annotation. The dependency also provides a JUnit5 Invocation Context Provider with the ***pactVerificationTestTemplate()*** method to generate a test for each of the interactions.
-
-The ***pact.verifier.publishResults*** property is set to ***true*** so that the results are sent to the Pact Broker after the tests are completed.
-
-The test target is defined in the ***PactVerificationContext*** context to point to the running endpoint of the ***system*** microservice.
-
-The ***@State*** annotation must match the ***given()*** parameter that was provided in the ***inventory*** test class so that Pact can identify which test case to run against which endpoint.
-
-Replace the system Maven project file.
-
-> To open the pom.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-contract-testing/start/system/pom.xml, or click the following button
-
-::openFile{path="/home/project/guide-contract-testing/start/system/pom.xml"}
-
-
-
-```xml
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>guide-contract-testing-system</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>war</packaging>
-
-    <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <!-- Liberty configuration -->
-        <liberty.var.http.port>9090</liberty.var.http.port>
-        <liberty.var.https.port>9453</liberty.var.https.port>
-        <debugPort>8787</debugPort>
-    </properties>
-
-    <dependencies>
-        <!-- Provided dependencies -->
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>7.0</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>10.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>au.com.dius.pact.provider</groupId>
-            <artifactId>junit5</artifactId>
-            <version>4.6.17</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>2.0.17</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-client</artifactId>
-            <version>6.2.12.Final</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <!-- Enable liberty-maven plugin -->
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.11.3</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.4.0</version>
-            </plugin>
-            <!-- Plugin to run functional tests -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.3</version>
-                <configuration>
-                    <systemPropertyVariables>
-                        <http.port>${liberty.var.http.port}</http.port>
-                        <pact.provider.version>${project.version}</pact.provider.version>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-</project>
-```
-
-
-
-The ***system*** microservice uses the ***junit5*** pact provider dependency to connect to the Pact Broker and verify the pact file. Ideally, in a CI/CD build pipeline, the ***pact.provider.version*** element is dynamically set to the build number so that you can identify where a breaking change is introduced.
-
-After you create the ***SystemBrokerIT.java*** class and replace the ***pom.xml*** file, Open Liberty automatically reloads its configuration.
-
-::page{title="Verifying the contract"}
-
-In the command-line session where you started the ***system*** microservice, press the ***enter/return*** key to run the tests to verify the pact file. When you integrate the Pact framework into a CI/CD build pipeline, you can use the Maven ***failsafe:integration-test*** goal to verify the pact file from the Pact Broker.
-
-The tests fail with the following errors:
-```
-[ERROR] Failures: 
-[ERROR]   SystemBrokerIT.pactVerificationTestTemplate:28 Pact between Inventory (1.0-SNAPSHOT) and System - Upon a request for the version 
-Failures:
-
-1) Verifying a pact between Inventory and System - a request for the version has a matching body
-
-    1.1) body: $.system.properties.version Expected "1.x" (String) to be a decimal number
-
-
-[INFO] 
-[ERROR] Tests run: 4, Failures: 1, Errors: 0, Skipped: 0
-```
-
-The test from the ***system*** microservice fails because the ***inventory*** microservice was expecting a decimal, ***1.1***, for the value of the ***system.properties.version*** property, but it received a string, ***"1.1"***.
-
-Correct the value of the ***system.properties.version*** property to a decimal.
-Replace the SystemResource class file.
-
-> To open the SystemResource.java file in your IDE, select
-> ***File*** > ***Open*** > guide-contract-testing/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java, or click the following button
-
-::openFile{path="/home/project/guide-contract-testing/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java"}
-
-
-
-```java
-package io.openliberty.guides.system;
-
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.core.Response;
+package io.openliberty.guides.frontend.client;
 
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.HeaderParam;
 
-import org.eclipse.microprofile.metrics.annotation.Counted;
-import org.eclipse.microprofile.metrics.annotation.Timed;
+import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
-@RequestScoped
+@RegisterRestClient(baseUri = "https://localhost:8443/system")
 @Path("/properties")
-public class SystemResource {
+@RequestScoped
+public interface SystemClient extends AutoCloseable {
 
-  @GET
-  @Produces(MediaType.APPLICATION_JSON)
-  @Timed(name = "getPropertiesTime",
-    description = "Time needed to get the JVM system properties")
-  @Counted(absolute = true,
-    description = "Number of times the JVM system properties are requested")
+    @GET
+    @Path("/os")
+    @Produces(MediaType.APPLICATION_JSON)
+    String getOS(@HeaderParam("Authorization") String authHeader);
 
-  public Response getProperties() {
-    return Response.ok(System.getProperties()).build();
-  }
+    @GET
+    @Path("/username")
+    @Produces(MediaType.APPLICATION_JSON)
+    String getUsername(@HeaderParam("Authorization") String authHeader);
 
-  @GET
-  @Path("/key/{key}")
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response getPropertiesByKey(@PathParam("key") String key) {
-    try {
-      JsonArray response = Json.createArrayBuilder()
-        .add(Json.createObjectBuilder()
-          .add(key, System.getProperties().get(key).toString()))
-        .build();
-      return Response.ok(response, MediaType.APPLICATION_JSON).build();
-    } catch (java.lang.NullPointerException exception) {
-        return Response.status(Response.Status.NOT_FOUND).build();
-    }
-  }
-
-  @GET
-  @Path("/version")
-  @Produces(MediaType.APPLICATION_JSON)
-  public JsonObject getVersion() {
-    JsonObject response = Json.createObjectBuilder()
-                          .add("system.properties.version", 1.1)
-                          .build();
-    return response;
-  }
+    @GET
+    @Path("/jwtroles")
+    @Produces(MediaType.APPLICATION_JSON)
+    String getJwtRoles(@HeaderParam("Authorization") String authHeader);
 }
 ```
 
 
 
-Press the ***enter/return*** key to rerun the tests from the command-line session where you started the ***system*** microservice.
+This interface declares methods for accessing each of the endpoints that were
+previously set up in the ***system*** service.
 
-If the tests are successful, you'll see a similar output to the following example:
-```
-...
-Verifying a pact between pact between Inventory (1.0-SNAPSHOT) and System
+The MicroProfile Rest Client feature automatically builds and generates a client implementation based on what is defined in the ***SystemClient*** interface. You don't need to set up the client and connect with the remote service.
 
-  Notices:
-    1) The pact at http://localhost:9292/pacts/provider/System/consumer/Inventory/pact-version/XXX is being verified because it matches the following configured selection criterion: latest pact for a consumer version tagged 'open-liberty-pact'
+As discussed, the ***system*** service is secured and requests made to it must include a valid JWT in the ***Authorization*** header. The ***@HeaderParam*** annotations include the JWT by specifying that the value of the ***String authHeader*** parameter, which contains the JWT, be used as the value for the ***Authorization*** header. This header is included in all of the requests that are made to the ***system*** service through this client.
 
-  [from Pact Broker http://localhost:9292/pacts/provider/System/consumer/Inventory/pact-version/XXX]
-  Given version is 1.1
-  a request for the version
-    returns a response which
-      has status code 200 (OK)
-      has a matching body (OK)
-[main] INFO au.com.dius.pact.provider.DefaultVerificationReporter - Published verification result of 'au.com.dius.pact.core.pactbroker.TestResult$Ok@4d84dfe7' for consumer 'Consumer(name=Inventory)'
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.835 s - in it.io.openliberty.guides.system.SystemBrokerIT
-...
-```
+Create the application bean that the front-end UI uses to request data.
 
+Create the ***ApplicationBean*** class.
 
-After the tests are complete, refresh the Pact Broker at the `https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai` URL, where ***accountname*** is your account name.
-
-::startApplication{port="9292" display="external" name="Visit Pact Broker" route="/"}
-
-Confirm that the last verified column now shows a timestamp:
-
-![Pact Broker webpage for verified](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/prod/assets/pact-broker-webpage-verified.png)
-
-
-
-
-
-The pact file that's created by the ***inventory*** microservice was successfully verified by the ***system*** microservice through the Pact Broker. This ensures that responses from the ***system*** microservice meet the expectations of the ***inventory*** microservice.
-
-::page{title="Tearing down the environment"}
-
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the Liberty instances for the ***system*** and ***inventory*** microservices.
-
-Navigate back to the ***/guide-contract-testing*** directory and run the following commands to remove the Pact Broker:
-
+> Run the following touch command in your terminal
 ```bash
-cd /home/project/guide-contract-testing
+touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java
 ```
 
-```bash
-docker-compose -f "pact-broker/docker-compose.yml" down
-docker rmi postgres:17.2
-docker rmi pactfoundation/pact-broker:latest
-docker volume rm pact-broker_postgres-volume
+
+> Then, to open the ApplicationBean.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java"}
+
+
+
+```java
+package io.openliberty.guides.frontend;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+
+import io.openliberty.guides.frontend.client.SystemClient;
+import io.openliberty.guides.frontend.util.SessionUtils;
+
+
+@ApplicationScoped
+@Named
+public class ApplicationBean {
+
+    @Inject
+    @RestClient
+    private SystemClient defaultRestClient;
+
+    public String getJwt() {
+        String jwtTokenString = SessionUtils.getJwtToken();
+        String authHeader = "Bearer " + jwtTokenString;
+        return authHeader;
+    }
+
+    public String getOs() {
+        String authHeader = getJwt();
+        String os;
+        try {
+            os = defaultRestClient.getOS(authHeader);
+        } catch (Exception e) {
+            return "You are not authorized to access this system property";
+        }
+        return os;
+    }
+
+    public String getUsername() {
+        String authHeader = getJwt();
+        return defaultRestClient.getUsername(authHeader);
+    }
+
+    public String getJwtRoles() {
+        String authHeader = getJwt();
+        return defaultRestClient.getJwtRoles(authHeader);
+    }
+
+}
 ```
+
+
+
+The application bean is used to populate the table in the front end by making requests for data through the ***defaultRestClient***, which is an injected instance of the ***SystemClient*** class that you created. The ***getOs()***, ***getUsername()***, and ***getJwtRoles()*** methods call their associated methods of the ***SystemClient*** class with the ***authHeader*** passed in as a parameter. The ***authHeader*** is a string that consists of the JWT with ***Bearer*** prefixed to it. The ***authHeader*** is included in the ***Authorization*** header of the subsequent requests that are made by the ***defaultRestClient*** instance.
+
+
+The JWT for these requests is retrieved from the session attributes with the ***getJwt()*** method. The JWT is stored in the session attributes by the provided ***LoginBean*** class. When the user logs in to the front end, the ***doLogin()*** method is called and builds the JWT. Then, the ***setAttribute()*** method stores it as an ***HttpSession*** attribute. The JWT is built by using the ***JwtBuilder*** APIs in the ***buildJwt()*** method. You can see that the ***claim()*** method is being used to set the ***groups*** and the ***aud*** claims of the token. The ***groups*** claim is used to provide the role-based access that you implemented. The ***aud*** claim is used to specify the audience that the JWT is intended for.
+
+::page{title="Configuring MicroProfile JWT"}
+
+Configure the ***mpJwt*** feature in the ***microprofile-config.properties*** file for the ***system*** service.
+
+Create the microprofile-config.properties file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-jwt/start/system/src/main/resources/META-INF/microprofile-config.properties
+```
+
+
+> Then, to open the microprofile-config.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-jwt/start/system/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/main/resources/META-INF/microprofile-config.properties"}
+
+
+
+```
+mp.jwt.verify.issuer=http://openliberty.io
+mp.jwt.token.header=Authorization
+mp.jwt.token.cookie=Bearer
+mp.jwt.verify.audiences=systemService, adminServices
+mp.jwt.verify.publickey.algorithm=RS256
+```
+
+
+
+The following table breaks down some of the properties:
+
+| *Property* |   *Description*
+| ---| ---
+| ***mp.jwt.verify.issuer*** | Specifies the expected value of the issuer claim on an incoming JWT. Incoming JWTs with an issuer claim that's different from this expected value aren't considered valid.
+| ***mp.jwt.token.header***  | With this property, you can control the HTTP request header, which is expected to contain a JWT. You can either specify Authorization, by default, or the Cookie values.
+| ***mp.jwt.token.cookie*** | Specifies the name of the cookie, which is expected to contain a JWT token. The default value is Bearer.
+| ***mp.jwt.verify.audiences*** |  With this property, you can create a list of allowable audience (aud) values. At least one of these values must be found in the claim. Previously, this configuration was included in the ***server.xml*** file.
+| ***mp.jwt.decrypt.key.location*** | With this property, you can specify the location of the Key Management key. It is a Private key that is used to decrypt the Content Encryption key, which is then used to decrypt the JWE ciphertext. This private key must correspond to the public key that is used to encrypt the Content Encryption key.
+| ***mp.jwt.verify.publickey.algorithm*** | With this property, you can control the Public Key Signature Algorithm that is supported by the MicroProfile JWT endpoint. The default value is RS256. Previously, this configuration was included in the ***server.xml*** file.
+
+For more information about these and other JWT properties, see the [MicroProfile Config properties for MicroProfile JSON Web Token documentation](https://openliberty.io/docs/latest/reference/microprofile-config-properties.html#jwt).
+
+Next, add the MicroProfile JSON Web Token feature to the Liberty ***server.xml*** configuration file for the ***system*** service.
+
+Replace the system ***server.xml*** configuration file.
+
+> To open the server.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-jwt/start/system/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="Sample Liberty server">
+
+  <featureManager>
+    <platform>jakartaee-10.0</platform>
+    <platform>microprofile-7.0</platform>
+    <feature>restfulWS</feature>
+    <feature>jsonb</feature>
+    <feature>jsonp</feature>
+    <feature>cdi</feature>
+    <feature>mpConfig</feature>
+    <feature>mpRestClient</feature>
+    <feature>appSecurity</feature>
+    <feature>servlet</feature>
+    <feature>mpJwt</feature>
+  </featureManager>
+
+  <variable name="http.port" defaultValue="8080"/>
+  <variable name="https.port" defaultValue="8443"/>
+
+  <keyStore id="defaultKeyStore" password="secret"/>
+
+  <httpEndpoint host="*" httpPort="${http.port}" httpsPort="${https.port}"
+                id="defaultHttpEndpoint"/>
+                 
+  <webApplication location="system.war" contextRoot="/"/>
+
+</server>
+```
+
+
+
+The ***mpJwt*** feature adds the libraries that are required for MicroProfile JWT implementation.
+
+
+::page{title="Building and running the application"}
+
+Because you are running the ***frontend*** and ***system*** services in dev mode, the changes that you made were automatically picked up. You're now ready to check out your application in your browser.
+
+
+To launch the front-end web application, click the following button:
+::startApplication{port="9090" display="external" name="Launch Application" route="/login.jsf"}
+
+Log in with one of the following usernames and its corresponding password:
+
+| *Username* | *Password* | *Role*
+| --- | --- | ---
+| bob | bobpwd | admin, user
+| alice | alicepwd | user
+| carl | carlpwd | user
+
+After you log in as an ***admin***, you can see the information that's retrieved from the ***system*** service. Click ***Log Out*** and log in as a ***user***. With successfully implemented role-based access in the application, if you log in as a ***user*** role, you don't have access to the OS property.
+
+You can also see the value of the ***groups*** claim in the row with the ***Roles:*** label. These roles are read from the JWT and sent back to the front end to be displayed.
+
+
+You can check that the ***system*** service is secured against unauthenticated requests by going to the **system** endpoint. Run the following curl command from the terminal in the IDE:
+```bash
+curl -k https://localhost:8443/system/properties/os
+```
+
+You'll see an empty response because you didn't authenticate with a valid JWT. 
+
+In the front end, you see your JWT displayed in the row with the ***JSON Web Token*** label.
+
+To see the specific information that this JWT holds, you can enter it into the token reader on the [JWT.io website](https://JWT.io). The token reader shows you the header, which contains information about the JWT, as shown in the following example:
+
+```
+{
+  "kid": "NPzyG3ZMzljUwQgbzi44",
+  "typ": "JWT",
+  "alg": "RS256"
+}
+```
+
+The token reader also shows you the payload, which contains the claims information:
+
+```
+{
+  "token_type": "Bearer",
+  "sub": "bob",
+  "upn": "bob",
+  "groups": [ "admin", "user" ],
+  "iss": "http://openliberty.io",
+  "exp": 1596723489,
+  "iat": 1596637089
+}
+```
+
+You can learn more about these claims in the [MicroProfile JWT documentation](https://github.com/eclipse/microprofile-jwt-auth/blob/master/spec/src/main/asciidoc/interoperability.asciidoc).
+
+
+::page{title="Testing the application"}
+
+You can manually check that the ***system*** service is secure by making requests to each of the endpoints with and without valid JWTs. However, automated tests are a much better approach because they are more reliable and trigger a failure if a breaking change is introduced.
+
+Create the ***SystemEndpointIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
+```
+
+
+> Then, to open the SystemEndpointIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.system;
+
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.Invocation.Builder;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MediaType;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import it.io.openliberty.guides.system.util.JwtBuilder;
+
+public class SystemEndpointIT {
+
+    static String authHeaderAdmin;
+    static String authHeaderUser;
+    static String urlOS;
+    static String urlUsername;
+    static String urlRoles;
+
+    @BeforeAll
+    public static void setup() throws Exception {
+        String urlBase = "http://" + System.getProperty("hostname")
+                 + ":" + System.getProperty("http.port")
+                 + "/system/properties";
+        urlOS = urlBase + "/os";
+        urlUsername = urlBase + "/username";
+        urlRoles = urlBase + "/jwtroles";
+
+        authHeaderAdmin = "Bearer " + new JwtBuilder().createAdminJwt("testUser");
+        authHeaderUser = "Bearer " + new JwtBuilder().createUserJwt("testUser");
+    }
+
+    @Test
+    public void testOSEndpoint() {
+        Response response = makeRequest(urlOS, authHeaderAdmin);
+        assertEquals(200, response.getStatus(),
+                    "Incorrect response code from " + urlOS);
+        assertEquals(System.getProperty("os.name"), response.readEntity(String.class),
+                "The system property for the local and remote JVM should match");
+
+        response = makeRequest(urlOS, authHeaderUser);
+        assertEquals(403, response.getStatus(),
+                    "Incorrect response code from " + urlOS);
+
+        response = makeRequest(urlOS, null);
+        assertEquals(401, response.getStatus(),
+                    "Incorrect response code from " + urlOS);
+
+        response.close();
+    }
+
+    @Test
+    public void testUsernameEndpoint() {
+        Response response = makeRequest(urlUsername, authHeaderAdmin);
+        assertEquals(200, response.getStatus(),
+                "Incorrect response code from " + urlUsername);
+
+        response = makeRequest(urlUsername, authHeaderUser);
+        assertEquals(200, response.getStatus(),
+                "Incorrect response code from " + urlUsername);
+
+        response = makeRequest(urlUsername, null);
+        assertEquals(401, response.getStatus(),
+                "Incorrect response code from " + urlUsername);
+
+        response.close();
+    }
+
+    @Test
+    public void testRolesEndpoint() {
+        Response response = makeRequest(urlRoles, authHeaderAdmin);
+        assertEquals(200, response.getStatus(),
+                "Incorrect response code from " + urlRoles);
+        assertEquals("[\"admin\",\"user\"]", response.readEntity(String.class),
+                "Incorrect groups claim in token " + urlRoles);
+
+        response = makeRequest(urlRoles, authHeaderUser);
+        assertEquals(200, response.getStatus(),
+                "Incorrect response code from " + urlRoles);
+        assertEquals("[\"user\"]", response.readEntity(String.class),
+                "Incorrect groups claim in token " + urlRoles);
+
+        response = makeRequest(urlRoles, null);
+        assertEquals(401, response.getStatus(),
+                "Incorrect response code from " + urlRoles);
+
+        response.close();
+    }
+
+    private Response makeRequest(String url, String authHeader) {
+        try (Client client = ClientBuilder.newClient()) {
+            Builder builder = client.target(url).request();
+            builder.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+            if (authHeader != null) {
+            builder.header(HttpHeaders.AUTHORIZATION, authHeader);
+            }
+            Response response = builder.get();
+            return response;
+        }
+    }
+
+}
+```
+
+
+
+The ***testOSEndpoint()***, ***testUsernameEndpoint()***, and ***testRolesEndpoint()*** tests test the ***/os***, ***/username***, and ***/roles*** endpoints.
+
+Each test makes three requests to its associated endpoint. The first ***makeRequest()*** call has a JWT with the ***admin*** role. The second ***makeRequest()*** call has a JWT with the ***user*** role. The third ***makeRequest()*** call has no JWT at all. The responses to these requests are checked based on the role-based access rules for the endpoints. The ***admin*** requests should be successful on all endpoints. The ***user*** requests should be denied by the ***/os*** endpoint but successfully access the ***/username*** and ***/jwtroles*** endpoints. The requests that don't include a JWT should be denied access to all endpoints.
+
+### Running the tests
+
+Because you started Open Liberty in dev mode, press the ***enter/return*** key from the command-line session of the ***system*** service to run the tests. You see the following output:
+
+```
+-------------------------------------------------------
+  T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.system.SystemEndpointIT
+[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
+[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
+[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.648 s - in it.io.openliberty.guides.system.SystemEndpointIT
+
+Results:
+
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+```
+
+The three errors in the output are expected and result from the ***system*** service successfully rejecting the requests that didn't include a JWT.
+
+When you are finished testing the application, stop both the ***frontend*** and ***system*** services by pressing `Ctrl+C` in the command-line sessions where you ran them. 
+
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You implemented contract testing in Java microservices by using Pact and verified the contract with the Pact Broker.
+You learned how to use MicroProfile JWT to validate JWTs, authenticate and authorize users to secure your microservices in Open Liberty.
 
 
 
@@ -855,35 +680,32 @@ You implemented contract testing in Java microservices by using Pact and verifie
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-contract-testing*** project by running the following commands:
+Delete the ***guide-microprofile-jwt*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-contract-testing
+rm -fr guide-microprofile-jwt
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Testing%20microservices%20with%20consumer-driven%20contracts&guide-id=cloud-hosted-guide-contract-testing)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Securing%20microservices%20with%20JSON%20Web%20Tokens&guide-id=cloud-hosted-guide-microprofile-jwt)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-contract-testing/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-contract-testing/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-jwt/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-jwt/pulls)
 
 
 
 ### Where to next?
 
-* [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html)
-* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
-* [Testing microservices with the Arquillian managed container](https://openliberty.io/guides/arquillian-managed.html)
-
-**Learn more about the Pact framework**
-* [Go to the Pact website.](https://pact.io/)
+* [Authenticating users through social media providers](https://openliberty.io/guides/social-media-login.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 
 
 ### Log out of the session
