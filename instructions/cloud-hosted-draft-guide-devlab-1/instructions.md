@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Checking the health of microservices on Kubernetes guide!"}
+::page{title="Welcome to the Providing metrics from a microservice guide!"}
 
-Learn how to check the health of microservices on Kubernetes by setting up startup, liveness, and readiness probes to inspect MicroProfile Health Check endpoints.
+You'll explore how to provide system and application metrics from a microservice with MicroProfile Metrics.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -15,20 +15,15 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 ::page{title="What you'll learn"}
 
-You will learn how to create health check endpoints for your microservices. Then, you will configure Kubernetes to use these endpoints to keep your microservices running smoothly. 
+You will learn how to use MicroProfile Metrics to provide metrics from a microservice. You can monitor metrics to determine the performance and health of a service. You can also use them to pinpoint issues, collect data for capacity planning, or to decide when to scale a service to run with more or fewer resources.
 
-MicroProfile Health allows services to report their health, and it publishes the overall health status to defined endpoints. If a service reports ***UP***, then it's available. If the service reports ***DOWN***, then it's unavailable. MicroProfile Health reports an individual service status at the endpoint and indicates the overall status as ***UP*** if all the services are ***UP***. A service orchestrator can then use the health statuses to make decisions.
+The application that you will work with is an ***inventory*** service that stores information about various systems. The ***inventory*** service communicates with the ***system*** service on a particular host to retrieve its system properties when necessary.
 
-Kubernetes provides startup, liveness, and readiness probes that are used to check the health of your containers. These probes can check certain files in your containers, check a TCP socket, or make HTTP requests. MicroProfile Health exposes startup, liveness, and readiness endpoints on your microservices. Kubernetes polls these endpoints as specified by the probes to react appropriately to any change in the microservice's status. Read the [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html) guide to learn more about MicroProfile Health.
+You will use annotations provided by MicroProfile Metrics to instrument the ***inventory*** service to provide application-level metrics data. You will add counter, gauge, and timer metrics to the service.
 
-The two microservices you will work with are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of the running container and it returns the pod's name in the HTTP header making replicas easy to distinguish from each other. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This demonstrates how communication can be established between pods inside a cluster.
-
-
-
-
+You will also check well-known REST endpoints that are defined by MicroProfile Metrics to review the metrics data collected. Monitoring agents can access these endpoints to collect metrics.
 
 ::page{title="Getting started"}
 
@@ -41,11 +36,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-microprofile-health.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-metrics.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-kubernetes-microprofile-health.git
-cd guide-kubernetes-microprofile-health
+git clone https://github.com/openliberty/guide-microprofile-metrics.git
+cd guide-microprofile-metrics
 ```
 
 
@@ -54,586 +49,638 @@ The ***start*** directory contains the starting project that you will build upon
 The ***finish*** directory contains the finished project that you will build.
 
 
-::page{title="Adding health checks to the inventory microservice"}
+### Try what you'll build
 
-Navigate to ***start*** directory to begin.
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-Create the ***InventoryStartupCheck*** class.
+To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
 
-> Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java
+cd finish
+mvn liberty:run
+```
+
+After you see the following message, your Liberty instance is ready:
+
+```
+The defaultServer server is ready to run a smarter planet.
 ```
 
 
-> Then, to open the InventoryStartupCheck.java file in your IDE, select
-> ***File*** > ***Open*** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java, or click the following button
+Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
 
-::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java"}
+Run the following curl command to access the **inventory** service. Because you just started the application, the inventory is empty. 
+```bash
+curl -s http://localhost:9080/inventory/systems | jq
+```
+
+Run the following curl command to add the ***localhost*** into the inventory.
+```bash
+curl -s http://localhost:9080/inventory/systems/localhost | jq
+```
+
+Access the ***inventory*** service at the ***http://localhost:9080/inventory/systems*** URL at least once so that application metrics are collected. Otherwise, the metrics do not appear.
+
+Next, run the following curl command to visit the MicroProfile Metrics endpoint by the ***admin*** user with ***adminpwd*** as the password.  You can see both the system and application metrics in a text format.
+```bash
+curl -k --user admin:adminpwd https://localhost:9443/metrics
+```
+
+To see only the application metrics, run the following curl command:
+```bash
+curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=application
+```
+
+See the following sample outputs for the ***@Timed***, ***@Gauge***, and ***@Counted*** metrics:
+
+```
+# TYPE inventoryProcessingTime_seconds_max gauge
+inventoryProcessingTime_seconds_max{method="list",mp_scope="application",} 3.0375E-5
+inventoryProcessingTime_seconds_max{method="get",mp_scope="application",} 0.1997325
+# HELP inventoryProcessingTime_seconds Time needed to process the inventory
+# TYPE inventoryProcessingTime_seconds summary
+inventoryProcessingTime_seconds{method="list",mp_scope="application",quantile="0.5",} 0.0
+inventoryProcessingTime_seconds{method="list",mp_scope="application",quantile="0.75",} 0.0
+...
+inventoryProcessingTime_seconds_count{method="list",mp_scope="application",} 2.0
+inventoryProcessingTime_seconds_sum{method="list",mp_scope="application",} 3.6792E-5
+inventoryProcessingTime_seconds{method="get",mp_scope="application",quantile="0.5",} 0.0
+inventoryProcessingTime_seconds{method="get",mp_scope="application",quantile="0.75",} 0.0
+...
+inventoryProcessingTime_seconds_count{method="get",mp_scope="application",} 1.0
+inventoryProcessingTime_seconds_sum{method="get",mp_scope="application",} 0.1997325
+...
+# HELP inventoryAddingTime_seconds_max Time needed to add system properties to the inventory
+# TYPE inventoryAddingTime_seconds_max gauge
+inventoryAddingTime_seconds_max{mp_scope="application",} 3.1E-5
+# HELP inventoryAddingTime_seconds Time needed to add system properties to the inventory
+# TYPE inventoryAddingTime_seconds summary
+inventoryAddingTime_seconds{mp_scope="application",quantile="0.5",} 0.0
+inventoryAddingTime_seconds{mp_scope="application",quantile="0.75",} 0.0
+...
+inventoryAddingTime_seconds_count{mp_scope="application",} 1.0
+inventoryAddingTime_seconds_sum{mp_scope="application",} 3.1E-5
+...
+```
+
+```
+# HELP inventorySizeGauge Number of systems in the inventory
+# TYPE inventorySizeGauge gauge
+inventorySizeGauge{mp_scope="application",} 1.0
+```
+
+```
+# HELP inventoryAccessCount_total Number of times the list of systems method is requested
+# TYPE inventoryAccessCount_total counter
+inventoryAccessCount_total{mp_scope="application",} 2.0
+```
+
+
+To see only the system metrics, run the following curl command:
+```bash
+curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=base
+```
+
+See the following sample output:
+
+```
+# HELP jvm_uptime_seconds Displays the time from the start of the Java virtual machine in seconds.
+# TYPE jvm_uptime_seconds gauge
+jvm_uptime_seconds{mp_scope="base",} 730.705
+```
+```
+# HELP classloader_loadedClasses_count Displays the number of classes that are currently loaded in the Java virtual machine.
+# TYPE classloader_loadedClasses_count gauge
+classloader_loadedClasses_count{mp_scope="base",} 13033.0
+```
+
+
+To see only the vendor metrics, run the following curl command:
+```bash
+curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=vendor
+```
+
+See the following sample output:
+
+```
+# HELP threadpool_size The size of the thread pool.
+# TYPE threadpool_size gauge
+threadpool_size{mp_scope="vendor",pool="Default_Executor",} 24.0
+```
+```
+# HELP servlet_request_total The number of visits to this servlet ... the start of the server.
+# TYPE servlet_request_total counter
+servlet_request_total{mp_scope="vendor",servlet="guide_microprofile_metrics_io_openliberty_guides_system_SystemApplication",} 1.0
+servlet_request_total{mp_scope="vendor",servlet="guide_microprofile_metrics_io_openliberty_guides_inventory_InventoryApplication",} 3.0
+servlet_request_total{mp_scope="vendor",servlet="io_openliberty_microprofile_metrics_5_0_private_internal_PrivateMetricsRESTProxyServlet",} 3.0
+```
+
+After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+
+```bash
+mvn liberty:stop
+```
+
+
+::page{title="Adding MicroProfile Metrics to the inventory service"}
+
+
+
+To begin, run the following command to navigate to the **start** directory:
+```bash
+cd /home/project/guide-microprofile-metrics/start
+```
+
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+
+```bash
+mvn liberty:dev
+```
+
+After you see the following message, your Liberty instance is ready in dev mode:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+
+The MicroProfile Metrics API is included in the MicroProfile dependency specified by your ***pom.xml*** file. Look for the dependency with the ***microprofile*** artifact ID. This dependency provides a library that allows you to use the MicroProfile Metrics API in your code to provide metrics from your microservices.
+
+Replace the Liberty ***server.xml*** configuration file.
+
+> To open the server.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-metrics/start/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-metrics/start/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="Sample Liberty server">
+
+  <featureManager>
+    <platform>jakartaee-10.0</platform>
+    <platform>microprofile-7.0</platform>
+    <feature>restfulWS</feature>
+    <feature>jsonp</feature>
+    <feature>jsonb</feature>
+    <feature>cdi</feature>
+    <feature>mpConfig</feature>
+   <feature>mpMetrics</feature>
+   <feature>mpRestClient</feature>
+ </featureManager>
+
+  <variable name="http.port" defaultValue="9080"/>
+  <variable name="https.port" defaultValue="9443"/>
+
+  <applicationManager autoExpand="true" />
+  <quickStartSecurity userName="admin" userPassword="adminpwd"/>
+  <httpEndpoint host="*" httpPort="${http.port}"
+      httpsPort="${https.port}" id="defaultHttpEndpoint"/>
+  <webApplication location="guide-microprofile-metrics.war" contextRoot="/"/>
+</server>
+```
+
+
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+
+
+The ***mpMetrics*** feature enables MicroProfile Metrics support in Open Liberty. Note that this feature requires SSL and the configuration has been provided for you.
+
+The ***quickStartSecurity*** configuration element provides basic security to secure the Liberty. When you visit the ***/metrics*** endpoint, use the credentials defined in the Liberty's configuration to log in and view the data.
+
+
+### Adding the annotations
+
+Replace the ***InventoryManager*** class.
+
+> To open the InventoryManager.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-metrics/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-metrics/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
 
 
 
 ```java
 package io.openliberty.guides.inventory;
 
-import java.lang.management.ManagementFactory;
-import com.sun.management.OperatingSystemMXBean;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Properties;
+
 import jakarta.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.health.Startup;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
 
-@Startup
+import org.eclipse.microprofile.metrics.MetricUnits;
+import org.eclipse.microprofile.metrics.annotation.Counted;
+import org.eclipse.microprofile.metrics.annotation.Gauge;
+import org.eclipse.microprofile.metrics.annotation.Timed;
+
+import io.openliberty.guides.inventory.model.InventoryList;
+import io.openliberty.guides.inventory.model.SystemData;
+
 @ApplicationScoped
-public class InventoryStartupCheck implements HealthCheck {
+public class InventoryManager {
 
-    @Override
-    public HealthCheckResponse call() {
-        OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean)
-        ManagementFactory.getOperatingSystemMXBean();
-        double cpuUsed = bean.getSystemCpuLoad();
-        String cpuUsage = String.valueOf(cpuUsed);
-        return HealthCheckResponse.named(InventoryResource.class
-                                            .getSimpleName() + " Startup Check")
-                                            .status(cpuUsed < 0.95).build();
+  private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
+  private InventoryUtils invUtils = new InventoryUtils();
+
+  @Timed(name = "inventoryProcessingTime",
+         tags = {"method=get"},
+         absolute = true,
+         description = "Time needed to process the inventory")
+  public Properties get(String hostname) {
+    return invUtils.getProperties(hostname);
+  }
+
+  @Timed(name = "inventoryAddingTime",
+    absolute = true,
+    description = "Time needed to add system properties to the inventory")
+  public void add(String hostname, Properties systemProps) {
+    Properties props = new Properties();
+    props.setProperty("os.name", systemProps.getProperty("os.name"));
+    props.setProperty("user.name", systemProps.getProperty("user.name"));
+
+    SystemData host = new SystemData(hostname, props);
+    if (!systems.contains(host)) {
+      systems.add(host);
     }
-}
+  }
 
-```
+  @Timed(name = "inventoryProcessingTime",
+         tags = {"method=list"},
+         absolute = true,
+         description = "Time needed to process the inventory")
+  @Counted(name = "inventoryAccessCount",
+           absolute = true,
+           description = "Number of times the list of systems method is requested")
+  public InventoryList list() {
+    return new InventoryList(systems);
+  }
 
-
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
-
-
-A health check for startup allows applications to define startup probes that verify whether deployed application is fully initialized before the liveness probe takes over. This check is useful for applications that require additional startup time on their first initialization. The ***@Startup*** annotation must be applied on a HealthCheck implementation to define a startup check procedure. Otherwise, this annotation is ignored. This startup check verifies that the cpu usage is below 95%. If more than 95% of the cpu is used, a status of ***DOWN*** is returned. 
-
-Create the ***InventoryLivenessCheck*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
-```
-
-
-> Then, to open the InventoryLivenessCheck.java file in your IDE, select
-> ***File*** > ***Open*** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java, or click the following button
-
-::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java"}
-
-
-
-```java
-package io.openliberty.guides.inventory;
-
-import jakarta.enterprise.context.ApplicationScoped;
-
-import java.lang.management.MemoryMXBean;
-import java.lang.management.ManagementFactory;
-
-import org.eclipse.microprofile.health.Liveness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
-
-@Liveness
-@ApplicationScoped
-public class InventoryLivenessCheck implements HealthCheck {
-
-  @Override
-  public HealthCheckResponse call() {
-      MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
-      long memUsed = memBean.getHeapMemoryUsage().getUsed();
-      long memMax = memBean.getHeapMemoryUsage().getMax();
-
-      return HealthCheckResponse.named(InventoryResource.class.getSimpleName()
-                                      + " Liveness Check")
-                                .status(memUsed < memMax * 0.9).build();
+  @Gauge(unit = MetricUnits.NONE,
+         name = "inventorySizeGauge",
+         absolute = true,
+         description = "Number of systems in the inventory")
+  public int getTotal() {
+    return systems.size();
   }
 }
 ```
 
 
 
-A health check for liveness allows third party services to determine whether the application is running. If this procedure fails, the application can be stopped. The ***@Liveness*** annotation must be applied on a HealthCheck implementation to define a Liveness check procedure. Otherwise, this annotation is ignored. This liveness check verifies that the heap memory usage is below 90% of the maximum memory. If more than 90% of the maximum memory is used, a status of ***DOWN*** is returned. 
+Apply the ***@Timed*** annotation to the ***get()*** method,
+and apply the ***@Timed*** annotation to the ***list()*** method.
 
-The ***inventory*** microservice is healthy only when the ***system*** microservice is available. To add this check to the ***/health/ready*** endpoint, create a class that is annotated with the ***@Readiness*** annotation and implements the ***HealthCheck*** interface. A Health Check for readiness allows third party services to know whether the application is ready to process requests. The ***@Readiness*** annotation must be applied on a HealthCheck implementation to define a readiness check procedure. Otherwise, this annotation is ignored.
+This annotation has these metadata fields:
 
-Create the ***InventoryReadinessCheck*** class.
+|***name*** | Optional. Use this field to name the metric.
+| ---| ---
+|***tags*** | Optional. Use this field to add tags to the metric with the same ***name***.
+|***absolute*** | Optional. Use this field to determine whether the metric name is the exact name that is specified in the ***name*** field or that is specified with the package prefix.
+|***description*** | Optional. Use this field to describe the purpose of the metric.
 
-> Run the following touch command in your terminal
+The ***@Timed*** annotation tracks how frequently the method is invoked and how long it takes for each invocation of the method to complete. Both the ***get()*** and ***list()*** methods are annotated with the ***@Timed*** metric and have the same ***inventoryProcessingTime*** name. The ***method=get*** and ***method=list*** tags add a dimension that uniquely identifies the collected metric data from the inventory processing time in getting the system properties.
+
+* The ***method=get*** tag identifies the ***inventoryProcessingTime*** metric that measures the elapsed time to get the system properties when you call the ***system*** service.
+* The ***method=list*** tag identifies the ***inventoryProcessingTime*** metric that measures the elapsed time for the ***inventory*** service to list all of the system properties in the inventory.
+
+The tags allow you to query the metrics together or separately based on the functionality of the monitoring tool of your choice. The ***inventoryProcessingTime*** metrics for example could be queried to display an aggregate time of both tagged metrics or individual times.
+
+Apply the ***@Timed*** annotation to the ***add()*** method to track how frequently the method is invoked and how long it takes for each invocation of the method to complete.
+
+Apply the ***@Counted*** annotation to the ***list()*** method to count how many times the ***http://localhost:9080/inventory/systems*** URL is accessed monotonically, which is counting up sequentially.
+
+Apply the ***@Gauge*** annotation to the ***getTotal()*** method to track the number of systems that are stored in the inventory. When the value of the gauge is retrieved, the underlying ***getTotal()*** method is called to return the size of the inventory. Note the additional metadata field:
+
+| ***unit*** | Set the unit of the metric. If it is ***MetricUnits.NONE***, the metric name is used without appending the unit name, no scaling is applied.
+| ---| ---
+
+Additional information about these annotations, relevant metadata fields, and more are available at
+the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/latest/reference/javadoc/microprofile-6.1-javadoc.html?class=org/eclipse/microprofile/metrics/annotation/package-summary.html&package=allclasses-frame.html&path=microprofile-6.1-javadoc/org/eclipse/microprofile/metrics/annotation/package-summary.html).
+
+
+::page{title="Enabling vendor metrics for the microservices"}
+
+
+MicroProfile Metrics API implementers can provide vendor metrics in the same forms as the base and application metrics do. Open Liberty as a vendor supplies server component metrics when the ***mpMetrics*** feature is enabled in the ***server.xml*** configuration file.
+
+You can see the vendor-only metrics in the ***metrics?scope=vendor*** endpoint. You see metrics from the runtime components, such as Web Application, ThreadPool and Session Management. Note that these metrics are specific to the Liberty instance. Different vendors may provide other metrics. Visit the [Metrics reference list](https://openliberty.io/docs/ref/general/#metrics-list.html) for more information.
+
+
+::page{title="Building and running the application"}
+
+The Open Liberty instance was started in dev mode at the beginning of the guide and all the changes were automatically picked up.
+
+
+Run the following curl command to review all the metrics that are enabled through MicroProfile Metrics. You see only the system and vendor metrics because the Liberty instance just started, and the ***inventory*** service has not been accessed.
 ```bash
-touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
+curl -k --user admin:adminpwd https://localhost:9443/metrics
+```
+
+Next, run the following curl command to access the **inventory** service:
+```bash
+curl -s http://localhost:9080/inventory/systems | jq
+```
+
+Rerun the following curl command to access the all metrics:
+```bash
+curl -k --user admin:adminpwd https://localhost:9443/metrics
+```
+
+or access only the application metrics by running following curl command:
+```bash
+curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=application
+```
+
+You can see the system metrics by running following curl command:
+```bash
+curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=base
+```
+
+as well as see the vendor metrics by running following curl command:
+```bash
+curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=vendor
 ```
 
 
-> Then, to open the InventoryReadinessCheck.java file in your IDE, select
-> ***File*** > ***Open*** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java, or click the following button
 
-::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java"}
+::page{title="Testing the metrics"}
+
+You can test your application manually, but automated tests ensure code quality because they trigger a failure whenever a code change introduces a defect. JUnit and the Jakarta Restful Web Services Client API provide a simple environment for you to write tests.
+
+Create the ***MetricsIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-metrics/start/src/test/java/it/io/openliberty/guides/metrics/MetricsIT.java
+```
+
+
+> Then, to open the MetricsIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-metrics/start/src/test/java/it/io/openliberty/guides/metrics/MetricsIT.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-metrics/start/src/test/java/it/io/openliberty/guides/metrics/MetricsIT.java"}
 
 
 
 ```java
-package io.openliberty.guides.inventory;
+package it.io.openliberty.guides.metrics;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.security.KeyStore;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.health.Readiness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 
-@Readiness
-@ApplicationScoped
-public class InventoryReadinessCheck implements HealthCheck {
+@TestMethodOrder(OrderAnnotation.class)
+public class MetricsIT {
 
-    private static final String READINESS_CHECK = InventoryResource.class
-                                                .getSimpleName()
-                                                + " Readiness Check";
+  private static final String KEYSTORE_PATH = System.getProperty("user.dir")
+                              + "/target/liberty/wlp/usr/servers/"
+                              + "defaultServer/resources/security/key.p12";
+  private static final String SYSTEM_ENV_PATH =  System.getProperty("user.dir")
+                              + "/target/liberty/wlp/usr/servers/"
+                              + "defaultServer/server.env";
 
-    @Inject
-    @ConfigProperty(name = "SYS_APP_HOSTNAME")
-    private String hostname;
+  private static String httpPort;
+  private static String httpsPort;
+  private static String baseHttpUrl;
+  private static String baseHttpsUrl;
+  private static KeyStore keystore;
 
-    public HealthCheckResponse call() {
-        if (isSystemServiceReachable()) {
-            return HealthCheckResponse.up(READINESS_CHECK);
-        } else {
-            return HealthCheckResponse.down(READINESS_CHECK);
-        }
+  private List<String> metrics;
+  private Client client;
+
+  private final String INVENTORY_HOSTS = "inventory/systems";
+  private final String INVENTORY_HOSTNAME = "inventory/systems/localhost";
+  private final String METRICS_APPLICATION = "metrics?scope=application";
+
+  @BeforeAll
+  public static void oneTimeSetup() throws Exception {
+    httpPort = System.getProperty("http.port");
+    httpsPort = System.getProperty("https.port");
+    baseHttpUrl = "http://localhost:" + httpPort + "/";
+    baseHttpsUrl = "https://localhost:" + httpsPort + "/";
+    loadKeystore();
+  }
+
+  private static void loadKeystore() throws Exception {
+    Properties sysEnv = new Properties();
+    sysEnv.load(new FileInputStream(SYSTEM_ENV_PATH));
+    char[] password = sysEnv.getProperty("keystore_password").toCharArray();
+    keystore = KeyStore.getInstance("PKCS12");
+    keystore.load(new FileInputStream(KEYSTORE_PATH), password);
+  }
+
+  @BeforeEach
+  public void setup() {
+    client = ClientBuilder.newBuilder().trustStore(keystore).build();
+  }
+
+  @AfterEach
+  public void teardown() {
+    client.close();
+  }
+
+  @Test
+  @Order(1)
+  public void testPropertiesRequestTimeMetric() {
+    connectToEndpoint(baseHttpUrl + INVENTORY_HOSTNAME);
+    metrics = getMetrics();
+    for (String metric : metrics) {
+      if (metric.startsWith(
+          "application_inventoryProcessingTime_rate_per_second")) {
+        float seconds = Float.parseFloat(metric.split(" ")[1]);
+        assertTrue(4 > seconds);
+      }
+    }
+  }
+
+  @Test
+  @Order(2)
+  public void testInventoryAccessCountMetric() {
+    metrics = getMetrics();
+    Map<String, Integer> accessCountsBefore = getIntMetrics(metrics,
+            "application_inventoryAccessCount_total");
+    connectToEndpoint(baseHttpUrl + INVENTORY_HOSTS);
+    metrics = getMetrics();
+    Map<String, Integer> accessCountsAfter = getIntMetrics(metrics,
+            "application_inventoryAccessCount_total");
+    for (String key : accessCountsBefore.keySet()) {
+      Integer accessCountBefore = accessCountsBefore.get(key);
+      Integer accessCountAfter = accessCountsAfter.get(key);
+      assertTrue(accessCountAfter > accessCountBefore);
+    }
+  }
+
+  @Test
+  @Order(3)
+  public void testInventorySizeGaugeMetric() {
+    metrics = getMetrics();
+    Map<String, Integer> inventorySizeGauges = getIntMetrics(metrics,
+            "application_inventorySizeGauge");
+    for (Integer value : inventorySizeGauges.values()) {
+      assertTrue(1 <= value);
+    }
+  }
+
+  @Test
+  @Order(4)
+  public void testPropertiesAddTimeMetric() {
+    connectToEndpoint(baseHttpUrl + INVENTORY_HOSTNAME);
+    metrics = getMetrics();
+    boolean checkMetric = false;
+    for (String metric : metrics) {
+      if (metric.startsWith(
+          "inventoryAddingTime_seconds_count")) {
+            checkMetric = true;
+      }
+    }
+    assertTrue(checkMetric);
+  }
+
+  public void connectToEndpoint(String url) {
+    Response response = this.getResponse(url);
+    this.assertResponse(url, response);
+    response.close();
+  }
+
+  private List<String> getMetrics() {
+    String usernameAndPassword = "admin" + ":" + "adminpwd";
+    String authorizationHeaderValue = "Basic "
+        + java.util.Base64.getEncoder()
+                          .encodeToString(usernameAndPassword.getBytes());
+    Response metricsResponse = client.target(baseHttpsUrl + METRICS_APPLICATION)
+                                     .request(MediaType.TEXT_PLAIN)
+                                     .header("Authorization",
+                                         authorizationHeaderValue)
+                                     .get();
+
+    BufferedReader br = new BufferedReader(new InputStreamReader((InputStream)
+    metricsResponse.getEntity()));
+    List<String> result = new ArrayList<String>();
+    try {
+      String input;
+      while ((input = br.readLine()) != null) {
+        result.add(input);
+      }
+      br.close();
+    } catch (IOException e) {
+      e.printStackTrace();
+      fail();
     }
 
-    private boolean isSystemServiceReachable() {
-        try {
-            Client client = ClientBuilder.newClient();
-            client
-                .target("http://" + hostname + ":9090/system/properties")
-                .request()
-                .post(null);
+    metricsResponse.close();
+    return result;
+  }
 
-            return true;
-        } catch (Exception ex) {
-            return false;
-        }
+  private Response getResponse(String url) {
+    return client.target(url).request().get();
+  }
+
+  private void assertResponse(String url, Response response) {
+    assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+  }
+
+  private Map<String, Integer> getIntMetrics(List<String> metrics, String metricName) {
+    Map<String, Integer> output = new HashMap<String, Integer>();
+    for (String metric : metrics) {
+      if (metric.startsWith(metricName)) {
+        String[] mSplit = metric.split(" ");
+        String key = mSplit[0];
+        Integer value = Integer.parseInt(mSplit[mSplit.length - 1]);
+        output.put(key, value);
+      }
     }
+    return output;
+  }
 }
 ```
 
 
 
-This health check verifies that the ***system*** microservice is available at ***http://system-service:9090/***. The ***system-service*** host name is accessible only from inside the cluster; you can't access it yourself. If it's available, then it returns an ***UP*** status. Similarly, if it's unavailable then it returns a ***DOWN*** status. When the status is ***DOWN***, the microservice is considered to be unhealthy.
 
-The health checks for the ***system*** microservice were already been implemented. The ***system*** microservice was set up to become unhealthy for 60 seconds when a specific endpoint is called. This endpoint has been provided for you to observe the results of an unhealthy pod and how Kubernetes reacts.
+* The ***testPropertiesRequestTimeMetric()*** test case validates the ***@Timed*** metric. The test case sends a request to the ***http://localhost:9080/inventory/systems/localhost*** URL to access the ***inventory*** service, which adds the ***localhost*** host to the inventory. Next, the test case makes a connection to the ***https://localhost:9443/metrics?scope=application*** URL to retrieve application metrics as plain text. Then, it asserts whether the time that is needed to retrieve the system properties for localhost is less than 4 seconds.
 
-::page{title="Configuring startup, liveness, and readiness probes"}
+* The ***testInventoryAccessCountMetric()*** test case validates the ***@Counted*** metric. The test case obtains metric data before and after a request to the ***http://localhost:9080/inventory/systems*** URL. It then asserts that the metric was increased after the URL was accessed.
 
-You will configure Kubernetes startup, liveness, and readiness probes. Startup probes determine whether your application is fully initialized. Liveness probes determine whether a container needs to be restarted. Readiness probes determine whether your application is ready to accept requests. If it's not ready, no traffic is routed to the container.
+* The ***testInventorySizeGaugeMetric()*** test case validates the ***@Gauge*** metric. The test case first ensures that the localhost is in the inventory, then looks for the ***@Gauge*** metric and asserts that the inventory size is greater or equal to 1.
 
-Create the kubernetes configuration file.
+* The ***testPropertiesAddTimeMetric()*** test case validates the ***@Timed*** metric. The test case sends a request to the ***http://localhost:9080/inventory/systems/localhost*** URL to access the ***inventory*** service, which adds the ***localhost*** host to the inventory. Next, the test case makes a connection to the ***https://localhost:9443/metrics?scope=application*** URL to retrieve application metrics as plain text. Then, it looks for the ***@Timed*** metric and asserts true if the metric exists.
 
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-kubernetes-microprofile-health/start/kubernetes.yaml
-```
+The ***oneTimeSetup()*** method retrieves the port number for the Liberty and builds a base URL string to set up the tests. Apply the ***@BeforeAll*** annotation to this method to run it before any of the test cases.
 
+The ***setup()*** method creates a JAX-RS client that makes HTTP requests to the ***inventory*** service. The ***teardown()*** method destroys this client instance. Apply the ***@BeforeEach*** annotation so that a method runs before a test case and apply the ***@AfterEach*** annotation so that a method runs after a test case. Apply these annotations to methods that are generally used to perform any setup and teardown tasks before and after a test.
 
-> Then, to open the kubernetes.yaml file in your IDE, select
-> ***File*** > ***Open*** > guide-kubernetes-microprofile-health/start/kubernetes.yaml, or click the following button
+To force these test cases to run in a particular order, annotate your ***MetricsIT*** test class with the ***@TestMethodOrder(OrderAnnotation.class)*** annotation. ***OrderAnnotation.class*** runs test methods in numerical order, according to the values specified in the ***@Order*** annotation. You can also create a custom ***MethodOrderer*** class or use built-in ***MethodOrderer*** implementations, such as ***OrderAnnotation.class***, ***Alphanumeric.class***, or ***Random.class***. Label your test cases with the ***@Test*** annotation so that they automatically run when your test class runs.
 
-::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/kubernetes.yaml"}
+In addition, the endpoint tests ***src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java*** and ***src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java*** are provided for you to test the basic functionality of the ***inventory*** and ***system*** services. If a test failure occurs, then you might have introduced a bug into the code.
 
 
+### Running the tests
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: system-deployment
-  labels:
-    app: system
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: system
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
-  template:
-    metadata:
-      labels:
-        app: system
-    spec:
-      containers:
-      - name: system-container
-        image: system:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9090
-        # system probes
-        startupProbe:
-          httpGet:
-            path: /health/started
-            port: 9090
-        livenessProbe:
-          httpGet:
-            path: /health/live
-            port: 9090
-          initialDelaySeconds: 60
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
-        readinessProbe:
-          httpGet:
-            path: /health/ready
-            port: 9090
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: inventory-deployment
-  labels:
-    app: inventory
-spec:
-  selector:
-    matchLabels:
-      app: inventory
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
-  template:
-    metadata:
-      labels:
-        app: inventory
-    spec:
-      containers:
-      - name: inventory-container
-        image: inventory:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9090
-        env:
-        - name: SYS_APP_HOSTNAME
-          value: system-service
-        # inventory probes
-        startupProbe:
-          httpGet:
-            path: /health/started
-            port: 9090
-        livenessProbe:
-          httpGet:
-            path: /health/live
-            port: 9090
-          initialDelaySeconds: 60
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
-        readinessProbe:
-          httpGet:
-            path: /health/ready
-            port: 9090
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: system-service
-spec:
-  type: NodePort
-  selector:
-    app: system
-  ports:
-  - protocol: TCP
-    port: 9090
-    targetPort: 9090
-    nodePort: 31000
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: inventory-service
-spec:
-  type: NodePort
-  selector:
-    app: inventory
-  ports:
-  - protocol: TCP
-    port: 9090
-    targetPort: 9090
-    nodePort: 32000
-```
-
-
-
-The startup, liveness, and readiness probes are configured for the containers that are running the ***system*** and ***inventory*** microservices.
-
-The startup probes are configured to poll the ***/health/started*** endpoint. The startup probe determines whether a container is started.
-
-The liveness probes are configured to poll the ***/health/live*** endpoint. The liveness probes determine whether a container needs to be restarted. The ***initialDelaySeconds*** field defines the duration that the probe waits before it starts to poll so that it does not make requests before the server is started. The ***periodSeconds*** option defines how often the probe polls the given endpoint. The ***timeoutSeconds*** option defines how many seconds before the probe times out. The ***failureThreshold*** option defines how many times the probe fails before the state changes from ready to not ready.
-
-The readiness probes are configured to poll the ***/health/ready*** endpoint. The readiness probe determines the READY status of the container, as seen in the ***kubectl get pods*** output. Similar to the liveness probes, the readiness probes also define ***initialDelaySeconds***, ***periodSeconds***, ***timeoutSeconds***, and ***failureThreshold***.
-
-::page{title="Deploying the microservices"}
-
-To build these microservices, navigate to the ***start*** directory and run the following command.
-
-
-```bash
-cd /home/project/guide-kubernetes-microprofile-health/start
-./mvnw package
-```
-
-
-
-Next, run the ***docker build*** commands to build container images for your application:
-```bash
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-```
-
-The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
-
-Push your images to the container registry on IBM Cloud with the following commands:
-
-```bash
-docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
-docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
-```
-
-Update the image names so that the images in your IBM Cloud container registry are used. Set the image pull policy to ***Always*** and remove the ***nodePort*** fields so that the ports can be automatically generated:
-```bash
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=nodePort: 31000==g' kubernetes.yaml
-sed -i 's=nodePort: 32000==g' kubernetes.yaml
-```
-
-When the builds succeed, run the following command to deploy the necessary Kubernetes resources to serve the applications.
-
-```bash
-kubectl apply -f kubernetes.yaml
-```
-
-Use the following command to view the status of the pods. There will be two ***system*** pods and one ***inventory*** pod, later you'll observe their behavior as the ***system*** pods become unhealthy. 
-
-```bash
-kubectl get pods
-```
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          59s
-system-deployment-694c7b74f7-lrlf7     1/1       Running   0          59s
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          59s
-```
-
-Wait until the pods are ready. After the pods are ready, you will make requests to your services.
-
-
-In this IBM cloud environment, you need to access the services by using the Kubernetes API. Run the following command to start a proxy to the Kubernetes API server:
-
-```bash
-kubectl proxy
-```
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following commands to store the proxy path of the ***system*** and ***inventory*** services.
-```bash
-SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/system-service/proxy
-INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/inventory-service/proxy
-```
-
-Run the following echo commands to verify the variables:
-
-```bash
-echo $SYSTEM_PROXY && echo $INVENTORY_PROXY
-```
-
-The output appears as shown in the following example:
-
-```
-localhost:8001/api/v1/namespaces/sn-labs-yourname/services/system-service/proxy
-localhost:8001/api/v1/namespaces/sn-labs-yourname/services/inventory-service/proxy
-```
-
-Make a request to the system service to see the JVM system properties with the following ***curl*** command:
-```bash
-curl -s http://$SYSTEM_PROXY/system/properties | jq
-```
-
-The readiness probe ensures the READY state won't be ***1/1*** until the container is available to accept requests. Without a readiness probe, you might notice an unsuccessful response from the server. This scenario can occur when the container is started, but the application server isn't fully initialized. With the readiness probe, you can be certain the pod accepts traffic only when the microservice is fully started.
-
-Similarly, access the inventory service and observe the successful request with the following command:
-```bash
-curl -s http://$INVENTORY_PROXY/inventory/systems/system-service | jq
-```
-
-::page{title="Changing the ready state of the system microservice"}
-
-An ***unhealthy*** endpoint has been provided under the ***system*** microservice to set it to an unhealthy state. The unhealthy state causes the readiness probe to fail. A request to the ***unhealthy*** endpoint puts the service in an unhealthy state as a simulation.
-
-
-Run the following ***curl*** command to invoke the unhealthy endpoint:
-```bash
-curl http://$SYSTEM_PROXY/system/unhealthy
-```
-
-Run the following command to view the state of the pods:
-
-```bash
-kubectl get pods
-```
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          1m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          1m
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          1m
-```
-
-
-You will notice that one of the two ***system*** pods is no longer in the ready state. Make a request to the ***/system/properties*** endpoint with the following command:
-```bash
-curl -s http://$SYSTEM_PROXY/system/properties | jq
-```
-
-Your request is successful because you have two replicas and one is still healthy.
-
-### Observing the effects on the inventory microservice
-
-
-Wait until the ***system-service*** pod is ready again. Make several requests to the ***/system/unhealthy*** endpoint of the ***system*** service until you see two pods are unhealthy.
-```bash
-curl http://$SYSTEM_PROXY/system/unhealthy
-```
-
-Observe the output of ***kubectl get pods***.
-```bash
-kubectl get pods
-```
-
-You will see both pods are no longer ready. During this process, the readiness probe for the ***inventory*** microservice will also fail. Observe that it's no longer in the ready state either.
-
-First, both ***system*** pods will no longer be ready because the readiness probe failed.
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     0/1       Running   0          5m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          5m
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          5m
-```
-
-Next, the ***inventory*** pod is no longer ready because the readiness probe failed. The probe failed because ***system-service*** is now unavailable.
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     0/1       Running   0          6m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          6m
-inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          6m
-```
-
-Then, the ***system*** pods will start to become healthy again after 60 seconds.
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          7m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          7m
-inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          7m
-```
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          7m
-system-deployment-694c7b74f7-lrlf7     1/1       Running   0          7m
-inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          7m
-```
-
-Finally, you will see all of the pods have recovered.
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          8m
-system-deployment-694c7b74f7-lrlf7     1/1       Running   0          8m
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          8m
-```
-
-::page{title="Testing the microservices"}
-
-
-Run the following commands to store the proxy path of the ***system*** and ***inventory*** services.
-```bash
-cd /home/project/guide-kubernetes-microprofile-health/start
-SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/system-service/proxy
-INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/inventory-service/proxy
-```
-
-Run the integration tests by using the following command:
-```bash
-./mvnw failsafe:integration-test \
-    -Dsystem.service.root=$SYSTEM_PROXY \
-    -Dinventory.service.root=$INVENTORY_PROXY
-```
-
-A few tests are included for you to test the basic functions of the microservices. If a test fails, then you might have introduced a bug into the code. Wait for all pods to be in the ready state before you run the tests. 
-
-When the tests succeed, you should see output similar to the following in your console.
+Because you started Open Liberty in dev mode at the start of the guide, press the ***enter/return*** key to run the tests and see the following output:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
 Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.65 s - in it.io.openliberty.guides.system.SystemEndpointIT
-
-Results:
-
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
-```
-
-```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.4 sec - in it.io.openliberty.guides.system.SystemEndpointIT
+Running it.io.openliberty.guides.metrics.MetricsIT
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.476 sec - in it.io.openliberty.guides.metrics.MetricsIT
 Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.542 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+[WARNING ] Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
+Could not send Message.
+[err] The specified host is unknown.
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.264 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
 
-Results:
+Results :
 
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 8, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-::page{title="Tearing down the environment"}
+The warning and error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the ***testUnknownHost()*** test from the ***InventoryEndpointIT*** integration test.
 
-Press **CTRL+C** to stop the proxy server that was started at step 6 ***Deploying the microservices***.
+To determine whether the tests detect a failure, go to the ***MetricsIT.java*** file and change any of the assertions in the test methods. Then re-run the tests to see a test failure occur.
 
-To remove all of the resources created during this guide, run the following command to delete all of the resources that you created.
-
-```bash
-kubectl delete -f kubernetes.yaml
-```
-
-
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
 
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You have used MicroProfile Health and Open Liberty to create endpoints that report on your microservice's status. Then, you observed how Kubernetes uses the **/health/started**, **/health/live**, and **/health/ready** endpoints to keep your microservices running smoothly.
+You learned how to enable system, application and vendor metrics for microservices by using MicroProfile Metrics
 
-
+and wrote tests to validate them in Open Liberty.
 
 
 ### Clean up your environment
@@ -641,31 +688,32 @@ You have used MicroProfile Health and Open Liberty to create endpoints that repo
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-kubernetes-microprofile-health*** project by running the following commands:
+Delete the ***guide-microprofile-metrics*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-kubernetes-microprofile-health
+rm -fr guide-microprofile-metrics
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Checking%20the%20health%20of%20microservices%20on%20Kubernetes&guide-id=cloud-hosted-guide-kubernetes-microprofile-health)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Providing%20metrics%20from%20a%20microservice&guide-id=cloud-hosted-guide-microprofile-metrics)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-metrics/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-metrics/pulls)
 
 
 
 ### Where to next?
 
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 * [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
-* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 
 
 ### Log out of the session
