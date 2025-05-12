@@ -3304,7 +3304,7 @@ The ***jwtSso*** feature adds the libraries that are required for JWT SSO implem
 
 The ***keyStore*** element is used to define the repository of security certificates used for SSL encryption. The ***id*** attribute is a unique configuration ID that is set to ***guideKeyStore***. The ***password*** attribute is used to load the keystore file, and its value can be stored in clear text or encoded form. To learn more about other attributes, see the [keyStore attribute documentation](https://openliberty.io/docs/latest/reference/config/keyStore.html#keyStore.html). 
 
-To avoid the conflict with the default ssl configuration, define your own ssl configuration by setting the ***id*** attribute to other value, the ***sslDefault*** element, and the ***sslRef*** attribute in the ***mpJwt*** element.
+To avoid the conflict with the default ssl configuration, define your own ssl configuration by setting the ***id*** attribute, the ***sslDefault*** element, and the ***sslRef*** attribute in the ***mpJwt*** element to another value.
 
 Because the keystore file is not provided at the ***src*** directory, Liberty creates a Public Key Cryptography Standards #12 (PKCS12) keystore file for you by default. This file needs to be replaced, as the ***keyStore*** configuration must be the same in both ***system*** and ***inventory*** microservices. As the configured ***system*** microservice is already provided for you, copy the ***key.p12*** keystore file from the ***system*** microservice to your ***inventory*** service.
 
