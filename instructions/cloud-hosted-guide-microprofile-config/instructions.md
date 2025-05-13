@@ -401,6 +401,7 @@ Every time that you invoke the ***inMaintenance.get()*** method, the ***Provider
 
 
 ::page{title="Creating custom converters"}
+
 Configuration values are purely Strings. MicroProfile Config API has built-in converters that automatically converts configured Strings into target types such as ***int***, ***Integer***, ***boolean***, ***Boolean***, ***float***, ***Float***, ***double*** and ***Double***. Therefore, in the previous section, it is type-safe to directly set the variable type to ***Provider\<Boolean\>***.
 
 To convert configured Strings to an arbitrary class type, such as the ***Email*** class type,
