@@ -16,6 +16,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 ::page{title="What you'll learn"}
+
 You will learn how to externalize and inject both static and dynamic configuration properties for microservices using MicroProfile Config.
 
 You will learn to aggregate multiple configuration sources, assign prioritization values to these sources, merge configuration values, and create custom configuration sources.
@@ -192,6 +193,7 @@ The ***getPortNumber()*** method directly returns the value of ***portNumber*** 
 Note that three default config sources mentioned above are static and fixed on application starting, so the properties within them cannot be modified while the Liberty is running. However, you can externalize configuration data out of the application package, through the creation of custom configuration sources, so that the service updates configuration changes dynamically.
 
 ### Creating custom configuration sources
+
 
 Custom configuration sources can be created by implementing the ***org.eclipse.microprofile.config.spi.ConfigSource*** interface and using the ***java.util.ServiceLoader*** mechanism.
 
