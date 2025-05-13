@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Persisting data with MongoDB guide!"}
+::page{title="Welcome to the Injecting dependencies into microservices guide!"}
 
-Learn how to persist data in your microservices to MongoDB, a document-oriented NoSQL database.
+Learn how to use Contexts and Dependency Injection (CDI) to manage scopes and inject dependencies into microservices.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -16,24 +16,18 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You will learn how to use MongoDB to build and test a simple microservice that manages the members of a crew. The microservice will respond to ***POST***, ***GET***, ***PUT***, and ***DELETE*** requests that manipulate the database.
+You will learn how to use Contexts and Dependency Injection (CDI) to manage scopes and inject dependencies in a simple inventory management application.
 
-The crew members will be stored in MongoDB as documents in the following JSON format:
+The application that you will be working with is an ***inventory*** service, which stores the information about various JVMs that run on different systems. Whenever a request is made to the ***inventory*** service to retrieve the JVM system properties of a particular host, the ***inventory*** service communicates with the ***system*** service on that host to get these system properties. The system properties are then stored and returned.
 
-```
-{
-  "_id": {
-    "$oid": "5dee6b079503234323db2ebc"
-  },
-  "Name": "Member1",
-  "Rank": "Captain",
-  "CrewID": "000001"
-}
-```
+You will use scopes to bind objects in this application to their well-defined contexts. CDI provides a variety of scopes for you to work with and while you will not use all of them in this guide, there is one for almost every scenario that you may encounter. Scopes are defined by using CDI annotations. You will also use dependency injection to inject one bean into another to make use of its functionalities. This enables you to inject the bean in its specified context without having to instantiate it yourself.
 
-This microservice connects to MongoDB by using Transport Layer Security (TLS) and injects a ***MongoDatabase*** instance into the service with a Contexts and Dependency Injection (CDI) producer. Additionally, MicroProfile Config is used to easily configure the MongoDB driver.
+The implementation of the application and its services are provided for you in the ***start/src*** directory. The ***system*** service can be found in the ***start/src/main/java/io/openliberty/guides/system*** directory, and the ***inventory*** service can be found in the ***start/src/main/java/io/openliberty/guides/inventory*** directory. If you want to learn more about RESTful web services and how to build them, see [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) for details about how to build the ***system*** service. The ***inventory*** service is built in a similar way.
 
-For more information about CDI and MicroProfile Config, see the guides on [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html) and [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html).
+### What is CDI?
+
+Contexts and Dependency Injection (CDI) defines a rich set of complementary services that improve the application structure. The most fundamental services that are provided by CDI are contexts that bind the lifecycle of stateful components to well-defined contexts, and dependency injection that is the ability to inject components into an application in a typesafe way. With CDI, the container does all the daunting work of instantiating dependencies, and controlling exactly when and how these components are instantiated and destroyed.
+
 
 
 ::page{title="Getting started"}
@@ -47,52 +41,17 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-mongodb-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-cdi-intro.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-mongodb-intro.git
-cd guide-mongodb-intro
+git clone https://github.com/openliberty/guide-cdi-intro.git
+cd guide-cdi-intro
 ```
 
 
 The ***start*** directory contains the starting project that you will build upon.
 
 The ***finish*** directory contains the finished project that you will build.
-
-
-### Setting up MongoDB
-
-This guide uses Docker to run an instance of MongoDB. A multi-stage Dockerfile is provided for you. This Dockerfile uses the ***mongo*** image as the base image of the final stage and gathers the required configuration files. The resulting ***mongo*** image runs in a Docker container, and you must set up a new database for the microservice. Lastly, the truststore that's generated in the Docker image is copied from the container and placed into the Open Liberty configuration.
-
-You can find more details and configuration options on the [MongoDB website](https://docs.mongodb.com/manual/reference/configuration-options/). For more information about the ***mongo*** image, see [mongo](https://hub.docker.com/_/mongo) in Docker Hub.
-
-**Running MongoDB in a Docker container**
-
-Run the following commands to use the Dockerfile to build the image, run the image in a Docker container, and map port ***27017*** from the container to your host machine:
-
-```bash
-sed -i 's=latest=7.0.15-rc1=g' assets/Dockerfile
-```
-
-```bash
-docker build -t mongo-sample -f assets/Dockerfile .
-docker run --name mongo-guide -p 27017:27017 -d mongo-sample
-```
-
-**Adding the truststore to the Open Liberty configuration**
-
-The truststore that's created in the container needs to be added to the Open Liberty configuration so that the Liberty can trust the certificate that MongoDB presents when they connect. Run the following command to copy the ***truststore.p12*** file from the container to the ***start*** and ***finish*** directories:
-
-
-```bash
-docker cp \
-  mongo-guide:/home/mongodb/certs/truststore.p12 \
-  start/src/main/liberty/config/resources/security
-docker cp \
-  mongo-guide:/home/mongodb/certs/truststore.p12 \
-  finish/src/main/liberty/config/resources/security
-```
-
 
 ### Try what you'll build
 
@@ -102,7 +61,7 @@ To try out the application, first go to the ***finish*** directory and run the f
 
 ```bash
 cd finish
-mvn liberty:run
+./mvnw liberty:run
 ```
 
 After you see the following message, your Liberty instance is ready:
@@ -112,139 +71,107 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 
-You can now check out the service by clicking the following button:
 
-::startApplication{port="9080" display="external" name="Launch application" route="/mongo"}
+Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
+
+
+Point your browser to the ***http\://localhost:9080/inventory/systems*** URL.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl -s http://localhost:9080/inventory/systems | jq
+```
+
+
+
+This is the starting point of the ***inventory*** service and it displays the current contents of the inventory. As you might expect, these are empty because nothing is stored in the inventory yet. Next, point your browser to the ***http\://localhost:9080/inventory/systems/localhost*** URL.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl -s http://localhost:9080/inventory/systems/localhost | jq
+```
+
+
+
+You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system properties are automatically stored in the inventory. Go back to ***http\://localhost:9080/inventory/systems***
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl -s http://localhost:9080/inventory/systems | jq
+```
+
+
+and you see a new entry for ***localhost***. For simplicity, only the OS name and username are shown here for each host. You can repeat this process for your own hostname or any other machine that is running the ***system*** service.
 
 After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
-mvn liberty:stop
+./mvnw liberty:stop
 ```
 
+::page{title="Handling dependencies in the application"}
 
-::page{title="Providing a MongoDatabase"}
+You will use CDI to inject dependencies into the inventory manager application and learn how to manage the life cycles of your objects.
+
+### Managing scopes and contexts
 
 Navigate to the ***start*** directory to begin.
-
 ```bash
-cd /home/project/guide-mongodb-intro/start
+cd /home/project/guide-cdi-intro/start
 ```
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
-```bash
-mvn liberty:dev
-```
-
-After you see the following message, your Liberty instance is ready in dev mode:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
-
-With a CDI producer, you can easily provide a ***MongoDatabase*** to your microservice.
-
-Create the ***MongoProducer*** class.
+Create the ***InventoryManager*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/mongo/MongoProducer.java
+touch /home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 ```
 
 
-> Then, to open the MongoProducer.java file in your IDE, select
-> ***File*** > ***Open*** > guide-mongodb-intro/start/src/main/java/io/openliberty/guides/mongo/MongoProducer.java, or click the following button
+> Then, to open the InventoryManager.java file in your IDE, select
+> ***File*** > ***Open*** > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
 
-::openFile{path="/home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/mongo/MongoProducer.java"}
+::openFile{path="/home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
 
 
 
 ```java
-package io.openliberty.guides.mongo;
+package io.openliberty.guides.inventory;
 
+import java.util.ArrayList;
 import java.util.Collections;
-
-import javax.net.ssl.SSLContext;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
-import com.ibm.websphere.crypto.PasswordUtil;
-import com.ibm.websphere.ssl.JSSEHelper;
-import com.ibm.websphere.ssl.SSLException;
-import com.mongodb.ConnectionString;
-import com.mongodb.MongoClientSettings;
-import com.mongodb.MongoCredential;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoDatabase;
-
+import java.util.List;
+import java.util.Properties;
+import io.openliberty.guides.inventory.model.InventoryList;
+import io.openliberty.guides.inventory.model.SystemData;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.inject.Disposes;
-import jakarta.enterprise.inject.Produces;
-import jakarta.inject.Inject;
 
 @ApplicationScoped
-public class MongoProducer {
+public class InventoryManager {
 
-    @Inject
-    @ConfigProperty(name = "mongo.hostname", defaultValue = "localhost")
-    String hostname;
+  private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
 
-    @Inject
-    @ConfigProperty(name = "mongo.port", defaultValue = "27017")
-    int port;
+  public void add(String hostname, Properties systemProps) {
+    Properties props = new Properties();
+    props.setProperty("os.name", systemProps.getProperty("os.name"));
+    props.setProperty("user.name", systemProps.getProperty("user.name"));
 
-    @Inject
-    @ConfigProperty(name = "mongo.dbname", defaultValue = "testdb")
-    String dbName;
-
-    @Inject
-    @ConfigProperty(name = "mongo.user")
-    String user;
-
-    @Inject
-    @ConfigProperty(name = "mongo.pass.encoded")
-    String encodedPass;
-
-    @Produces
-    public MongoClient createMongo() throws SSLException {
-        String password = PasswordUtil.passwordDecode(encodedPass);
-        MongoCredential creds = MongoCredential.createCredential(
-                user,
-                dbName,
-                password.toCharArray()
-        );
-
-        SSLContext sslContext = JSSEHelper.getInstance().getSSLContext(
-                "outboundSSLContext",
-                Collections.emptyMap(),
-                null
-        );
-
-        return MongoClients.create(MongoClientSettings.builder()
-                   .applyConnectionString(
-                       new ConnectionString("mongodb://" + hostname + ":" + port))
-                   .credential(creds)
-                   .applyToSslSettings(builder -> {
-                       builder.enabled(true);
-                       builder.context(sslContext); })
-                   .build());
+    SystemData system = new SystemData(hostname, props);
+    if (!systems.contains(system)) {
+      systems.add(system);
     }
+  }
 
-    @Produces
-    public MongoDatabase createDB(
-            MongoClient client) {
-        return client.getDatabase(dbName);
-    }
-
-    public void close(
-            @Disposes MongoClient toClose) {
-        toClose.close();
-    }
+  public InventoryList list() {
+    return new InventoryList(systems);
+  }
 }
 ```
 
@@ -252,770 +179,362 @@ public class MongoProducer {
 Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
+This bean contains two simple functions. The ***add()*** function is for adding entries to the inventory. The ***list()*** function is for listing all the entries currently stored in the inventory.
 
+This bean must be persistent between all of the clients, which means multiple clients need to share the same instance. To achieve this by using CDI, you can simply add the ***@ApplicationScoped*** annotation onto the class.
 
+This annotation indicates that this particular bean is to be initialized once per application. By making it application-scoped, the container ensures that the same instance of the bean is used whenever it is injected into the application.
 
-The values from the ***microprofile-config.properties*** file are injected into the ***MongoProducer*** class. The ***MongoProducer*** class requires the following methods for the ***MongoClient***:
-
-* The ***createMongo()*** producer method returns an instance of ***MongoClient***. In this method, the username, database name, and decoded password are passed into the ***MongoCredential.createCredential()*** method to get an instance of ***MongoCredential***. The ***JSSEHelper*** gets the ***SSLContext*** from the ***outboundSSLContext*** in the ***server.xml*** configuration file. Then, a ***MongoClient*** instance is created.
-
-* The ***createDB()*** producer method returns an instance of ***MongoDatabase*** that depends on the ***MongoClient***. This method injects the ***MongoClient*** in its parameters and passes the database name into the ***MongoClient.getDatabase()*** method to get a ***MongoDatabase*** instance.
-
-* The ***close()*** method is a clean-up function for the ***MongoClient*** that closes the connection to the ***MongoDatabase*** instance.
-
-
-
-::page{title="Implementing the Create, Retrieve, Update, and Delete operations"}
-
-You are going to implement the basic create, retrieve, update, and delete (CRUD) operations in the ***CrewService*** class. The ***com.mongodb.client*** and ***com.mongodb.client.result*** packages are used to help implement these operations for the microservice. For more information about these packages, see the [com.mongodb.client](https://mongodb.github.io/mongo-java-driver/5.2.1/apidocs/mongodb-driver-sync/com/mongodb/client/package-summary.html) and [com.mongodb.client.result](https://mongodb.github.io/mongo-java-driver/5.2.1/apidocs/mongodb-driver-core/com/mongodb/client/result/package-summary.html) Javadoc. For more information about creating a RESTful service with JAX-RS, JSON-B, and Open Liberty, see the guide on [Creating a RESTful web serivce](https://openliberty.io/guides/rest-intro.html).
-
-Create the ***CrewService*** class.
+Create the ***InventoryResource*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/application/CrewService.java
+touch /home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 ```
 
 
-> Then, to open the CrewService.java file in your IDE, select
-> ***File*** > ***Open*** > guide-mongodb-intro/start/src/main/java/io/openliberty/guides/application/CrewService.java, or click the following button
+> Then, to open the InventoryResource.java file in your IDE, select
+> ***File*** > ***Open*** > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
 
-::openFile{path="/home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/application/CrewService.java"}
+::openFile{path="/home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java"}
 
 
 
 ```java
-package io.openliberty.guides.application;
+package io.openliberty.guides.inventory;
 
-import java.util.Set;
-
-import java.io.StringWriter;
-
+import java.util.Properties;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonArrayBuilder;
-import jakarta.json.Json;
 import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import io.openliberty.guides.inventory.model.InventoryList;
+import io.openliberty.guides.inventory.client.SystemClient;
 
-import jakarta.validation.Validator;
-import jakarta.validation.ConstraintViolation;
-
-import com.mongodb.client.FindIterable;
-import org.bson.Document;
-import org.bson.types.ObjectId;
-
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.result.DeleteResult;
-import com.mongodb.client.result.UpdateResult;
-
-import org.eclipse.microprofile.openapi.annotations.Operation;
-import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
-
-@Path("/crew")
 @ApplicationScoped
-public class CrewService {
+@Path("/systems")
+public class InventoryResource {
 
-    @Inject
-    MongoDatabase db;
+  @Inject
+  InventoryManager manager;
 
-    @Inject
-    Validator validator;
+  @Inject
+  SystemClient systemClient;
 
-    private JsonArray getViolations(CrewMember crewMember) {
-        Set<ConstraintViolation<CrewMember>> violations = validator.validate(
-                crewMember);
-
-        JsonArrayBuilder messages = Json.createArrayBuilder();
-
-        for (ConstraintViolation<CrewMember> v : violations) {
-            messages.add(v.getMessage());
-        }
-
-        return messages.build();
+  @GET
+  @Path("/{hostname}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response getPropertiesForHost(@PathParam("hostname") String hostname) {
+    Properties props = systemClient.getProperties(hostname);
+    if (props == null) {
+      return Response.status(Response.Status.NOT_FOUND)
+                     .entity("{ \"error\" : \"Unknown hostname " + hostname
+                             + " or the inventory service may not be running "
+                             + "on the host machine \" }")
+                     .build();
     }
 
-    @POST
-    @Path("/")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @APIResponses({
-        @APIResponse(
-            responseCode = "200",
-            description = "Successfully added crew member."),
-        @APIResponse(
-            responseCode = "400",
-            description = "Invalid crew member configuration.") })
-    @Operation(summary = "Add a new crew member to the database.")
-    public Response add(CrewMember crewMember) {
-        JsonArray violations = getViolations(crewMember);
+    manager.add(hostname, props);
+    return Response.ok(props).build();
+  }
 
-        if (!violations.isEmpty()) {
-            return Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity(violations.toString())
-                    .build();
-        }
-
-        MongoCollection<Document> crew = db.getCollection("Crew");
-
-        Document newCrewMember = new Document();
-        newCrewMember.put("Name", crewMember.getName());
-        newCrewMember.put("Rank", crewMember.getRank());
-        newCrewMember.put("CrewID", crewMember.getCrewID());
-
-        crew.insertOne(newCrewMember);
-
-        return Response
-            .status(Response.Status.OK)
-            .entity(newCrewMember.toJson())
-            .build();
-    }
-
-    @GET
-    @Path("/")
-    @Produces(MediaType.APPLICATION_JSON)
-    @APIResponses({
-        @APIResponse(
-            responseCode = "200",
-            description = "Successfully listed the crew members."),
-        @APIResponse(
-            responseCode = "500",
-            description = "Failed to list the crew members.") })
-    @Operation(summary = "List the crew members from the database.")
-    public Response retrieve() {
-        StringWriter sb = new StringWriter();
-
-        try {
-            MongoCollection<Document> crew = db.getCollection("Crew");
-            sb.append("[");
-            boolean first = true;
-            FindIterable<Document> docs = crew.find();
-            for (Document d : docs) {
-                if (!first) {
-                    sb.append(",");
-                } else {
-                    first = false;
-                }
-                sb.append(d.toJson());
-            }
-            sb.append("]");
-        } catch (Exception e) {
-            e.printStackTrace(System.out);
-            return Response
-                .status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity("[\"Unable to list crew members!\"]")
-                .build();
-        }
-
-        return Response
-            .status(Response.Status.OK)
-            .entity(sb.toString())
-            .build();
-    }
-
-    @PUT
-    @Path("/{id}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @APIResponses({
-        @APIResponse(
-            responseCode = "200",
-            description = "Successfully updated crew member."),
-        @APIResponse(
-            responseCode = "400",
-            description = "Invalid object id or crew member configuration."),
-        @APIResponse(
-            responseCode = "404",
-            description = "Crew member object id was not found.") })
-    @Operation(summary = "Update a crew member in the database.")
-    public Response update(CrewMember crewMember,
-        @Parameter(
-            description = "Object id of the crew member to update.",
-            required = true
-        )
-        @PathParam("id") String id) {
-
-        JsonArray violations = getViolations(crewMember);
-
-        if (!violations.isEmpty()) {
-            return Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity(violations.toString())
-                    .build();
-        }
-
-        ObjectId oid;
-
-        try {
-            oid = new ObjectId(id);
-        } catch (Exception e) {
-            return Response
-                .status(Response.Status.BAD_REQUEST)
-                .entity("[\"Invalid object id!\"]")
-                .build();
-        }
-
-        MongoCollection<Document> crew = db.getCollection("Crew");
-
-        Document query = new Document("_id", oid);
-
-        Document newCrewMember = new Document();
-        newCrewMember.put("Name", crewMember.getName());
-        newCrewMember.put("Rank", crewMember.getRank());
-        newCrewMember.put("CrewID", crewMember.getCrewID());
-
-        UpdateResult updateResult = crew.replaceOne(query, newCrewMember);
-
-        if (updateResult.getMatchedCount() == 0) {
-            return Response
-                .status(Response.Status.NOT_FOUND)
-                .entity("[\"_id was not found!\"]")
-                .build();
-        }
-
-        newCrewMember.put("_id", oid);
-
-        return Response
-            .status(Response.Status.OK)
-            .entity(newCrewMember.toJson())
-            .build();
-    }
-
-    @DELETE
-    @Path("/{id}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @APIResponses({
-        @APIResponse(
-            responseCode = "200",
-            description = "Successfully deleted crew member."),
-        @APIResponse(
-            responseCode = "400",
-            description = "Invalid object id."),
-        @APIResponse(
-            responseCode = "404",
-            description = "Crew member object id was not found.") })
-    @Operation(summary = "Delete a crew member from the database.")
-    public Response remove(
-        @Parameter(
-            description = "Object id of the crew member to delete.",
-            required = true
-        )
-        @PathParam("id") String id) {
-
-        ObjectId oid;
-
-        try {
-            oid = new ObjectId(id);
-        } catch (Exception e) {
-            return Response
-                .status(Response.Status.BAD_REQUEST)
-                .entity("[\"Invalid object id!\"]")
-                .build();
-        }
-
-        MongoCollection<Document> crew = db.getCollection("Crew");
-
-        Document query = new Document("_id", oid);
-
-        DeleteResult deleteResult = crew.deleteOne(query);
-
-        if (deleteResult.getDeletedCount() == 0) {
-            return Response
-                .status(Response.Status.NOT_FOUND)
-                .entity("[\"_id was not found!\"]")
-                .build();
-        }
-
-        return Response
-            .status(Response.Status.OK)
-            .entity(query.toJson())
-            .build();
-    }
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  public InventoryList listContents() {
+    return manager.list();
+  }
 }
 ```
 
 
 
+The inventory resource is a RESTful service that is served at the ***inventory/systems*** endpoint. 
 
-In this class, a ***Validator*** is used to validate a ***CrewMember*** before the database is updated. The CDI producer is used to inject a ***MongoDatabase*** into the CrewService class.
+Annotating a class with the ***@ApplicationScoped*** annotation indicates that the bean is initialized once and is shared between all requests while the application runs.
 
+If you want this bean to be initialized once for every request, you can annotate the class with the ***@RequestScoped*** annotation instead. With the ***@RequestScoped*** annotation, the bean is instantiated when the request is received and destroyed when a response is sent back to the client. A request scope is short-lived.
 
-**Implementing the Create operation**
+### Injecting a dependency
 
-The ***add()*** method handles the implementation of the create operation. An instance of ***MongoCollection*** is retrieved with the ***MongoDatabase.getCollection()*** method. The ***Document*** type parameter specifies that the ***Document*** type is used to store data in the ***MongoCollection***. Each crew member is converted into a ***Document***, and the ***MongoCollection.insertOne()*** method inserts a new crew member document.
+Refer to the ***InventoryResource*** class you created above.
 
+The ***@Inject*** annotation indicates a dependency injection. You are injecting your ***InventoryManager*** and ***SystemClient*** beans into the ***InventoryResource*** class. This injects the beans in their specified context and makes all of their functionalities available without the need of instantiating them yourself. The injected bean ***InventoryManager*** can then be invoked directly through the ***manager.add(hostname, props)*** and ***manager.list()*** function calls. The injected bean ***SystemClient*** can be invoked through the ***systemClient.getProperties(hostname)*** function call.
 
-**Implementing the Retrieve operation**
+Finally, you have a client component ***SystemClient*** that can be found in the ***src/main/java/io/openliberty/guides/inventory/client*** directory. This class communicates with the ***system*** service to retrieve the JVM system properties for a particular host that exposes them. This class also contains detailed Javadocs that you can read for reference.
 
-The ***retrieve()*** method handles the implementation of the retrieve operation. The ***Crew*** collection is retrieved with the ***MongoDatabase.getCollection()*** method. Then, the ***MongoCollection.find()*** method retrieves a ***FindIterable*** object. This object is iterable for all the crew members documents in the collection, so each crew member document is concatenated into a String array and returned.
-
-
-**Implementing the Update operation**
-
-The ***update()*** method handles the implementation of the update operation. After the ***Crew*** collection is retrieved, a document is created with the specified object ***id*** and is used to query the collection. Next, a new crew member ***Document*** is created with the updated configuration. The ***MongoCollection.replaceOne()*** method is called with the query and new crew member document. This method updates all of the matching queries with the new document. Because the object ***id*** is unique in the ***Crew*** collection, only one document is updated. The ***MongoCollection.replaceOne()*** method also returns an ***UpdateResult*** instance, which determines how many documents matched the query. If there are zero matches, then the object ***id*** doesn't exist.
+Your inventory application is now completed.
 
 
-**Implementing the Delete operation**
-
-The ***remove()*** method handles the implementation of the delete operation. After the ***Crew*** collection is retrieved, a ***Document*** is created with the specified object ***id*** and is used to query the collection. Because the object ***id*** is unique in the ***Crew*** collection, only one document is deleted. After the document is deleted, the ***MongoCollection.deleteOne()*** method returns a ***DeleteResult*** instance, which determines how many documents were deleted. If zero documents were deleted, then the object ***id*** doesn't exist.
-
-
-
-::page{title="Configuring the MongoDB driver and the Liberty"}
-
-MicroProfile Config makes configuring the MongoDB driver simple because all of the configuration can be set in one place and injected into the CDI producer.
-
-Create the configuration file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-mongodb-intro/start/src/main/resources/META-INF/microprofile-config.properties
-```
-
-
-> Then, to open the microprofile-config.properties file in your IDE, select
-> ***File*** > ***Open*** > guide-mongodb-intro/start/src/main/resources/META-INF/microprofile-config.properties, or click the following button
-
-::openFile{path="/home/project/guide-mongodb-intro/start/src/main/resources/META-INF/microprofile-config.properties"}
-
-
-
-```
-mongo.hostname=localhost
-mongo.port=27017
-mongo.dbname=testdb
-mongo.user=sampleUser
-mongo.pass.encoded={aes}APtt+/vYxxPa0jE1rhmZue9wBm3JGqFK3JR4oJdSDGWM1wLr1ckvqkqKjSB2Voty8g==
-```
-
-
-
-Values such as the hostname, port, and database name for the running MongoDB instance are set in this file. The user’s username and password are also set here. For added security, the password was encoded by using the [securityUtility encode command](https://openliberty.io/docs/latest/reference/command/securityUtility-encode.html).
-
-To create a CDI producer for MongoDB and connect over TLS, the Open Liberty needs to be correctly configured.
-
-Replace the Liberty ***server.xml*** configuration file.
-
-> To open the server.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-mongodb-intro/start/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-mongodb-intro/start/src/main/liberty/config/server.xml"}
-
-
-
-```xml
-<server description="Sample Liberty server">
-    <featureManager>
-        <platform>jakartaee-10.0</platform>
-        <platform>microprofile-7.0</platform>
-        <feature>beanValidation</feature>
-        <feature>cdi</feature>
-        <feature>jsonb</feature>
-        <feature>passwordUtilities-1.1</feature>
-        <feature>restfulWS</feature>
-        <feature>ssl-1.0</feature>
-        <feature>mpConfig</feature>
-        <feature>mpOpenAPI</feature>
-    </featureManager>
-
-    <variable name="http.port" defaultValue="9080"/>
-    <variable name="https.port" defaultValue="9443"/>
-    <variable name="app.context.root" defaultValue="/mongo"/>
-
-    <httpEndpoint
-        host="*" 
-        httpPort="${http.port}" 
-        httpsPort="${https.port}" 
-        id="defaultHttpEndpoint"
-    />
-
-    <webApplication 
-        location="guide-mongodb-intro.war" 
-        contextRoot="${app.context.root}"
-    />
-    <keyStore
-        id="outboundTrustStore" 
-        location="${server.output.dir}/resources/security/truststore.p12"
-        password="mongodb"
-        type="PKCS12" 
-    />
-    <ssl 
-        id="outboundSSLContext" 
-        keyStoreRef="defaultKeyStore" 
-        trustStoreRef="outboundTrustStore" 
-        sslProtocol="TLS" 
-    />
-</server>
-```
-
-
-
-The features that are required to create the CDI producer for MongoDB are [Contexts and Dependency Injection](https://openliberty.io/docs/latest/reference/feature/cdi.html) (***cdi***), [Secure Socket Layer](https://openliberty.io/docs/latest/reference/feature/ssl.html) (***ssl***), [MicroProfile Config](https://openliberty.io/docs/latest/reference/feature/mpConfig.html) (***mpConfig***), and [Password Utilities](https://openliberty.io/docs/latest/reference/feature/passwordUtilities.html) (***passwordUtilities***). These features are specified in the ***featureManager*** element. The Secure Socket Layer (SSL) context is configured in the ***server.xml*** configuration file so that the application can connect to MongoDB with TLS. The ***keyStore*** element points to the ***truststore.p12*** keystore file that was created in one of the previous sections. The ***ssl*** element specifies the ***defaultKeyStore*** as the keystore and ***outboundTrustStore*** as the truststore.
-
-After you replace the ***server.xml*** file, the Open Liberty configuration is automatically reloaded.
 
 
 ::page{title="Running the application"}
 
 You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
+You can find the ***system*** and ***inventory*** services at the following URLs:
 
-Wait until you see a message similar to the following example:
 
-```
-CWWKZ0001I: Application guide-mongodb-intro started in 5.715 seconds.
-```
+ ***http\://localhost:9080/system/properties***
 
-Click the following button to see the OpenAPI user interface (UI) that provides API documentation and a client to test the API endpoints that you create:
 
-::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
-**Try the Create operation**
-
-From the OpenAPI UI, test the create operation at the ***POST /api/crew*** endpoint by using the following code as the request body:
-
-```
-{
-  "name": "Member1",
-  "rank": "Officer",
-  "crewID": "000001"
-}
+```bash
+curl -s http://localhost:9080/system/properties | jq
 ```
 
-This request creates a new document in the ***Crew*** collection with a name of ***Member1***, rank of ***Officer***, and crew ID of ***000001***.
 
-You'll receive a response that contains the JSON object of the new crew member, as shown in the following example:
+ ***http\://localhost:9080/inventory/systems/localhost***
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl -s http://localhost:9080/inventory/systems/localhost | jq
 ```
-{
-  "Name": "Member1",
-  "Rank": "Officer",
-  "CrewID": "000001",
-  "_id": {
-    "$oid": "<<ID>>"
-  }
-}
+
+
+ ***http\://localhost:9080/inventory/systems***
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl -s http://localhost:9080/inventory/systems | jq
 ```
 
 
 
-The ***\<\<ID\>\>*** that you receive is a unique identifier in the collection. Save this value for future commands.
+::page{title="Testing the inventory application"}
 
-**Try the Retrieve operation**
+While you can test your application manually, you should rely on automated tests because they trigger a failure whenever a code change introduces a defect. Because the application is a RESTful web service application, you can use JUnit and the RESTful web service Client API to write tests. In testing the functionality of the application, the scopes and dependencies are being tested.
 
-From the OpenAPI UI, test the read operation at the ***GET /api/crew*** endpoint. This request gets all crew member documents from the collection.
-
-You'll receive a response that contains an array of all the members in your crew. The response might include crew members that were created in the **Try what you’ll build** section of this guide:
-```
-[
-  {
-    "_id": {
-      "$oid": "<<ID>>"
-    },
-    "Name": "Member1",
-    "Rank": "Officer",
-    "CrewID": "000001"
-  }
-]
-```
-
-
-**Try the Update operation**
-
-
-From the OpenAPI UI, test the update operation at the ***PUT /api/crew/{id}*** endpoint, where the ***{id}*** parameter is the ***\<\<ID\>\>*** that you saved from the create operation. Use the following code as the request body:
-
-```
-{
-  "name": "Member1",
-  "rank": "Captain",
-  "crewID": "000001"
-}
-```
-
-This request updates the rank of the crew member that you created from ***Officer*** to ***Captain***.
-
-You'll receive a response that contains the JSON object of the updated crew member, as shown in the following example:
-
-```
-{
-  "Name": "Member1",
-  "Rank": "Captain",
-  "CrewID": "000001",
-  "_id": {
-    "$oid": "<<ID>>"
-  }
-}
-```
-
-
-**Try the Delete operation**
-
-
-From the OpenAPI UI, test the delete operation at the ***DELETE/api/crew/{id}*** endpoint, where the ***{id}*** parameter is the ***\<\<ID\>\>*** that you saved from the create operation. This request removes the document that contains the specified crew member object ***id*** from the collection.
-
-You'll receive a response that contains the object ***id*** of the deleted crew member, as shown in the following example:
-
-```
-{
-  "_id": {
-    "$oid": "<<ID>>"
-  }
-}
-```
-
-
-Now, you can check out the microservice that you created by clicking the following button:
-
-::startApplication{port="9080" display="external" name="Launch application" route="/mongo"}
-
-
-
-::page{title="Testing the application"}
-
-Next, you'll create integration tests to ensure that the basic operations you implemented function correctly.
-
-Create the ***CrewServiceIT*** class.
+Create the ***InventoryEndpointIT*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-mongodb-intro/start/src/test/java/it/io/openliberty/guides/application/CrewServiceIT.java
+touch /home/project/guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
 ```
 
 
-> Then, to open the CrewServiceIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-mongodb-intro/start/src/test/java/it/io/openliberty/guides/application/CrewServiceIT.java, or click the following button
+> Then, to open the InventoryEndpointIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java, or click the following button
 
-::openFile{path="/home/project/guide-mongodb-intro/start/src/test/java/it/io/openliberty/guides/application/CrewServiceIT.java"}
+::openFile{path="/home/project/guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.application;
+package it.io.openliberty.guides.inventory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.StringReader;
-import java.util.ArrayList;
-
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.TestMethodOrder;
-
-import jakarta.json.Json;
 import jakarta.json.JsonArray;
-import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
-import jakarta.json.JsonObjectBuilder;
-import jakarta.json.JsonReader;
-import jakarta.json.JsonValue;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.client.Entity;
 
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class CrewServiceIT {
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 
-    private static Client client;
-    private static JsonArray testData;
-    private static String rootURL;
-    private static ArrayList<String> testIDs = new ArrayList<>(2);
+@TestMethodOrder(OrderAnnotation.class)
+public class InventoryEndpointIT {
 
-    @BeforeAll
-    public static void setup() {
-        client = ClientBuilder.newClient();
+  private static String port;
+  private static String baseUrl;
 
-        String port = System.getProperty("app.http.port");
-        String context = System.getProperty("app.context.root");
-        rootURL = "http://localhost:" + port + context;
+  private Client client;
 
-        JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
-        JsonObjectBuilder jsonBuilder = Json.createObjectBuilder();
-        jsonBuilder.add("name", "Member1");
-        jsonBuilder.add("crewID", "000001");
-        jsonBuilder.add("rank", "Captain");
-        arrayBuilder.add(jsonBuilder.build());
-        jsonBuilder = Json.createObjectBuilder();
-        jsonBuilder.add("name", "Member2");
-        jsonBuilder.add("crewID", "000002");
-        jsonBuilder.add("rank", "Engineer");
-        arrayBuilder.add(jsonBuilder.build());
-        testData = arrayBuilder.build();
+  private final String SYSTEM_PROPERTIES = "system/properties";
+  private final String INVENTORY_SYSTEMS = "inventory/systems";
+
+  @BeforeAll
+  public static void oneTimeSetup() {
+    port = System.getProperty("http.port");
+    baseUrl = "http://localhost:" + port + "/";
+  }
+
+  @BeforeEach
+  public void setup() {
+    client = ClientBuilder.newClient();
+  }
+
+  @AfterEach
+  public void teardown() {
+    client.close();
+  }
+
+  @Test
+  @Order(1)
+  public void testHostRegistration() {
+    this.visitLocalhost();
+
+    Response response = this.getResponse(baseUrl + INVENTORY_SYSTEMS);
+    this.assertResponse(baseUrl, response);
+
+    JsonObject obj = response.readEntity(JsonObject.class);
+
+    JsonArray systems = obj.getJsonArray("systems");
+
+    boolean localhostExists = false;
+    for (int n = 0; n < systems.size(); n++) {
+      localhostExists = systems.getJsonObject(n)
+                                .get("hostname").toString()
+                                .contains("localhost");
+      if (localhostExists) {
+          break;
+      }
     }
+    assertTrue(localhostExists,
+              "A host was registered, but it was not localhost");
 
-    @AfterAll
-    public static void teardown() {
-        client.close();
-    }
+    response.close();
+  }
 
-    @Test
-    @Order(1)
-    public void testAddCrewMember() {
-        System.out.println("   === Adding " + testData.size()
-                + " crew members to the database. ===");
+  @Test
+  @Order(2)
+  public void testSystemPropertiesMatch() {
+    Response invResponse = this.getResponse(baseUrl + INVENTORY_SYSTEMS);
+    Response sysResponse = this.getResponse(baseUrl + SYSTEM_PROPERTIES);
 
-        for (int i = 0; i < testData.size(); i++) {
-            JsonObject member = (JsonObject) testData.get(i);
-            String url = rootURL + "/api/crew";
-            Response response = client.target(url).request().post(Entity.json(member));
-            this.assertResponse(url, response);
+    this.assertResponse(baseUrl, invResponse);
+    this.assertResponse(baseUrl, sysResponse);
 
-            JsonObject newMember = response.readEntity(JsonObject.class);
-            testIDs.add(newMember.getJsonObject("_id").getString("$oid"));
+    JsonObject jsonFromInventory = (JsonObject) invResponse.readEntity(JsonObject.class)
+                                                           .getJsonArray("systems")
+                                                           .getJsonObject(0)
+                                                           .get("properties");
 
-            response.close();
-        }
-        System.out.println("      === Done. ===");
-    }
+    JsonObject jsonFromSystem = sysResponse.readEntity(JsonObject.class);
 
-    @Test
-    @Order(2)
-    public void testUpdateCrewMember() {
-        System.out.println("   === Updating crew member with id " + testIDs.get(0)
-                + ". ===");
+    String osNameFromInventory = jsonFromInventory.getString("os.name");
+    String osNameFromSystem = jsonFromSystem.getString("os.name");
+    this.assertProperty("os.name", "localhost", osNameFromSystem,
+                        osNameFromInventory);
 
-        JsonObject oldMember = (JsonObject) testData.get(0);
+    String userNameFromInventory = jsonFromInventory.getString("user.name");
+    String userNameFromSystem = jsonFromSystem.getString("user.name");
+    this.assertProperty("user.name", "localhost", userNameFromSystem,
+                        userNameFromInventory);
 
-        JsonObjectBuilder newMember = Json.createObjectBuilder();
-        newMember.add("name", oldMember.get("name"));
-        newMember.add("crewID", oldMember.get("crewID"));
-        newMember.add("rank", "Officer");
+    invResponse.close();
+    sysResponse.close();
+  }
 
-        String url = rootURL + "/api/crew/" + testIDs.get(0);
-        Response response = client.target(url).request()
-                .put(Entity.json(newMember.build()));
+  @Test
+  @Order(3)
+  public void testUnknownHost() {
+    Response response = this.getResponse(baseUrl + INVENTORY_SYSTEMS);
+    this.assertResponse(baseUrl, response);
 
-        this.assertResponse(url, response);
+    Response badResponse = client.target(baseUrl + INVENTORY_SYSTEMS + "/"
+        + "badhostname").request(MediaType.APPLICATION_JSON).get();
 
-        System.out.println("      === Done. ===");
-    }
+    assertEquals(404, badResponse.getStatus(),
+        "BadResponse expected status: 404. Response code not as expected.");
 
-    @Test
-    @Order(3)
-    public void testGetCrewMembers() {
-        System.out.println("   === Listing crew members from the database. ===");
+    String obj = badResponse.readEntity(String.class);
 
-        String url = rootURL + "/api/crew";
-        Response response = client.target(url).request().get();
+    boolean isError = obj.contains("error");
+    assertTrue(isError,
+              "badhostname is not a valid host but it didn't raise an error");
 
-        this.assertResponse(url, response);
+    response.close();
+    badResponse.close();
+  }
 
-        String responseText = response.readEntity(String.class);
-        JsonReader reader = Json.createReader(new StringReader(responseText));
-        JsonArray crew = reader.readArray();
-        reader.close();
+  private Response getResponse(String url) {
+    return client.target(url).request().get();
+  }
 
-        int testMemberCount = 0;
-        for (JsonValue value : crew) {
-            JsonObject member = (JsonObject) value;
-            String id = member.getJsonObject("_id").getString("$oid");
-            if (testIDs.contains(id)) {
-                testMemberCount++;
-            }
-        }
+  private void assertResponse(String url, Response response) {
+    assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+  }
 
-        assertEquals(testIDs.size(), testMemberCount,
-                "Incorrect number of testing members.");
+  private void assertProperty(String propertyName, String hostname,
+      String expected, String actual) {
+    assertEquals(expected, actual, "JVM system property [" + propertyName + "] "
+        + "in the system service does not match the one stored in "
+        + "the inventory service for " + hostname);
+  }
 
-        System.out.println("      === Done. There are " + crew.size()
-                + " crew members. ===");
+  private void visitLocalhost() {
+    Response response = this.getResponse(baseUrl + SYSTEM_PROPERTIES);
+    this.assertResponse(baseUrl, response);
+    response.close();
 
-        response.close();
-    }
-
-    @Test
-    @Order(4)
-    public void testDeleteCrewMember() {
-        System.out.println("   === Removing " + testIDs.size()
-                + " crew members from the database. ===");
-
-        for (String id : testIDs) {
-            String url = rootURL + "/api/crew/" + id;
-            Response response = client.target(url).request().delete();
-            this.assertResponse(url, response);
-            response.close();
-        }
-
-        System.out.println("      === Done. ===");
-    }
-
-    private void assertResponse(String url, Response response) {
-        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
-    }
+    Response targetResponse = client.target(baseUrl + INVENTORY_SYSTEMS
+        + "/localhost").request().get();
+    targetResponse.close();
+  }
 }
 ```
 
 
 
-The test methods are annotated with the ***@Test*** annotation.
+The ***@BeforeAll*** annotation is placed on a method that runs before any of the test cases. In this case, the ***oneTimeSetup()*** method retrieves the port number for the Open Liberty and builds a base URL string that is used throughout the tests.
 
-The following test cases are included in this class:
+The ***@BeforeEach*** and ***@AfterEach*** annotations are placed on methods that run before and after every test case. These methods are generally used to perform any setup and teardown tasks. In this case, the ***setup()*** method creates a JAX-RS client, which makes HTTP requests to the ***inventory*** service. The ***teardown()*** method simply destroys this client instance.
 
-* ***testAddCrewMember()*** verifies that new members are correctly added to the database.
+See the following descriptions of the test cases:
 
-* ***testUpdateCrewMember()*** verifies that a crew member's information is correctly updated.
+* ***testHostRegistration()*** verifies that a host is correctly added to the inventory.
 
-* ***testGetCrewMembers()*** verifies that a list of crew members is returned by the microservice API.
+* ***testSystemPropertiesMatch()*** verifies that the JVM system properties returned by the ***system*** service match the ones stored in the ***inventory*** service.
 
-* ***testDeleteCrewMember()*** verifies that the crew members are correctly removed from the database.
+* ***testUnknownHost()*** verifies that an unknown host or a host that does not expose their JVM system properties is correctly handled as an error.
+
+To force these test cases to run in a particular order, annotate your ***InventoryEndpointIT*** test class with the ***@TestMethodOrder(OrderAnnotation.class)*** annotation. ***OrderAnnotation.class*** runs test methods in numerical order, according to the values specified in the ***@Order*** annotation. You can also create a custom ***MethodOrderer*** class or use built-in ***MethodOrderer*** implementations, such as ***OrderAnnotation.class***, ***Alphanumeric.class***, or ***Random.class***. Label your test cases with the ***@Test*** annotation so that they automatically run when your test class runs.
+
+Finally, the ***src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java*** file is included for you to test the basic functionality of the ***system*** service. If a test failure occurs, then you might have introduced a bug into the code.
+
+
 
 ### Running the tests
 
 Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
 
-You'll see the following output:
+If the tests pass, you see a similar output to the following example:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.application.CrewServiceIT
-   === Adding 2 crew members to the database. ===
-      === Done. ===
-   === Updating crew member with id 5df8e0a004ccc019976c7d0a. ===
-      === Done. ===
-   === Listing crew members from the database. ===
-      === Done. There are 2 crew members. ===
-   === Removing 2 crew members from the database. ===
-      === Done. ===
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.411 s - in it.io.openliberty.guides.application.CrewServiceIT
-Results:
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.99 sec - in it.io.openliberty.guides.system.SystemEndpointIT
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+[err] Runtime exception: RESTEASY004655: Unable to invoke request: java.net.UnknownHostException: badhostname: nodename nor servname provided, or not known
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.325 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+
+Results :
+
 Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-::page{title="Tearing down the environment"}
+The error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the ***testUnknownHost()*** test from the ***InventoryEndpointIT*** integration test.
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
+To see whether the tests detect a failure, change the ***endpoint*** for the ***inventory*** service in the ***src/main/java/io/openliberty/guides/inventory/InventoryResource.java*** file to something else. Then, run the tests again to see that a test failure occurs.
 
-Then, run the following commands to stop and remove the ***mongo-guide*** container and to remove the ***mongo-sample*** and ***mongo*** images.
 
-```bash
-docker stop mongo-guide
-docker rm mongo-guide
-docker rmi mongo-sample
-```
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You've successfully accessed and persisted data to a MongoDB database from a Java microservice using Contexts and Dependency Injection (CDI) and MicroProfile Config with Open Liberty.
+You just used CDI services in Open Liberty to build a simple inventory application.
 
 
 
@@ -1024,36 +543,30 @@ You've successfully accessed and persisted data to a MongoDB database from a Jav
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-mongodb-intro*** project by running the following commands:
+Delete the ***guide-cdi-intro*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-mongodb-intro
+rm -fr guide-cdi-intro
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Persisting%20data%20with%20MongoDB&guide-id=cloud-hosted-guide-mongodb-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Injecting%20dependencies%20into%20microservices&guide-id=cloud-hosted-guide-cdi-intro)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-mongodb-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-mongodb-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-cdi-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-cdi-intro/pulls)
 
 
 
 ### Where to next?
 
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-
-**Learn more about MicroProfile**
-* [See the MicroProfile specs](https://microprofile.io/)
-* [View the MicroProfile API](https://openliberty.io/docs/ref/microprofile)
 
 
 ### Log out of the session
