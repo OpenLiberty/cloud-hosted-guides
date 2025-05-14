@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Injecting dependencies into microservices guide!"}
+::page{title="Welcome to the Containerizing microservices guide!"}
 
-Learn how to use Contexts and Dependency Injection (CDI) to manage scopes and inject dependencies into microservices.
+Learn how to containerize and run your microservices with Open Liberty using Docker.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,21 +14,15 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 ::page{title="What you'll learn"}
 
-You will learn how to use Contexts and Dependency Injection (CDI) to manage scopes and inject dependencies in a simple inventory management application.
 
-The application that you will be working with is an ***inventory*** service, which stores the information about various JVMs that run on different systems. Whenever a request is made to the ***inventory*** service to retrieve the JVM system properties of a particular host, the ***inventory*** service communicates with the ***system*** service on that host to get these system properties. The system properties are then stored and returned.
+From development to production, and across your DevOps environments, you can deploy your microservices in a lightweight and portable manner by using containers. You can run a container from a container image. Each container image is a package of what you need to run your microservice or application, from the code to its dependencies and configuration. If you're new to the development of applications in containers, you might want to start with the [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html) guide before you work through this guide.
 
-You will use scopes to bind objects in this application to their well-defined contexts. CDI provides a variety of scopes for you to work with and while you will not use all of them in this guide, there is one for almost every scenario that you may encounter. Scopes are defined by using CDI annotations. You will also use dependency injection to inject one bean into another to make use of its functionalities. This enables you to inject the bean in its specified context without having to instantiate it yourself.
+You'll learn how to build container images and run containers using [Docker](https://www.docker.com/) for your microservices. You'll learn about the [Open Liberty container images](https://github.com/OpenLiberty/ci.docker) and how to use them for your containerized applications. You'll construct ***Dockerfile*** files, create Docker images by using the ***docker build*** command, and run the image as Docker containers by using ***docker run*** command.
 
-The implementation of the application and its services are provided for you in the ***start/src*** directory. The ***system*** service can be found in the ***start/src/main/java/io/openliberty/guides/system*** directory, and the ***inventory*** service can be found in the ***start/src/main/java/io/openliberty/guides/inventory*** directory. If you want to learn more about RESTful web services and how to build them, see [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) for details about how to build the ***system*** service. The ***inventory*** service is built in a similar way.
-
-### What is CDI?
-
-Contexts and Dependency Injection (CDI) defines a rich set of complementary services that improve the application structure. The most fundamental services that are provided by CDI are contexts that bind the lifecycle of stateful components to well-defined contexts, and dependency injection that is the ability to inject components into an application in a typesafe way. With CDI, the container does all the daunting work of instantiating dependencies, and controlling exactly when and how these components are instantiated and destroyed.
-
-
+The two microservices that you'll be working with are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of the running container. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This guide demonstrates how both microservices can run and communicate with each other in different Docker containers. 
 
 ::page{title="Getting started"}
 
@@ -41,11 +35,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-cdi-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-containerize.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-cdi-intro.git
-cd guide-cdi-intro
+git clone https://github.com/openliberty/guide-containerize.git
+cd guide-containerize
 ```
 
 
@@ -53,292 +47,580 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-### Try what you'll build
 
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+::page{title="Packaging your microservices"}
 
-To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
 
+To begin, run the following command to navigate to the **start** directory:
 ```bash
-cd finish
-./mvnw liberty:run
+cd start
 ```
 
-After you see the following message, your Liberty instance is ready:
+You can find the starting Java project in the ***start*** directory. This project is a multi-module Maven project that is made up of the ***system*** and ***inventory*** microservices. Each microservice is located in its own corresponding directory, ***system*** and ***inventory***.
+
+To try out the microservices by using Maven, run the following Maven goal to build the ***system*** microservice and run it inside Open Liberty:
+
+```bash
+./mvnw -pl system liberty:run
+```
+
+
+Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session and run the following Maven goal to build the **inventory** microservice and run it inside Open Liberty:
+```bash
+cd /home/project/guide-containerize/start
+./mvnw -pl inventory liberty:run
+```
+
+After you see the following message in both command-line sessions, both of your services are ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
 ```
 
+Select **Terminal** > **New Terminal** from the menu of the IDE to open a new command-line session. To access the **inventory** service, which displays the current contents of the inventory, run the following curl command: 
+```bash
+curl -s http://localhost:9081/inventory/systems | jq
+```
+
+The **system** service shows the system properties of the running JVM and can be found by running the following curl command:
+```bash
+curl -s http://localhost:9080/system/properties | jq
+```
+
+The system properties of your localhost can be added to the **inventory** service at **http://localhost:9081/inventory/systems/localhost**. Run the following curl command:
+```bash
+curl -s http://localhost:9081/inventory/systems/localhost | jq
+```
 
 
-Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
-
-
-Point your browser to the ***http\://localhost:9080/inventory/systems*** URL.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
+To package your microservices, run the Maven package goal to build the application ***.war*** files from the start directory so that the ***.war*** files are in the ***system/target*** and ***inventory/target*** directories.
 
 ```bash
-curl -s http://localhost:9080/inventory/systems | jq
+./mvnw package
 ```
 
+To learn more about RESTful web services and how to build them, see [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) for details about how to build the ***system*** service. The ***inventory*** service is built in a similar way.
 
 
-This is the starting point of the ***inventory*** service and it displays the current contents of the inventory. As you might expect, these are empty because nothing is stored in the inventory yet. Next, point your browser to the ***http\://localhost:9080/inventory/systems/localhost*** URL.
+::page{title="Building your Docker images"}
 
+A Docker image is a binary file. It is made up of multiple layers and is used to run code in a Docker container. Images are built from instructions in Dockerfiles to create a containerized version of the application.
 
-_To see the output for this URL in the IDE, run the following command at a terminal:_
+A ***Dockerfile*** is a collection of instructions for building a Docker image that can then be run as a container. As each instruction is run in a ***Dockerfile***, a new Docker layer is created. These layers, which are known as intermediate images, are created when a change is made to your Docker image.
 
-```bash
-curl -s http://localhost:9080/inventory/systems/localhost | jq
-```
+Every ***Dockerfile*** begins with a parent or base image over which various commands are run. For example, you can start your image from scratch and run commands that download and install a Java runtime, or you can start from an image that already contains a Java installation.
 
+Learn more about Docker on the [official Docker page](https://www.docker.com/what-docker).
 
+### Creating your Dockerfiles
+You will be creating two Docker images to run the ***inventory*** service and ***system*** service. The first step is to create Dockerfiles for both services.
 
-You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system properties are automatically stored in the inventory. Go back to ***http\://localhost:9080/inventory/systems***
+In this guide, you're using an official image from the IBM Container Registry (ICR), ***icr.io/appcafe/open-liberty:full-java11-openj9-ubi***, as your parent image. This image is tagged with the word ***full***, meaning it includes all Liberty features. ***full*** images are recommended for development only because they significantly expand the image size with features that are not required by the application.
 
+To minimize your image footprint in production, you can use one of the ***kernel-slim*** images, such as ***icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi***.  This image installs the basic Liberty runtime. You can then add all the necessary features for your application with the usage pattern that is detailed in the Open Liberty [container image documentation](https://openliberty.io/docs/latest/container-images.html#build). To use the default image that comes with the Open Liberty runtime, define the ***FROM*** instruction as ***FROM icr.io/appcafe/open-liberty***. You can find all official images on the Open Liberty [container image repository](https://openliberty.io/docs/latest/container-images.html).
 
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/inventory/systems | jq
-```
-
-
-and you see a new entry for ***localhost***. For simplicity, only the OS name and username are shown here for each host. You can repeat this process for your own hostname or any other machine that is running the ***system*** service.
-
-After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
-
-```bash
-./mvnw liberty:stop
-```
-
-::page{title="Handling dependencies in the application"}
-
-You will use CDI to inject dependencies into the inventory manager application and learn how to manage the life cycles of your objects.
-
-### Managing scopes and contexts
-
-Navigate to the ***start*** directory to begin.
-```bash
-cd /home/project/guide-cdi-intro/start
-```
-
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
-
-```bash
-./mvnw liberty:dev
-```
-
-After you see the following message, your Liberty instance is ready in dev mode:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
-
-Create the ***InventoryManager*** class.
+Create the ***Dockerfile*** for the inventory service.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+touch /home/project/guide-containerize/start/inventory/Dockerfile
 ```
 
 
-> Then, to open the InventoryManager.java file in your IDE, select
-> ***File*** > ***Open*** > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
+> Then, to open the Dockerfile file in your IDE, select
+> ***File*** > ***Open*** > guide-containerize/start/inventory/Dockerfile, or click the following button
 
-::openFile{path="/home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
+::openFile{path="/home/project/guide-containerize/start/inventory/Dockerfile"}
 
 
 
-```java
-package io.openliberty.guides.inventory;
+```
+FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
-import io.openliberty.guides.inventory.model.InventoryList;
-import io.openliberty.guides.inventory.model.SystemData;
-import jakarta.enterprise.context.ApplicationScoped;
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
 
-@ApplicationScoped
-public class InventoryManager {
+LABEL \
+  org.opencontainers.image.authors="Your Name" \
+  org.opencontainers.image.vendor="Open Liberty" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="inventory" \
+  version="$VERSION-$REVISION" \
+  summary="The inventory microservice from the Containerizing microservices guide" \
+  description="This image contains the inventory microservice running with the Open Liberty runtime."
 
-  private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
+COPY --chown=1001:0 \
+    src/main/liberty/config \
+    /config/
 
-  public void add(String hostname, Properties systemProps) {
-    Properties props = new Properties();
-    props.setProperty("os.name", systemProps.getProperty("os.name"));
-    props.setProperty("user.name", systemProps.getProperty("user.name"));
+COPY --chown=1001:0 \
+    target/guide-containerize-inventory.war \
+    /config/apps
 
-    SystemData system = new SystemData(hostname, props);
-    if (!systems.contains(system)) {
-      systems.add(system);
-    }
-  }
-
-  public InventoryList list() {
-    return new InventoryList(systems);
-  }
-}
+RUN configure.sh
 ```
 
 
 Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-This bean contains two simple functions. The ***add()*** function is for adding entries to the inventory. The ***list()*** function is for listing all the entries currently stored in the inventory.
+The ***FROM*** instruction initializes a new build stage, which indicates the parent image of the built image. If you don't need a parent image, then you can use ***FROM scratch***, which makes your image a base image. 
 
-This bean must be persistent between all of the clients, which means multiple clients need to share the same instance. To achieve this by using CDI, you can simply add the ***@ApplicationScoped*** annotation onto the class.
+It is also recommended to label your Docker images with the ***LABEL*** command, as the label information can help you manage your images. For more information, see [Best practices for writing Dockerfiles](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#label).
 
-This annotation indicates that this particular bean is to be initialized once per application. By making it application-scoped, the container ensures that the same instance of the bean is used whenever it is injected into the application.
+The ***COPY*** instructions are structured as ***COPY*** ***[--chown=\<user\>:\<group\>]*** ***\<source\>*** ***\<destination\>***. They copy local files into the specified destination within your Docker image. In this case, the ***inventory*** Liberty configuration files that are located at ***src/main/liberty/config*** are copied to the ***/config/*** destination directory. The ***inventory*** application WAR file ***inventory.war***, which was created from running Maven ***package***, is copied to the ***/config/apps*** destination directory.
 
-Create the ***InventoryResource*** class.
+The ***COPY*** instructions use the ***1001*** user ID  and ***0*** group because the ***icr.io/appcafe/open-liberty:full-java11-openj9-ubi*** image runs by default with the ***USER 1001*** (non-root) user for security purposes. Otherwise, the files and directories that are copied over are owned by the root user.
+
+Place the ***RUN configure.sh*** command at the end to get a pre-warmed Docker image. It improves the startup time of running your Docker container.
+
+The ***Dockerfile*** for the ***system*** service follows the same instructions as the ***inventory*** service, except that some ***labels*** are updated, and the ***system.war*** archive is copied into ***/config/apps***.
+
+Create the ***Dockerfile*** for the system service.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+touch /home/project/guide-containerize/start/system/Dockerfile
 ```
 
 
-> Then, to open the InventoryResource.java file in your IDE, select
-> ***File*** > ***Open*** > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
+> Then, to open the Dockerfile file in your IDE, select
+> ***File*** > ***Open*** > guide-containerize/start/system/Dockerfile, or click the following button
 
-::openFile{path="/home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java"}
+::openFile{path="/home/project/guide-containerize/start/system/Dockerfile"}
+
+
+
+```
+FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
+
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
+
+LABEL \
+  org.opencontainers.image.authors="Your Name" \
+  org.opencontainers.image.vendor="Open Liberty" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="system" \
+  version="$VERSION-$REVISION" \
+  summary="The system microservice from the Containerizing microservices guide" \
+  description="This image contains the system microservice running with the Open Liberty runtime."
+
+COPY --chown=1001:0 src/main/liberty/config /config/
+
+COPY --chown=1001:0 target/guide-containerize-system.war /config/apps
+
+RUN configure.sh
+```
+
+
+
+
+### Building your Docker image
+
+Now that your microservices are packaged and you have written your Dockerfiles, you will build your Docker images by using the ***docker build*** command.
+
+
+
+Run the following commands to build container images for your application:
+
+```bash
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+```
+
+The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
+
+To verify that the images are built, run the ***docker images*** command to list all local Docker images:
+
+```bash
+docker images
+```
+
+Or, run the ***docker images*** command with ***--filter*** option to list your images:
+```bash
+docker images -f "label=org.opencontainers.image.authors=Your Name"
+```
+
+Your ***inventory*** and ***system*** images appear in the list of all Docker images:
+
+```
+REPOSITORY    TAG             IMAGE ID        CREATED          SIZE
+inventory     1.0-SNAPSHOT    08fef024e986    4 minutes ago    1GB
+system        1.0-SNAPSHOT    1dff6d0b4f31    5 minutes ago    977MB
+```
+
+
+::page{title="Running your microservices in Docker containers"}
+
+Now that your two images are built, you will run your microservices in Docker containers:
+
+```bash
+docker run -d --name system -p 9080:9080 system:1.0-SNAPSHOT
+docker run -d --name inventory -p 9081:9081 inventory:1.0-SNAPSHOT
+```
+
+The following table describes the flags in these commands:
+
+| *Flag* | *Description*
+| ---| ---
+| -d     | Runs the container in the background.
+| --name | Specifies a name for the container.
+| -p     | Maps the host ports to the container ports. For example: ***-p \<HOST_PORT\>:\<CONTAINER_PORT\>***
+
+Next, run the ***docker ps*** command to verify that your containers are started:
+
+```bash
+docker ps
+```
+
+Make sure that your containers are running and show ***Up*** as their status:
+
+```
+CONTAINER ID    IMAGE                   COMMAND                  CREATED          STATUS          PORTS                                        NAMES
+2b584282e0f5    inventory:1.0-SNAPSHOT  "/opt/ol/helpers/run…"   2 seconds ago    Up 1 second     9080/tcp, 9443/tcp, 0.0.0.0:9081->9081/tcp   inventory
+99a98313705f    system:1.0-SNAPSHOT     "/opt/ol/helpers/run…"   3 seconds ago    Up 2 seconds    0.0.0.0:9080->9080/tcp, 9443/tcp             system
+```
+
+If a problem occurs and your containers exit prematurely, the containers don't appear in the container list that the ***docker ps*** command displays. Instead, your containers appear with an ***Exited*** status when they run the ***docker ps -a*** command. Run the ***docker logs system*** and ***docker logs inventory*** commands to view the container logs for any potential problems. Run the ***docker stats system*** and ***docker stats inventory*** commands to display a live stream of usage statistics for your containers. You can also double-check that your Dockerfiles are correct. When you find the cause of the issues, remove the faulty containers with the ***docker rm system*** and ***docker rm inventory*** commands. Rebuild your images, and start the containers again.
+
+
+To access the application, run the following curl command. An empty list is expected because no system properties are stored in the inventory yet:
+```bash
+curl -s http://localhost:9081/inventory/systems | jq
+```
+
+Next, retrieve the ***system*** container's IP address by running the following:
+
+```bash
+docker inspect -f "{{.NetworkSettings.IPAddress }}" system
+```
+
+The command returns the system container IP address:
+
+```
+172.17.0.2
+```
+
+In this case, the IP address for the ***system*** service is ***172.17.0.2***. Take note of this IP address to construct the URL to view the system properties. 
+
+
+Run the following commands to go to the **http://localhost:9081/inventory/systems/[system-ip-address]** by replacing **[system-ip-address]** URL with the IP address that you obtained earlier:
+```bash
+SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
+curl -s http://localhost:9081/inventory/systems/{$SYSTEM_IP} | jq
+```
+
+You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system properties are automatically stored in the inventory. Run the following curl command and you see a new entry for **[system-ip-address]**:
+```bash
+curl -s http://localhost:9081/inventory/systems | jq
+```
+
+::page{title="Externalizing Liberty's configuration"}
+
+
+As mentioned at the beginning of this guide, one of the advantages of using containers is that they are portable and can be moved and deployed efficiently across all of your DevOps environments. Configuration often changes across different environments, and by externalizing your Liberty's configuration, you can simplify the development process.
+
+Imagine a scenario where you are developing an Open Liberty application on port ***9081*** but to deploy it to production, it must be available on port ***9091***. To manage this scenario, you can keep two different versions of the ***server.xml*** file; one for production and one for development. However, trying to maintain two different versions of a file might lead to mistakes. A better solution would be to externalize the configuration of the port number and use the value of an environment variable that is stored in each environment. 
+
+In this example, you will use an environment variable to externally configure the HTTP port number of the ***inventory*** service. 
+
+In the ***inventory/server.xml*** file, the ***http.port*** variable is declared and is used in the ***httpEndpoint*** element to define the service endpoint. The default value of the ***http.port*** variable is ***9081***. However, this value is only used if no other value is specified. You can replace this value in the container by using the -e flag for the podman run command. 
+
+Run the following commands to stop and remove the ***inventory*** container and rerun it with the ***http.port*** environment variable set:
+
+```bash
+docker stop inventory
+docker rm inventory 
+docker run -d --name inventory -e http.port=9091 -p 9091:9091 inventory:1.0-SNAPSHOT
+```
+
+The ***-e*** flag can be used to create and set the values of environment variables in a Docker container. In this case, you are setting the ***http.port*** environment variable to ***9091*** for the ***inventory*** container.
+
+Now, when the service is starting up, Open Liberty finds the ***http.port*** environment variable and uses it to set the value of the ***http.port*** variable to be used in the HTTP endpoint.
+
+
+The **inventory** service is now available on the new port number that you specified. You can see the contents of the inventory at the **http://localhost:9091/inventory/systems** URL. Run the following curl command:
+```bash
+curl -s http://localhost:9091/inventory/systems | jq
+```
+
+You can add your local system properties at the **http://localhost:9091/inventory/systems/[system-ip-address]** URL by replacing **[system-ip-address]** with the IP address that you obtained in the previous section. Run the following commands:
+```bash
+SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
+curl -s http://localhost:9091/inventory/systems/{$SYSTEM_IP} | jq
+```
+
+The **system** service remains unchanged and is available at the **http://localhost:9080/system/properties** URL. Run the following curl command:
+```bash
+curl -s http://localhost:9080/system/properties | jq
+```
+
+You can externalize the configuration of more than just the port numbers. To learn more about Open Liberty configuration, check out the [Server Configuration Overview](https://openliberty.io/docs/latest/reference/config/server-configuration-overview.html) docs. 
+
+::page{title="Optimizing the image size"}
+
+As mentioned previously, the parent image that is used in each ***Dockerfile*** contains the ***full*** tag, which includes all of the Liberty features. This parent image with the ***full*** tag is recommended for development, but while deploying to production it is recommended to use a parent image with the ***kernel-slim*** tag. The ***kernel-slim*** tag provides a bare minimum Liberty runtime with the ability to add the features required by the application.
+
+Replace the ***Dockerfile*** for the inventory service.
+
+> To open the Dockerfile file in your IDE, select
+> ***File*** > ***Open*** > guide-containerize/start/inventory/Dockerfile, or click the following button
+
+::openFile{path="/home/project/guide-containerize/start/inventory/Dockerfile"}
+
+
+
+```
+FROM icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi
+
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
+
+LABEL \
+  org.opencontainers.image.authors="Your Name" \
+  org.opencontainers.image.vendor="Open Liberty" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="inventory" \
+  version="$VERSION-$REVISION" \
+  summary="The inventory microservice from the Containerizing microservices guide" \
+  description="This image contains the inventory microservice running with the Open Liberty runtime."
+
+COPY --chown=1001:0 \
+    src/main/liberty/config \
+    /config/
+
+RUN features.sh
+
+COPY --chown=1001:0 \
+    target/guide-containerize-inventory.war \
+    /config/apps
+
+RUN configure.sh
+```
+
+
+
+Replace the parent image with ***icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi*** at the top of your ***Dockerfile***. This image contains the ***kernel-slim*** tag that is recommended when deploying to production.
+
+Place ***RUN features.sh*** command after the ***COPY*** command that copies the local ***/config/*** directory into the ***Docker*** image. The ***features.sh*** script adds the Liberty features that your application is required to operate.
+
+Ensure that you repeat these instructions for the ***system*** service.
+
+Replace the ***Dockerfile*** for the system service.
+
+> To open the Dockerfile file in your IDE, select
+> ***File*** > ***Open*** > guide-containerize/start/system/Dockerfile, or click the following button
+
+::openFile{path="/home/project/guide-containerize/start/system/Dockerfile"}
+
+
+
+```
+FROM icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi
+
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
+
+LABEL \
+  org.opencontainers.image.authors="Your Name" \
+  org.opencontainers.image.vendor="Open Liberty" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="system" \
+  version="$VERSION-$REVISION" \
+  summary="The system microservice from the Containerizing microservices guide" \
+  description="This image contains the system microservice running with the Open Liberty runtime."
+
+COPY --chown=1001:0 src/main/liberty/config /config/
+
+RUN features.sh
+
+COPY --chown=1001:0 target/guide-containerize-system.war /config/apps
+
+RUN configure.sh
+```
+
+
+
+Continue by running the following commands to stop and remove your current ***Docker*** containers that are using the ***full*** parent image:
+
+```bash
+docker stop inventory system
+docker rm inventory system
+```
+
+Next, build your new ***Docker*** images with the ***kernel-slim*** parent image:
+
+```bash
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+```
+
+Verify that the images have been built by executing the following command to list all the local ***Docker*** images:
+
+```bash
+docker images
+```
+
+Notice that the images for the ***inventory*** and ***system*** services now have a reduced image size.
+```
+REPOSITORY      TAG             IMAGE ID        CREATED         SIZE
+inventory       1.0-SNAPSHOT	d5a3d1b2c20e    4 minutes ago	682MB
+system          1.0-SNAPSHOT	6346cf87eae0	5 minutes ago	694MB
+```
+
+After confirming that the images have been built, run the following commands to start the ***Docker*** containers:
+
+```bash
+docker run -d --name system -p 9080:9080 system:1.0-SNAPSHOT
+docker run -d --name inventory -p 9081:9081 inventory:1.0-SNAPSHOT
+```
+
+Once your ***Docker*** containers are running, run the following command to see the list of required features installed by ***features.sh***:
+
+```bash
+docker exec -it inventory /opt/ol/wlp/bin/productInfo featureInfo
+```
+
+Your list of Liberty features should be similar to the following:
+```
+jndi-1.0
+cdi-4.0
+jsonb-3.0
+jsonp-2.1
+mpConfig-3.1
+restfulWS-3.1
+restfulWSClient-3.1
+```
+
+
+The **system** service which shows the system properties of the running JVM is now available to be accessed at **http://localhost:9080/system/properties**. Run the following curl command:
+```bash
+curl -s http://localhost:9080/system/properties | jq
+```
+
+Next, you can add your local system properties at the **http://localhost:9081/inventory/systems/[system-ip-address]** URL by replacing **[system-ip-address]** with the IP address that you obtained in the previous section. Run the following commands:
+```bash
+SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
+curl -s http://localhost:9081/inventory/systems/{$SYSTEM_IP} | jq
+```
+
+Then, verify the addition of your localhost system properties to the **inventory** service at **http://localhost:9081/inventory/systems**. Run the following curl command:
+```bash
+curl -s http://localhost:9081/inventory/systems | jq
+```
+
+::page{title="Testing the microservices"}
+
+You can test your microservices manually by hitting the endpoints or with automated tests that check your running Docker containers.
+
+Create the ***SystemEndpointIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
+```
+
+
+> Then, to open the SystemEndpointIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java, or click the following button
+
+::openFile{path="/home/project/guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java"}
 
 
 
 ```java
-package io.openliberty.guides.inventory;
+package it.io.openliberty.guides.system;
 
-import java.util.Properties;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.Response;
-import io.openliberty.guides.inventory.model.InventoryList;
-import io.openliberty.guides.inventory.client.SystemClient;
 
-@ApplicationScoped
-@Path("/systems")
-public class InventoryResource {
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-  @Inject
-  InventoryManager manager;
+public class SystemEndpointIT {
 
-  @Inject
-  SystemClient systemClient;
+    private static String clusterUrl;
 
-  @GET
-  @Path("/{hostname}")
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response getPropertiesForHost(@PathParam("hostname") String hostname) {
-    Properties props = systemClient.getProperties(hostname);
-    if (props == null) {
-      return Response.status(Response.Status.NOT_FOUND)
-                     .entity("{ \"error\" : \"Unknown hostname " + hostname
-                             + " or the inventory service may not be running "
-                             + "on the host machine \" }")
-                     .build();
+    private Client client;
+
+    @BeforeAll
+    public static void oneTimeSetup() {
+        String nodePort = System.getProperty("system.http.port");
+        clusterUrl = "http://localhost:" + nodePort + "/system/properties/";
     }
 
-    manager.add(hostname, props);
-    return Response.ok(props).build();
-  }
+    @BeforeEach
+    public void setup() {
+        client = ClientBuilder.newBuilder()
+                    .hostnameVerifier(new HostnameVerifier() {
+                        public boolean verify(String hostname, SSLSession session) {
+                            return true;
+                        }
+                    })
+                    .build();
+    }
 
-  @GET
-  @Produces(MediaType.APPLICATION_JSON)
-  public InventoryList listContents() {
-    return manager.list();
-  }
+    @AfterEach
+    public void teardown() {
+        client.close();
+    }
+
+    @Test
+    public void testGetProperties() {
+        Client client = ClientBuilder.newClient();
+
+        WebTarget target = client.target(clusterUrl);
+        Response response = target.request().get();
+
+        assertEquals(200, response.getStatus(),
+            "Incorrect response code from " + clusterUrl);
+        response.close();
+    }
+
 }
 ```
 
 
 
-The inventory resource is a RESTful service that is served at the ***inventory/systems*** endpoint. 
-
-Annotating a class with the ***@ApplicationScoped*** annotation indicates that the bean is initialized once and is shared between all requests while the application runs.
-
-If you want this bean to be initialized once for every request, you can annotate the class with the ***@RequestScoped*** annotation instead. With the ***@RequestScoped*** annotation, the bean is instantiated when the request is received and destroyed when a response is sent back to the client. A request scope is short-lived.
-
-### Injecting a dependency
-
-Refer to the ***InventoryResource*** class you created above.
-
-The ***@Inject*** annotation indicates a dependency injection. You are injecting your ***InventoryManager*** and ***SystemClient*** beans into the ***InventoryResource*** class. This injects the beans in their specified context and makes all of their functionalities available without the need of instantiating them yourself. The injected bean ***InventoryManager*** can then be invoked directly through the ***manager.add(hostname, props)*** and ***manager.list()*** function calls. The injected bean ***SystemClient*** can be invoked through the ***systemClient.getProperties(hostname)*** function call.
-
-Finally, you have a client component ***SystemClient*** that can be found in the ***src/main/java/io/openliberty/guides/inventory/client*** directory. This class communicates with the ***system*** service to retrieve the JVM system properties for a particular host that exposes them. This class also contains detailed Javadocs that you can read for reference.
-
-Your inventory application is now completed.
-
-
-
-
-::page{title="Running the application"}
-
-You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
-
-You can find the ***system*** and ***inventory*** services at the following URLs:
-
-
- ***http\://localhost:9080/system/properties***
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/system/properties | jq
-```
-
-
- ***http\://localhost:9080/inventory/systems/localhost***
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/inventory/systems/localhost | jq
-```
-
-
- ***http\://localhost:9080/inventory/systems***
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/inventory/systems | jq
-```
-
-
-
-::page{title="Testing the inventory application"}
-
-While you can test your application manually, you should rely on automated tests because they trigger a failure whenever a code change introduces a defect. Because the application is a RESTful web service application, you can use JUnit and the RESTful web service Client API to write tests. In testing the functionality of the application, the scopes and dependencies are being tested.
+The ***testGetProperties()*** method checks for a ***200*** response code from the ***system*** service endpoint.
 
 Create the ***InventoryEndpointIT*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
+touch /home/project/guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
 ```
 
 
 > Then, to open the InventoryEndpointIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java, or click the following button
+> ***File*** > ***Open*** > guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java, or click the following button
 
-::openFile{path="/home/project/guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java"}
+::openFile{path="/home/project/guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java"}
 
 
 
@@ -348,15 +630,15 @@ package it.io.openliberty.guides.inventory;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
@@ -366,189 +648,200 @@ import org.junit.jupiter.api.TestMethodOrder;
 @TestMethodOrder(OrderAnnotation.class)
 public class InventoryEndpointIT {
 
-  private static String port;
-  private static String baseUrl;
+    private static String invUrl;
+    private static String sysUrl;
+    private static String systemServiceIp;
 
-  private Client client;
+    private static Client client;
 
-  private final String SYSTEM_PROPERTIES = "system/properties";
-  private final String INVENTORY_SYSTEMS = "inventory/systems";
+    @BeforeAll
+    public static void oneTimeSetup() {
 
-  @BeforeAll
-  public static void oneTimeSetup() {
-    port = System.getProperty("http.port");
-    baseUrl = "http://localhost:" + port + "/";
-  }
+        String invServPort = System.getProperty("inventory.http.port");
+        String sysServPort = System.getProperty("system.http.port");
 
-  @BeforeEach
-  public void setup() {
-    client = ClientBuilder.newClient();
-  }
+        systemServiceIp = System.getProperty("system.ip");
 
-  @AfterEach
-  public void teardown() {
-    client.close();
-  }
+        invUrl = "http://localhost" + ":" + invServPort + "/inventory/systems/";
+        sysUrl = "http://localhost" + ":" + sysServPort + "/system/properties/";
 
-  @Test
-  @Order(1)
-  public void testHostRegistration() {
-    this.visitLocalhost();
+        client = ClientBuilder.newBuilder().hostnameVerifier(new HostnameVerifier() {
+            public boolean verify(String hostname, SSLSession session) {
+                return true;
+            }
+        }).build();
 
-    Response response = this.getResponse(baseUrl + INVENTORY_SYSTEMS);
-    this.assertResponse(baseUrl, response);
-
-    JsonObject obj = response.readEntity(JsonObject.class);
-
-    JsonArray systems = obj.getJsonArray("systems");
-
-    boolean localhostExists = false;
-    for (int n = 0; n < systems.size(); n++) {
-      localhostExists = systems.getJsonObject(n)
-                                .get("hostname").toString()
-                                .contains("localhost");
-      if (localhostExists) {
-          break;
-      }
+        client.target(invUrl + "reset").request().post(null);
     }
-    assertTrue(localhostExists,
-              "A host was registered, but it was not localhost");
 
-    response.close();
-  }
+    @AfterAll
+    public static void teardown() {
+        client.close();
+    }
 
-  @Test
-  @Order(2)
-  public void testSystemPropertiesMatch() {
-    Response invResponse = this.getResponse(baseUrl + INVENTORY_SYSTEMS);
-    Response sysResponse = this.getResponse(baseUrl + SYSTEM_PROPERTIES);
+    @Test
+    @Order(1)
+    public void testEmptyInventory() {
+        Response response = this.getResponse(invUrl);
+        this.assertResponse(invUrl, response);
 
-    this.assertResponse(baseUrl, invResponse);
-    this.assertResponse(baseUrl, sysResponse);
+        JsonObject obj = response.readEntity(JsonObject.class);
 
-    JsonObject jsonFromInventory = (JsonObject) invResponse.readEntity(JsonObject.class)
-                                                           .getJsonArray("systems")
-                                                           .getJsonObject(0)
-                                                           .get("properties");
+        int expected = 0;
+        int actual = obj.getInt("total");
+        assertEquals(expected, actual,
+                    "The inventory should be empty on application start but it wasn't");
 
-    JsonObject jsonFromSystem = sysResponse.readEntity(JsonObject.class);
+        response.close();
+    }
 
-    String osNameFromInventory = jsonFromInventory.getString("os.name");
-    String osNameFromSystem = jsonFromSystem.getString("os.name");
-    this.assertProperty("os.name", "localhost", osNameFromSystem,
+    @Test
+    @Order(2)
+    public void testHostRegistration() {
+        this.visitSystemService();
+
+        Response response = this.getResponse(invUrl);
+        this.assertResponse(invUrl, response);
+
+        JsonObject obj = response.readEntity(JsonObject.class);
+
+        int expected = 1;
+        int actual = obj.getInt("total");
+        assertEquals(expected, actual,
+                        "The inventory should have one entry for " + systemServiceIp);
+
+        boolean serviceExists = obj.getJsonArray("systems").getJsonObject(0)
+                        .get("hostname").toString().contains(systemServiceIp);
+        assertTrue(serviceExists,
+                        "A host was registered, but it was not " + systemServiceIp);
+
+        response.close();
+    }
+
+    @Test
+    @Order(3)
+    public void testSystemPropertiesMatch() {
+        Response invResponse = this.getResponse(invUrl);
+        Response sysResponse = this.getResponse(sysUrl);
+
+        this.assertResponse(invUrl, invResponse);
+        this.assertResponse(sysUrl, sysResponse);
+
+        JsonObject jsonFromInventory = (JsonObject) invResponse
+                        .readEntity(JsonObject.class).getJsonArray("systems")
+                        .getJsonObject(0).get("properties");
+
+        JsonObject jsonFromSystem = sysResponse.readEntity(JsonObject.class);
+
+        String osNameFromInventory = jsonFromInventory.getString("os.name");
+        String osNameFromSystem = jsonFromSystem.getString("os.name");
+        this.assertProperty("os.name", systemServiceIp, osNameFromSystem,
                         osNameFromInventory);
 
-    String userNameFromInventory = jsonFromInventory.getString("user.name");
-    String userNameFromSystem = jsonFromSystem.getString("user.name");
-    this.assertProperty("user.name", "localhost", userNameFromSystem,
+        String userNameFromInventory = jsonFromInventory.getString("user.name");
+        String userNameFromSystem = jsonFromSystem.getString("user.name");
+        this.assertProperty("user.name", systemServiceIp, userNameFromSystem,
                         userNameFromInventory);
 
-    invResponse.close();
-    sysResponse.close();
-  }
+        invResponse.close();
+        sysResponse.close();
+    }
 
-  @Test
-  @Order(3)
-  public void testUnknownHost() {
-    Response response = this.getResponse(baseUrl + INVENTORY_SYSTEMS);
-    this.assertResponse(baseUrl, response);
+    @Test
+    @Order(4)
+    public void testUnknownHost() {
+        Response response = this.getResponse(invUrl);
+        this.assertResponse(invUrl, response);
 
-    Response badResponse = client.target(baseUrl + INVENTORY_SYSTEMS + "/"
-        + "badhostname").request(MediaType.APPLICATION_JSON).get();
+        Response badResponse = client.target(invUrl + "badhostname")
+                        .request(MediaType.APPLICATION_JSON).get();
 
-    assertEquals(404, badResponse.getStatus(),
-        "BadResponse expected status: 404. Response code not as expected.");
+        String obj = badResponse.readEntity(String.class);
 
-    String obj = badResponse.readEntity(String.class);
+        boolean isError = obj.contains("error");
+        assertTrue(isError,
+                        "badhostname is not a valid host but it didn't raise an error");
 
-    boolean isError = obj.contains("error");
-    assertTrue(isError,
-              "badhostname is not a valid host but it didn't raise an error");
+        response.close();
+        badResponse.close();
+    }
 
-    response.close();
-    badResponse.close();
-  }
+    private Response getResponse(String url) {
+        return client.target(url).request().get();
+    }
 
-  private Response getResponse(String url) {
-    return client.target(url).request().get();
-  }
 
-  private void assertResponse(String url, Response response) {
-    assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
-  }
+    private void assertResponse(String url, Response response) {
+        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+    }
 
-  private void assertProperty(String propertyName, String hostname,
-      String expected, String actual) {
-    assertEquals(expected, actual, "JVM system property [" + propertyName + "] "
-        + "in the system service does not match the one stored in "
-        + "the inventory service for " + hostname);
-  }
+    private void assertProperty(String propertyName, String hostname, String expected,
+                    String actual) {
+        assertEquals(expected, actual, "JVM system property [" + propertyName + "] "
+                        + "in the system service does not match the one stored in "
+                        + "the inventory service for " + hostname);
+    }
 
-  private void visitLocalhost() {
-    Response response = this.getResponse(baseUrl + SYSTEM_PROPERTIES);
-    this.assertResponse(baseUrl, response);
-    response.close();
+    private void visitSystemService() {
+        Response response = this.getResponse(sysUrl);
+        this.assertResponse(sysUrl, response);
+        response.close();
 
-    Response targetResponse = client.target(baseUrl + INVENTORY_SYSTEMS
-        + "/localhost").request().get();
-    targetResponse.close();
-  }
+        Response targetResponse = client.target(invUrl + systemServiceIp).request()
+                        .get();
+
+        targetResponse.close();
+    }
 }
 ```
 
 
 
-The ***@BeforeAll*** annotation is placed on a method that runs before any of the test cases. In this case, the ***oneTimeSetup()*** method retrieves the port number for the Open Liberty and builds a base URL string that is used throughout the tests.
-
-The ***@BeforeEach*** and ***@AfterEach*** annotations are placed on methods that run before and after every test case. These methods are generally used to perform any setup and teardown tasks. In this case, the ***setup()*** method creates a JAX-RS client, which makes HTTP requests to the ***inventory*** service. The ***teardown()*** method simply destroys this client instance.
-
-See the following descriptions of the test cases:
-
-* ***testHostRegistration()*** verifies that a host is correctly added to the inventory.
-
-* ***testSystemPropertiesMatch()*** verifies that the JVM system properties returned by the ***system*** service match the ones stored in the ***inventory*** service.
-
-* ***testUnknownHost()*** verifies that an unknown host or a host that does not expose their JVM system properties is correctly handled as an error.
-
-To force these test cases to run in a particular order, annotate your ***InventoryEndpointIT*** test class with the ***@TestMethodOrder(OrderAnnotation.class)*** annotation. ***OrderAnnotation.class*** runs test methods in numerical order, according to the values specified in the ***@Order*** annotation. You can also create a custom ***MethodOrderer*** class or use built-in ***MethodOrderer*** implementations, such as ***OrderAnnotation.class***, ***Alphanumeric.class***, or ***Random.class***. Label your test cases with the ***@Test*** annotation so that they automatically run when your test class runs.
-
-Finally, the ***src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java*** file is included for you to test the basic functionality of the ***system*** service. If a test failure occurs, then you might have introduced a bug into the code.
-
-
+* The ***testEmptyInventory()*** method checks that the ***inventory*** service has a total of 0 systems before anything is added to it.
+* The ***testHostRegistration()*** method checks that the ***system*** service was added to ***inventory*** properly.
+* The ***testSystemPropertiesMatch()*** checks that the ***system*** properties match what was added into the ***inventory*** service.
+* The ***testUnknownHost()*** method checks that an error is raised if an unknown host name is being added into the ***inventory*** service.
+* The ***systemServiceIp*** variable has the same value as the IP address that you retrieved in the previous section when you manually added the ***system*** service into the ***inventory*** service. This value of the IP address is passed in when you run the tests.
 
 ### Running the tests
 
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
-
-If the tests pass, you see a similar output to the following example:
+If the tests pass, you see output similar to the following example:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
 Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.99 sec - in it.io.openliberty.guides.system.SystemEndpointIT
-Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-[err] Runtime exception: RESTEASY004655: Unable to invoke request: java.net.UnknownHostException: badhostname: nodename nor servname provided, or not known
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.325 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.653 s - in it.io.openliberty.guides.system.SystemEndpointIT
 
-Results :
+Results:
+
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.935 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+
+Results:
 
 Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-The error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the ***testUnknownHost()*** test from the ***InventoryEndpointIT*** integration test.
+When you are finished with the services, run the following commands to stop and remove your containers:
 
-To see whether the tests detect a failure, change the ***endpoint*** for the ***inventory*** service in the ***src/main/java/io/openliberty/guides/inventory/InventoryResource.java*** file to something else. Then, run the tests again to see that a test failure occurs.
+```bash
+docker stop inventory system 
+docker rm inventory system
+```
 
-
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just used CDI services in Open Liberty to build a simple inventory application.
+You have just built Docker images and run two microservices on Open Liberty in containers. 
 
 
 
@@ -557,30 +850,31 @@ You just used CDI services in Open Liberty to build a simple inventory applicati
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-cdi-intro*** project by running the following commands:
+Delete the ***guide-containerize*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-cdi-intro
+rm -fr guide-containerize
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Injecting%20dependencies%20into%20microservices&guide-id=cloud-hosted-guide-cdi-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Containerizing%20microservices&guide-id=cloud-hosted-guide-containerize)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-cdi-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-cdi-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-containerize/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-containerize/pulls)
 
 
 
 ### Where to next?
 
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
 
 
 ### Log out of the session
