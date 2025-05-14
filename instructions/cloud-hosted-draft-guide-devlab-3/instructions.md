@@ -126,6 +126,20 @@ Navigate to the ***start*** directory to begin.
 cd /home/project/guide-cdi-intro/start
 ```
 
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+
+```bash
+./mvnw liberty:dev
+```
+
+After you see the following message, your Liberty instance is ready in dev mode:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
 Create the ***InventoryManager*** class.
 
