@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Consuming RESTful services with template interfaces guide!"}
+::page{title="Welcome to the Creating a hypermedia-driven RESTful web service guide!"}
 
-Learn how to use MicroProfile Rest Client to invoke RESTful microservices over HTTP in a type-safe way.
+You'll explore how to use Hypermedia As The Engine Of Application State (HATEOAS) to drive your RESTful web service on Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,19 +14,86 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 ::page{title="What you'll learn"}
 
-You will learn how to build a MicroProfile Rest Client to access remote RESTful services. You will create a template interface that maps to the remote service that you want to call. MicroProfile Rest Client automatically generates a client instance based on what is defined and annotated in the template interface. Thus, you don't have to worry about all of the boilerplate code, such as setting up a client class, connecting to the remote server, or invoking the correct URI with the correct parameters.
+You will learn how to use hypermedia to create a specific style of a response JSON, which has contents that you can use to navigate your REST service. You'll build on top of a simple inventory REST service that you can develop with MicroProfile technologies. You can find the service at the following URL:
 
-The application that you will be working with is an ***inventory*** service, which fetches and stores the system property information for different hosts. Whenever a request is made to retrieve the system properties of a particular host, the ***inventory*** service will create a client to invoke the ***system*** service on that host. The ***system*** service simulates a remote service in the application.
+```
+http://localhost:9080/inventory/hosts
+```
 
-You will instantiate the client and use it in the ***inventory*** service. You can choose from two different approaches, [Context and Dependency Injection (CDI)](https://openliberty.io/docs/latest/cdi-beans.html) with the help of MicroProfile Config or the [RestClientBuilder](https://openliberty.io/blog/2018/01/31/mpRestClient.html) method. In this guide, you will explore both methods to handle scenarios for providing a valid base URL.
+The service responds with a JSON file that contains all of the registered hosts. Each host has a collection of HATEOAS links:
 
- * When the base URL of the remote service is static and known, define the default base URL in the configuration file. Inject the client with a CDI method.
+```
+{
+  "foo": [
+    {
+      "href": "http://localhost:9080/inventory/hosts/foo",
+      "rel": "self"
+    }
+  ],
+  "bar": [
+    {
+      "href": "http://localhost:9080/inventory/hosts/bar",
+      "rel": "self"
+    }
+  ],
+  "*": [
+    {
+      "href": "http://localhost:9080/inventory/hosts/*",
+      "rel": "self"
+    }
+  ]
+}
+```
 
- * When the base URL is not yet known and needs to be determined during the run time, set the base URL as a variable. Build the client with the more verbose ***RestClientBuilder*** method.
+### What is HATEOAS?
 
+HATEOAS is a constraint of REST application architectures. With HATEOAS, the client receives information about the available resources from the REST application. The client does not need to be hardcoded to a fixed set of resources, and the application and client can evolve independently. In other words, the application tells the client where it can go and what it can access by providing it with a simple collection of links to other available resources.
+
+### Response JSON
+
+In the context of HATEOAS, each resource must contain a link reference to itself, which is commonly referred to as ***self***. In this guide, the JSON structure features a mapping between the hostname and its corresponding list of HATEOAS links:
+
+```
+  "*": [
+    {
+      "href": "http://localhost:9080/inventory/hosts/*",
+      "rel": "self"
+    }
+  ]
+```
+
+#### Link types
+
+The following example shows two different links. The first link has a ***self*** relationship with the resource object and is generated whenever you register a host. The link points to that host entry in the inventory:
+
+```
+  {
+    "href": "http://localhost:9080/inventory/hosts/<hostname>",
+    "rel": "self"
+  }
+```
+
+The second link has a ***properties*** relationship with the resource object and is generated if the host ***system*** service is running. The link points to the properties resource on the host:
+
+```
+  {
+    "href": "http://<hostname>:9080/system/properties",
+    "rel": "properties"
+  }
+```
+
+#### Other formats
+
+Although you should stick to the previous format for the purpose of this guide, another common convention has the link as the value of the relationship:
+
+```
+  "_links": {
+      "self": "http://localhost:9080/inventory/hosts/<hostname>",
+      "properties": "http://<hostname>:9080/system/properties"
+  }
+```
 
 ::page{title="Getting started"}
 
@@ -39,11 +106,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-rest-client.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-hateoas.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-microprofile-rest-client.git
-cd guide-microprofile-rest-client
+git clone https://github.com/openliberty/guide-rest-hateoas.git
+cd guide-rest-hateoas
 ```
 
 
@@ -69,36 +136,10 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 
-
-Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
-
-
-The ***system*** microservice simulates a service that returns the system property information for the host. The ***system*** service is accessible at the ***http\://localhost:9080/system/properties*** URL. In this case, ***localhost*** is the host name.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+After the Liberty instance runs, you can find your hypermedia-driven ***inventory*** service at the ***/inventory/hosts*** endpoint. Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following curl command:
 ```bash
-curl -s http://localhost:9080/system/properties | jq
+curl -s http://localhost:9080/inventory/hosts | jq
 ```
-
-
-
-
-The ***inventory*** microservice makes a request to the ***system*** microservice and stores the system property information.  To fetch and store your system information, visit the ***http\://localhost:9080/inventory/systems/localhost*** URL.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/inventory/systems/localhost | jq
-```
-
-
-
-
-You can also use the ***http://localhost:9080/inventory/systems/{your-hostname}*** URL. In Windows, MacOS, and Linux, get your fully qualified domain name (FQDN) by entering **hostname** into your command-line. Visit the URL by replacing ***{your-hostname}*** with your FQDN.
-
 
 After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
@@ -106,12 +147,13 @@ After you are finished checking out the application, stop the Liberty instance b
 ./mvnw liberty:stop
 ```
 
-::page{title="Writing the RESTful client interface"}
 
-Now, navigate to the ***start*** directory to begin.
 
+::page{title="Creating the response JSON"}
+
+Navigate to the ***start*** directory.
 ```bash
-cd /home/project/guide-microprofile-rest-client/start
+cd /home/project/guide-rest-hateoas/start
 ```
 
 When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
@@ -129,508 +171,484 @@ After you see the following message, your Liberty instance is ready in dev mode:
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-The MicroProfile Rest Client API is included in the MicroProfile dependency specified by your ***pom.xml*** file. Look for the dependency with the ***microprofile*** artifact ID.
+Begin by building your response JSON, which is composed of the name of the host machine and its list of HATEOAS links.
 
+### Linking to inventory contents
 
-This dependency provides a library that is required to implement the MicroProfile Rest Client interface.
+As mentioned before, your starting point is an existing simple inventory REST service. 
 
-The ***mpRestClient*** feature is also enabled in the ***src/main/liberty/config/server.xml*** file. This feature enables your Open Liberty to use MicroProfile Rest Client to invoke RESTful microservices.
+Look at the request handlers in the ***InventoryResource.java*** file.
 
+The ***.../inventory/hosts/*** URL will no longer respond with a JSON representation of your inventory contents, so you can discard the ***listContents*** method and integrate it into the ***getPropertiesForHost*** method.
 
-The code for the ***system*** service in the ***src/main/java/io/openliberty/guides/system*** directory is provided for you. It simulates a remote RESTful service that the ***inventory*** service invokes.
+Replace the ***InventoryResource*** class.
 
-Create a RESTful client interface for the ***system*** service. Write a template interface that maps the API of the remote ***system*** service. The template interface describes the remote service that you want to access. The interface defines the resource to access as a method by mapping its annotations, return type, list of arguments, and exception declarations.
+> To open the InventoryResource.java file in your IDE, select
+> ***File*** > ***Open*** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryResource.java, or click the following button
 
-Create the ***SystemClient*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
-```
-
-
-> Then, to open the SystemClient.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java"}
+::openFile{path="/home/project/guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryResource.java"}
 
 
 
 ```java
-package io.openliberty.guides.inventory.client;
+package io.openliberty.guides.microprofile;
 
-import java.util.Properties;
-
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.ProcessingException;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.UriInfo;
 
-import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
-import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+@ApplicationScoped
+@Path("hosts")
+public class InventoryResource {
 
-@RegisterRestClient(configKey = "systemClient",
-                     baseUri = "http://localhost:9080/system")
-@RegisterProvider(UnknownUriExceptionMapper.class)
-@Path("/properties")
-public interface SystemClient extends AutoCloseable {
+    @Inject
+    InventoryManager manager;
 
-  @GET
-  @Produces(MediaType.APPLICATION_JSON)
-  Properties getProperties() throws UnknownUriException, ProcessingException;
+    @Context
+    UriInfo uriInfo;
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public JsonObject handler() {
+        return manager.getSystems(uriInfo.getAbsolutePath().toString());
+    }
+
+    @GET
+    @Path("{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public JsonObject getPropertiesForHost(@PathParam("hostname") String hostname) {
+        return (hostname.equals("*")) ? manager.list() : manager.get(hostname);
+    }
 }
 ```
 
 
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
-
-
-The MicroProfile Rest Client feature automatically builds and generates a client implementation based on what is defined in the ***SystemClient*** interface. There is no need to set up the client and connect with the remote service.
-
-Notice the ***SystemClient*** interface inherits the ***AutoCloseable*** interface. This allows the user to explicitly close the client instance by invoking the ***close()*** method or to implicitly close the client instance using a try-with-resources block. When the client instance is closed, all underlying resources associated with the client instance are cleaned up. Refer to the [MicroProfile Rest Client specification](https://github.com/eclipse/microprofile-rest-client/releases) for more details.
-
-When the ***getProperties()*** method is invoked, the ***SystemClient*** instance sends a GET request to the ***\<baseUrl\>/properties*** endpoint, where ***\<baseUrl\>*** is the default base URL of the ***system*** service. You will see how to configure the base URL in the next section.
-
-The ***@Produces*** annotation specifies the media (MIME) type of the expected response. The default value is ***MediaType.APPLICATION_JSON***.
-
-The ***@RegisterProvider*** annotation tells the framework to register the provider classes to be used when the framework invokes the interface. You can add as many providers as necessary. In the ***SystemClient*** interface, add a response exception mapper as a provider to map the ***404*** response code with the ***UnknownUriException*** exception.
-
-### Handling exceptions through ResponseExceptionMappers
-
-Error handling is an important step to ensure that the application can fail safely. If there is an error response such as ***404 NOT FOUND*** when invoking the remote service, you need to handle it. First, define an exception, and map the exception with the error response code. Then, register the exception mapper in the client interface.
-
-Look at the client interface again, the ***@RegisterProvider*** annotation registers the ***UnknownUriExceptionMapper*** response exception mapper. An exception mapper maps various response codes from the remote service to throwable exceptions.
-
-
-Implement the actual exception class and the mapper class to see how this mechanism works.
-
-Create the ***UnknownUriException*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
-```
-
-
-> Then, to open the UnknownUriException.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java"}
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
 
-```java
-package io.openliberty.guides.inventory.client;
+The contents of your inventory are now under the asterisk (`*`) wildcard and reside at the `http://localhost:9080/inventory/hosts/*` URL.
 
-public class UnknownUriException extends Exception {
+The ***GET*** request handler is responsible for handling all ***GET*** requests that are made to the target URL. This method responds with a JSON that contains HATEOAS links.
 
-  private static final long serialVersionUID = 1L;
+The ***UriInfo*** object is what will be used to build your HATEOAS links.
 
-  public UnknownUriException() {
-    super();
-  }
+The ***@Context*** annotation is a part of CDI and indicates that the ***UriInfo*** will be injected when the resource is instantiated.
 
-  public UnknownUriException(String message) {
-    super(message);
-  }
-}
-```
+Your new ***InventoryResource*** class is now replaced. Next, you will implement the ***getSystems*** method and build the response JSON object.
 
 
+### Linking to each available resource
 
-Now, link the ***UnknownUriException*** class with the corresponding response code through a ***ResponseExceptionMapper*** mapper class.
-
-Create the ***UnknownUriExceptionMapper*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
-```
-
-
-> Then, to open the UnknownUriExceptionMapper.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java"}
-
-
-
-```java
-package io.openliberty.guides.inventory.client;
-
-import java.util.logging.Logger;
-import jakarta.ws.rs.core.MultivaluedMap;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.ext.Provider;
-import org.eclipse.microprofile.rest.client.ext.ResponseExceptionMapper;
-
-@Provider
-public class UnknownUriExceptionMapper
-    implements ResponseExceptionMapper<UnknownUriException> {
-  Logger LOG = Logger.getLogger(UnknownUriExceptionMapper.class.getName());
-
-  @Override
-  public boolean handles(int status, MultivaluedMap<String, Object> headers) {
-    LOG.info("status = " + status);
-    return status == 404;
-  }
-
-  @Override
-  public UnknownUriException toThrowable(Response response) {
-    return new UnknownUriException();
-  }
-}
-```
-
-
-
-The ***handles()*** method inspects the HTTP response code to determine whether an exception is thrown for the specific response, and the ***toThrowable()*** method returns the mapped exception.
-
-::page{title="Injecting the client with dependency injection"}
-
-Now, instantiate the ***SystemClient*** interface and use it in the ***inventory*** service. If you want to connect only with the default host name, you can easily instantiate the ***SystemClient*** with CDI annotations. CDI injection simplifies the process of bootstrapping the client.
-
-First, you need to define the base URL of the ***SystemClient*** instance. Configure the default base URL with the MicroProfile Config feature. This feature is enabled for you in the ***server.xml*** file.
-
-Create the configuration file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-microprofile-rest-client/start/src/main/resources/META-INF/microprofile-config.properties
-```
-
-
-> Then, to open the microprofile-config.properties file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/main/resources/META-INF/microprofile-config.properties, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-rest-client/start/src/main/resources/META-INF/microprofile-config.properties"}
-
-
-
-```
-systemClient/mp-rest/uri=http://localhost:9080/system
-```
-
-
-
-The ***mp-rest/uri*** base URL config property is configured to the default ***http://localhost:9080/system*** URL.
-
-This configuration is automatically picked up by the MicroProfile Config API.
-
-Look at the annotations in the ***SystemClient*** interface again.
-
-
-The ***@RegisterRestClient*** annotation registers the interface as a RESTful client. The runtime creates a CDI managed bean for every interface that is annotated with the ***@RegisterRestClient*** annotation.
-
-The ***configKey*** value in the ***@RegisterRestClient*** annotation replaces the fully-qualified classname of the properties in the ***microprofile-config.properties*** configuration file. For example, the ***\<fully-qualified classname\>/mp-rest/uri*** property becomes ***systemClient/mp-rest/uri***. The benefit of using Config Keys is when multiple client interfaces have the same ***configKey*** value, the interfaces can be configured with a single MP config property.
-
-The ***baseUri*** value can also be set in the ***@RegisterRestClient*** annotation. However, this value will be overridden by the base URI property defined in the ***microprofile-config.properties*** configuration file, which takes precedence. In a production environment, you can use the ***baseUri*** variable to specify a different URI for development and testing purposes.
-
-The ***@RegisterRestClient*** annotation, which is a bean defining annotation implies that the interface is manageable through CDI. You must have this annotation in order to inject the client.
-
-Inject the ***SystemClient*** interface into the ***InventoryManager*** class, which is another CDI managed bean.
+Take a look at your ***InventoryManager*** and ***InventoryUtil*** files.
 
 Replace the ***InventoryManager*** class.
 
 > To open the InventoryManager.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
+> ***File*** > ***Open*** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryManager.java, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
+::openFile{path="/home/project/guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryManager.java"}
 
 
 
 ```java
-package io.openliberty.guides.inventory;
+package io.openliberty.guides.microprofile;
 
-import java.net.ConnectException;
-import java.net.URI;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.ProcessingException;
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.eclipse.microprofile.rest.client.RestClientBuilder;
-import org.eclipse.microprofile.rest.client.inject.RestClient;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
-import io.openliberty.guides.inventory.client.SystemClient;
-import io.openliberty.guides.inventory.client.UnknownUriException;
-import io.openliberty.guides.inventory.client.UnknownUriExceptionMapper;
-import io.openliberty.guides.inventory.model.InventoryList;
-import io.openliberty.guides.inventory.model.SystemData;
+import io.openliberty.guides.microprofile.util.ReadyJson;
+import io.openliberty.guides.microprofile.util.InventoryUtil;
 
 @ApplicationScoped
 public class InventoryManager {
 
-  private List<SystemData> systems = Collections.synchronizedList(
-                                       new ArrayList<SystemData>());
+    private ConcurrentMap<String, JsonObject> inv = new ConcurrentHashMap<>();
 
-  @Inject
-  @ConfigProperty(name = "http.port")
-  String HTTP_PORT;
-
-  @Inject
-  @RestClient
-  private SystemClient defaultRestClient;
-
-  public Properties get(String hostname) {
-    Properties properties = null;
-    if (hostname.equals("localhost")) {
-      properties = getPropertiesWithDefaultHostName();
-    } else {
-      properties = getPropertiesWithGivenHostName(hostname);
+    public JsonObject get(String hostname) {
+        JsonObject properties = inv.get(hostname);
+        if (properties == null) {
+            if (InventoryUtil.responseOk(hostname)) {
+                properties = InventoryUtil.getProperties(hostname);
+                this.add(hostname, properties);
+            } else {
+                return ReadyJson.SERVICE_UNREACHABLE.getJson();
+            }
+        }
+        return properties;
     }
 
-    return properties;
-  }
-
-  public void add(String hostname, Properties systemProps) {
-    Properties props = new Properties();
-    props.setProperty("os.name", systemProps.getProperty("os.name"));
-    props.setProperty("user.name", systemProps.getProperty("user.name"));
-
-    SystemData host = new SystemData(hostname, props);
-    if (!systems.contains(host)) {
-      systems.add(host);
+    public void add(String hostname, JsonObject systemProps) {
+        inv.putIfAbsent(hostname, systemProps);
     }
-  }
 
-  public InventoryList list() {
-    return new InventoryList(systems);
-  }
-
-  private Properties getPropertiesWithDefaultHostName() {
-    try {
-      return defaultRestClient.getProperties();
-    } catch (UnknownUriException e) {
-      System.err.println("The given URI is not formatted correctly.");
-    } catch (ProcessingException ex) {
-      handleProcessingException(ex);
+    public JsonObject list() {
+        JsonObjectBuilder systems = Json.createObjectBuilder();
+        inv.forEach((host, props) -> {
+            JsonObject systemProps = Json.createObjectBuilder()
+                                         .add("os.name", props.getString("os.name"))
+                                         .add("user.name", props.getString("user.name"))
+                                         .build();
+            systems.add(host, systemProps);
+        });
+        systems.add("hosts", systems);
+        systems.add("total", inv.size());
+        return systems.build();
     }
-    return null;
-  }
 
-  private Properties getPropertiesWithGivenHostName(String hostname) {
-    String customURIString = "http://" + hostname + ":" + HTTP_PORT + "/system";
-    URI customURI = null;
-    try {
-      customURI = URI.create(customURIString);
-      SystemClient customRestClient = RestClientBuilder.newBuilder()
-                                        .baseUri(customURI)
-                                        .register(UnknownUriExceptionMapper.class)
-                                        .build(SystemClient.class);
-      return customRestClient.getProperties();
-    } catch (ProcessingException ex) {
-      handleProcessingException(ex);
-    } catch (UnknownUriException e) {
-      System.err.println("The given URI is unreachable.");
-    }
-    return null;
-  }
+    public JsonObject getSystems(String url) {
+        JsonObjectBuilder systems = Json.createObjectBuilder();
+        systems.add("*", InventoryUtil.buildLinksForHost("*", url));
 
-  private void handleProcessingException(ProcessingException ex) {
-    Throwable rootEx = ExceptionUtils.getRootCause(ex);
-    if (rootEx != null && (rootEx instanceof UnknownHostException
-        || rootEx instanceof ConnectException)) {
-      System.err.println("The specified host is unknown.");
-    } else {
-      throw ex;
+        for (String host : inv.keySet()) {
+            systems.add(host, InventoryUtil.buildLinksForHost(host, url));
+        }
+
+        return systems.build();
     }
-  }
 
 }
 ```
 
 
 
-***@Inject*** and ***@RestClient*** annotations inject an instance of the ***SystemClient*** called ***defaultRestClient*** to the ***InventoryManager*** class.
+The ***getSystems*** method accepts a target URL as an argument and returns a JSON object that contains HATEOAS links.
 
-Because the ***InventoryManager*** class is ***@ApplicationScoped***, and the ***SystemClient*** CDI bean maintains the same scope through the default dependent scope, the client is initialized once per application.
+Replace the ***InventoryUtil*** class.
 
-If the ***hostname*** parameter is ***localhost***, the service runs the ***getPropertiesWithDefaultHostName()*** helper function to fetch system properties. The helper function invokes the ***system*** service by calling the ***defaultRestClient.getProperties()*** method.
+> To open the InventoryUtil.java file in your IDE, select
+> ***File*** > ***Open*** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/util/InventoryUtil.java, or click the following button
 
-
-::page{title="Building the client with RestClientBuilder"}
-
-The ***inventory*** service can also connect with a host other than the default ***localhost*** host, but you cannot configure a base URL that is not yet known. In this case, set the host name as a variable and build the client by using the ***RestClientBuilder*** method. You can customize the base URL from the host name attribute.
-
-Look at the ***getPropertiesWithGivenHostName()*** method in the ***src/main/java/io/openliberty/guides/inventory/InventoryManager.java*** file.
+::openFile{path="/home/project/guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/util/InventoryUtil.java"}
 
 
-The host name is provided as a parameter. This method first assembles the base URL that consists of the new host name. Then, the method instantiates a ***RestClientBuilder*** builder with the new URL, registers the response exception mapper, and builds the ***SystemClient*** instance.
 
-Similarly, call the ***customRestClient.getProperties()*** method to invoke the ***system*** service.
+```java
+package io.openliberty.guides.microprofile.util;
 
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URL;
+
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.UriBuilder;
+
+import org.apache.commons.lang3.StringUtils;
+
+public class InventoryUtil {
+
+    private static final int PORT = 9080;
+    private static final String PROTOCOL = "http";
+    private static final String SYSTEM_PROPERTIES = "/system/properties";
+
+    public static JsonObject getProperties(String hostname) {
+        Client client = ClientBuilder.newClient();
+        URI propURI = InventoryUtil.buildUri(hostname);
+        JsonObject properties = client.target(propURI)
+                                      .request(MediaType.APPLICATION_JSON)
+                                      .get(JsonObject.class);
+        client.close();
+        return properties;
+    }
+
+    public static JsonArray buildLinksForHost(String hostname, String invUri) {
+
+        JsonArrayBuilder links = Json.createArrayBuilder();
+
+        links.add(Json.createObjectBuilder()
+                      .add("href", StringUtils.appendIfMissing(invUri, "/") + hostname)
+                      .add("rel", "self"));
+
+        if (!hostname.equals("*")) {
+            links.add(Json.createObjectBuilder()
+                 .add("href", InventoryUtil.buildUri(hostname).toString())
+                 .add("rel", "properties"));
+        }
+
+        return links.build();
+    }
+
+    public static boolean responseOk(String hostname) {
+        try {
+            URL target = new URL(buildUri(hostname).toString());
+            HttpURLConnection http = (HttpURLConnection) target.openConnection();
+            http.setConnectTimeout(50);
+            int response = http.getResponseCode();
+            return response == 200;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private static URI buildUri(String hostname) {
+        return UriBuilder.fromUri(SYSTEM_PROPERTIES)
+                .host(hostname)
+                .port(PORT)
+                .scheme(PROTOCOL)
+                .build();
+    }
+
+}
+```
+
+
+
+The helper builds a link that points to the inventory entry with a ***self*** relationship. The helper also builds a link that points to the ***system*** service with a ***properties*** relationship:
+
+
+* `http://localhost:9080/inventory/hosts/<hostname>`
+* `http://<hostname>:9080/system/properties`
+
+### Linking to inactive services or unavailable resources
+
+Consider what happens when one of the return links does not work or when a link should be available for one object but not for another. In other words, it is important that a resource or service is available and running before it is added in the HATEOAS links array of the hostname.
+
+Although this guide does not cover this case, always make sure that you receive a good response code from a service before you link that service. Similarly, make sure that it makes sense for a particular object to access a resource it is linked to. For instance, it doesn't make sense for an account holder to be able to withdraw money from their account when their balance is 0. Hence, the account holder should not be linked to a resource that provides money withdrawal.
 
 ::page{title="Running the application"}
 
 You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
-When the Liberty instance is running, select either approach to fetch your system properties:
 
-
- Visit the ***http\://localhost:9080/inventory/systems/localhost*** URL. The URL retrieves the system property information for the ***localhost*** host name by making a request to the ***system*** service at ***http://localhost:9080/system/properties***.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+After the Liberty instance updates, you can find your new hypermedia-driven ***inventory*** service at the ***/inventory/hosts*** endpoint. Run the following curl command by another command-line session:
 ```bash
-curl -s http://localhost:9080/inventory/systems/localhost | jq
+curl -s http://localhost:9080/inventory/hosts | jq
 ```
 
 
+::page{title="Testing the hypermedia-driven RESTful web service"}
 
+If the Liberty instances are running, you can test the application manually by running the following curl commands to access the **inventory** service that is now driven by hypermedia: 
+```bash
+curl -s http://localhost:9080/inventory/hosts | jq
+```
 
-Or, get your FQDN first. Then, visit the ***http://localhost:9080/inventory/systems/{your-hostname}*** URL by replacing ***{your-hostname}*** with your FQDN, which retrieves your system properties by making a request to the ***system*** service at ***http://{your-hostname}:9080/system/properties***.
+```bash
+curl -s http://localhost:9080/inventory/hosts/localhost| jq
+```
 
+Nevertheless, you should rely on automated tests because they are more reliable and trigger a failure if a change introduces a defect.
 
-::page{title="Testing the application"}
+### Setting up your tests
 
-Create the ***RestClientIT*** class.
+Create the ***EndpointIT*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
+touch /home/project/guide-rest-hateoas/start/src/test/java/it/io/openliberty/guides/hateoas/EndpointIT.java
 ```
 
 
-> Then, to open the RestClientIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java, or click the following button
+> Then, to open the EndpointIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-rest-hateoas/start/src/test/java/it/io/openliberty/guides/hateoas/EndpointIT.java, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java"}
+::openFile{path="/home/project/guide-rest-hateoas/start/src/test/java/it/io/openliberty/guides/hateoas/EndpointIT.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.client;
+package it.io.openliberty.guides.hateoas;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
+import jakarta.json.JsonValue;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.client.WebTarget;
-import org.junit.jupiter.api.AfterEach;
+
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 
-public class RestClientIT {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-  private static String port;
+@TestMethodOrder(OrderAnnotation.class)
+public class EndpointIT {
+    private String port;
+    private String baseUrl;
 
-  private Client client;
+    private Client client;
 
-  private final String INVENTORY_SYSTEMS = "inventory/systems";
+    private final String SYSTEM_PROPERTIES = "system/properties";
+    private final String INVENTORY_HOSTS = "inventory/hosts";
 
-  @BeforeAll
-  public static void oneTimeSetup() {
-    port = System.getProperty("http.port");
-  }
+    @BeforeEach
+    public void setup() {
+        port = System.getProperty("http.port");
+        baseUrl = "http://localhost:" + port + "/";
 
-  @BeforeEach
-  public void setup() {
-    client = ClientBuilder.newClient();
-  }
-
-  @AfterEach
-  public void teardown() {
-    client.close();
-  }
-
-  @Test
-  public void testSuite() {
-    this.testDefaultLocalhost();
-    this.testRestClientBuilder();
-  }
-
-  public void testDefaultLocalhost() {
-    String hostname = "localhost";
-
-    String url = "http://localhost:" + port + "/" + INVENTORY_SYSTEMS + "/" + hostname;
-
-    JsonObject obj = fetchProperties(url);
-
-    assertEquals(System.getProperty("os.name"), obj.getString("os.name"),
-                 "The system property for the local and remote JVM should match");
-  }
-
-  public void testRestClientBuilder() {
-    String hostname = null;
-    try {
-      hostname = InetAddress.getLocalHost().getHostAddress();
-    } catch (UnknownHostException e) {
-      System.err.println("Unknown Host.");
+        client = ClientBuilder.newClient();
     }
 
-    String url = "http://localhost:" + port + "/" + INVENTORY_SYSTEMS + "/" + hostname;
+    @AfterEach
+    public void teardown() {
+        client.close();
+    }
 
-    JsonObject obj = fetchProperties(url);
+    /**
+     * Checks if the HATEOAS link for the inventory contents (hostname=*)
+     * is as expected.
+     */
+    @Test
+    @Order(1)
+    public void testLinkForInventoryContents() {
+        Response response = this.getResponse(baseUrl + INVENTORY_HOSTS);
+        assertEquals(200, response.getStatus(),
+                    "Incorrect response code from " + baseUrl);
 
-    assertEquals(System.getProperty("os.name"), obj.getString("os.name"),
-                 "The system property for the local and remote JVM should match");
-  }
+        JsonObject systems = response.readEntity(JsonObject.class);
 
-  private JsonObject fetchProperties(String url) {
-    WebTarget target = client.target(url);
-    Response response = target.request().get();
+        String expected;
+        String actual;
+        boolean isFound = false;
 
-    assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
 
-    JsonObject obj = response.readEntity(JsonObject.class);
-    response.close();
-    return obj;
-  }
+        if (!systems.isNull("*")) {
+            isFound = true;
+            JsonArray links = systems.getJsonArray("*");
 
+            expected = baseUrl + INVENTORY_HOSTS + "/*";
+            actual = links.getJsonObject(0).getString("href");
+            assertEquals(expected, actual, "Incorrect href");
+
+            expected = "self";
+            actual = links.getJsonObject(0).getString("rel");
+            assertEquals(expected, actual, "Incorrect rel");
+        }
+
+
+        assertTrue(isFound, "Could not find system with hostname *");
+
+        response.close();
+    }
+
+    /**
+     * Checks that the HATEOAS links, with relationships 'self' and 'properties' for
+     * a simple localhost system is as expected.
+     */
+    @Test
+    @Order(2)
+    public void testLinksForSystem() {
+        this.visitLocalhost();
+
+        Response response = this.getResponse(baseUrl + INVENTORY_HOSTS);
+        assertEquals(200, response.getStatus(),
+                     "Incorrect response code from " + baseUrl);
+
+        JsonObject systems = response.readEntity(JsonObject.class);
+
+        String expected;
+        String actual;
+        boolean isHostnameFound = false;
+
+
+        if (!systems.isNull("localhost")) {
+            isHostnameFound = true;
+            JsonArray links = systems.getJsonArray("localhost");
+
+            expected = baseUrl + INVENTORY_HOSTS + "/localhost";
+            actual = links.getJsonObject(0).getString("href");
+            assertEquals(expected, actual, "Incorrect href");
+
+            expected = "self";
+            actual = links.getJsonObject(0).getString("rel");
+            assertEquals(expected, actual, "Incorrect rel");
+
+            expected = baseUrl + SYSTEM_PROPERTIES;
+            actual = links.getJsonObject(1).getString("href");
+            assertEquals(expected, actual, "Incorrect href");
+
+            expected = "properties";
+            actual = links.getJsonObject(1).getString("rel");
+
+            assertEquals(expected, actual, "Incorrect rel");
+        }
+
+
+        assertTrue(isHostnameFound, "Could not find system with hostname localhost");
+        response.close();
+
+    }
+
+    /**
+     * Returns a Response object for the specified URL.
+     */
+    private Response getResponse(String url) {
+        return client.target(url).request().get();
+    }
+
+    /**
+     * Makes a GET request to localhost at the Inventory service.
+     */
+    private void visitLocalhost() {
+        Response response = this.getResponse(baseUrl + SYSTEM_PROPERTIES);
+        assertEquals(200, response.getStatus(),
+                     "Incorrect response code from " + baseUrl);
+        response.close();
+        Response targetResponse =
+        client.target(baseUrl + INVENTORY_HOSTS + "/localhost")
+                                        .request()
+                                        .get();
+        targetResponse.close();
+    }
 }
 ```
 
 
 
-Each test case tests one of the methods for instantiating a RESTful client.
+The ***@BeforeEach*** and ***@AfterEach*** annotations are placed on setup and teardown tasks that are run for each individual test.
 
-The ***testDefaultLocalhost()*** test fetches and compares system properties from the ***http\://localhost:9080/inventory/systems/localhost*** URL.
+### Writing the tests
 
-The ***testRestClientBuilder()*** test gets your IP address. Then, use your IP address as the host name to fetch your system properties and compare them.
+Each test method must be marked with the ***@Test*** annotation. The execution order of test methods is controlled by marking them with the ***@Order*** annotation. The value that is passed into the annotation denotes the order in which the methods are run.
 
-In addition, a few endpoint tests are provided for you to test the basic functionality of the ***inventory*** and ***system*** services. If a test failure occurs, you might have introduced a bug into the code.
+The ***testLinkForInventoryContents*** test is responsible for asserting that the correct HATEOAS link is created for the inventory contents.
 
+Finally, the ***testLinksForSystem*** test is responsible for asserting that the correct HATEOAS links are created for the ***localhost*** system. This method checks for both the ***self*** link that points to the ***inventory*** service and the ***properties*** link that points to the ***system*** service, which is running on the ***localhost*** system.
 
 ### Running the tests
 
 Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+You will see the following output:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.377 sec - in it.io.openliberty.guides.system.SystemEndpointIT
-Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
-Could not send Message.
-[err] The specified host is unknown.
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.379 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
-Running it.io.openliberty.guides.client.RestClientIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.121 sec - in it.io.openliberty.guides.client.RestClientIT
+Running it.io.openliberty.guides.hateoas.EndpointIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.951 s - in it.io.openliberty.guides.hateoas.EndpointIT
 
-Results :
+Results:
 
-Tests run: 5, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+
+Integration tests finished.
 ```
-
-The warning and error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the ***testUnknownHost()*** test from the ***InventoryEndpointIT*** integration test.
-
-To see whether the tests detect a failure, change the base URL in the configuration file so that when the ***inventory*** service tries to access the invalid URL, an ***UnknownUriException*** is thrown. Rerun the tests to see a test failure occur.
 
 When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
 
@@ -638,12 +656,9 @@ When you are done checking out the service, exit dev mode by pressing `Ctrl+C` i
 
 ### Nice Work!
 
-You just invoked a remote service by using a template interface with MicroProfile Rest Client in Open Liberty.
+You've just built and tested a hypermedia-driven RESTful web service on top of Open Liberty.
 
 
-MicroProfile Rest Client also provides a uniform way to configure SSL for the client. You can learn more in the [Hostname verification with SSL on Open Liberty and MicroProfile Rest Client](https://openliberty.io/blog/2019/06/21/microprofile-rest-client-19006.html#ssl) blog and the [MicroProfile Rest Client specification](https://github.com/eclipse/microprofile-rest-client/releases).
-
-Feel free to try one of the related guides where you can learn more technologies and expand on what you built here.
 
 
 ### Clean up your environment
@@ -651,33 +666,31 @@ Feel free to try one of the related guides where you can learn more technologies
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-microprofile-rest-client*** project by running the following commands:
+Delete the ***guide-rest-hateoas*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-microprofile-rest-client
+rm -fr guide-rest-hateoas
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20RESTful%20services%20with%20template%20interfaces&guide-id=cloud-hosted-guide-microprofile-rest-client)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20hypermedia-driven%20RESTful%20web%20service&guide-id=cloud-hosted-guide-rest-hateoas)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-rest-client/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-rest-client/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-hateoas/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-hateoas/pulls)
 
 
 
 ### Where to next?
 
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
-* [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
+* [Creating a MicroProfile application](https://openliberty.io/guides/microprofile-intro.html)
 
 
 ### Log out of the session
