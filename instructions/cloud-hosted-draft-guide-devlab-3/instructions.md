@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Containerizing microservices guide!"}
+::page{title="Welcome to the Consuming RESTful services with template interfaces guide!"}
 
-Learn how to containerize and run your microservices with Open Liberty using Docker.
+Learn how to use MicroProfile Rest Client to invoke RESTful microservices over HTTP in a type-safe way.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -17,12 +17,16 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
+You will learn how to build a MicroProfile Rest Client to access remote RESTful services. You will create a template interface that maps to the remote service that you want to call. MicroProfile Rest Client automatically generates a client instance based on what is defined and annotated in the template interface. Thus, you don't have to worry about all of the boilerplate code, such as setting up a client class, connecting to the remote server, or invoking the correct URI with the correct parameters.
 
-From development to production, and across your DevOps environments, you can deploy your microservices in a lightweight and portable manner by using containers. You can run a container from a container image. Each container image is a package of what you need to run your microservice or application, from the code to its dependencies and configuration. If you're new to the development of applications in containers, you might want to start with the [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html) guide before you work through this guide.
+The application that you will be working with is an ***inventory*** service, which fetches and stores the system property information for different hosts. Whenever a request is made to retrieve the system properties of a particular host, the ***inventory*** service will create a client to invoke the ***system*** service on that host. The ***system*** service simulates a remote service in the application.
 
-You'll learn how to build container images and run containers using [Docker](https://www.docker.com/) for your microservices. You'll learn about the [Open Liberty container images](https://github.com/OpenLiberty/ci.docker) and how to use them for your containerized applications. You'll construct ***Dockerfile*** files, create Docker images by using the ***docker build*** command, and run the image as Docker containers by using ***docker run*** command.
+You will instantiate the client and use it in the ***inventory*** service. You can choose from two different approaches, [Context and Dependency Injection (CDI)](https://openliberty.io/docs/latest/cdi-beans.html) with the help of MicroProfile Config or the [RestClientBuilder](https://openliberty.io/blog/2018/01/31/mpRestClient.html) method. In this guide, you will explore both methods to handle scenarios for providing a valid base URL.
 
-The two microservices that you'll be working with are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of the running container. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This guide demonstrates how both microservices can run and communicate with each other in different Docker containers. 
+ * When the base URL of the remote service is static and known, define the default base URL in the configuration file. Inject the client with a CDI method.
+
+ * When the base URL is not yet known and needs to be determined during the run time, set the base URL as a variable. Build the client with the more verbose ***RestClientBuilder*** method.
+
 
 ::page{title="Getting started"}
 
@@ -35,11 +39,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-containerize.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-rest-client.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-containerize.git
-cd guide-containerize
+git clone https://github.com/openliberty/guide-microprofile-rest-client.git
+cd guide-microprofile-rest-client
 ```
 
 
@@ -47,817 +51,599 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
+### Try what you'll build
 
-::page{title="Packaging your microservices"}
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-
-To begin, run the following command to navigate to the **start** directory:
-```bash
-cd start
-```
-
-You can find the starting Java project in the ***start*** directory. This project is a multi-module Maven project that is made up of the ***system*** and ***inventory*** microservices. Each microservice is located in its own corresponding directory, ***system*** and ***inventory***.
-
-To try out the microservices by using Maven, run the following Maven goal to build the ***system*** microservice and run it inside Open Liberty:
+To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
 
 ```bash
-./mvnw -pl system liberty:run
+cd finish
+mvn liberty:run
 ```
 
-
-Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session and run the following Maven goal to build the **inventory** microservice and run it inside Open Liberty:
-```bash
-cd /home/project/guide-containerize/start
-./mvnw -pl inventory liberty:run
-```
-
-After you see the following message in both command-line sessions, both of your services are ready:
+After you see the following message, your Liberty instance is ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
 ```
 
-Select **Terminal** > **New Terminal** from the menu of the IDE to open a new command-line session. To access the **inventory** service, which displays the current contents of the inventory, run the following curl command: 
-```bash
-curl -s http://localhost:9081/inventory/systems | jq
-```
 
-The **system** service shows the system properties of the running JVM and can be found by running the following curl command:
+
+Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
+
+
+The ***system*** microservice simulates a service that returns the system property information for the host. The ***system*** service is accessible at the ***http\://localhost:9080/system/properties*** URL. In this case, ***localhost*** is the host name.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
 ```bash
 curl -s http://localhost:9080/system/properties | jq
 ```
 
-The system properties of your localhost can be added to the **inventory** service at **http://localhost:9081/inventory/systems/localhost**. Run the following curl command:
+
+
+
+The ***inventory*** microservice makes a request to the ***system*** microservice and stores the system property information.  To fetch and store your system information, visit the ***http\://localhost:9080/inventory/systems/localhost*** URL.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
 ```bash
-curl -s http://localhost:9081/inventory/systems/localhost | jq
+curl -s http://localhost:9080/inventory/systems/localhost | jq
 ```
 
 
-After you are finished checking out the microservices, stop the Liberty instances by pressing **CTRL+C** in the command-line sessions where you ran the **system** and **inventory** services. Alternatively, you can run the **liberty:stop** goal in another command-line session from the **start** directory:
-```bash
-cd /home/project/guide-containerize/start
-./mvnw -pl system liberty:stop
-./mvnw -pl inventory liberty:stop
-```
 
-To package your microservices, run the Maven package goal to build the application ***.war*** files from the start directory so that the ***.war*** files are in the ***system/target*** and ***inventory/target*** directories.
+
+You can also use the ***http://localhost:9080/inventory/systems/{your-hostname}*** URL. In Windows, MacOS, and Linux, get your fully qualified domain name (FQDN) by entering **hostname** into your command-line. Visit the URL by replacing ***{your-hostname}*** with your FQDN.
+
+
+After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
-./mvnw package
+mvn liberty:stop
 ```
 
-To learn more about RESTful web services and how to build them, see [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) for details about how to build the ***system*** service. The ***inventory*** service is built in a similar way.
+::page{title="Writing the RESTful client interface"}
+
+Now, navigate to the ***start*** directory to begin.
+
+```bash
+cd /home/project/guide-microprofile-rest-client/start
+```
+
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+
+```bash
+mvn liberty:dev
+```
+
+After you see the following message, your Liberty instance is ready in dev mode:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+
+The MicroProfile Rest Client API is included in the MicroProfile dependency specified by your ***pom.xml*** file. Look for the dependency with the ***microprofile*** artifact ID.
 
 
-::page{title="Building your Docker images"}
+This dependency provides a library that is required to implement the MicroProfile Rest Client interface.
 
-A Docker image is a binary file. It is made up of multiple layers and is used to run code in a Docker container. Images are built from instructions in Dockerfiles to create a containerized version of the application.
+The ***mpRestClient*** feature is also enabled in the ***src/main/liberty/config/server.xml*** file. This feature enables your Open Liberty to use MicroProfile Rest Client to invoke RESTful microservices.
 
-A ***Dockerfile*** is a collection of instructions for building a Docker image that can then be run as a container. As each instruction is run in a ***Dockerfile***, a new Docker layer is created. These layers, which are known as intermediate images, are created when a change is made to your Docker image.
 
-Every ***Dockerfile*** begins with a parent or base image over which various commands are run. For example, you can start your image from scratch and run commands that download and install a Java runtime, or you can start from an image that already contains a Java installation.
+The code for the ***system*** service in the ***src/main/java/io/openliberty/guides/system*** directory is provided for you. It simulates a remote RESTful service that the ***inventory*** service invokes.
 
-Learn more about Docker on the [official Docker page](https://www.docker.com/what-docker).
+Create a RESTful client interface for the ***system*** service. Write a template interface that maps the API of the remote ***system*** service. The template interface describes the remote service that you want to access. The interface defines the resource to access as a method by mapping its annotations, return type, list of arguments, and exception declarations.
 
-### Creating your Dockerfiles
-You will be creating two Docker images to run the ***inventory*** service and ***system*** service. The first step is to create Dockerfiles for both services.
-
-In this guide, you're using an official image from the IBM Container Registry (ICR), ***icr.io/appcafe/open-liberty:full-java11-openj9-ubi***, as your parent image. This image is tagged with the word ***full***, meaning it includes all Liberty features. ***full*** images are recommended for development only because they significantly expand the image size with features that are not required by the application.
-
-To minimize your image footprint in production, you can use one of the ***kernel-slim*** images, such as ***icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi***.  This image installs the basic Liberty runtime. You can then add all the necessary features for your application with the usage pattern that is detailed in the Open Liberty [container image documentation](https://openliberty.io/docs/latest/container-images.html#build). To use the default image that comes with the Open Liberty runtime, define the ***FROM*** instruction as ***FROM icr.io/appcafe/open-liberty***. You can find all official images on the Open Liberty [container image repository](https://openliberty.io/docs/latest/container-images.html).
-
-Create the ***Dockerfile*** for the inventory service.
+Create the ***SystemClient*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-containerize/start/inventory/Dockerfile
+touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
 ```
 
 
-> Then, to open the Dockerfile file in your IDE, select
-> ***File*** > ***Open*** > guide-containerize/start/inventory/Dockerfile, or click the following button
+> Then, to open the SystemClient.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java, or click the following button
 
-::openFile{path="/home/project/guide-containerize/start/inventory/Dockerfile"}
+::openFile{path="/home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java"}
 
 
 
-```
-FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
+```java
+package io.openliberty.guides.inventory.client;
 
-ARG VERSION=1.0
-ARG REVISION=SNAPSHOT
+import java.util.Properties;
 
-LABEL \
-  org.opencontainers.image.authors="Your Name" \
-  org.opencontainers.image.vendor="Open Liberty" \
-  org.opencontainers.image.url="local" \
-  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize" \
-  org.opencontainers.image.version="$VERSION" \
-  org.opencontainers.image.revision="$REVISION" \
-  vendor="Open Liberty" \
-  name="inventory" \
-  version="$VERSION-$REVISION" \
-  summary="The inventory microservice from the Containerizing microservices guide" \
-  description="This image contains the inventory microservice running with the Open Liberty runtime."
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.ProcessingException;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 
-COPY --chown=1001:0 \
-    src/main/liberty/config \
-    /config/
+import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
+import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
-COPY --chown=1001:0 \
-    target/guide-containerize-inventory.war \
-    /config/apps
+@RegisterRestClient(configKey = "systemClient",
+                     baseUri = "http://localhost:9080/system")
+@RegisterProvider(UnknownUriExceptionMapper.class)
+@Path("/properties")
+public interface SystemClient extends AutoCloseable {
 
-RUN configure.sh
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  Properties getProperties() throws UnknownUriException, ProcessingException;
+}
 ```
 
 
 Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-The ***FROM*** instruction initializes a new build stage, which indicates the parent image of the built image. If you don't need a parent image, then you can use ***FROM scratch***, which makes your image a base image. 
+The MicroProfile Rest Client feature automatically builds and generates a client implementation based on what is defined in the ***SystemClient*** interface. There is no need to set up the client and connect with the remote service.
 
-It is also recommended to label your Docker images with the ***LABEL*** command, as the label information can help you manage your images. For more information, see [Best practices for writing Dockerfiles](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#label).
+Notice the ***SystemClient*** interface inherits the ***AutoCloseable*** interface. This allows the user to explicitly close the client instance by invoking the ***close()*** method or to implicitly close the client instance using a try-with-resources block. When the client instance is closed, all underlying resources associated with the client instance are cleaned up. Refer to the [MicroProfile Rest Client specification](https://github.com/eclipse/microprofile-rest-client/releases) for more details.
 
-The ***COPY*** instructions are structured as ***COPY*** ***[--chown=\<user\>:\<group\>]*** ***\<source\>*** ***\<destination\>***. They copy local files into the specified destination within your Docker image. In this case, the ***inventory*** Liberty configuration files that are located at ***src/main/liberty/config*** are copied to the ***/config/*** destination directory. The ***inventory*** application WAR file ***inventory.war***, which was created from running Maven ***package***, is copied to the ***/config/apps*** destination directory.
+When the ***getProperties()*** method is invoked, the ***SystemClient*** instance sends a GET request to the ***\<baseUrl\>/properties*** endpoint, where ***\<baseUrl\>*** is the default base URL of the ***system*** service. You will see how to configure the base URL in the next section.
 
-The ***COPY*** instructions use the ***1001*** user ID  and ***0*** group because the ***icr.io/appcafe/open-liberty:full-java11-openj9-ubi*** image runs by default with the ***USER 1001*** (non-root) user for security purposes. Otherwise, the files and directories that are copied over are owned by the root user.
+The ***@Produces*** annotation specifies the media (MIME) type of the expected response. The default value is ***MediaType.APPLICATION_JSON***.
 
-Place the ***RUN configure.sh*** command at the end to get a pre-warmed Docker image. It improves the startup time of running your Docker container.
+The ***@RegisterProvider*** annotation tells the framework to register the provider classes to be used when the framework invokes the interface. You can add as many providers as necessary. In the ***SystemClient*** interface, add a response exception mapper as a provider to map the ***404*** response code with the ***UnknownUriException*** exception.
 
-The ***Dockerfile*** for the ***system*** service follows the same instructions as the ***inventory*** service, except that some ***labels*** are updated, and the ***system.war*** archive is copied into ***/config/apps***.
+### Handling exceptions through ResponseExceptionMappers
 
-Create the ***Dockerfile*** for the system service.
+Error handling is an important step to ensure that the application can fail safely. If there is an error response such as ***404 NOT FOUND*** when invoking the remote service, you need to handle it. First, define an exception, and map the exception with the error response code. Then, register the exception mapper in the client interface.
+
+Look at the client interface again, the ***@RegisterProvider*** annotation registers the ***UnknownUriExceptionMapper*** response exception mapper. An exception mapper maps various response codes from the remote service to throwable exceptions.
+
+
+Implement the actual exception class and the mapper class to see how this mechanism works.
+
+Create the ***UnknownUriException*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-containerize/start/system/Dockerfile
+touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
 ```
 
 
-> Then, to open the Dockerfile file in your IDE, select
-> ***File*** > ***Open*** > guide-containerize/start/system/Dockerfile, or click the following button
+> Then, to open the UnknownUriException.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java, or click the following button
 
-::openFile{path="/home/project/guide-containerize/start/system/Dockerfile"}
-
-
-
-```
-FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-
-ARG VERSION=1.0
-ARG REVISION=SNAPSHOT
-
-LABEL \
-  org.opencontainers.image.authors="Your Name" \
-  org.opencontainers.image.vendor="Open Liberty" \
-  org.opencontainers.image.url="local" \
-  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize" \
-  org.opencontainers.image.version="$VERSION" \
-  org.opencontainers.image.revision="$REVISION" \
-  vendor="Open Liberty" \
-  name="system" \
-  version="$VERSION-$REVISION" \
-  summary="The system microservice from the Containerizing microservices guide" \
-  description="This image contains the system microservice running with the Open Liberty runtime."
-
-COPY --chown=1001:0 src/main/liberty/config /config/
-
-COPY --chown=1001:0 target/guide-containerize-system.war /config/apps
-
-RUN configure.sh
-```
-
-
-
-
-### Building your Docker image
-
-Now that your microservices are packaged and you have written your Dockerfiles, you will build your Docker images by using the ***docker build*** command.
-
-
-
-Run the following commands to build container images for your application:
-
-```bash
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-```
-
-The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
-
-To verify that the images are built, run the ***docker images*** command to list all local Docker images:
-
-```bash
-docker images
-```
-
-Or, run the ***docker images*** command with ***--filter*** option to list your images:
-```bash
-docker images -f "label=org.opencontainers.image.authors=Your Name"
-```
-
-Your ***inventory*** and ***system*** images appear in the list of all Docker images:
-
-```
-REPOSITORY    TAG             IMAGE ID        CREATED          SIZE
-inventory     1.0-SNAPSHOT    08fef024e986    4 minutes ago    1GB
-system        1.0-SNAPSHOT    1dff6d0b4f31    5 minutes ago    977MB
-```
-
-
-::page{title="Running your microservices in Docker containers"}
-
-Now that your two images are built, you will run your microservices in Docker containers:
-
-```bash
-docker run -d --name system -p 9080:9080 system:1.0-SNAPSHOT
-docker run -d --name inventory -p 9081:9081 inventory:1.0-SNAPSHOT
-```
-
-The following table describes the flags in these commands:
-
-| *Flag* | *Description*
-| ---| ---
-| -d     | Runs the container in the background.
-| --name | Specifies a name for the container.
-| -p     | Maps the host ports to the container ports. For example: ***-p \<HOST_PORT\>:\<CONTAINER_PORT\>***
-
-Next, run the ***docker ps*** command to verify that your containers are started:
-
-```bash
-docker ps
-```
-
-Make sure that your containers are running and show ***Up*** as their status:
-
-```
-CONTAINER ID    IMAGE                   COMMAND                  CREATED          STATUS          PORTS                                        NAMES
-2b584282e0f5    inventory:1.0-SNAPSHOT  "/opt/ol/helpers/run…"   2 seconds ago    Up 1 second     9080/tcp, 9443/tcp, 0.0.0.0:9081->9081/tcp   inventory
-99a98313705f    system:1.0-SNAPSHOT     "/opt/ol/helpers/run…"   3 seconds ago    Up 2 seconds    0.0.0.0:9080->9080/tcp, 9443/tcp             system
-```
-
-If a problem occurs and your containers exit prematurely, the containers don't appear in the container list that the ***docker ps*** command displays. Instead, your containers appear with an ***Exited*** status when they run the ***docker ps -a*** command. Run the ***docker logs system*** and ***docker logs inventory*** commands to view the container logs for any potential problems. Run the ***docker stats system*** and ***docker stats inventory*** commands to display a live stream of usage statistics for your containers. You can also double-check that your Dockerfiles are correct. When you find the cause of the issues, remove the faulty containers with the ***docker rm system*** and ***docker rm inventory*** commands. Rebuild your images, and start the containers again.
-
-
-To access the application, run the following curl command. An empty list is expected because no system properties are stored in the inventory yet:
-```bash
-curl -s http://localhost:9081/inventory/systems | jq
-```
-
-Next, retrieve the ***system*** container's IP address by running the following:
-
-```bash
-docker inspect -f "{{.NetworkSettings.IPAddress }}" system
-```
-
-The command returns the system container IP address:
-
-```
-172.17.0.2
-```
-
-In this case, the IP address for the ***system*** service is ***172.17.0.2***. Take note of this IP address to construct the URL to view the system properties. 
-
-
-Run the following commands to go to the **http://localhost:9081/inventory/systems/[system-ip-address]** by replacing **[system-ip-address]** URL with the IP address that you obtained earlier:
-```bash
-SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
-curl -s http://localhost:9081/inventory/systems/{$SYSTEM_IP} | jq
-```
-
-You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system properties are automatically stored in the inventory. Run the following curl command and you see a new entry for **[system-ip-address]**:
-```bash
-curl -s http://localhost:9081/inventory/systems | jq
-```
-
-::page{title="Externalizing Liberty's configuration"}
-
-
-As mentioned at the beginning of this guide, one of the advantages of using containers is that they are portable and can be moved and deployed efficiently across all of your DevOps environments. Configuration often changes across different environments, and by externalizing your Liberty's configuration, you can simplify the development process.
-
-Imagine a scenario where you are developing an Open Liberty application on port ***9081*** but to deploy it to production, it must be available on port ***9091***. To manage this scenario, you can keep two different versions of the ***server.xml*** file; one for production and one for development. However, trying to maintain two different versions of a file might lead to mistakes. A better solution would be to externalize the configuration of the port number and use the value of an environment variable that is stored in each environment. 
-
-In this example, you will use an environment variable to externally configure the HTTP port number of the ***inventory*** service. 
-
-In the ***inventory/server.xml*** file, the ***http.port*** variable is declared and is used in the ***httpEndpoint*** element to define the service endpoint. The default value of the ***http.port*** variable is ***9081***. However, this value is only used if no other value is specified. You can replace this value in the container by using the -e flag for the podman run command. 
-
-Run the following commands to stop and remove the ***inventory*** container and rerun it with the ***http.port*** environment variable set:
-
-```bash
-docker stop inventory
-docker rm inventory 
-docker run -d --name inventory -e http.port=9091 -p 9091:9091 inventory:1.0-SNAPSHOT
-```
-
-The ***-e*** flag can be used to create and set the values of environment variables in a Docker container. In this case, you are setting the ***http.port*** environment variable to ***9091*** for the ***inventory*** container.
-
-Now, when the service is starting up, Open Liberty finds the ***http.port*** environment variable and uses it to set the value of the ***http.port*** variable to be used in the HTTP endpoint.
-
-
-The **inventory** service is now available on the new port number that you specified. You can see the contents of the inventory at the **http://localhost:9091/inventory/systems** URL. Run the following curl command:
-```bash
-curl -s http://localhost:9091/inventory/systems | jq
-```
-
-You can add your local system properties at the **http://localhost:9091/inventory/systems/[system-ip-address]** URL by replacing **[system-ip-address]** with the IP address that you obtained in the previous section. Run the following commands:
-```bash
-SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
-curl -s http://localhost:9091/inventory/systems/{$SYSTEM_IP} | jq
-```
-
-The **system** service remains unchanged and is available at the **http://localhost:9080/system/properties** URL. Run the following curl command:
-```bash
-curl -s http://localhost:9080/system/properties | jq
-```
-
-You can externalize the configuration of more than just the port numbers. To learn more about Open Liberty configuration, check out the [Server Configuration Overview](https://openliberty.io/docs/latest/reference/config/server-configuration-overview.html) docs. 
-
-::page{title="Optimizing the image size"}
-
-As mentioned previously, the parent image that is used in each ***Dockerfile*** contains the ***full*** tag, which includes all of the Liberty features. This parent image with the ***full*** tag is recommended for development, but while deploying to production it is recommended to use a parent image with the ***kernel-slim*** tag. The ***kernel-slim*** tag provides a bare minimum Liberty runtime with the ability to add the features required by the application.
-
-Replace the ***Dockerfile*** for the inventory service.
-
-> To open the Dockerfile file in your IDE, select
-> ***File*** > ***Open*** > guide-containerize/start/inventory/Dockerfile, or click the following button
-
-::openFile{path="/home/project/guide-containerize/start/inventory/Dockerfile"}
-
-
-
-```
-FROM icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi
-
-ARG VERSION=1.0
-ARG REVISION=SNAPSHOT
-
-LABEL \
-  org.opencontainers.image.authors="Your Name" \
-  org.opencontainers.image.vendor="Open Liberty" \
-  org.opencontainers.image.url="local" \
-  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize" \
-  org.opencontainers.image.version="$VERSION" \
-  org.opencontainers.image.revision="$REVISION" \
-  vendor="Open Liberty" \
-  name="inventory" \
-  version="$VERSION-$REVISION" \
-  summary="The inventory microservice from the Containerizing microservices guide" \
-  description="This image contains the inventory microservice running with the Open Liberty runtime."
-
-COPY --chown=1001:0 \
-    src/main/liberty/config \
-    /config/
-
-RUN features.sh
-
-COPY --chown=1001:0 \
-    target/guide-containerize-inventory.war \
-    /config/apps
-
-RUN configure.sh
-```
-
-
-
-Replace the parent image with ***icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi*** at the top of your ***Dockerfile***. This image contains the ***kernel-slim*** tag that is recommended when deploying to production.
-
-Place ***RUN features.sh*** command after the ***COPY*** command that copies the local ***/config/*** directory into the ***Docker*** image. The ***features.sh*** script adds the Liberty features that your application is required to operate.
-
-Ensure that you repeat these instructions for the ***system*** service.
-
-Replace the ***Dockerfile*** for the system service.
-
-> To open the Dockerfile file in your IDE, select
-> ***File*** > ***Open*** > guide-containerize/start/system/Dockerfile, or click the following button
-
-::openFile{path="/home/project/guide-containerize/start/system/Dockerfile"}
-
-
-
-```
-FROM icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi
-
-ARG VERSION=1.0
-ARG REVISION=SNAPSHOT
-
-LABEL \
-  org.opencontainers.image.authors="Your Name" \
-  org.opencontainers.image.vendor="Open Liberty" \
-  org.opencontainers.image.url="local" \
-  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize" \
-  org.opencontainers.image.version="$VERSION" \
-  org.opencontainers.image.revision="$REVISION" \
-  vendor="Open Liberty" \
-  name="system" \
-  version="$VERSION-$REVISION" \
-  summary="The system microservice from the Containerizing microservices guide" \
-  description="This image contains the system microservice running with the Open Liberty runtime."
-
-COPY --chown=1001:0 src/main/liberty/config /config/
-
-RUN features.sh
-
-COPY --chown=1001:0 target/guide-containerize-system.war /config/apps
-
-RUN configure.sh
-```
-
-
-
-Continue by running the following commands to stop and remove your current ***Docker*** containers that are using the ***full*** parent image:
-
-```bash
-docker stop inventory system
-docker rm inventory system
-```
-
-Next, build your new ***Docker*** images with the ***kernel-slim*** parent image:
-
-```bash
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-```
-
-Verify that the images have been built by executing the following command to list all the local ***Docker*** images:
-
-```bash
-docker images
-```
-
-Notice that the images for the ***inventory*** and ***system*** services now have a reduced image size.
-```
-REPOSITORY      TAG             IMAGE ID        CREATED         SIZE
-inventory       1.0-SNAPSHOT	d5a3d1b2c20e    4 minutes ago	682MB
-system          1.0-SNAPSHOT	6346cf87eae0	5 minutes ago	694MB
-```
-
-After confirming that the images have been built, run the following commands to start the ***Docker*** containers:
-
-```bash
-docker run -d --name system -p 9080:9080 system:1.0-SNAPSHOT
-docker run -d --name inventory -p 9081:9081 inventory:1.0-SNAPSHOT
-```
-
-Once your ***Docker*** containers are running, run the following command to see the list of required features installed by ***features.sh***:
-
-```bash
-docker exec -it inventory /opt/ol/wlp/bin/productInfo featureInfo
-```
-
-Your list of Liberty features should be similar to the following:
-```
-jndi-1.0
-cdi-4.0
-jsonb-3.0
-jsonp-2.1
-mpConfig-3.1
-restfulWS-3.1
-restfulWSClient-3.1
-```
-
-
-The **system** service which shows the system properties of the running JVM is now available to be accessed at **http://localhost:9080/system/properties**. Run the following curl command:
-```bash
-curl -s http://localhost:9080/system/properties | jq
-```
-
-Next, you can add your local system properties at the **http://localhost:9081/inventory/systems/[system-ip-address]** URL by replacing **[system-ip-address]** with the IP address that you obtained in the previous section. Run the following commands:
-```bash
-SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
-curl -s http://localhost:9081/inventory/systems/{$SYSTEM_IP} | jq
-```
-
-Then, verify the addition of your localhost system properties to the **inventory** service at **http://localhost:9081/inventory/systems**. Run the following curl command:
-```bash
-curl -s http://localhost:9081/inventory/systems | jq
-```
-
-::page{title="Testing the microservices"}
-
-You can test your microservices manually by hitting the endpoints or with automated tests that check your running Docker containers.
-
-Create the ***SystemEndpointIT*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
-```
-
-
-> Then, to open the SystemEndpointIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java, or click the following button
-
-::openFile{path="/home/project/guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java"}
+::openFile{path="/home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.system;
+package io.openliberty.guides.inventory.client;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+public class UnknownUriException extends Exception {
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLSession;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.WebTarget;
+  private static final long serialVersionUID = 1L;
+
+  public UnknownUriException() {
+    super();
+  }
+
+  public UnknownUriException(String message) {
+    super(message);
+  }
+}
+```
+
+
+
+Now, link the ***UnknownUriException*** class with the corresponding response code through a ***ResponseExceptionMapper*** mapper class.
+
+Create the ***UnknownUriExceptionMapper*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
+```
+
+
+> Then, to open the UnknownUriExceptionMapper.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java"}
+
+
+
+```java
+package io.openliberty.guides.inventory.client;
+
+import java.util.logging.Logger;
+import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.Provider;
+import org.eclipse.microprofile.rest.client.ext.ResponseExceptionMapper;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+@Provider
+public class UnknownUriExceptionMapper
+    implements ResponseExceptionMapper<UnknownUriException> {
+  Logger LOG = Logger.getLogger(UnknownUriExceptionMapper.class.getName());
 
-public class SystemEndpointIT {
+  @Override
+  public boolean handles(int status, MultivaluedMap<String, Object> headers) {
+    LOG.info("status = " + status);
+    return status == 404;
+  }
 
-    private static String clusterUrl;
+  @Override
+  public UnknownUriException toThrowable(Response response) {
+    return new UnknownUriException();
+  }
+}
+```
 
-    private Client client;
 
-    @BeforeAll
-    public static void oneTimeSetup() {
-        String nodePort = System.getProperty("system.http.port");
-        clusterUrl = "http://localhost:" + nodePort + "/system/properties/";
+
+The ***handles()*** method inspects the HTTP response code to determine whether an exception is thrown for the specific response, and the ***toThrowable()*** method returns the mapped exception.
+
+::page{title="Injecting the client with dependency injection"}
+
+Now, instantiate the ***SystemClient*** interface and use it in the ***inventory*** service. If you want to connect only with the default host name, you can easily instantiate the ***SystemClient*** with CDI annotations. CDI injection simplifies the process of bootstrapping the client.
+
+First, you need to define the base URL of the ***SystemClient*** instance. Configure the default base URL with the MicroProfile Config feature. This feature is enabled for you in the ***server.xml*** file.
+
+Create the configuration file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-rest-client/start/src/main/resources/META-INF/microprofile-config.properties
+```
+
+
+> Then, to open the microprofile-config.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-rest-client/start/src/main/resources/META-INF/microprofile-config.properties"}
+
+
+
+```
+systemClient/mp-rest/uri=http://localhost:9080/system
+```
+
+
+
+The ***mp-rest/uri*** base URL config property is configured to the default ***http://localhost:9080/system*** URL.
+
+This configuration is automatically picked up by the MicroProfile Config API.
+
+Look at the annotations in the ***SystemClient*** interface again.
+
+
+The ***@RegisterRestClient*** annotation registers the interface as a RESTful client. The runtime creates a CDI managed bean for every interface that is annotated with the ***@RegisterRestClient*** annotation.
+
+The ***configKey*** value in the ***@RegisterRestClient*** annotation replaces the fully-qualified classname of the properties in the ***microprofile-config.properties*** configuration file. For example, the ***\<fully-qualified classname\>/mp-rest/uri*** property becomes ***systemClient/mp-rest/uri***. The benefit of using Config Keys is when multiple client interfaces have the same ***configKey*** value, the interfaces can be configured with a single MP config property.
+
+The ***baseUri*** value can also be set in the ***@RegisterRestClient*** annotation. However, this value will be overridden by the base URI property defined in the ***microprofile-config.properties*** configuration file, which takes precedence. In a production environment, you can use the ***baseUri*** variable to specify a different URI for development and testing purposes.
+
+The ***@RegisterRestClient*** annotation, which is a bean defining annotation implies that the interface is manageable through CDI. You must have this annotation in order to inject the client.
+
+Inject the ***SystemClient*** interface into the ***InventoryManager*** class, which is another CDI managed bean.
+
+Replace the ***InventoryManager*** class.
+
+> To open the InventoryManager.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
+
+
+
+```java
+package io.openliberty.guides.inventory;
+
+import java.net.ConnectException;
+import java.net.URI;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Properties;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.ProcessingException;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.eclipse.microprofile.rest.client.RestClientBuilder;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
+import io.openliberty.guides.inventory.client.SystemClient;
+import io.openliberty.guides.inventory.client.UnknownUriException;
+import io.openliberty.guides.inventory.client.UnknownUriExceptionMapper;
+import io.openliberty.guides.inventory.model.InventoryList;
+import io.openliberty.guides.inventory.model.SystemData;
+
+@ApplicationScoped
+public class InventoryManager {
+
+  private List<SystemData> systems = Collections.synchronizedList(
+                                       new ArrayList<SystemData>());
+
+  @Inject
+  @ConfigProperty(name = "http.port")
+  String HTTP_PORT;
+
+  @Inject
+  @RestClient
+  private SystemClient defaultRestClient;
+
+  public Properties get(String hostname) {
+    Properties properties = null;
+    if (hostname.equals("localhost")) {
+      properties = getPropertiesWithDefaultHostName();
+    } else {
+      properties = getPropertiesWithGivenHostName(hostname);
     }
 
-    @BeforeEach
-    public void setup() {
-        client = ClientBuilder.newBuilder()
-                    .hostnameVerifier(new HostnameVerifier() {
-                        public boolean verify(String hostname, SSLSession session) {
-                            return true;
-                        }
-                    })
-                    .build();
+    return properties;
+  }
+
+  public void add(String hostname, Properties systemProps) {
+    Properties props = new Properties();
+    props.setProperty("os.name", systemProps.getProperty("os.name"));
+    props.setProperty("user.name", systemProps.getProperty("user.name"));
+
+    SystemData host = new SystemData(hostname, props);
+    if (!systems.contains(host)) {
+      systems.add(host);
     }
+  }
 
-    @AfterEach
-    public void teardown() {
-        client.close();
+  public InventoryList list() {
+    return new InventoryList(systems);
+  }
+
+  private Properties getPropertiesWithDefaultHostName() {
+    try {
+      return defaultRestClient.getProperties();
+    } catch (UnknownUriException e) {
+      System.err.println("The given URI is not formatted correctly.");
+    } catch (ProcessingException ex) {
+      handleProcessingException(ex);
     }
+    return null;
+  }
 
-    @Test
-    public void testGetProperties() {
-        Client client = ClientBuilder.newClient();
-
-        WebTarget target = client.target(clusterUrl);
-        Response response = target.request().get();
-
-        assertEquals(200, response.getStatus(),
-            "Incorrect response code from " + clusterUrl);
-        response.close();
+  private Properties getPropertiesWithGivenHostName(String hostname) {
+    String customURIString = "http://" + hostname + ":" + HTTP_PORT + "/system";
+    URI customURI = null;
+    try {
+      customURI = URI.create(customURIString);
+      SystemClient customRestClient = RestClientBuilder.newBuilder()
+                                        .baseUri(customURI)
+                                        .register(UnknownUriExceptionMapper.class)
+                                        .build(SystemClient.class);
+      return customRestClient.getProperties();
+    } catch (ProcessingException ex) {
+      handleProcessingException(ex);
+    } catch (UnknownUriException e) {
+      System.err.println("The given URI is unreachable.");
     }
+    return null;
+  }
+
+  private void handleProcessingException(ProcessingException ex) {
+    Throwable rootEx = ExceptionUtils.getRootCause(ex);
+    if (rootEx != null && (rootEx instanceof UnknownHostException
+        || rootEx instanceof ConnectException)) {
+      System.err.println("The specified host is unknown.");
+    } else {
+      throw ex;
+    }
+  }
 
 }
 ```
 
 
 
-The ***testGetProperties()*** method checks for a ***200*** response code from the ***system*** service endpoint.
+***@Inject*** and ***@RestClient*** annotations inject an instance of the ***SystemClient*** called ***defaultRestClient*** to the ***InventoryManager*** class.
 
-Create the ***InventoryEndpointIT*** class.
+Because the ***InventoryManager*** class is ***@ApplicationScoped***, and the ***SystemClient*** CDI bean maintains the same scope through the default dependent scope, the client is initialized once per application.
 
-> Run the following touch command in your terminal
+If the ***hostname*** parameter is ***localhost***, the service runs the ***getPropertiesWithDefaultHostName()*** helper function to fetch system properties. The helper function invokes the ***system*** service by calling the ***defaultRestClient.getProperties()*** method.
+
+
+::page{title="Building the client with RestClientBuilder"}
+
+The ***inventory*** service can also connect with a host other than the default ***localhost*** host, but you cannot configure a base URL that is not yet known. In this case, set the host name as a variable and build the client by using the ***RestClientBuilder*** method. You can customize the base URL from the host name attribute.
+
+Look at the ***getPropertiesWithGivenHostName()*** method in the ***src/main/java/io/openliberty/guides/inventory/InventoryManager.java*** file.
+
+
+The host name is provided as a parameter. This method first assembles the base URL that consists of the new host name. Then, the method instantiates a ***RestClientBuilder*** builder with the new URL, registers the response exception mapper, and builds the ***SystemClient*** instance.
+
+Similarly, call the ***customRestClient.getProperties()*** method to invoke the ***system*** service.
+
+
+::page{title="Running the application"}
+
+You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+
+When the Liberty instance is running, select either approach to fetch your system properties:
+
+
+ Visit the ***http\://localhost:9080/inventory/systems/localhost*** URL. The URL retrieves the system property information for the ***localhost*** host name by making a request to the ***system*** service at ***http://localhost:9080/system/properties***.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
 ```bash
-touch /home/project/guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
+curl -s http://localhost:9080/inventory/systems/localhost | jq
 ```
 
 
-> Then, to open the InventoryEndpointIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java, or click the following button
 
-::openFile{path="/home/project/guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java"}
+
+Or, get your FQDN first. Then, visit the ***http://localhost:9080/inventory/systems/{your-hostname}*** URL by replacing ***{your-hostname}*** with your FQDN, which retrieves your system properties by making a request to the ***system*** service at ***http://{your-hostname}:9080/system/properties***.
+
+
+::page{title="Testing the application"}
+
+Create the ***RestClientIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
+```
+
+
+> Then, to open the RestClientIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.inventory;
+package it.io.openliberty.guides.client;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import jakarta.json.JsonObject;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLSession;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-
-import org.junit.jupiter.api.AfterAll;
+import jakarta.ws.rs.client.WebTarget;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
-@TestMethodOrder(OrderAnnotation.class)
-public class InventoryEndpointIT {
+public class RestClientIT {
 
-    private static String invUrl;
-    private static String sysUrl;
-    private static String systemServiceIp;
+  private static String port;
 
-    private static Client client;
+  private Client client;
 
-    @BeforeAll
-    public static void oneTimeSetup() {
+  private final String INVENTORY_SYSTEMS = "inventory/systems";
 
-        String invServPort = System.getProperty("inventory.http.port");
-        String sysServPort = System.getProperty("system.http.port");
+  @BeforeAll
+  public static void oneTimeSetup() {
+    port = System.getProperty("http.port");
+  }
 
-        systemServiceIp = System.getProperty("system.ip");
+  @BeforeEach
+  public void setup() {
+    client = ClientBuilder.newClient();
+  }
 
-        invUrl = "http://localhost" + ":" + invServPort + "/inventory/systems/";
-        sysUrl = "http://localhost" + ":" + sysServPort + "/system/properties/";
+  @AfterEach
+  public void teardown() {
+    client.close();
+  }
 
-        client = ClientBuilder.newBuilder().hostnameVerifier(new HostnameVerifier() {
-            public boolean verify(String hostname, SSLSession session) {
-                return true;
-            }
-        }).build();
+  @Test
+  public void testSuite() {
+    this.testDefaultLocalhost();
+    this.testRestClientBuilder();
+  }
 
-        client.target(invUrl + "reset").request().post(null);
+  public void testDefaultLocalhost() {
+    String hostname = "localhost";
+
+    String url = "http://localhost:" + port + "/" + INVENTORY_SYSTEMS + "/" + hostname;
+
+    JsonObject obj = fetchProperties(url);
+
+    assertEquals(System.getProperty("os.name"), obj.getString("os.name"),
+                 "The system property for the local and remote JVM should match");
+  }
+
+  public void testRestClientBuilder() {
+    String hostname = null;
+    try {
+      hostname = InetAddress.getLocalHost().getHostAddress();
+    } catch (UnknownHostException e) {
+      System.err.println("Unknown Host.");
     }
 
-    @AfterAll
-    public static void teardown() {
-        client.close();
-    }
+    String url = "http://localhost:" + port + "/" + INVENTORY_SYSTEMS + "/" + hostname;
 
-    @Test
-    @Order(1)
-    public void testEmptyInventory() {
-        Response response = this.getResponse(invUrl);
-        this.assertResponse(invUrl, response);
+    JsonObject obj = fetchProperties(url);
 
-        JsonObject obj = response.readEntity(JsonObject.class);
+    assertEquals(System.getProperty("os.name"), obj.getString("os.name"),
+                 "The system property for the local and remote JVM should match");
+  }
 
-        int expected = 0;
-        int actual = obj.getInt("total");
-        assertEquals(expected, actual,
-                    "The inventory should be empty on application start but it wasn't");
+  private JsonObject fetchProperties(String url) {
+    WebTarget target = client.target(url);
+    Response response = target.request().get();
 
-        response.close();
-    }
+    assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
 
-    @Test
-    @Order(2)
-    public void testHostRegistration() {
-        this.visitSystemService();
+    JsonObject obj = response.readEntity(JsonObject.class);
+    response.close();
+    return obj;
+  }
 
-        Response response = this.getResponse(invUrl);
-        this.assertResponse(invUrl, response);
-
-        JsonObject obj = response.readEntity(JsonObject.class);
-
-        int expected = 1;
-        int actual = obj.getInt("total");
-        assertEquals(expected, actual,
-                        "The inventory should have one entry for " + systemServiceIp);
-
-        boolean serviceExists = obj.getJsonArray("systems").getJsonObject(0)
-                        .get("hostname").toString().contains(systemServiceIp);
-        assertTrue(serviceExists,
-                        "A host was registered, but it was not " + systemServiceIp);
-
-        response.close();
-    }
-
-    @Test
-    @Order(3)
-    public void testSystemPropertiesMatch() {
-        Response invResponse = this.getResponse(invUrl);
-        Response sysResponse = this.getResponse(sysUrl);
-
-        this.assertResponse(invUrl, invResponse);
-        this.assertResponse(sysUrl, sysResponse);
-
-        JsonObject jsonFromInventory = (JsonObject) invResponse
-                        .readEntity(JsonObject.class).getJsonArray("systems")
-                        .getJsonObject(0).get("properties");
-
-        JsonObject jsonFromSystem = sysResponse.readEntity(JsonObject.class);
-
-        String osNameFromInventory = jsonFromInventory.getString("os.name");
-        String osNameFromSystem = jsonFromSystem.getString("os.name");
-        this.assertProperty("os.name", systemServiceIp, osNameFromSystem,
-                        osNameFromInventory);
-
-        String userNameFromInventory = jsonFromInventory.getString("user.name");
-        String userNameFromSystem = jsonFromSystem.getString("user.name");
-        this.assertProperty("user.name", systemServiceIp, userNameFromSystem,
-                        userNameFromInventory);
-
-        invResponse.close();
-        sysResponse.close();
-    }
-
-    @Test
-    @Order(4)
-    public void testUnknownHost() {
-        Response response = this.getResponse(invUrl);
-        this.assertResponse(invUrl, response);
-
-        Response badResponse = client.target(invUrl + "badhostname")
-                        .request(MediaType.APPLICATION_JSON).get();
-
-        String obj = badResponse.readEntity(String.class);
-
-        boolean isError = obj.contains("error");
-        assertTrue(isError,
-                        "badhostname is not a valid host but it didn't raise an error");
-
-        response.close();
-        badResponse.close();
-    }
-
-    private Response getResponse(String url) {
-        return client.target(url).request().get();
-    }
-
-
-    private void assertResponse(String url, Response response) {
-        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
-    }
-
-    private void assertProperty(String propertyName, String hostname, String expected,
-                    String actual) {
-        assertEquals(expected, actual, "JVM system property [" + propertyName + "] "
-                        + "in the system service does not match the one stored in "
-                        + "the inventory service for " + hostname);
-    }
-
-    private void visitSystemService() {
-        Response response = this.getResponse(sysUrl);
-        this.assertResponse(sysUrl, response);
-        response.close();
-
-        Response targetResponse = client.target(invUrl + systemServiceIp).request()
-                        .get();
-
-        targetResponse.close();
-    }
 }
 ```
 
 
 
-* The ***testEmptyInventory()*** method checks that the ***inventory*** service has a total of 0 systems before anything is added to it.
-* The ***testHostRegistration()*** method checks that the ***system*** service was added to ***inventory*** properly.
-* The ***testSystemPropertiesMatch()*** checks that the ***system*** properties match what was added into the ***inventory*** service.
-* The ***testUnknownHost()*** method checks that an error is raised if an unknown host name is being added into the ***inventory*** service.
-* The ***systemServiceIp*** variable has the same value as the IP address that you retrieved in the previous section when you manually added the ***system*** service into the ***inventory*** service. This value of the IP address is passed in when you run the tests.
+Each test case tests one of the methods for instantiating a RESTful client.
+
+The ***testDefaultLocalhost()*** test fetches and compares system properties from the ***http\://localhost:9080/inventory/systems/localhost*** URL.
+
+The ***testRestClientBuilder()*** test gets your IP address. Then, use your IP address as the host name to fetch your system properties and compare them.
+
+In addition, a few endpoint tests are provided for you to test the basic functionality of the ***inventory*** and ***system*** services. If a test failure occurs, you might have introduced a bug into the code.
+
 
 ### Running the tests
 
-Run the Maven **package** goal to compile the test classes. Run the Maven **failsafe** goal to test the services that are running in the Docker containers by setting **-Dsystem.ip** to the IP address that you determined previously.
-
-```bash
-SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
-./mvnw package
-./mvnw failsafe:integration-test -Dsystem.ip="$SYSTEM_IP" -Dinventory.http.port=9081 -Dsystem.http.port=9080
-```
-
-If the tests pass, you see output similar to the following example:
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
 Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.653 s - in it.io.openliberty.guides.system.SystemEndpointIT
-
-Results:
-
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.377 sec - in it.io.openliberty.guides.system.SystemEndpointIT
 Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.935 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
+Could not send Message.
+[err] The specified host is unknown.
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.379 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+Running it.io.openliberty.guides.client.RestClientIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.121 sec - in it.io.openliberty.guides.client.RestClientIT
 
-Results:
+Results :
 
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-When you are finished with the services, run the following commands to stop and remove your containers:
+The warning and error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the ***testUnknownHost()*** test from the ***InventoryEndpointIT*** integration test.
 
-```bash
-docker stop inventory system 
-docker rm inventory system
-```
+To see whether the tests detect a failure, change the base URL in the configuration file so that when the ***inventory*** service tries to access the invalid URL, an ***UnknownUriException*** is thrown. Rerun the tests to see a test failure occur.
 
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You have just built Docker images and run two microservices on Open Liberty in containers. 
+You just invoked a remote service by using a template interface with MicroProfile Rest Client in Open Liberty.
 
+
+MicroProfile Rest Client also provides a uniform way to configure SSL for the client. You can learn more in the [Hostname verification with SSL on Open Liberty and MicroProfile Rest Client](https://openliberty.io/blog/2019/06/21/microprofile-rest-client-19006.html#ssl) blog and the [MicroProfile Rest Client specification](https://github.com/eclipse/microprofile-rest-client/releases).
+
+Feel free to try one of the related guides where you can learn more technologies and expand on what you built here.
 
 
 ### Clean up your environment
@@ -865,31 +651,33 @@ You have just built Docker images and run two microservices on Open Liberty in c
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-containerize*** project by running the following commands:
+Delete the ***guide-microprofile-rest-client*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-containerize
+rm -fr guide-microprofile-rest-client
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Containerizing%20microservices&guide-id=cloud-hosted-guide-containerize)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20RESTful%20services%20with%20template%20interfaces&guide-id=cloud-hosted-guide-microprofile-rest-client)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-containerize/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-containerize/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-rest-client/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-rest-client/pulls)
 
 
 
 ### Where to next?
 
-* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
-* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
 
 
 ### Log out of the session
