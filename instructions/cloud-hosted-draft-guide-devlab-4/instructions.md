@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Bidirectional communication between services using Jakarta WebSocket guide!"}
+::page{title="Welcome to the Enabling distributed tracing in microservices with OpenTelemetry and Jaeger guide!"}
 
-Learn how to use Jakarta WebSocket to send and receive messages between services without closing the connection.
+Distributed tracing helps teams keep track of requests between microservices. MicroProfile Telemetry adopts OpenTelemetry tracing, so you can observe requests across your distributed systems.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -17,14 +17,18 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-Jakarta WebSocket enables two-way communication between client and server endpoints. First, each client makes an HTTP connection to a Jakarta WebSocket server. The server can then broadcast messages to the clients. link:[Server-Sent Events (SSE)](link:https://openliberty.io/guides/reactive-messaging-sse.html) also enables a client to receive automatic updates from a server via an HTTP connection however WebSocket differs from Server-Sent Events in that SSE is unidirectional from server to client, whereas WebSocket is bidirectional. WebSocket also enables real-time updates over a smaller bandwidth than SSE. The connection isn't closed meaning that the client can continue to send and receive messages with the server, without having to poll the server to receive any replies.
+The complexity of microservices architecture can make it more difficult to understand how services depend on or affect each other and to identify sources of latency or inaccuracies.
 
-The application that you will build in this guide consists of the ***client*** service and the ***system*** server service. The following diagram depicts the application that is used in this guide. 
+One way to increase the observability of an application is by emitting traces. [OpenTelemetry](https://opentelemetry.io/) is a set of APIs, SDKs, tooling, and integrations designed to create and manage telemetry data such as traces, metrics, and logs. MicroProfile Telemetry adopts OpenTelemetry so your Java applications can benefit from both manual and automatic traces.
 
-![Application architecture where system and client services use the Jakarta Websocket API to connect and communicate.](https://raw.githubusercontent.com/OpenLiberty/guide-jakarta-websocket/prod/assets/architecture.png)
+Traces represent requests, which can contain multiple operations or spans. Each span comprises a name, time-related data, log messages, and metadata that describe what occurred during a transaction. Spans are associated with a context, which identifies the request within which the span occurred. Developers can then follow a single request between services through a potentially complex distributed system. Exporters send the data that MicroProfile Telemetry collects to Jaeger so you can visualize and monitor the generated spans.
+
+The diagram shows multiple services, which is where distributed tracing is valuable. However, for simplicity, in this guide, you'll configure only the ***system*** and ***inventory*** services to use [Jaeger](https://www.jaegertracing.io/) for distributed tracing with MicroProfile Telemetry. You'll run these services in two separate JVMs made of two Open Liberty instances to demonstrate tracing in a distributed environment.
+
+![Application architecture](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/architecture_diagram.png)
 
 
-You'll learn how to use the link:[Jakarta WebSocket API](link:https://openliberty.io/docs/latest/reference/javadoc/liberty-jakartaee10-javadoc.html?path=liberty-jakartaee10-javadoc/jakarta/websocket/package-summary.html) to build the ***system*** service and the scheduler in the ***client*** service. The scheduler pushes messages to the system service every 10 seconds, then the system service broadcasts the messages to any connected clients. You will also learn how to use a JavaScript ***WebSocket*** object in an HTML file to build a WebSocket connection, subscribe to different events, and display the broadcasting messages from the ***system*** service in a table.
+
 
 ::page{title="Getting started"}
 
@@ -37,11 +41,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-jakarta-websocket.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-telemetry-jaeger.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-jakarta-websocket.git
-cd guide-jakarta-websocket
+git clone https://github.com/openliberty/guide-microprofile-telemetry-jaeger.git
+cd guide-microprofile-telemetry-jaeger
 ```
 
 
@@ -51,735 +55,643 @@ The ***finish*** directory contains the finished project that you will build.
 
 ### Try what you'll build
 
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed. 
+Run the following `docker` command to start the Jaeger server:
+```bash
+docker run -d --name jaeger \
+  -e COLLECTOR_ZIPKIN_HOST_PORT=:9411 \
+  -e COLLECTOR_OTLP_ENABLED=true \
+  -p 6831:6831/udp \
+  -p 6832:6832/udp \
+  -p 5778:5778 \
+  -p 16686:16686 \
+  -p 4317:4317 \
+  -p 4318:4318 \
+  -p 14250:14250 \
+  -p 14268:14268 \
+  -p 14269:14269 \
+  -p 9411:9411 \
+  jaegertracing/all-in-one:1.46
+```
 
-To try out the application, go to the finish directory and run the following Maven goal to build the ***system*** service and deploy it to Open Liberty:
+You can find information about the Jaeger server and instructions for starting the all-in-one executable file in the [Jaeger documentation](https://www.jaegertracing.io/docs/1.46/getting-started/#all-in-one).
+
+Before you proceed, make sure that your Jaeger server is up and running. Click the following button to visit the Jaeger service:
+
+::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
+
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+
+
+
+Navigate to the ***finish/system*** directory. Run the following Maven goal to build the ***system*** service and deploy it to Open Liberty:
+```bash
+cd /home/project/guide-microprofile-telemetry-jaeger/finish/system
+./mvnw liberty:run
+```
+
+Open another command-line session and navigate to the ***finish/inventory*** directory. Run the following Maven goal to build the ***inventory*** service and deploy it to Open Liberty:
+```bash
+cd /home/project/guide-microprofile-telemetry-jaeger/finish/inventory
+./mvnw liberty:run
+```
+
+
+After you see the following message in both command-line sessions, both of your services are ready:
+
+```
+The defaultServer server is ready to run a smarter planet.
+```
+
+
+Open another command-line session and run the following curl command from the terminal:
+```bash
+curl -s http://localhost:9081/inventory/systems/localhost | jq
+```
+
+When you visit this endpoint, you make two GET HTTP requests, one to the ***system*** service and another to the ***inventory*** service. Both of these requests are configured to be traced, so a new trace is recorded in Jaeger. To view the traces, click the following button to visit the Jaeger service:
+
+::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
+
+You can view the traces for the ***system*** or ***inventory*** services under the **Search** tab. If you see only the **jaeger-query** option in the drop-down menu, wait a little longer and refresh the page to see the application services.
+
+Select the services in the **Select A Service** menu and click the **Find Traces** button at the end of the section. You will see the following result:
+
+![Get traces for the inventory service](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_service_spans.png)
+
+
+
+The trace has five spans, four from the ***inventory*** service and one from the ***system*** service. Click the trace to view its details. Under **Service & Operation**, you see the spans in this trace. You can inspect each span by clicking it to reveal more detailed information, such as the times that a request was received and a response was sent.
+
+![Inventory details spans](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_details_spans.png)
+
+
+
+After you’re finished reviewing the application, stop the Open Liberty instances by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***inventory*** services. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
 
 
 ```bash
-./mvnw -pl system liberty:run
-```
-
-Next, open another command-line session and run the following command to start the ***client*** service:
-
-
-```bash
-./mvnw -pl client liberty:run
-```
-
-After you see the following message in both command-line sessions, both your services are ready.
-
-```
-The defaultServer is ready to run a smarter planet. 
-```
-
-Check out the service at the ***http\://localhost:9080*** URL. See that the table is being updated for every 10 seconds. 
-
-After you are finished checking out the application, stop both the ***system*** and ***client*** services by pressing `Ctrl+C` in the command-line sessions where you ran them. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
-
-
-```bash
+cd /home/project/guide-microprofile-telemetry-jaeger/finish
 ./mvnw -pl system liberty:stop
-./mvnw -pl client liberty:stop
+./mvnw -pl inventory liberty:stop
 ```
- 
 
-::page{title="Creating the WebSocket server service"}
+::page{title="Building the application "}
 
-In this section, you will create the ***system*** WebSocket server service that broadcasts messages to clients.
+You need to start the services to see basic traces appear in Jaeger.
+
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
+
+Open a command-line session and navigate to the ***start/system*** directory. Run the following Maven goal to start the ***system*** service in dev mode:
+
+
+```bash
+cd /home/project/guide-microprofile-telemetry-jaeger/start/system
+./mvnw liberty:dev
+```
+
+Open a command-line session and navigate to the ***start/inventory*** directory. Run the following Maven goal to start the ***inventory*** service in dev mode:
+
+
+```bash
+cd /home/project/guide-microprofile-telemetry-jaeger/start/inventory
+./mvnw liberty:dev
+```
+
+After you see the following message, your Liberty instance is ready in dev mode:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+
+
+When the runtime instances start, you can find the ***system*** service by running the following curl command:
+```bash
+curl -s http://localhost:9080/system/properties | jq
+```
+
+and the ***inventory*** service by running the following curl command:
+```bash
+curl -s http://localhost:9081/inventory/systems | jq
+```
+
+::page{title="Enabling Telemetry implementation "}
 
 Navigate to the ***start*** directory to begin.
 
-```bash
-cd /home/project/guide-jakarta-websocket/start
+MicroProfile Telemetry allows you to observe traces without modifying the source code in your Jakarta RESTful applications. You can enable the ***mpTelemetry*** feature in the ***server.xml*** configuration file.
+
+Replace the ***server.xml*** file of the system service:
+
+> To open the server.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-telemetry-jaeger/start/system/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/system/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="system service">
+
+    <featureManager>
+        <platform>jakartaee-10.0</platform>
+        <platform>microprofile-7.0</platform>
+        <feature>cdi</feature>
+        <feature>jsonb</feature>
+        <feature>jsonp</feature>
+        <feature>restfulWS</feature>
+        <feature>mpTelemetry</feature>
+    </featureManager>
+
+    <httpEndpoint httpPort="${http.port}"
+                  httpsPort="${https.port}"
+                  id="defaultHttpEndpoint" host="*" />
+
+    <webApplication location="guide-microprofile-telemetry-jaeger-system.war"
+                    contextRoot="/" />
+
+</server>
 ```
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following command to start the ***system*** service in dev mode:
 
-```bash
-./mvnw -pl system liberty:dev
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+
+
+The ***mpTelemetry*** feature is now enabled in the ***server.xml*** of the ***system*** service.
+
+Replace the ***server.xml*** file of the inventory service:
+
+> To open the server.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="inventory service">
+
+    <featureManager>
+        <platform>jakartaee-10.0</platform>
+        <platform>microprofile-7.0</platform>
+        <feature>cdi</feature>
+        <feature>jsonb</feature>
+        <feature>jsonp</feature>
+        <feature>restfulWS</feature>
+        <feature>mpConfig</feature>
+        <feature>mpTelemetry</feature>
+    </featureManager>
+
+    <httpEndpoint httpPort="${http.port}"
+                  httpsPort="${https.port}"
+                  id="defaultHttpEndpoint" host="*" />
+
+    <webApplication location="guide-microprofile-telemetry-jaeger-inventory.war"
+                    contextRoot="/">
+    </webApplication>
+
+</server>
 ```
 
-After you see the following message, your Liberty instance is ready in dev mode:
 
-```
-**************************************************
-*     Liberty is running in dev mode.
-```
 
-The ***system*** service is responsible for handling the messages produced by the ***client*** scheduler, building system load messages, and forwarding them to clients.
+The ***mpTelemetry*** feature is now enabled in the ***server.xml*** of the ***inventory*** service.
 
-Create the SystemService class.
+
+By default, MicroProfile Telemetry tracing is off. To enable any tracing aspects, specify the ***otel*** properties in the MicroProfile configuration file. 
+
+Create the ***microprofile-config.properties*** file of the system service:
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
+touch /home/project/guide-microprofile-telemetry-jaeger/start/system/src/main/resources/META-INF/microprofile-config.properties
 ```
 
 
-> Then, to open the SystemService.java file in your IDE, select
-> ***File*** > ***Open*** > guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
+> Then, to open the microprofile-config.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-telemetry-jaeger/start/system/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
-::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
+::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/system/src/main/resources/META-INF/microprofile-config.properties"}
+
+
+
+```
+otel.service.name=system
+otel.sdk.disabled=false
+otel.metrics.exporter=none
+otel.logs.exporter=none
+```
+
+
+
+The MicroProfile properties file sets the ***otel.service.name*** property with the ***system*** service name, sets the ***otel.sdk.disabled*** property to ***false*** to enable tracing, sets the ***otel.metrics.exporter*** property to ***none*** to disable metrics, and sets the ***otel.logs.exporter*** property to ***none*** to disable exporting logs.
+
+
+Replace the ***microprofile-config.properties*** file of the inventory service:
+
+> To open the microprofile-config.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main/resources/META-INF/microprofile-config.properties"}
+
+
+
+```
+io.openliberty.guides.inventory.client.SystemClient/mp-rest/url=http://localhost:9080/system
+otel.service.name=inventory
+otel.sdk.disabled=false
+otel.metrics.exporter=none
+otel.logs.exporter=none
+```
+
+
+
+Similarly, specify the ***otel*** properties for the ***inventory*** service.
+
+For more information about these and other Telemetry properties, see the [MicroProfile Config properties for MicroProfile Telemetry](https://openliberty.io/docs/latest/reference/microprofile-config-properties.html#telemetry) documentation.
+
+
+To run the ***system*** and ***inventory*** services, run the following curl command:
+```bash
+curl -s http://localhost:9081/inventory/systems/localhost | jq
+```
+
+To view the traces, click the following button to visit the Jaeger service:
+
+::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
+
+You can view the traces for the ***system*** or ***inventory*** services under the **Search** tab. Select the services in the **Select A Service** menu and click the **Find Traces** button at the end of the section. You'll see the result as:
+
+![Default spans](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/default_spans.png)
+
+
+
+Verify that there are two spans from the ***inventory*** service and one span from the ***system*** service. Click the trace to view its details.
+
+![Details default spans](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/details_default_spans.png)
+
+
+::page{title="Enabling explicit distributed tracing"}
+
+Automatic instrumentation only instruments Jakarta RESTful web services and MicroProfile REST clients. To get further spans on other operations, such as database calls, you can add manual instrumentation to the source code.
+
+### Enabling OpenTelemetry APIs
+
+The MicroProfile Telemetry feature has been enabled to trace all REST endpoints by default in the previous section. To further control and customize traces, use the ***@WithSpan*** annotation to enable particular methods. You can also inject a ***Tracer*** object to create and customize spans.
+
+Replace the ***server.xml*** file of the inventory service:
+
+> To open the server.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="inventory service">
+
+    <featureManager>
+        <platform>jakartaee-10.0</platform>
+        <platform>microprofile-7.0</platform>
+        <feature>cdi</feature>
+        <feature>jsonb</feature>
+        <feature>jsonp</feature>
+        <feature>restfulWS</feature>
+        <feature>mpConfig</feature>
+        <feature>mpTelemetry</feature>
+    </featureManager>
+
+    <httpEndpoint httpPort="${http.port}"
+                  httpsPort="${https.port}"
+                  id="defaultHttpEndpoint" host="*" />
+
+    <webApplication location="guide-microprofile-telemetry-jaeger-inventory.war"
+                    contextRoot="/">
+        <!-- enable visibility to third party apis -->
+        <classloader apiTypeVisibility="+third-party"/>
+    </webApplication>
+
+</server>
+```
+
+
+
+The OpenTelemetry APIs are exposed as third-party APIs in Open Liberty. To add the visibility of OpenTelemetry APIs to the application, add ***third-party*** to the types of API packages that this class loader supports. Instead of explicitly configuring a list of API packages that includes ***third-party***, set the ***+third-party*** value to the ***apiTypeVisibility*** attribute in the ***classLoader*** configuration. This configuration adds ***third-party*** to the default list of API package types that are supported.
+
+
+### Enabling tracing in Jakarta CDI beans
+
+You can trace your Jakarta CDI beans by annotating their methods with a ***@WithSpan*** annotation.
+
+Replace the ***InventoryManager*** class:
+
+> To open the InventoryManager.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
 
 
 
 ```java
-package io.openliberty.guides.system;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
-import java.util.Calendar;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.logging.Logger;
+package io.openliberty.guides.inventory;
 
-import jakarta.json.Json;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonObjectBuilder;
-import jakarta.websocket.CloseReason;
-import jakarta.websocket.OnClose;
-import jakarta.websocket.OnError;
-import jakarta.websocket.OnMessage;
-import jakarta.websocket.OnOpen;
-import jakarta.websocket.Session;
-import jakarta.websocket.server.ServerEndpoint;
+import java.util.ArrayList;
+import java.util.Properties;
 
-import com.sun.management.OperatingSystemMXBean;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
+import io.opentelemetry.instrumentation.annotations.SpanAttribute;
 
-@ServerEndpoint(value = "/systemLoad",
-                decoders = { SystemLoadDecoder.class },
-                encoders = { SystemLoadEncoder.class })
-public class SystemService {
+import io.openliberty.guides.inventory.client.SystemClient;
+import io.openliberty.guides.inventory.model.InventoryList;
+import io.openliberty.guides.inventory.model.SystemData;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import java.util.List;
+import java.util.Collections;
 
-    private static Logger logger = Logger.getLogger(SystemService.class.getName());
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-    private static Set<Session> sessions = new HashSet<>();
+@ApplicationScoped
+public class InventoryManager {
 
-    private static final OperatingSystemMXBean OS =
-        (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+    @Inject
+    @ConfigProperty(name = "system.http.port")
+    private int SYSTEM_PORT;
 
-    private static final MemoryMXBean MEM =
-        ManagementFactory.getMemoryMXBean();
+    private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
+    private SystemClient systemClient = new SystemClient();
 
-    public static void sendToAllSessions(JsonObject systemLoad) {
-        for (Session session : sessions) {
-            try {
-                session.getBasicRemote().sendObject(systemLoad);
-            } catch (Exception e) {
-                e.printStackTrace();
+    public Properties get(String hostname) {
+        systemClient.init(hostname, SYSTEM_PORT);
+        Properties properties = systemClient.getProperties();
+        return properties;
+    }
+
+    @WithSpan
+    public InventoryList list() {
+        return new InventoryList(systems);
+    }
+
+    @WithSpan("Inventory Manager Add")
+    public void add(@SpanAttribute("hostname") String host,
+                    Properties systemProps) {
+        Properties props = new Properties();
+        props.setProperty("os.name", systemProps.getProperty("os.name"));
+        props.setProperty("user.name", systemProps.getProperty("user.name"));
+        SystemData system = new SystemData(host, props);
+        if (!systems.contains(system)) {
+            systems.add(system);
+        }
+    }
+
+    int clear() {
+        int propertiesClearedCount = systems.size();
+        systems.clear();
+        return propertiesClearedCount;
+    }
+}
+
+```
+
+
+
+The ***list()*** and ***add()*** methods are annotated with the ***@WithSpan*** annotation, which can accept an optional parameter that functions as the span name. In this example, the default span name assigned to the ***list()*** method is automatically generated through the instrumentation. You can also specify a custom span name. For example, ***Inventory Manager Add*** is specified as the span name for the ***add()*** method. The OpenTelemetry instrumentation provides a new span for each method. You can now collect and trace the spans across different services. 
+
+Optionally, you can include parameters and their values in the span by using the ***@SpanAttribute*** annotation. For example, the ***@SpanAttribute*** annotation specifies ***hostname*** as the attribute name for the ***host*** parameter , which helps trace the parameter within the ***add*** span.
+
+To learn more about how to use OpenTelemetry annotations to instrument code, see the [OpenTelemetry Annotations](https://opentelemetry.io/docs/instrumentation/java/automatic/annotations/) documentation.
+
+
+
+Now, you can check out the traces that are generated by the ***@WithSpan*** annotation. Run the following curl command:
+```bash
+curl -s http://localhost:9081/inventory/systems | jq
+```
+
+and click the following button to visit the Jaeger service:
+
+::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
+
+Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result as:
+
+![Inventory Manager span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_manager_span.png)
+
+
+
+Verify that there are two spans from the ***inventory*** service. Click the trace to view its details. You'll see the ***InventoryManager.list*** span that is created by the ***@WithSpan*** annotation.
+
+![Inventory Manager list span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_manager_list_span.png)
+
+
+
+To check out the information generated by the ***@SpanAttribute*** annotation, run the following curl command:
+```bash
+curl -s http://localhost:9081/inventory/systems/localhost | jq
+```
+
+Click the following button to visit the Jaeger service:
+
+::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
+
+
+Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You will see the following result:
+
+![Get traces for the inventory service](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_service_4_spans.png)
+
+
+
+Verify that there are three spans from the ***inventory*** service and one span from the ***system*** service. Click the trace to view its details.
+
+![Inventory details spans](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_details_4_spans.png)
+
+
+
+Click the ***Inventory Manager Add*** span and its ***Tags***. You can see the ***hostname*** tag with the ***localhost*** value that is created by the ***@SpanAttribute*** annotation.
+
+![Inventory Manager add span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_manager_add_span.png)
+
+
+
+### Injecting a custom Tracer object
+
+The MicroProfile Telemetry specification makes the underlying OpenTelemetry Tracer instance available. The configured Tracer is accessed by injecting it into a bean. You can use it to instrument your code to create traces.
+
+Replace the ***InventoryResource*** class:
+
+> To open the InventoryResource.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java"}
+
+
+
+```java
+package io.openliberty.guides.inventory;
+
+import java.util.Properties;
+
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.context.Scope;
+
+import io.openliberty.guides.inventory.model.InventoryList;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+@RequestScoped
+@Path("/systems")
+public class InventoryResource {
+
+    @Inject
+    private InventoryManager manager;
+
+    @Inject
+    private Tracer tracer;
+
+    @GET
+    @Path("/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getPropertiesForHost(@PathParam("hostname") String hostname) {
+        Span getPropertiesSpan = tracer.spanBuilder("GettingProperties").startSpan();
+        Properties props = null;
+        try (Scope scope = getPropertiesSpan.makeCurrent()) {
+            props = manager.get(hostname);
+            if (props == null) {
+                getPropertiesSpan.addEvent("Cannot get properties");
+                return Response.status(Response.Status.NOT_FOUND)
+                         .entity("{ \"error\" : \"Unknown hostname or the system "
+                               + "service may not be running on " + hostname + "\" }")
+                         .build();
             }
+            getPropertiesSpan.addEvent("Received properties");
+            manager.add(hostname, props);
+        } finally {
+            getPropertiesSpan.end();
         }
+        return Response.ok(props).build();
+
     }
 
-    @OnOpen
-    public void onOpen(Session session) {
-        logger.info("Server connected to session: " + session.getId());
-        sessions.add(session);
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public InventoryList listContents() {
+        return manager.list();
     }
 
-    @OnMessage
-    public void onMessage(String option, Session session) {
-        logger.info("Server received message \"" + option + "\" "
-                    + "from session: " + session.getId());
-        try {
-            JsonObjectBuilder builder = Json.createObjectBuilder();
-            builder.add("time", Calendar.getInstance().getTime().toString());
-            if (option.equalsIgnoreCase("cpuLoad")
-                || option.equalsIgnoreCase("both")) {
-                builder.add("cpuLoad", Double.valueOf(OS.getCpuLoad() * 100.0));
-            }
-            if (option.equalsIgnoreCase("memoryUsage")
-                || option.equalsIgnoreCase("both")) {
-                long heapMax = MEM.getHeapMemoryUsage().getMax();
-                long heapUsed = MEM.getHeapMemoryUsage().getUsed();
-                builder.add("memoryUsage", Double.valueOf(heapUsed * 100.0 / heapMax));
-            }
-            JsonObject systemLoad = builder.build();
-            sendToAllSessions(systemLoad);
-        } catch (Exception e) {
-            e.printStackTrace();
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response clearContents() {
+        int cleared = manager.clear();
+
+        if (cleared == 0) {
+            return Response.status(Response.Status.NOT_MODIFIED)
+                           .build();
         }
-    }
-
-    @OnClose
-    public void onClose(Session session, CloseReason closeReason) {
-        logger.info("Session " + session.getId()
-                    + " was closed with reason " + closeReason.getCloseCode());
-        sessions.remove(session);
-    }
-
-    @OnError
-    public void onError(Session session, Throwable throwable) {
-        logger.info("WebSocket error for " + session.getId() + " "
-                    + throwable.getMessage());
+        return Response.status(Response.Status.OK)
+                       .build();
     }
 }
+
 ```
 
 
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
+To access the Tracer, the ***@Inject*** annotation from the Contexts and Dependency Injections API injects the Tracer into a bean. 
+
+Before the ***InventoryManager*** calls the ***system*** service, it creates and starts a span called the ***GettingProperties*** by using the ***spanBuilder()*** and ***startSpan()*** Tracer APIs.
+
+When you start a span, you must also end it by calling ***end()*** on the span. If you don't end a span, it won't be recorded at all and won't show up in Jaeger. This code ensures that ***end()*** is always called by including it in a ***finally*** block.
+
+After you start the span, make it current with the ***makeCurrent()*** call. Making a span current means that any new spans created in the same thread, either automatically by Open Liberty or manually by calling the API, will use this span as their parent span.
+
+The ***makeCurrent()*** call returns a ***Scope***. Make sure to always close the ***Scope***, which stops the span from being current and makes the previous span current again. Use a ***try-with-resources*** block, which automatically closes the ***Scope*** at the end of the block.
+
+Use the ***addEvent()*** Span API to create an event when the properties are received and an event when it fails to get the properties from the ***system*** service. Use the ***end()*** Span API to mark the ***GettingProperties*** span as completed.
 
 
-Annotate the ***SystemService*** class with a ***@ServerEndpoint*** annotation to make it a WebSocket server. The ***@ServerEndpoint***  ***value*** attribute specifies the URI where the endpoint will be deployed. The ***encoders*** attribute specifies the classes to encode messages and the ***decoders*** attribute specifies the classes to decode messages. Provide methods that define the parts of the WebSocket lifecycle like establishing a connection, receiving a message, and closing the connection by annotating them with the ***@OnOpen***, ***@OnMessage*** and ***@OnClose*** annotations respectively. The method that is annotated with the ***@OnError*** annotation is responsible for tackling errors.
 
-The ***onOpen()*** method stores up the client sessions. The ***onClose()*** method displays the reason for closing the connection and removes the closing session from the client sessions.
-
-The ***onMessage()*** method is called when receiving a message through the ***option*** parameter. The ***option*** parameter signifies which message to construct, either system load, memory usage data, or both, and sends out the ***JsonObject*** message. The ***sendToAllSessions()*** method uses the WebSocket API to broadcast the message to all client sessions.
-
-Create the SystemLoadEncoder class.
-
-> Run the following touch command in your terminal
+To check out the traces that contain the ***GettingProperties*** span, run the following curl command:
 ```bash
-touch /home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadEncoder.java
+curl -s http://localhost:9081/inventory/systems/localhost | jq
 ```
 
+Click the following button to visit the Jaeger service:
 
-> Then, to open the SystemLoadEncoder.java file in your IDE, select
-> ***File*** > ***Open*** > guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadEncoder.java, or click the following button
+::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
 
-::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadEncoder.java"}
+Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result:
 
-
-
-```java
-package io.openliberty.guides.system;
-
-import jakarta.json.JsonObject;
-import jakarta.websocket.EncodeException;
-import jakarta.websocket.Encoder;
-
-public class SystemLoadEncoder implements Encoder.Text<JsonObject> {
-
-    @Override
-    public String encode(JsonObject object) throws EncodeException {
-        return object.toString();
-    }
-}
-```
+![Get traces for the inventory service](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_service_spans.png)
 
 
 
-The ***SystemLoadEncoder*** class implements the ***Encoder.Text*** interface. Override the ***encode()*** method that accepts the ***JsonObject*** message and converts the message to a string.
+Verify that there are four spans from the ***inventory*** service and one span from the ***system*** service. Click the trace to view its details. You'll see the ***GettingProperties*** span.
 
-Create the SystemLoadDecoder class.
+![Inventory details spans](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_details_spans.png)
 
-> Run the following touch command in your terminal
+
+
+To check out the event adding to the ***GettingProperties*** span, run the following curl command:
 ```bash
-touch /home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadDecoder.java
+curl -s http://localhost:9081/inventory/systems/unknown | jq
 ```
 
+Click the following button to visit the Jaeger service:
 
-> Then, to open the SystemLoadDecoder.java file in your IDE, select
-> ***File*** > ***Open*** > guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadDecoder.java, or click the following button
+::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
 
-::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadDecoder.java"}
+Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You will see the following result:
 
+![Get traces for unknown hostname](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_service_unknown_spans.png)
 
 
-```java
-package io.openliberty.guides.system;
 
-import java.io.StringReader;
+There are two spans from the ***inventory*** service. Click the trace to view its details. You'll see the ***GettingProperties*** span. Click the ***GettingProperties*** span and its ***Logs***. You can see the ***Cannot get properties*** message.
 
-import jakarta.json.Json;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonReader;
-import jakarta.websocket.DecodeException;
-import jakarta.websocket.Decoder;
+![Logs at GettingProperties span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/logs_at_gettingProperties.png)
 
-public class SystemLoadDecoder implements Decoder.Text<JsonObject> {
 
-    @Override
-    public JsonObject decode(String s) throws DecodeException {
-        try (JsonReader reader = Json.createReader(new StringReader(s))) {
-            return reader.readObject();
-        } catch (Exception e) {
-            JsonObject error = Json.createObjectBuilder()
-                    .add("error", e.getMessage())
-                    .build();
-            return error;
-        }
-    }
 
-    @Override
-    public boolean willDecode(String s) {
-        try (JsonReader reader = Json.createReader(new StringReader(s))) {
-            reader.readObject();
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
+To learn more about how to use OpenTelemetry APIs to instrument code, see the [OpenTelemetry Manual Instrumentation](https://opentelemetry.io/docs/instrumentation/java/manual/) documentation.
 
-}
-```
 
+::page{title="Testing the application "}
 
-
-The ***SystemLoadDecoder*** class implements the ***Decoder.Text*** interface.
-Override the ***decode()*** method that accepts string message and decodes the string back into a ***JsonObject***. The ***willDecode()*** override method checks out whether the string can be decoded into a JSON object and returns a Boolean value.
-
-
-The required ***websocket*** and ***jsonb*** features for the ***system*** service have been enabled for you in the Liberty ***server.xml*** configuration file.
-
-
-::page{title="Creating the client service"}
-
-In this section, you will create the WebSocket client that communicates with the WebSocket server and the scheduler that uses the WebSocket client to send messages to the server. You'll also create an HTML file that uses a JavaScript ***WebSocket*** object to build a WebSocket connection, subscribe to different events, and display the broadcasting messages from the ***system*** service in a table.
-
-On another command-line session, navigate to the ***start*** directory and run the following goal to start the ***client*** service in dev mode:
-
-
-```bash
-./mvnw -pl client liberty:dev
-```
-
-After you see the following message, your Liberty instance is ready in dev mode:
-
-```
-**************************************************
-*     Liberty is running in dev mode.
-```
-
-Create the SystemClient class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemClient.java
-```
-
-
-> Then, to open the SystemClient.java file in your IDE, select
-> ***File*** > ***Open*** > guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemClient.java, or click the following button
-
-::openFile{path="/home/project/guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemClient.java"}
-
-
-
-```java
-package io.openliberty.guides.client.scheduler;
-
-import java.io.IOException;
-import java.net.URI;
-import java.util.logging.Logger;
-
-import jakarta.websocket.ClientEndpoint;
-import jakarta.websocket.ContainerProvider;
-import jakarta.websocket.OnMessage;
-import jakarta.websocket.OnOpen;
-import jakarta.websocket.Session;
-import jakarta.websocket.WebSocketContainer;
-
-@ClientEndpoint()
-public class SystemClient {
-
-    private static Logger logger = Logger.getLogger(SystemClient.class.getName());
-
-    private Session session;
-
-    public SystemClient(URI endpoint) {
-        try {
-            WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-            container.connectToServer(this, endpoint);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @OnOpen
-    public void onOpen(Session session) {
-        this.session = session;
-        logger.info("Scheduler connected to the server.");
-    }
-
-    @OnMessage
-    public void onMessage(String message, Session session) throws Exception {
-        logger.info("Scheduler received message from the server: " + message);
-    }
-
-    public void sendMessage(String message) {
-        session.getAsyncRemote().sendText(message);
-        logger.info("Scheduler sent message \"" + message + "\" to the server.");
-    }
-
-    public void close() {
-        try {
-            session.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        logger.info("Scheduler closed the session.");
-    }
-
-}
-```
-
-
-
-Annotate the ***SystemClient*** class with ***@ClientEndpoint*** annotation to make it as a WebSocket client. Create a constructor that uses the ***websocket*** APIs to establish connection with the server. Provide a method with the ***@OnOpen*** annotation that persists the client session when the connection is established. The ***onMessage()*** method that is annotated with the ***@OnMessage*** annotation handles messages from the server.
-
-Create the SystemLoadScheduler class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemLoadScheduler.java
-```
-
-
-> Then, to open the SystemLoadScheduler.java file in your IDE, select
-> ***File*** > ***Open*** > guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemLoadScheduler.java, or click the following button
-
-::openFile{path="/home/project/guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemLoadScheduler.java"}
-
-
-
-```java
-package io.openliberty.guides.client.scheduler;
-
-import java.net.URI;
-import java.util.Random;
-
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
-import jakarta.ejb.Schedule;
-import jakarta.ejb.Singleton;
-
-@Singleton
-public class SystemLoadScheduler {
-
-    private SystemClient client;
-    private static final String[] MESSAGES = new String[] {
-        "cpuLoad", "memoryUsage", "both" };
-
-    @PostConstruct
-    public void init() {
-        try {
-            client = new SystemClient(new URI("ws://localhost:9081/systemLoad"));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Schedule(second = "*/10", minute = "*", hour = "*", persistent = false)
-    public void sendSystemLoad() {
-        Random r = new Random();
-        client.sendMessage(MESSAGES[r.nextInt(MESSAGES.length)]);
-    }
-
-    @PreDestroy
-    public void close() {
-        client.close();
-    }
-}
-```
-
-
-
-
-
-Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
-
-The ***SystemLoadScheduler*** class uses the ***SystemClient*** class to establish a connection to the server by the ***ws://localhost:9081/systemLoad*** URI at the ***@PostConstruct*** annotated method. The ***sendSystemLoad()*** method calls the client to send a random string from either ***cpuLoad***, ***memoryUsage***, or ***both*** to the ***system*** service. Using the link:[Jakarta Enterprise Beans Schedule](link:https://openliberty.io/docs/latest/reference/javadoc/liberty-jakartaee10-javadoc.html?path=liberty-jakartaee10-javadoc/jakarta/ejb/Schedule.html), annotate the ***sendSystemLoad()*** method with the ***@Schedule*** annotation so that it sends out a message every 10 seconds.
-
-Now, create the front-end UI. The images and styles for the UI are provided for you. 
-
-Create the index.html file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-jakarta-websocket/start/client/src/main/webapp/index.html
-```
-
-
-> Then, to open the index.html file in your IDE, select
-> ***File*** > ***Open*** > guide-jakarta-websocket/start/client/src/main/webapp/index.html, or click the following button
-
-::openFile{path="/home/project/guide-jakarta-websocket/start/client/src/main/webapp/index.html"}
-
-
-
-```html
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="UTF-8">
-        <title>Open Liberty - Jakarta WebSocket Example</title>
-        <link rel="stylesheet" href="css/styles.css">
-        <link href="favicon.ico" rel="icon" />
-        <link href="favicon.ico" rel="shortcut icon" />
-    </head>
-    <body>
-        <section id="appIntro">
-            <div id="titleSection">
-                <h1 id="appTitle">Jakarta WebSocket Example</h1>
-                <div class="line"></div>
-                <div class="headerImage"></div>
-            </div>
-
-            <div class="msSection" id="systemLoads">
-                <div class="headerRow">
-                    <div class="headerIcon">
-                      <img src="img/sysProps.svg"/>
-                    </div>
-                    <div class="headerTitle" id="sysPropTitle">
-                      <h2>System Loads</h2>
-                    </div>
-                </div>
-                <div class="sectionContent">
-                    <table id="systemLoadsTable">
-                        <tbody id="systemLoadsTableBody">
-                            <tr>
-                                <th>Time</th>
-                                <th>CPU Load (%)</th>
-                                <th>Heap Memory Usage (%)</th>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-        <footer class="bodyFooter">
-            <div class="bodyFooterLink">
-                <a id="licenseLink"
-                   href="https://github.com/OpenLiberty/open-liberty/blob/release/LICENSE"
-                >License</a>
-                <a href="https://github.com/OpenLiberty">GitHub</a>
-                <a href="https://stackoverflow.com/questions/tagged/open-liberty">stackoverflow</a>
-                <a href="https://groups.io/g/openliberty">groups.io</a>
-                <a href="https://openliberty.io/">openliberty.io</a>
-            </div>
-            <p id="footer_text">an IBM open source project</p>
-            <p id="footer_copyright">&copy;Copyright IBM Corp. 2022, 2024</p>
-        </footer>
-        <script>
-    const webSocket = new WebSocket('ws://localhost:9081/systemLoad')
-
-    webSocket.onopen = function (event) {
-        console.log(event);
-    };
-
-    webSocket.onmessage = function (event) {
-        var data = JSON.parse(event.data);
-        var tableRow = document.createElement('tr');
-        var cpuLoad = data.cpuLoad == null ? '-' : data.cpuLoad.toFixed(7);
-        var memoryUsage = data.memoryUsage == null ? '-' : data.memoryUsage.toFixed(2);
-        tableRow.innerHTML = '<td>' + data.time + '</td>' +
-                             '<td>' + cpuLoad + '</td>' +
-                             '<td>' + memoryUsage + '</td>';
-        document.getElementById('systemLoadsTableBody').appendChild(tableRow);
-    };
-    
-    webSocket.onerror = function (event) {
-        console.log(event);
-    };
-        </script>
-    </body>
-</html>
-```
-
-
-
-The ***index.html*** front-end UI displays a table in which each row contains a time, system load, and the memory usage of the ***system*** service. Use a JavaScript ***WebSocket*** object to establish a connection to the server by the ***ws://localhost:9081/systemLoad*** URI. The ***webSocket.onopen*** event is triggered when the connection is established. The ***webSocket.onmessage*** event receives messages from the server and inserts a row with the data from the message into the table. The ***webSocket.onerror*** event defines how to tackle errors.
-
-
-The required features for the ***client*** service are enabled for you in the Liberty ***server.xml*** configuration file.
-
-
-::page{title="Running the application"}
-
-Because you are running the ***system*** and ***client*** services in dev mode, the changes that you made are automatically picked up. You're now ready to check out your application in your browser.
-
-Point your browser to the ***http\://localhost:9080*** URL to test out the ***client*** service. Notice that the table is updated every 10 seconds.
-
-Visit the ***http\://localhost:9080*** URL again on a different tab or browser and verify that both sessions are updated every 10 seconds.
-
-
-::page{title="Testing the application"}
-
-Create the SystemClient class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemClient.java
-```
-
-
-> Then, to open the SystemClient.java file in your IDE, select
-> ***File*** > ***Open*** > guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemClient.java, or click the following button
-
-::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemClient.java"}
-
-
-
-```java
-package it.io.openliberty.guides.system;
-
-import java.net.URI;
-
-import io.openliberty.guides.system.SystemLoadDecoder;
-import jakarta.json.JsonObject;
-import jakarta.websocket.ClientEndpoint;
-import jakarta.websocket.ContainerProvider;
-import jakarta.websocket.OnMessage;
-import jakarta.websocket.OnOpen;
-import jakarta.websocket.Session;
-import jakarta.websocket.WebSocketContainer;
-
-@ClientEndpoint()
-public class SystemClient {
-
-    private Session session;
-
-    public SystemClient(URI endpoint) {
-        try {
-            WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-            container.connectToServer(this, endpoint);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @OnOpen
-    public void onOpen(Session session) {
-        this.session = session;
-    }
-
-    @OnMessage
-    public void onMessage(String message, Session userSession) throws Exception {
-        SystemLoadDecoder decoder = new SystemLoadDecoder();
-        JsonObject systemLoad = decoder.decode(message);
-        SystemServiceIT.verify(systemLoad);
-    }
-
-    public void sendMessage(String message) {
-        session.getAsyncRemote().sendText(message);
-    }
-
-    public void close() throws Exception {
-        session.close();
-    }
-
-}
-```
-
-
-
-The ***SystemClient*** class is used to communicate and test the ***system*** service. Its implementation is similar to the client class from the ***client*** service that you created in the previous section. At the ***onMessage()*** method, decode and verify the message. 
-
-Create the SystemServiceIT class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java
-```
-
-
-> Then, to open the SystemServiceIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java, or click the following button
-
-::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java"}
-
-
-
-```java
-package it.io.openliberty.guides.system;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.net.URI;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
-
-import jakarta.json.JsonObject;
-
-@TestMethodOrder(OrderAnnotation.class)
-public class SystemServiceIT {
-
-    private static CountDownLatch countDown;
-
-    @Test
-    @Order(1)
-    public void testSystem() throws Exception {
-        startCountDown(1);
-        URI uri = new URI("ws://localhost:9081/systemLoad");
-        SystemClient client = new SystemClient(uri);
-        client.sendMessage("both");
-        countDown.await(5, TimeUnit.SECONDS);
-        client.close();
-        assertEquals(0, countDown.getCount(),
-                "The countDown was not 0.");
-    }
-
-    @Test
-    @Order(2)
-    public void testSystemMultipleSessions() throws Exception {
-        startCountDown(3);
-        URI uri = new URI("ws://localhost:9081/systemLoad");
-        SystemClient client1 = new SystemClient(uri);
-        SystemClient client2 = new SystemClient(uri);
-        SystemClient client3 = new SystemClient(uri);
-        client2.sendMessage("cpuLoad");
-        countDown.await(5, TimeUnit.SECONDS);
-        client1.close();
-        client2.close();
-        client3.close();
-        assertEquals(0, countDown.getCount(),
-            "The countDown was not 0.");
-    }
-
-    private static void startCountDown(int count) {
-        countDown = new CountDownLatch(count);
-    }
-
-    public static void verify(JsonObject systemLoad) {
-        assertNotNull(systemLoad.getString("time"));
-        assertTrue(
-            systemLoad.getJsonNumber("cpuLoad") != null
-            || systemLoad.getJsonNumber("memoryUsage") != null
-        );
-        countDown.countDown();
-    }
-}
-```
-
-
-
-There are two test cases to ensure correct functionality of the ***system*** service. The ***testSystem()*** method verifies one client connection and the ***testSystemMultipleSessions()*** method verifies multiple client connections. 
+Manually verify the traces by inspecting them on the Jaeger server. You will find some tests included to test the basic functionality of the services. If any of the tests fail, you might have introduced a bug into the code.
 
 ### Running the tests
 
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started the ***system*** service.
+Since you started Open Liberty in dev mode, run the tests for the ***system*** and ***inventory*** services by pressing the ***enter/return*** key in the command-line sessions where you started the services.
 
+When you are done checking out the services, exit dev mode by pressing `Ctrl+C` in the shell sessions where you ran the ***system*** and ***inventory*** services.
+
+
+Finally, stop the ***Jaeger*** service that you started in the previous step.
+```bash
+docker stop jaeger
+docker rm jaeger
 ```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.system.SystemServiceIT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.247 s - in it.io.openliberty.guides.system.SystemServiceIT
-
-Results:
-
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
-```
-
-When you are done checking out the services, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***client*** services.
 
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You developed an application that subscribes to real time updates by using Jakarta WebSocket and Open Liberty.
+You just used MicroProfile Telemetry in Open Liberty to customize how and which traces are delivered to Jaeger.
 
 
+Try out one of the related MicroProfile guides. These guides demonstrate more technologies that you can learn to expand on what you built in this guide.
 
 
 ### Clean up your environment
@@ -787,30 +699,32 @@ You developed an application that subscribes to real time updates by using Jakar
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-jakarta-websocket*** project by running the following commands:
+Delete the ***guide-microprofile-telemetry-jaeger*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-jakarta-websocket
+rm -fr guide-microprofile-telemetry-jaeger
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Bidirectional%20communication%20between%20services%20using%20Jakarta%20WebSocket&guide-id=cloud-hosted-guide-jakarta-websocket)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Enabling%20distributed%20tracing%20in%20microservices%20with%20OpenTelemetry%20and%20Jaeger&guide-id=cloud-hosted-guide-microprofile-telemetry-jaeger)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-jakarta-websocket/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-jakarta-websocket/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-telemetry-jaeger/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-telemetry-jaeger/pulls)
 
 
 
 ### Where to next?
 
-* [Streaming messages between client and server services using gRPC](https://openliberty.io/guides/grpc-intro.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html)
+* [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
 
 
 ### Log out of the session
