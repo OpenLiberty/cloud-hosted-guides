@@ -93,6 +93,13 @@ curl -s http://localhost:9081/inventory/systems/localhost | jq
 ```
 
 
+After you are finished checking out the microservices, stop the Liberty instances by pressing **CTRL+C** in the command-line sessions where you ran the **system** and **inventory** services. Alternatively, you can run the **liberty:stop** goal in another command-line session from the **start** directory:
+```bash
+cd /home/project/guide-containerize/start
+./mvnw -pl system liberty:stop
+./mvnw -pl inventory liberty:stop
+```
+
 To package your microservices, run the Maven package goal to build the application ***.war*** files from the start directory so that the ***.war*** files are in the ***system/target*** and ***inventory/target*** directories.
 
 ```bash
