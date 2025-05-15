@@ -83,16 +83,16 @@ The ***finish*** directory in the root of this guide contains the finished appli
 
 
 
-Navigate to the ***finish/system*** directory. Run the following Maven goal to build the ***system*** service and deploy it to Open Liberty:
+Navigate to the ***finish*** directory. Run the following Maven goal to build the ***system*** service and deploy it to Open Liberty:
 ```bash
-cd /home/project/guide-microprofile-telemetry-jaeger/finish/system
-./mvnw liberty:run
+cd /home/project/guide-microprofile-telemetry-jaeger/finish
+./mvnw -pl system liberty:run
 ```
 
-Open another command-line session and navigate to the ***finish/inventory*** directory. Run the following Maven goal to build the ***inventory*** service and deploy it to Open Liberty:
+Open another command-line session and navigate to the ***finish*** directory again. Run the following Maven goal to build the ***inventory*** service and deploy it to Open Liberty:
 ```bash
-cd /home/project/guide-microprofile-telemetry-jaeger/finish/inventory
-./mvnw liberty:run
+cd /home/project/guide-microprofile-telemetry-jaeger/finish
+./mvnw -pl inventory liberty:run
 ```
 
 
@@ -141,20 +141,20 @@ You need to start the services to see basic traces appear in Jaeger.
 
 When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
 
-Open a command-line session and navigate to the ***start/system*** directory. Run the following Maven goal to start the ***system*** service in dev mode:
+Open a command-line session and navigate to the ***start*** directory. Run the following Maven goal to start the ***system*** service in dev mode:
 
 
 ```bash
-cd /home/project/guide-microprofile-telemetry-jaeger/start/system
-./mvnw liberty:dev
+cd /home/project/guide-microprofile-telemetry-jaeger/start
+./mvnw -pl system liberty:dev
 ```
 
-Open a command-line session and navigate to the ***start/inventory*** directory. Run the following Maven goal to start the ***inventory*** service in dev mode:
+Open a command-line session and navigate to the ***start*** directory again. Run the following Maven goal to start the ***inventory*** service in dev mode:
 
 
 ```bash
-cd /home/project/guide-microprofile-telemetry-jaeger/start/inventory
-./mvnw liberty:dev
+cd /home/project/guide-microprofile-telemetry-jaeger/start
+./mvnw -pl inventory liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
