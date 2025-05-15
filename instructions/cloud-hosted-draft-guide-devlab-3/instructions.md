@@ -805,6 +805,14 @@ public class InventoryEndpointIT {
 
 ### Running the tests
 
+Run the Maven **package** goal to compile the test classes. Run the Maven **failsafe** goal to test the services that are running in the Docker containers by setting **-Dsystem.ip** to the IP address that you determined previously.
+
+```bash
+SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
+./mvnw package
+./mvnw failsafe:integration-test -Dsystem.ip="$SYSTEM_IP" -Dinventory.http.port=9081 -Dsystem.http.port=9080
+```
+
 If the tests pass, you see output similar to the following example:
 
 ```
