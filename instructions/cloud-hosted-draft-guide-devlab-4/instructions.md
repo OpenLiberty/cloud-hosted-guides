@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Creating a RESTful web service guide!"}
+::page{title="Welcome to the Bidirectional communication between services using Jakarta WebSocket guide!"}
 
-Learn how to create a RESTful service with Jakarta Restful Web Services, JSON-B, and Open Liberty.
+Learn how to use Jakarta WebSocket to send and receive messages between services without closing the connection.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -15,21 +15,16 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 ::page{title="What you'll learn"}
 
-You will learn how to build and test a simple RESTful service with Jakarta Restful Web Services and JSON-B, which will expose the JVM's system properties. The RESTful service responds to ***GET*** requests made to the ***http://localhost:9080/LibertyProject/system/properties*** URL.
+Jakarta WebSocket enables two-way communication between client and server endpoints. First, each client makes an HTTP connection to a Jakarta WebSocket server. The server can then broadcast messages to the clients. link:[Server-Sent Events (SSE)](link:https://openliberty.io/guides/reactive-messaging-sse.html) also enables a client to receive automatic updates from a server via an HTTP connection however WebSocket differs from Server-Sent Events in that SSE is unidirectional from server to client, whereas WebSocket is bidirectional. WebSocket also enables real-time updates over a smaller bandwidth than SSE. The connection isn't closed meaning that the client can continue to send and receive messages with the server, without having to poll the server to receive any replies.
 
-The service responds to a ***GET*** request with a JSON representation of the system properties, where each property is a field in a JSON object, like this:
+The application that you will build in this guide consists of the ***client*** service and the ***system*** server service. The following diagram depicts the application that is used in this guide. 
 
-```
-{
-  "os.name":"Mac",
-  "java.version": "1.8"
-}
-```
+![Application architecture where system and client services use the Jakarta Websocket API to connect and communicate.](https://raw.githubusercontent.com/OpenLiberty/guide-jakarta-websocket/prod/assets/architecture.png)
 
-The design of an HTTP API is an essential part of creating a web application. The REST API is the go-to architectural style for building an HTTP API. The Jakarta Restful Web Services API offers functions to create, read, update, and delete exposed resources. The Jakarta Restful Web Services API supports the creation of RESTful web services that are performant, scalable, and modifiable.
+
+You'll learn how to use the link:[Jakarta WebSocket API](link:https://openliberty.io/docs/latest/reference/javadoc/liberty-jakartaee10-javadoc.html?path=liberty-jakartaee10-javadoc/jakarta/websocket/package-summary.html) to build the ***system*** service and the scheduler in the ***client*** service. The scheduler pushes messages to the system service every 10 seconds, then the system service broadcasts the messages to any connected clients. You will also learn how to use a JavaScript ***WebSocket*** object in an HTML file to build a WebSocket connection, subscribe to different events, and display the broadcasting messages from the ***system*** service in a table.
 
 ::page{title="Getting started"}
 
@@ -42,11 +37,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-jakarta-websocket.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-rest-intro.git
-cd guide-rest-intro
+git clone https://github.com/openliberty/guide-jakarta-websocket.git
+cd guide-jakarta-websocket
 ```
 
 
@@ -56,133 +51,265 @@ The ***finish*** directory contains the finished project that you will build.
 
 ### Try what you'll build
 
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed. 
 
-To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
+To try out the application, go to the finish directory and run the following Maven goal to build the ***system*** service and deploy it to Open Liberty:
+
 
 ```bash
-cd finish
-./mvnw liberty:run
+./mvnw -pl system liberty:run
 ```
 
-After you see the following message, your Liberty instance is ready:
+Next, open another command-line session and run the following command to start the ***client*** service:
 
-```
-The defaultServer server is ready to run a smarter planet.
-```
-
-
-
-Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
-
-
-Check out the service at the ***http\://localhost:9080/LibertyProject/system/properties*** URL. 
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```bash
-curl -s http://localhost:9080/LibertyProject/system/properties | jq
+./mvnw -pl client liberty:run
 ```
 
+After you see the following message in both command-line sessions, both your services are ready.
 
+```
+The defaultServer is ready to run a smarter planet. 
+```
 
-After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+Check out the service at the ***http\://localhost:9080*** URL. See that the table is being updated for every 10 seconds. 
+
+After you are finished checking out the application, stop both the ***system*** and ***client*** services by pressing `Ctrl+C` in the command-line sessions where you ran them. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
+
 
 ```bash
-./mvnw liberty:stop
+./mvnw -pl system liberty:stop
+./mvnw -pl client liberty:stop
 ```
+ 
 
+::page{title="Creating the WebSocket server service"}
 
-::page{title="Creating a RESTful application"}
+In this section, you will create the ***system*** WebSocket server service that broadcasts messages to clients.
 
 Navigate to the ***start*** directory to begin.
+
 ```bash
-cd /home/project/guide-rest-intro/start
+cd /home/project/guide-jakarta-websocket/start
 ```
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following command to start the ***system*** service in dev mode:
 
 ```bash
-./mvnw liberty:dev
+./mvnw -pl system liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
-**************************************************************
-*    Liberty is running in dev mode.
+**************************************************
+*     Liberty is running in dev mode.
 ```
 
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+The ***system*** service is responsible for handling the messages produced by the ***client*** scheduler, building system load messages, and forwarding them to clients.
 
-Jakarta Restful Web Services defines two key concepts for creating REST APIs. The most obvious one is the resource itself, which is modelled as a class. The second is a RESTful application, which groups all exposed resources under a common path. You can think of the RESTful application as a wrapper for all of your resources.
+Create the SystemService class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
+```
 
 
-Replace the ***SystemApplication*** class.
+> Then, to open the SystemService.java file in your IDE, select
+> ***File*** > ***Open*** > guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
 
-> To open the SystemApplication.java file in your IDE, select
-> ***File*** > ***Open*** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java, or click the following button
-
-::openFile{path="/home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java"}
+::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
 
 
 
 ```java
-package io.openliberty.guides.rest;
+package io.openliberty.guides.system;
 
-import jakarta.ws.rs.core.Application;
-import jakarta.ws.rs.ApplicationPath;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.util.Calendar;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.logging.Logger;
 
-@ApplicationPath("system")
-public class SystemApplication extends Application {
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.OnClose;
+import jakarta.websocket.OnError;
+import jakarta.websocket.OnMessage;
+import jakarta.websocket.OnOpen;
+import jakarta.websocket.Session;
+import jakarta.websocket.server.ServerEndpoint;
 
+import com.sun.management.OperatingSystemMXBean;
+
+@ServerEndpoint(value = "/systemLoad",
+                decoders = { SystemLoadDecoder.class },
+                encoders = { SystemLoadEncoder.class })
+public class SystemService {
+
+    private static Logger logger = Logger.getLogger(SystemService.class.getName());
+
+    private static Set<Session> sessions = new HashSet<>();
+
+    private static final OperatingSystemMXBean OS =
+        (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+
+    private static final MemoryMXBean MEM =
+        ManagementFactory.getMemoryMXBean();
+
+    public static void sendToAllSessions(JsonObject systemLoad) {
+        for (Session session : sessions) {
+            try {
+                session.getBasicRemote().sendObject(systemLoad);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @OnOpen
+    public void onOpen(Session session) {
+        logger.info("Server connected to session: " + session.getId());
+        sessions.add(session);
+    }
+
+    @OnMessage
+    public void onMessage(String option, Session session) {
+        logger.info("Server received message \"" + option + "\" "
+                    + "from session: " + session.getId());
+        try {
+            JsonObjectBuilder builder = Json.createObjectBuilder();
+            builder.add("time", Calendar.getInstance().getTime().toString());
+            if (option.equalsIgnoreCase("cpuLoad")
+                || option.equalsIgnoreCase("both")) {
+                builder.add("cpuLoad", Double.valueOf(OS.getCpuLoad() * 100.0));
+            }
+            if (option.equalsIgnoreCase("memoryUsage")
+                || option.equalsIgnoreCase("both")) {
+                long heapMax = MEM.getHeapMemoryUsage().getMax();
+                long heapUsed = MEM.getHeapMemoryUsage().getUsed();
+                builder.add("memoryUsage", Double.valueOf(heapUsed * 100.0 / heapMax));
+            }
+            JsonObject systemLoad = builder.build();
+            sendToAllSessions(systemLoad);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @OnClose
+    public void onClose(Session session, CloseReason closeReason) {
+        logger.info("Session " + session.getId()
+                    + " was closed with reason " + closeReason.getCloseCode());
+        sessions.remove(session);
+    }
+
+    @OnError
+    public void onError(Session session, Throwable throwable) {
+        logger.info("WebSocket error for " + session.getId() + " "
+                    + throwable.getMessage());
+    }
 }
 ```
 
 
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-The ***SystemApplication*** class extends the ***Application*** class, which associates all RESTful resource classes in the WAR file with this RESTful application. These resources become available under the common path that's specified with the ***@ApplicationPath*** annotation. The ***@ApplicationPath*** annotation has a value that indicates the path in the WAR file that the RESTful application accepts requests from.
+Annotate the ***SystemService*** class with a ***@ServerEndpoint*** annotation to make it a WebSocket server. The ***@ServerEndpoint***  ***value*** attribute specifies the URI where the endpoint will be deployed. The ***encoders*** attribute specifies the classes to encode messages and the ***decoders*** attribute specifies the classes to decode messages. Provide methods that define the parts of the WebSocket lifecycle like establishing a connection, receiving a message, and closing the connection by annotating them with the ***@OnOpen***, ***@OnMessage*** and ***@OnClose*** annotations respectively. The method that is annotated with the ***@OnError*** annotation is responsible for tackling errors.
 
+The ***onOpen()*** method stores up the client sessions. The ***onClose()*** method displays the reason for closing the connection and removes the closing session from the client sessions.
 
-::page{title="Creating the RESTful resource"}
+The ***onMessage()*** method is called when receiving a message through the ***option*** parameter. The ***option*** parameter signifies which message to construct, either system load, memory usage data, or both, and sends out the ***JsonObject*** message. The ***sendToAllSessions()*** method uses the WebSocket API to broadcast the message to all client sessions.
 
-In a RESTful application, a single class represents a single resource, or a group of resources of the same type. In this application, a resource might be a system property, or a set of system properties. A single class can easily handle multiple different resources, but keeping a clean separation between types of resources helps with maintainability in the long run.
-
-Create the ***PropertiesResource*** class.
+Create the SystemLoadEncoder class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+touch /home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadEncoder.java
 ```
 
 
-> Then, to open the PropertiesResource.java file in your IDE, select
-> ***File*** > ***Open*** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java, or click the following button
+> Then, to open the SystemLoadEncoder.java file in your IDE, select
+> ***File*** > ***Open*** > guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadEncoder.java, or click the following button
 
-::openFile{path="/home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java"}
+::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadEncoder.java"}
 
 
 
 ```java
-package io.openliberty.guides.rest;
+package io.openliberty.guides.system;
 
-import java.util.Properties;
+import jakarta.json.JsonObject;
+import jakarta.websocket.EncodeException;
+import jakarta.websocket.Encoder;
 
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
+public class SystemLoadEncoder implements Encoder.Text<JsonObject> {
 
-@Path("properties")
-public class PropertiesResource {
+    @Override
+    public String encode(JsonObject object) throws EncodeException {
+        return object.toString();
+    }
+}
+```
 
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Properties getProperties() {
-        return System.getProperties();
+
+
+The ***SystemLoadEncoder*** class implements the ***Encoder.Text*** interface. Override the ***encode()*** method that accepts the ***JsonObject*** message and converts the message to a string.
+
+Create the SystemLoadDecoder class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadDecoder.java
+```
+
+
+> Then, to open the SystemLoadDecoder.java file in your IDE, select
+> ***File*** > ***Open*** > guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadDecoder.java, or click the following button
+
+::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadDecoder.java"}
+
+
+
+```java
+package io.openliberty.guides.system;
+
+import java.io.StringReader;
+
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonReader;
+import jakarta.websocket.DecodeException;
+import jakarta.websocket.Decoder;
+
+public class SystemLoadDecoder implements Decoder.Text<JsonObject> {
+
+    @Override
+    public JsonObject decode(String s) throws DecodeException {
+        try (JsonReader reader = Json.createReader(new StringReader(s))) {
+            return reader.readObject();
+        } catch (Exception e) {
+            JsonObject error = Json.createObjectBuilder()
+                    .add("error", e.getMessage())
+                    .build();
+            return error;
+        }
+    }
+
+    @Override
+    public boolean willDecode(String s) {
+        try (JsonReader reader = Json.createReader(new StringReader(s))) {
+            reader.readObject();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
 }
@@ -190,133 +317,158 @@ public class PropertiesResource {
 
 
 
-
-The ***@Path*** annotation on the class indicates that this resource responds to the ***properties*** path in the RESTful Web Services application. The ***@ApplicationPath*** annotation in the ***SystemApplication*** class together with the ***@Path*** annotation in this class indicates that the resource is available at the ***system/properties*** path.
-
-Jakarta Restful Web Services maps the HTTP methods on the URL to the methods of the class by using annotations. Your application uses the ***GET*** annotation to map an HTTP ***GET*** request to the ***system/properties*** path.
-
-The ***@GET*** annotation on the method indicates that this method is called for the HTTP ***GET*** method. The ***@Produces*** annotation indicates the format of the content that is returned. The value of the ***@Produces*** annotation is specified in the HTTP ***Content-Type*** response header. This application returns a JSON structured. The desired ***Content-Type*** for a JSON response is ***application/json***, with ***MediaType.APPLICATION_JSON*** instead of the ***String*** content type. Using a constant such as ***MediaType.APPLICATION_JSON*** is better because a spelling error results in a compile failure.
-
-Jakarta Restful Web Services supports a number of ways to marshal JSON. The Jakarta Restful Web Services specification mandates JSON-Binding (JSON-B). The method body returns the result of ***System.getProperties()***, which is of type ***java.util.Properties***. The method is annotated with ***@Produces(MediaType.APPLICATION_JSON)*** so Jakarta Restful Web Services uses JSON-B to automatically convert the returned object to JSON data in the HTTP response.
+The ***SystemLoadDecoder*** class implements the ***Decoder.Text*** interface.
+Override the ***decode()*** method that accepts string message and decodes the string back into a ***JsonObject***. The ***willDecode()*** override method checks out whether the string can be decoded into a JSON object and returns a Boolean value.
 
 
-::page{title="Configuring Liberty"}
-
-To get the service running, the Liberty ***server.xml*** configuration file needs to be correctly configured.
-
-Replace the Liberty ***server.xml*** configuration file.
-
-> To open the server.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-rest-intro/start/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-rest-intro/start/src/main/liberty/config/server.xml"}
+The required ***websocket*** and ***jsonb*** features for the ***system*** service have been enabled for you in the Liberty ***server.xml*** configuration file.
 
 
+::page{title="Creating the client service"}
 
-```xml
-<server description="Intro REST Guide Liberty server">
-  <featureManager>
-      <platform>jakartaee-10.0</platform>
-      <feature>restfulWS</feature>
-      <feature>jsonb</feature>
-  </featureManager>
+In this section, you will create the WebSocket client that communicates with the WebSocket server and the scheduler that uses the WebSocket client to send messages to the server. You'll also create an HTML file that uses a JavaScript ***WebSocket*** object to build a WebSocket connection, subscribe to different events, and display the broadcasting messages from the ***system*** service in a table.
 
-  <httpEndpoint httpPort="${http.port}" httpsPort="${https.port}"
-                id="defaultHttpEndpoint" host="*" />
+On another command-line session, navigate to the ***start*** directory and run the following goal to start the ***client*** service in dev mode:
 
-  <webApplication location="guide-rest-intro.war" contextRoot="${app.context.root}"/>
-</server>
-```
-
-
-
-The configuration does the following actions:
-
-* Configures Liberty to enable Jakarta Restful Web Services. This is specified in the ***featureManager*** element.
-* Configures Liberty to resolve the HTTP port numbers from variables, which are then specified in the Maven ***pom.xml*** file. This is specified in the ***httpEndpoint*** element. Variables use the ***${variableName}*** syntax.
-* Configures Liberty to run the produced web application on a context root specified in the ***pom.xml*** file. This is specified in the ***webApplication*** element.
-
-
-The variables that are being used in the ***server.xml*** file are provided by the properties set in the Maven ***pom.xml*** file. The properties must be formatted as ***liberty.var.variableName***.
-
-
-::page{title="Running the application"}
-
-You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
-
-
-Check out the service that you created at the ***http\://localhost:9080/LibertyProject/system/properties*** URL. 
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```bash
-curl -s http://localhost:9080/LibertyProject/system/properties | jq
+./mvnw -pl client liberty:dev
 ```
 
+After you see the following message, your Liberty instance is ready in dev mode:
 
+```
+**************************************************
+*     Liberty is running in dev mode.
+```
 
-
-::page{title="Testing the service"}
-
-
-You can test this service manually by starting Liberty and visiting the http://localhost:9080/LibertyProject/system/properties URL. However, automated tests are a much better approach because they trigger a failure if a change introduces a bug. JUnit and the Jakarta Restful Web Services Client API provide a simple environment to test the application.
-
-You can write tests for the individual units of code outside of a running Liberty instance, or they can be written to call the Liberty instance directly. In this example, you will create a test that does the latter.
-
-Create the ***EndpointIT*** class.
+Create the SystemClient class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+touch /home/project/guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemClient.java
 ```
 
 
-> Then, to open the EndpointIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java, or click the following button
+> Then, to open the SystemClient.java file in your IDE, select
+> ***File*** > ***Open*** > guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemClient.java, or click the following button
 
-::openFile{path="/home/project/guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java"}
+::openFile{path="/home/project/guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemClient.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.rest;
+package io.openliberty.guides.client.scheduler;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.io.IOException;
+import java.net.URI;
+import java.util.logging.Logger;
 
-import java.util.Properties;
+import jakarta.websocket.ClientEndpoint;
+import jakarta.websocket.ContainerProvider;
+import jakarta.websocket.OnMessage;
+import jakarta.websocket.OnOpen;
+import jakarta.websocket.Session;
+import jakarta.websocket.WebSocketContainer;
 
-import jakarta.json.bind.Jsonb;
-import jakarta.json.bind.JsonbBuilder;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.Response;
+@ClientEndpoint()
+public class SystemClient {
 
-import org.junit.jupiter.api.Test;
+    private static Logger logger = Logger.getLogger(SystemClient.class.getName());
 
-public class EndpointIT {
-    private static final Jsonb JSONB = JsonbBuilder.create();
-    @Test
-    public void testGetProperties() {
-        String port = System.getProperty("http.port");
-        String context = System.getProperty("context.root");
-        String url = "http://localhost:" + port + "/" + context + "/";
+    private Session session;
 
-        Client client = ClientBuilder.newClient();
+    public SystemClient(URI endpoint) {
+        try {
+            WebSocketContainer container = ContainerProvider.getWebSocketContainer();
+            container.connectToServer(this, endpoint);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-        WebTarget target = client.target(url + "system/properties");
-        Response response = target.request().get();
+    @OnOpen
+    public void onOpen(Session session) {
+        this.session = session;
+        logger.info("Scheduler connected to the server.");
+    }
 
-        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus(),
-                     "Incorrect response code from " + url);
+    @OnMessage
+    public void onMessage(String message, Session session) throws Exception {
+        logger.info("Scheduler received message from the server: " + message);
+    }
 
-        String json = response.readEntity(String.class);
-        Properties sysProps = JSONB.fromJson(json, Properties.class);
+    public void sendMessage(String message) {
+        session.getAsyncRemote().sendText(message);
+        logger.info("Scheduler sent message \"" + message + "\" to the server.");
+    }
 
-        assertEquals(System.getProperty("os.name"), sysProps.getProperty("os.name"),
-                     "The system property for the local and remote JVM should match");
-        response.close();
+    public void close() {
+        try {
+            session.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        logger.info("Scheduler closed the session.");
+    }
+
+}
+```
+
+
+
+Annotate the ***SystemClient*** class with ***@ClientEndpoint*** annotation to make it as a WebSocket client. Create a constructor that uses the ***websocket*** APIs to establish connection with the server. Provide a method with the ***@OnOpen*** annotation that persists the client session when the connection is established. The ***onMessage()*** method that is annotated with the ***@OnMessage*** annotation handles messages from the server.
+
+Create the SystemLoadScheduler class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemLoadScheduler.java
+```
+
+
+> Then, to open the SystemLoadScheduler.java file in your IDE, select
+> ***File*** > ***Open*** > guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemLoadScheduler.java, or click the following button
+
+::openFile{path="/home/project/guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemLoadScheduler.java"}
+
+
+
+```java
+package io.openliberty.guides.client.scheduler;
+
+import java.net.URI;
+import java.util.Random;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import jakarta.ejb.Schedule;
+import jakarta.ejb.Singleton;
+
+@Singleton
+public class SystemLoadScheduler {
+
+    private SystemClient client;
+    private static final String[] MESSAGES = new String[] {
+        "cpuLoad", "memoryUsage", "both" };
+
+    @PostConstruct
+    public void init() {
+        try {
+            client = new SystemClient(new URI("ws://localhost:9081/systemLoad"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Schedule(second = "*/10", minute = "*", hour = "*", persistent = false)
+    public void sendSystemLoad() {
+        Random r = new Random();
+        client.sendMessage(MESSAGES[r.nextInt(MESSAGES.length)]);
+    }
+
+    @PreDestroy
+    public void close() {
         client.close();
     }
 }
@@ -324,50 +476,309 @@ public class EndpointIT {
 
 
 
-This test class has more lines of code than the resource implementation. This situation is common. The test method is indicated with the ***@Test*** annotation.
 
 
-The test code needs to know some information about the application to make requests. The server port and the application context root are key, and are dictated by the Liberty's configuration. While this information can be hardcoded, it is better to specify it in a single place like the Maven ***pom.xml*** file. Refer to the ***pom.xml*** file to see how the application information such as the ***http.port***, ***https.port*** and ***app.context.root*** elements are provided in the file.
+Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
+
+The ***SystemLoadScheduler*** class uses the ***SystemClient*** class to establish a connection to the server by the ***ws://localhost:9081/systemLoad*** URI at the ***@PostConstruct*** annotated method. The ***sendSystemLoad()*** method calls the client to send a random string from either ***cpuLoad***, ***memoryUsage***, or ***both*** to the ***system*** service. Using the link:[Jakarta Enterprise Beans Schedule](link:https://openliberty.io/docs/latest/reference/javadoc/liberty-jakartaee10-javadoc.html?path=liberty-jakartaee10-javadoc/jakarta/ejb/Schedule.html), annotate the ***sendSystemLoad()*** method with the ***@Schedule*** annotation so that it sends out a message every 10 seconds.
+
+Now, create the front-end UI. The images and styles for the UI are provided for you. 
+
+Create the index.html file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-jakarta-websocket/start/client/src/main/webapp/index.html
+```
 
 
-These Maven properties are then passed to the Java test program as the ***systemPropertyVariables*** element in the ***pom.xml*** file.
+> Then, to open the index.html file in your IDE, select
+> ***File*** > ***Open*** > guide-jakarta-websocket/start/client/src/main/webapp/index.html, or click the following button
 
-Getting the values to create a representation of the URL is simple. The test class uses the ***getProperty*** method to get the application details.
+::openFile{path="/home/project/guide-jakarta-websocket/start/client/src/main/webapp/index.html"}
 
-To call the RESTful service using the Jakarta Restful Web Services client, first create a ***WebTarget*** object by calling the ***target*** method that provides the URL. To cause the HTTP request to occur, the ***request().get()*** method is called on the ***WebTarget*** object. The ***get*** method call is a synchronous call that blocks until a response is received. This call returns a ***Response*** object, which can be inspected to determine whether the request was successful.
 
-The first thing to check is that a ***200*** response was received. The JUnit ***assertEquals*** method can be used for this check.
 
-Check the response body to ensure it returned the right information. The client and the server are running on the same machine so it is reasonable to expect that the system properties for the local and remote JVM would be the same. In this case, an ***assertEquals*** assertion is made so that the ***os.name*** system property for both JVMs is the same. You can write additional assertions to check for more values.
+```html
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Open Liberty - Jakarta WebSocket Example</title>
+        <link rel="stylesheet" href="css/styles.css">
+        <link href="favicon.ico" rel="icon" />
+        <link href="favicon.ico" rel="shortcut icon" />
+    </head>
+    <body>
+        <section id="appIntro">
+            <div id="titleSection">
+                <h1 id="appTitle">Jakarta WebSocket Example</h1>
+                <div class="line"></div>
+                <div class="headerImage"></div>
+            </div>
+
+            <div class="msSection" id="systemLoads">
+                <div class="headerRow">
+                    <div class="headerIcon">
+                      <img src="img/sysProps.svg"/>
+                    </div>
+                    <div class="headerTitle" id="sysPropTitle">
+                      <h2>System Loads</h2>
+                    </div>
+                </div>
+                <div class="sectionContent">
+                    <table id="systemLoadsTable">
+                        <tbody id="systemLoadsTableBody">
+                            <tr>
+                                <th>Time</th>
+                                <th>CPU Load (%)</th>
+                                <th>Heap Memory Usage (%)</th>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+        <footer class="bodyFooter">
+            <div class="bodyFooterLink">
+                <a id="licenseLink"
+                   href="https://github.com/OpenLiberty/open-liberty/blob/release/LICENSE"
+                >License</a>
+                <a href="https://github.com/OpenLiberty">GitHub</a>
+                <a href="https://stackoverflow.com/questions/tagged/open-liberty">stackoverflow</a>
+                <a href="https://groups.io/g/openliberty">groups.io</a>
+                <a href="https://openliberty.io/">openliberty.io</a>
+            </div>
+            <p id="footer_text">an IBM open source project</p>
+            <p id="footer_copyright">&copy;Copyright IBM Corp. 2022, 2024</p>
+        </footer>
+        <script>
+    const webSocket = new WebSocket('ws://localhost:9081/systemLoad')
+
+    webSocket.onopen = function (event) {
+        console.log(event);
+    };
+
+    webSocket.onmessage = function (event) {
+        var data = JSON.parse(event.data);
+        var tableRow = document.createElement('tr');
+        var cpuLoad = data.cpuLoad == null ? '-' : data.cpuLoad.toFixed(7);
+        var memoryUsage = data.memoryUsage == null ? '-' : data.memoryUsage.toFixed(2);
+        tableRow.innerHTML = '<td>' + data.time + '</td>' +
+                             '<td>' + cpuLoad + '</td>' +
+                             '<td>' + memoryUsage + '</td>';
+        document.getElementById('systemLoadsTableBody').appendChild(tableRow);
+    };
+    
+    webSocket.onerror = function (event) {
+        console.log(event);
+    };
+        </script>
+    </body>
+</html>
+```
+
+
+
+The ***index.html*** front-end UI displays a table in which each row contains a time, system load, and the memory usage of the ***system*** service. Use a JavaScript ***WebSocket*** object to establish a connection to the server by the ***ws://localhost:9081/systemLoad*** URI. The ***webSocket.onopen*** event is triggered when the connection is established. The ***webSocket.onmessage*** event receives messages from the server and inserts a row with the data from the message into the table. The ***webSocket.onerror*** event defines how to tackle errors.
+
+
+The required features for the ***client*** service are enabled for you in the Liberty ***server.xml*** configuration file.
+
+
+::page{title="Running the application"}
+
+Because you are running the ***system*** and ***client*** services in dev mode, the changes that you made are automatically picked up. You're now ready to check out your application in your browser.
+
+Point your browser to the ***http\://localhost:9080*** URL to test out the ***client*** service. Notice that the table is updated every 10 seconds.
+
+Visit the ***http\://localhost:9080*** URL again on a different tab or browser and verify that both sessions are updated every 10 seconds.
+
+
+::page{title="Testing the application"}
+
+Create the SystemClient class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemClient.java
+```
+
+
+> Then, to open the SystemClient.java file in your IDE, select
+> ***File*** > ***Open*** > guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemClient.java, or click the following button
+
+::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemClient.java"}
+
+
+
+```java
+package it.io.openliberty.guides.system;
+
+import java.net.URI;
+
+import io.openliberty.guides.system.SystemLoadDecoder;
+import jakarta.json.JsonObject;
+import jakarta.websocket.ClientEndpoint;
+import jakarta.websocket.ContainerProvider;
+import jakarta.websocket.OnMessage;
+import jakarta.websocket.OnOpen;
+import jakarta.websocket.Session;
+import jakarta.websocket.WebSocketContainer;
+
+@ClientEndpoint()
+public class SystemClient {
+
+    private Session session;
+
+    public SystemClient(URI endpoint) {
+        try {
+            WebSocketContainer container = ContainerProvider.getWebSocketContainer();
+            container.connectToServer(this, endpoint);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @OnOpen
+    public void onOpen(Session session) {
+        this.session = session;
+    }
+
+    @OnMessage
+    public void onMessage(String message, Session userSession) throws Exception {
+        SystemLoadDecoder decoder = new SystemLoadDecoder();
+        JsonObject systemLoad = decoder.decode(message);
+        SystemServiceIT.verify(systemLoad);
+    }
+
+    public void sendMessage(String message) {
+        session.getAsyncRemote().sendText(message);
+    }
+
+    public void close() throws Exception {
+        session.close();
+    }
+
+}
+```
+
+
+
+The ***SystemClient*** class is used to communicate and test the ***system*** service. Its implementation is similar to the client class from the ***client*** service that you created in the previous section. At the ***onMessage()*** method, decode and verify the message. 
+
+Create the SystemServiceIT class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java
+```
+
+
+> Then, to open the SystemServiceIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java, or click the following button
+
+::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.system;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.net.URI;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+
+import jakarta.json.JsonObject;
+
+@TestMethodOrder(OrderAnnotation.class)
+public class SystemServiceIT {
+
+    private static CountDownLatch countDown;
+
+    @Test
+    @Order(1)
+    public void testSystem() throws Exception {
+        startCountDown(1);
+        URI uri = new URI("ws://localhost:9081/systemLoad");
+        SystemClient client = new SystemClient(uri);
+        client.sendMessage("both");
+        countDown.await(5, TimeUnit.SECONDS);
+        client.close();
+        assertEquals(0, countDown.getCount(),
+                "The countDown was not 0.");
+    }
+
+    @Test
+    @Order(2)
+    public void testSystemMultipleSessions() throws Exception {
+        startCountDown(3);
+        URI uri = new URI("ws://localhost:9081/systemLoad");
+        SystemClient client1 = new SystemClient(uri);
+        SystemClient client2 = new SystemClient(uri);
+        SystemClient client3 = new SystemClient(uri);
+        client2.sendMessage("cpuLoad");
+        countDown.await(5, TimeUnit.SECONDS);
+        client1.close();
+        client2.close();
+        client3.close();
+        assertEquals(0, countDown.getCount(),
+            "The countDown was not 0.");
+    }
+
+    private static void startCountDown(int count) {
+        countDown = new CountDownLatch(count);
+    }
+
+    public static void verify(JsonObject systemLoad) {
+        assertNotNull(systemLoad.getString("time"));
+        assertTrue(
+            systemLoad.getJsonNumber("cpuLoad") != null
+            || systemLoad.getJsonNumber("memoryUsage") != null
+        );
+        countDown.countDown();
+    }
+}
+```
+
+
+
+There are two test cases to ensure correct functionality of the ***system*** service. The ***testSystem()*** method verifies one client connection and the ***testSystemMultipleSessions()*** method verifies multiple client connections. 
 
 ### Running the tests
 
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
-
-You will see the following output:
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started the ***system*** service.
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.rest.EndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.884 sec - in it.io.openliberty.guides.rest.EndpointIT
+Running it.io.openliberty.guides.system.SystemServiceIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.247 s - in it.io.openliberty.guides.system.SystemServiceIT
 
-Results :
+Results:
 
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-To see whether the tests detect a failure, add an assertion that you know fails, or change the existing assertion to a constant value that doesn't match the ***os.name*** system property.
-
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
+When you are done checking out the services, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***client*** services.
 
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just developed a RESTful service in Open Liberty by using Jakarta Restful Web Services and JSON-B.
+You developed an application that subscribes to real time updates by using Jakarta WebSocket and Open Liberty.
+
 
 
 
@@ -376,31 +787,30 @@ You just developed a RESTful service in Open Liberty by using Jakarta Restful We
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-rest-intro*** project by running the following commands:
+Delete the ***guide-jakarta-websocket*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-rest-intro
+rm -fr guide-jakarta-websocket
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20RESTful%20web%20service&guide-id=cloud-hosted-guide-rest-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Bidirectional%20communication%20between%20services%20using%20Jakarta%20WebSocket&guide-id=cloud-hosted-guide-jakarta-websocket)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-jakarta-websocket/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-jakarta-websocket/pulls)
 
 
 
 ### Where to next?
 
-* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
-* [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
+* [Streaming messages between client and server services using gRPC](https://openliberty.io/guides/grpc-intro.html)
 
 
 ### Log out of the session
