@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Creating a RESTful web service guide!"}
+::page{title="Welcome to the Consuming RESTful services with template interfaces guide!"}
 
-Learn how to create a RESTful service with Jakarta Restful Web Services, JSON-B, and Open Liberty.
+Learn how to use MicroProfile Rest Client to invoke RESTful microservices over HTTP in a type-safe way.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -15,21 +15,18 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 ::page{title="What you'll learn"}
 
-You will learn how to build and test a simple RESTful service with Jakarta Restful Web Services and JSON-B, which will expose the JVM's system properties. The RESTful service responds to ***GET*** requests made to the ***http://localhost:9080/LibertyProject/system/properties*** URL.
+You will learn how to build a MicroProfile Rest Client to access remote RESTful services. You will create a template interface that maps to the remote service that you want to call. MicroProfile Rest Client automatically generates a client instance based on what is defined and annotated in the template interface. Thus, you don't have to worry about all of the boilerplate code, such as setting up a client class, connecting to the remote server, or invoking the correct URI with the correct parameters.
 
-The service responds to a ***GET*** request with a JSON representation of the system properties, where each property is a field in a JSON object, like this:
+The application that you will be working with is an ***inventory*** service, which fetches and stores the system property information for different hosts. Whenever a request is made to retrieve the system properties of a particular host, the ***inventory*** service will create a client to invoke the ***system*** service on that host. The ***system*** service simulates a remote service in the application.
 
-```
-{
-  "os.name":"Mac",
-  "java.version": "1.8"
-}
-```
+You will instantiate the client and use it in the ***inventory*** service. You can choose from two different approaches, [Context and Dependency Injection (CDI)](https://openliberty.io/docs/latest/cdi-beans.html) with the help of MicroProfile Config or the [RestClientBuilder](https://openliberty.io/blog/2018/01/31/mpRestClient.html) method. In this guide, you will explore both methods to handle scenarios for providing a valid base URL.
 
-The design of an HTTP API is an essential part of creating a web application. The REST API is the go-to architectural style for building an HTTP API. The Jakarta Restful Web Services API offers functions to create, read, update, and delete exposed resources. The Jakarta Restful Web Services API supports the creation of RESTful web services that are performant, scalable, and modifiable.
+ * When the base URL of the remote service is static and known, define the default base URL in the configuration file. Inject the client with a CDI method.
+
+ * When the base URL is not yet known and needs to be determined during the run time, set the base URL as a variable. Build the client with the more verbose ***RestClientBuilder*** method.
+
 
 ::page{title="Getting started"}
 
@@ -42,11 +39,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-rest-client.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-rest-intro.git
-cd guide-rest-intro
+git clone https://github.com/openliberty/guide-microprofile-rest-client.git
+cd guide-microprofile-rest-client
 ```
 
 
@@ -62,7 +59,7 @@ To try out the application, first go to the ***finish*** directory and run the f
 
 ```bash
 cd finish
-mvn liberty:run
+./mvnw liberty:run
 ```
 
 After you see the following message, your Liberty instance is ready:
@@ -76,35 +73,51 @@ The defaultServer server is ready to run a smarter planet.
 Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
 
 
-Check out the service at the ***http\://localhost:9080/LibertyProject/system/properties*** URL. 
+The ***system*** microservice simulates a service that returns the system property information for the host. The ***system*** service is accessible at the ***http\://localhost:9080/system/properties*** URL. In this case, ***localhost*** is the host name.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```bash
-curl -s http://localhost:9080/LibertyProject/system/properties | jq
+curl -s http://localhost:9080/system/properties | jq
 ```
 
+
+
+
+The ***inventory*** microservice makes a request to the ***system*** microservice and stores the system property information.  To fetch and store your system information, visit the ***http\://localhost:9080/inventory/systems/localhost*** URL.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl -s http://localhost:9080/inventory/systems/localhost | jq
+```
+
+
+
+
+You can also use the ***http://localhost:9080/inventory/systems/{your-hostname}*** URL. In Windows, MacOS, and Linux, get your fully qualified domain name (FQDN) by entering **hostname** into your command-line. Visit the URL by replacing ***{your-hostname}*** with your FQDN.
 
 
 After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
-mvn liberty:stop
+./mvnw liberty:stop
 ```
 
+::page{title="Writing the RESTful client interface"}
 
-::page{title="Creating a RESTful application"}
+Now, navigate to the ***start*** directory to begin.
 
-Navigate to the ***start*** directory to begin.
 ```bash
-cd /home/project/guide-rest-intro/start
+cd /home/project/guide-microprofile-rest-client/start
 ```
 
 When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
-mvn liberty:dev
+./mvnw liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
@@ -116,259 +129,521 @@ After you see the following message, your Liberty instance is ready in dev mode:
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-Jakarta Restful Web Services defines two key concepts for creating REST APIs. The most obvious one is the resource itself, which is modelled as a class. The second is a RESTful application, which groups all exposed resources under a common path. You can think of the RESTful application as a wrapper for all of your resources.
+The MicroProfile Rest Client API is included in the MicroProfile dependency specified by your ***pom.xml*** file. Look for the dependency with the ***microprofile*** artifact ID.
 
 
-Replace the ***SystemApplication*** class.
+This dependency provides a library that is required to implement the MicroProfile Rest Client interface.
 
-> To open the SystemApplication.java file in your IDE, select
-> ***File*** > ***Open*** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java, or click the following button
-
-::openFile{path="/home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java"}
+The ***mpRestClient*** feature is also enabled in the ***src/main/liberty/config/server.xml*** file. This feature enables your Open Liberty to use MicroProfile Rest Client to invoke RESTful microservices.
 
 
+The code for the ***system*** service in the ***src/main/java/io/openliberty/guides/system*** directory is provided for you. It simulates a remote RESTful service that the ***inventory*** service invokes.
 
-```java
-package io.openliberty.guides.rest;
+Create a RESTful client interface for the ***system*** service. Write a template interface that maps the API of the remote ***system*** service. The template interface describes the remote service that you want to access. The interface defines the resource to access as a method by mapping its annotations, return type, list of arguments, and exception declarations.
 
-import jakarta.ws.rs.core.Application;
-import jakarta.ws.rs.ApplicationPath;
-
-@ApplicationPath("system")
-public class SystemApplication extends Application {
-
-}
-```
-
-
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
-
-
-The ***SystemApplication*** class extends the ***Application*** class, which associates all RESTful resource classes in the WAR file with this RESTful application. These resources become available under the common path that's specified with the ***@ApplicationPath*** annotation. The ***@ApplicationPath*** annotation has a value that indicates the path in the WAR file that the RESTful application accepts requests from.
-
-
-::page{title="Creating the RESTful resource"}
-
-In a RESTful application, a single class represents a single resource, or a group of resources of the same type. In this application, a resource might be a system property, or a set of system properties. A single class can easily handle multiple different resources, but keeping a clean separation between types of resources helps with maintainability in the long run.
-
-Create the ***PropertiesResource*** class.
+Create the ***SystemClient*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
 ```
 
 
-> Then, to open the PropertiesResource.java file in your IDE, select
-> ***File*** > ***Open*** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java, or click the following button
+> Then, to open the SystemClient.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java, or click the following button
 
-::openFile{path="/home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java"}
+::openFile{path="/home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java"}
 
 
 
 ```java
-package io.openliberty.guides.rest;
+package io.openliberty.guides.inventory.client;
 
 import java.util.Properties;
 
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 
-@Path("properties")
-public class PropertiesResource {
+import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
+import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Properties getProperties() {
-        return System.getProperties();
+@RegisterRestClient(configKey = "systemClient",
+                     baseUri = "http://localhost:9080/system")
+@RegisterProvider(UnknownUriExceptionMapper.class)
+@Path("/properties")
+public interface SystemClient extends AutoCloseable {
+
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  Properties getProperties() throws UnknownUriException, ProcessingException;
+}
+```
+
+
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
+
+The MicroProfile Rest Client feature automatically builds and generates a client implementation based on what is defined in the ***SystemClient*** interface. There is no need to set up the client and connect with the remote service.
+
+Notice the ***SystemClient*** interface inherits the ***AutoCloseable*** interface. This allows the user to explicitly close the client instance by invoking the ***close()*** method or to implicitly close the client instance using a try-with-resources block. When the client instance is closed, all underlying resources associated with the client instance are cleaned up. Refer to the [MicroProfile Rest Client specification](https://github.com/eclipse/microprofile-rest-client/releases) for more details.
+
+When the ***getProperties()*** method is invoked, the ***SystemClient*** instance sends a GET request to the ***\<baseUrl\>/properties*** endpoint, where ***\<baseUrl\>*** is the default base URL of the ***system*** service. You will see how to configure the base URL in the next section.
+
+The ***@Produces*** annotation specifies the media (MIME) type of the expected response. The default value is ***MediaType.APPLICATION_JSON***.
+
+The ***@RegisterProvider*** annotation tells the framework to register the provider classes to be used when the framework invokes the interface. You can add as many providers as necessary. In the ***SystemClient*** interface, add a response exception mapper as a provider to map the ***404*** response code with the ***UnknownUriException*** exception.
+
+### Handling exceptions through ResponseExceptionMappers
+
+Error handling is an important step to ensure that the application can fail safely. If there is an error response such as ***404 NOT FOUND*** when invoking the remote service, you need to handle it. First, define an exception, and map the exception with the error response code. Then, register the exception mapper in the client interface.
+
+Look at the client interface again, the ***@RegisterProvider*** annotation registers the ***UnknownUriExceptionMapper*** response exception mapper. An exception mapper maps various response codes from the remote service to throwable exceptions.
+
+
+Implement the actual exception class and the mapper class to see how this mechanism works.
+
+Create the ***UnknownUriException*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
+```
+
+
+> Then, to open the UnknownUriException.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java"}
+
+
+
+```java
+package io.openliberty.guides.inventory.client;
+
+public class UnknownUriException extends Exception {
+
+  private static final long serialVersionUID = 1L;
+
+  public UnknownUriException() {
+    super();
+  }
+
+  public UnknownUriException(String message) {
+    super(message);
+  }
+}
+```
+
+
+
+Now, link the ***UnknownUriException*** class with the corresponding response code through a ***ResponseExceptionMapper*** mapper class.
+
+Create the ***UnknownUriExceptionMapper*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
+```
+
+
+> Then, to open the UnknownUriExceptionMapper.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java"}
+
+
+
+```java
+package io.openliberty.guides.inventory.client;
+
+import java.util.logging.Logger;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.Provider;
+import org.eclipse.microprofile.rest.client.ext.ResponseExceptionMapper;
+
+@Provider
+public class UnknownUriExceptionMapper
+    implements ResponseExceptionMapper<UnknownUriException> {
+  Logger LOG = Logger.getLogger(UnknownUriExceptionMapper.class.getName());
+
+  @Override
+  public boolean handles(int status, MultivaluedMap<String, Object> headers) {
+    LOG.info("status = " + status);
+    return status == 404;
+  }
+
+  @Override
+  public UnknownUriException toThrowable(Response response) {
+    return new UnknownUriException();
+  }
+}
+```
+
+
+
+The ***handles()*** method inspects the HTTP response code to determine whether an exception is thrown for the specific response, and the ***toThrowable()*** method returns the mapped exception.
+
+::page{title="Injecting the client with dependency injection"}
+
+Now, instantiate the ***SystemClient*** interface and use it in the ***inventory*** service. If you want to connect only with the default host name, you can easily instantiate the ***SystemClient*** with CDI annotations. CDI injection simplifies the process of bootstrapping the client.
+
+First, you need to define the base URL of the ***SystemClient*** instance. Configure the default base URL with the MicroProfile Config feature. This feature is enabled for you in the ***server.xml*** file.
+
+Create the configuration file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-rest-client/start/src/main/resources/META-INF/microprofile-config.properties
+```
+
+
+> Then, to open the microprofile-config.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-rest-client/start/src/main/resources/META-INF/microprofile-config.properties"}
+
+
+
+```
+systemClient/mp-rest/uri=http://localhost:9080/system
+```
+
+
+
+The ***mp-rest/uri*** base URL config property is configured to the default ***http://localhost:9080/system*** URL.
+
+This configuration is automatically picked up by the MicroProfile Config API.
+
+Look at the annotations in the ***SystemClient*** interface again.
+
+
+The ***@RegisterRestClient*** annotation registers the interface as a RESTful client. The runtime creates a CDI managed bean for every interface that is annotated with the ***@RegisterRestClient*** annotation.
+
+The ***configKey*** value in the ***@RegisterRestClient*** annotation replaces the fully-qualified classname of the properties in the ***microprofile-config.properties*** configuration file. For example, the ***\<fully-qualified classname\>/mp-rest/uri*** property becomes ***systemClient/mp-rest/uri***. The benefit of using Config Keys is when multiple client interfaces have the same ***configKey*** value, the interfaces can be configured with a single MP config property.
+
+The ***baseUri*** value can also be set in the ***@RegisterRestClient*** annotation. However, this value will be overridden by the base URI property defined in the ***microprofile-config.properties*** configuration file, which takes precedence. In a production environment, you can use the ***baseUri*** variable to specify a different URI for development and testing purposes.
+
+The ***@RegisterRestClient*** annotation, which is a bean defining annotation implies that the interface is manageable through CDI. You must have this annotation in order to inject the client.
+
+Inject the ***SystemClient*** interface into the ***InventoryManager*** class, which is another CDI managed bean.
+
+Replace the ***InventoryManager*** class.
+
+> To open the InventoryManager.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
+
+
+
+```java
+package io.openliberty.guides.inventory;
+
+import java.net.ConnectException;
+import java.net.URI;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Properties;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.ProcessingException;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.eclipse.microprofile.rest.client.RestClientBuilder;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
+import io.openliberty.guides.inventory.client.SystemClient;
+import io.openliberty.guides.inventory.client.UnknownUriException;
+import io.openliberty.guides.inventory.client.UnknownUriExceptionMapper;
+import io.openliberty.guides.inventory.model.InventoryList;
+import io.openliberty.guides.inventory.model.SystemData;
+
+@ApplicationScoped
+public class InventoryManager {
+
+  private List<SystemData> systems = Collections.synchronizedList(
+                                       new ArrayList<SystemData>());
+
+  @Inject
+  @ConfigProperty(name = "http.port")
+  String HTTP_PORT;
+
+  @Inject
+  @RestClient
+  private SystemClient defaultRestClient;
+
+  public Properties get(String hostname) {
+    Properties properties = null;
+    if (hostname.equals("localhost")) {
+      properties = getPropertiesWithDefaultHostName();
+    } else {
+      properties = getPropertiesWithGivenHostName(hostname);
     }
+
+    return properties;
+  }
+
+  public void add(String hostname, Properties systemProps) {
+    Properties props = new Properties();
+    props.setProperty("os.name", systemProps.getProperty("os.name"));
+    props.setProperty("user.name", systemProps.getProperty("user.name"));
+
+    SystemData host = new SystemData(hostname, props);
+    if (!systems.contains(host)) {
+      systems.add(host);
+    }
+  }
+
+  public InventoryList list() {
+    return new InventoryList(systems);
+  }
+
+  private Properties getPropertiesWithDefaultHostName() {
+    try {
+      return defaultRestClient.getProperties();
+    } catch (UnknownUriException e) {
+      System.err.println("The given URI is not formatted correctly.");
+    } catch (ProcessingException ex) {
+      handleProcessingException(ex);
+    }
+    return null;
+  }
+
+  private Properties getPropertiesWithGivenHostName(String hostname) {
+    String customURIString = "http://" + hostname + ":" + HTTP_PORT + "/system";
+    URI customURI = null;
+    try {
+      customURI = URI.create(customURIString);
+      SystemClient customRestClient = RestClientBuilder.newBuilder()
+                                        .baseUri(customURI)
+                                        .register(UnknownUriExceptionMapper.class)
+                                        .build(SystemClient.class);
+      return customRestClient.getProperties();
+    } catch (ProcessingException ex) {
+      handleProcessingException(ex);
+    } catch (UnknownUriException e) {
+      System.err.println("The given URI is unreachable.");
+    }
+    return null;
+  }
+
+  private void handleProcessingException(ProcessingException ex) {
+    Throwable rootEx = ExceptionUtils.getRootCause(ex);
+    if (rootEx != null && (rootEx instanceof UnknownHostException
+        || rootEx instanceof ConnectException)) {
+      System.err.println("The specified host is unknown.");
+    } else {
+      throw ex;
+    }
+  }
 
 }
 ```
 
 
 
+***@Inject*** and ***@RestClient*** annotations inject an instance of the ***SystemClient*** called ***defaultRestClient*** to the ***InventoryManager*** class.
 
-The ***@Path*** annotation on the class indicates that this resource responds to the ***properties*** path in the RESTful Web Services application. The ***@ApplicationPath*** annotation in the ***SystemApplication*** class together with the ***@Path*** annotation in this class indicates that the resource is available at the ***system/properties*** path.
+Because the ***InventoryManager*** class is ***@ApplicationScoped***, and the ***SystemClient*** CDI bean maintains the same scope through the default dependent scope, the client is initialized once per application.
 
-Jakarta Restful Web Services maps the HTTP methods on the URL to the methods of the class by using annotations. Your application uses the ***GET*** annotation to map an HTTP ***GET*** request to the ***system/properties*** path.
-
-The ***@GET*** annotation on the method indicates that this method is called for the HTTP ***GET*** method. The ***@Produces*** annotation indicates the format of the content that is returned. The value of the ***@Produces*** annotation is specified in the HTTP ***Content-Type*** response header. This application returns a JSON structured. The desired ***Content-Type*** for a JSON response is ***application/json***, with ***MediaType.APPLICATION_JSON*** instead of the ***String*** content type. Using a constant such as ***MediaType.APPLICATION_JSON*** is better because a spelling error results in a compile failure.
-
-Jakarta Restful Web Services supports a number of ways to marshal JSON. The Jakarta Restful Web Services specification mandates JSON-Binding (JSON-B). The method body returns the result of ***System.getProperties()***, which is of type ***java.util.Properties***. The method is annotated with ***@Produces(MediaType.APPLICATION_JSON)*** so Jakarta Restful Web Services uses JSON-B to automatically convert the returned object to JSON data in the HTTP response.
+If the ***hostname*** parameter is ***localhost***, the service runs the ***getPropertiesWithDefaultHostName()*** helper function to fetch system properties. The helper function invokes the ***system*** service by calling the ***defaultRestClient.getProperties()*** method.
 
 
-::page{title="Configuring Liberty"}
+::page{title="Building the client with RestClientBuilder"}
 
-To get the service running, the Liberty ***server.xml*** configuration file needs to be correctly configured.
+The ***inventory*** service can also connect with a host other than the default ***localhost*** host, but you cannot configure a base URL that is not yet known. In this case, set the host name as a variable and build the client by using the ***RestClientBuilder*** method. You can customize the base URL from the host name attribute.
 
-Replace the Liberty ***server.xml*** configuration file.
-
-> To open the server.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-rest-intro/start/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-rest-intro/start/src/main/liberty/config/server.xml"}
+Look at the ***getPropertiesWithGivenHostName()*** method in the ***src/main/java/io/openliberty/guides/inventory/InventoryManager.java*** file.
 
 
+The host name is provided as a parameter. This method first assembles the base URL that consists of the new host name. Then, the method instantiates a ***RestClientBuilder*** builder with the new URL, registers the response exception mapper, and builds the ***SystemClient*** instance.
 
-```xml
-<server description="Intro REST Guide Liberty server">
-  <featureManager>
-      <platform>jakartaee-10.0</platform>
-      <feature>restfulWS</feature>
-      <feature>jsonb</feature>
-  </featureManager>
-
-  <httpEndpoint httpPort="${http.port}" httpsPort="${https.port}"
-                id="defaultHttpEndpoint" host="*" />
-
-  <webApplication location="guide-rest-intro.war" contextRoot="${app.context.root}"/>
-</server>
-```
-
-
-
-The configuration does the following actions:
-
-* Configures Liberty to enable Jakarta Restful Web Services. This is specified in the ***featureManager*** element.
-* Configures Liberty to resolve the HTTP port numbers from variables, which are then specified in the Maven ***pom.xml*** file. This is specified in the ***httpEndpoint*** element. Variables use the ***${variableName}*** syntax.
-* Configures Liberty to run the produced web application on a context root specified in the ***pom.xml*** file. This is specified in the ***webApplication*** element.
-
-
-The variables that are being used in the ***server.xml*** file are provided by the properties set in the Maven ***pom.xml*** file. The properties must be formatted as ***liberty.var.variableName***.
+Similarly, call the ***customRestClient.getProperties()*** method to invoke the ***system*** service.
 
 
 ::page{title="Running the application"}
 
 You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
+When the Liberty instance is running, select either approach to fetch your system properties:
 
-Check out the service that you created at the ***http\://localhost:9080/LibertyProject/system/properties*** URL. 
+
+ Visit the ***http\://localhost:9080/inventory/systems/localhost*** URL. The URL retrieves the system property information for the ***localhost*** host name by making a request to the ***system*** service at ***http://localhost:9080/system/properties***.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```bash
-curl -s http://localhost:9080/LibertyProject/system/properties | jq
+curl -s http://localhost:9080/inventory/systems/localhost | jq
 ```
 
 
 
 
-::page{title="Testing the service"}
+Or, get your FQDN first. Then, visit the ***http://localhost:9080/inventory/systems/{your-hostname}*** URL by replacing ***{your-hostname}*** with your FQDN, which retrieves your system properties by making a request to the ***system*** service at ***http://{your-hostname}:9080/system/properties***.
 
 
-You can test this service manually by starting Liberty and visiting the http://localhost:9080/LibertyProject/system/properties URL. However, automated tests are a much better approach because they trigger a failure if a change introduces a bug. JUnit and the Jakarta Restful Web Services Client API provide a simple environment to test the application.
+::page{title="Testing the application"}
 
-You can write tests for the individual units of code outside of a running Liberty instance, or they can be written to call the Liberty instance directly. In this example, you will create a test that does the latter.
-
-Create the ***EndpointIT*** class.
+Create the ***RestClientIT*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+touch /home/project/guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
 ```
 
 
-> Then, to open the EndpointIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java, or click the following button
+> Then, to open the RestClientIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java, or click the following button
 
-::openFile{path="/home/project/guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java"}
+::openFile{path="/home/project/guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.rest;
+package it.io.openliberty.guides.client;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.util.Properties;
-
-import jakarta.json.bind.Jsonb;
-import jakarta.json.bind.JsonbBuilder;
+import jakarta.json.JsonObject;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.Response;
-
+import jakarta.ws.rs.client.WebTarget;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
-public class EndpointIT {
-    private static final Jsonb JSONB = JsonbBuilder.create();
-    @Test
-    public void testGetProperties() {
-        String port = System.getProperty("http.port");
-        String context = System.getProperty("context.root");
-        String url = "http://localhost:" + port + "/" + context + "/";
+public class RestClientIT {
 
-        Client client = ClientBuilder.newClient();
+  private static String port;
 
-        WebTarget target = client.target(url + "system/properties");
-        Response response = target.request().get();
+  private Client client;
 
-        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus(),
-                     "Incorrect response code from " + url);
+  private final String INVENTORY_SYSTEMS = "inventory/systems";
 
-        String json = response.readEntity(String.class);
-        Properties sysProps = JSONB.fromJson(json, Properties.class);
+  @BeforeAll
+  public static void oneTimeSetup() {
+    port = System.getProperty("http.port");
+  }
 
-        assertEquals(System.getProperty("os.name"), sysProps.getProperty("os.name"),
-                     "The system property for the local and remote JVM should match");
-        response.close();
-        client.close();
+  @BeforeEach
+  public void setup() {
+    client = ClientBuilder.newClient();
+  }
+
+  @AfterEach
+  public void teardown() {
+    client.close();
+  }
+
+  @Test
+  public void testSuite() {
+    this.testDefaultLocalhost();
+    this.testRestClientBuilder();
+  }
+
+  public void testDefaultLocalhost() {
+    String hostname = "localhost";
+
+    String url = "http://localhost:" + port + "/" + INVENTORY_SYSTEMS + "/" + hostname;
+
+    JsonObject obj = fetchProperties(url);
+
+    assertEquals(System.getProperty("os.name"), obj.getString("os.name"),
+                 "The system property for the local and remote JVM should match");
+  }
+
+  public void testRestClientBuilder() {
+    String hostname = null;
+    try {
+      hostname = InetAddress.getLocalHost().getHostAddress();
+    } catch (UnknownHostException e) {
+      System.err.println("Unknown Host.");
     }
+
+    String url = "http://localhost:" + port + "/" + INVENTORY_SYSTEMS + "/" + hostname;
+
+    JsonObject obj = fetchProperties(url);
+
+    assertEquals(System.getProperty("os.name"), obj.getString("os.name"),
+                 "The system property for the local and remote JVM should match");
+  }
+
+  private JsonObject fetchProperties(String url) {
+    WebTarget target = client.target(url);
+    Response response = target.request().get();
+
+    assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+
+    JsonObject obj = response.readEntity(JsonObject.class);
+    response.close();
+    return obj;
+  }
+
 }
 ```
 
 
 
-This test class has more lines of code than the resource implementation. This situation is common. The test method is indicated with the ***@Test*** annotation.
+Each test case tests one of the methods for instantiating a RESTful client.
 
+The ***testDefaultLocalhost()*** test fetches and compares system properties from the ***http\://localhost:9080/inventory/systems/localhost*** URL.
 
-The test code needs to know some information about the application to make requests. The server port and the application context root are key, and are dictated by the Liberty's configuration. While this information can be hardcoded, it is better to specify it in a single place like the Maven ***pom.xml*** file. Refer to the ***pom.xml*** file to see how the application information such as the ***http.port***, ***https.port*** and ***app.context.root*** elements are provided in the file.
+The ***testRestClientBuilder()*** test gets your IP address. Then, use your IP address as the host name to fetch your system properties and compare them.
 
+In addition, a few endpoint tests are provided for you to test the basic functionality of the ***inventory*** and ***system*** services. If a test failure occurs, you might have introduced a bug into the code.
 
-These Maven properties are then passed to the Java test program as the ***systemPropertyVariables*** element in the ***pom.xml*** file.
-
-Getting the values to create a representation of the URL is simple. The test class uses the ***getProperty*** method to get the application details.
-
-To call the RESTful service using the Jakarta Restful Web Services client, first create a ***WebTarget*** object by calling the ***target*** method that provides the URL. To cause the HTTP request to occur, the ***request().get()*** method is called on the ***WebTarget*** object. The ***get*** method call is a synchronous call that blocks until a response is received. This call returns a ***Response*** object, which can be inspected to determine whether the request was successful.
-
-The first thing to check is that a ***200*** response was received. The JUnit ***assertEquals*** method can be used for this check.
-
-Check the response body to ensure it returned the right information. The client and the server are running on the same machine so it is reasonable to expect that the system properties for the local and remote JVM would be the same. In this case, an ***assertEquals*** assertion is made so that the ***os.name*** system property for both JVMs is the same. You can write additional assertions to check for more values.
 
 ### Running the tests
 
 Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
 
-You will see the following output:
-
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.rest.EndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.884 sec - in it.io.openliberty.guides.rest.EndpointIT
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.377 sec - in it.io.openliberty.guides.system.SystemEndpointIT
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
+Could not send Message.
+[err] The specified host is unknown.
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.379 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+Running it.io.openliberty.guides.client.RestClientIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.121 sec - in it.io.openliberty.guides.client.RestClientIT
 
 Results :
 
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-To see whether the tests detect a failure, add an assertion that you know fails, or change the existing assertion to a constant value that doesn't match the ***os.name*** system property.
+The warning and error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the ***testUnknownHost()*** test from the ***InventoryEndpointIT*** integration test.
+
+To see whether the tests detect a failure, change the base URL in the configuration file so that when the ***inventory*** service tries to access the invalid URL, an ***UnknownUriException*** is thrown. Rerun the tests to see a test failure occur.
 
 When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
-
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just developed a RESTful service in Open Liberty by using Jakarta Restful Web Services and JSON-B.
+You just invoked a remote service by using a template interface with MicroProfile Rest Client in Open Liberty.
 
+
+MicroProfile Rest Client also provides a uniform way to configure SSL for the client. You can learn more in the [Hostname verification with SSL on Open Liberty and MicroProfile Rest Client](https://openliberty.io/blog/2019/06/21/microprofile-rest-client-19006.html#ssl) blog and the [MicroProfile Rest Client specification](https://github.com/eclipse/microprofile-rest-client/releases).
+
+Feel free to try one of the related guides where you can learn more technologies and expand on what you built here.
 
 
 ### Clean up your environment
@@ -376,31 +651,33 @@ You just developed a RESTful service in Open Liberty by using Jakarta Restful We
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-rest-intro*** project by running the following commands:
+Delete the ***guide-microprofile-rest-client*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-rest-intro
+rm -fr guide-microprofile-rest-client
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20RESTful%20web%20service&guide-id=cloud-hosted-guide-rest-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20RESTful%20services%20with%20template%20interfaces&guide-id=cloud-hosted-guide-microprofile-rest-client)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-rest-client/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-rest-client/pulls)
 
 
 
 ### Where to next?
 
-* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
-* [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
 
 
 ### Log out of the session
