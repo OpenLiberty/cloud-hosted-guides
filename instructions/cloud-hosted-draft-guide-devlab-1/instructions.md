@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Getting started with Open Liberty guide!"}
+::page{title="Welcome to the Consuming RESTful services asynchronously with template interfaces guide!"}
 
-Learn how to develop a Java application on Open Liberty with Maven and Docker.
+Learn how to use MicroProfile Rest Client to invoke RESTful microservices asynchronously over HTTP.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -16,17 +16,24 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You will learn how to run and update a simple REST microservice on Open Liberty. You will use Maven throughout the guide to build and deploy the microservice as well as to interact with the running Liberty instance.
+You will learn how to build a MicroProfile Rest Client to access remote RESTful services using asynchronous method calls. You'll update the template interface for a MicroProfile Rest Client to use the ***CompletionStage*** return type. The template interface maps to the remote service that you want to call. A ***CompletionStage*** interface allows you to work with the result of your remote service call asynchronously.
 
-Open Liberty is an open application framework designed for the cloud. It's small, lightweight, and designed with modern cloud-native application development in mind. It supports the full MicroProfile and Jakarta EE APIs and is composable, meaning that you can use only the features that you need, keeping everything lightweight, which is great for microservices. It also deploys to every major cloud platform, including Docker, Kubernetes, and Cloud Foundry.
+*What is asynchronous programming?*
 
-Maven is an automation build tool that provides an efficient way to develop Java applications. Using Maven, you will build a simple microservice, called ***system***, that collects basic system properties from your laptop and displays them on an endpoint that you can access in your web browser. 
+Imagine asynchronous programming as a restaurant. After you're seated, a waiter takes your order. Then, you must wait a few minutes for your food to be prepared. While your food is being prepared, your waiter may take more orders or serve other tables. After your food is ready, your waiter brings out the food to your table. However, in a synchronous model, the waiter must wait for your food to be prepared before serving any other customers. This method blocks other customers from placing orders or receiving their food.
 
-You'll also explore how to package your application with Open Liberty so that it can be deployed anywhere in one go. You will then make Liberty configuration and code changes and see how they are immediately picked up by a running instance.
+You can perform lengthy operations, such as input/output (I/O), without blocking with asynchronous methods. The I/O operation can occur in the background and a callback notifies the caller to continue its computation when the original request is complete. As a result, the original thread frees up so it can handle other work rather than wait for the I/O to complete. Revisiting the restaurant analogy, food is prepared asynchronously in the kitchen and your waiter is freed up to attend to other tables.
 
-Finally, you will package the application along with Liberty's configuration into a Docker image and run that image as a container.
+In the context of REST clients, HTTP request calls can be time consuming. The network might be slow, or maybe the upstream service is overwhelmed and can't respond quickly. These lengthy operations can block the execution of your thread when it's in use and prevent other work from being completed.
+
+The application in this guide consists of three microservices, ***system***, ***inventory***, and ***query***. Every 15 seconds the ***system*** microservice calculates and publishes an event that contains its average system load. The ***inventory*** microservice subscribes to that information so that it can keep an updated list of all the systems and their current system loads. 
+
+![Reactive Inventory System](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-rest-client-async/prod/assets/QueryService.png)
 
 
+The microservice that you will modify is the ***query*** service. It communicates with the ***inventory*** service to determine which system has the highest system load and which system has the lowest system load. 
+
+The ***system*** and ***inventory*** microservices use MicroProfile Reactive Messaging to send and receive the system load events. If you want to learn more about reactive messaging, see the [Creating Reactive Java Microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
 ::page{title="Getting started"}
 
@@ -39,11 +46,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-getting-started.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-rest-client-async.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-getting-started.git
-cd guide-getting-started
+git clone https://github.com/openliberty/guide-microprofile-rest-client-async.git
+cd guide-microprofile-rest-client-async
 ```
 
 
@@ -51,837 +58,487 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-You have cloned a Maven project. To learn how to create a Liberty Maven project from scratch and edit your application using the Liberty Tools, see [Developing a cloud-native Java application with Liberty Tools in IntelliJ IDEA](https://openliberty.io/blog/2024/05/31/liberty-project-starter-guide-IntelliJ.html).
+::page{title="Updating the template interface of a REST client to use asynchronous methods"}
 
-In this IBM Cloud environment, you need to change the user home to ***/home/project*** by running the following command:
+
+To begin, run the following command to navigate to the ***start*** directory:
 ```bash
-sudo usermod -d /home/project theia
+cd /home/project/guide-microprofile-rest-client-async/start
 ```
 
+The ***query*** service uses a MicroProfile Rest Client to access the ***inventory*** service. You will update the methods in the template interface for this client to be asynchronous.
 
+Replace the ***InventoryClient*** interface.
 
-::page{title="Building and running the application"}
+> To open the InventoryClient.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-rest-client-async/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java, or click the following button
 
-Your application is configured to be built with Maven. Every Maven-configured project contains a ***pom.xml*** file, which defines the project configuration, dependencies, plug-ins, and so on.
-
-Your ***pom.xml*** file is located in the ***start*** directory and is configured to include the ***liberty-maven-plugin***, which allows you to install applications into Open Liberty and manage the associated Liberty instances.
-
-
-To begin, navigate to the ***start*** directory. Build the ***system*** microservice that is provided and deploy it to Open Liberty by running the Maven ***liberty:run*** goal:
-
-
-```bash
-cd start
-./mvnw liberty:run
-```
-
-The Maven command initiates a Maven build, during which the ***target*** directory is created to store all build-related files.
-
-The ***liberty:run*** argument specifies the Open Liberty ***run*** goal, which starts an Open Liberty instance in the foreground. As part of this phase, an Open Liberty runtime is downloaded and installed into the ***target/liberty/wlp*** directory, an instance of Liberty is created and configured in the ***target/liberty/wlp/usr/servers/defaultServer*** directory, and the application is installed into that instance using [loose config](https://www.ibm.com/support/knowledgecenter/en/SSEQTP_liberty/com.ibm.websphere.wlp.doc/ae/rwlp_loose_applications.html).
-
-For more information about the Liberty Maven plug-in, see its [GitHub repository](https://github.com/WASdev/ci.maven).
-
-When the Liberty instance begins starting up, various messages display in your command-line session. Wait for the following message, which indicates that Liberty's startup is complete:
-
-```
-[INFO] [AUDIT] CWWKF0011I: The server defaultServer is ready to run a smarter planet.
-```
+::openFile{path="/home/project/guide-microprofile-rest-client-async/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java"}
 
 
 
-Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
+```java
+package io.openliberty.guides.query.client;
 
+import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.CompletionStage;
 
-To access the ***system*** microservice, see the ***http\://localhost:9080/system/properties*** URL, and you see a list of the various system properties of your JVM:
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 
+import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
-_To see the output for this URL in the IDE, run the following command at a terminal:_
+@Path("/inventory")
+@RegisterRestClient(configKey = "InventoryClient", baseUri = "http://localhost:9085")
+public interface InventoryClient extends AutoCloseable {
 
-```bash
-curl -s http://localhost:9080/system/properties | jq
-```
+    @GET
+    @Path("/systems")
+    @Produces(MediaType.APPLICATION_JSON)
+    List<String> getSystems();
 
+    @GET
+    @Path("/systems/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    CompletionStage<Properties> getSystem(
+        @PathParam("hostname") String hostname);
 
-```
-{
-    "os.name": "Mac OS X",
-    "java.version": "1.8.0_151",
-    ...
 }
-```
-
-When you need to stop the Liberty instance, press `Ctrl+C` in the command-line session where you ran Liberty, or run the ***liberty:stop*** goal from the ***start*** directory in another command-line session:
-
-
-```bash
-./mvnw liberty:stop
-```
-
-
-
-::page{title="Starting and stopping Open Liberty in the background"}
-
-Although you can start and stop Liberty in the foreground by using the Maven ***liberty:run*** goal, you can also start and stop the Liberty instance in the background with the Maven ***liberty:start*** and ***liberty:stop*** goals:
-
-
-```bash
-./mvnw liberty:start
-./mvnw liberty:stop
-```
-
-
-
-
-::page{title="Updating Liberty's configuration without restarting"}
-
-The Open Liberty Maven plug-in includes a ***dev*** goal that listens for any changes in the project, including application source code or configuration. The Open Liberty instance automatically reloads the configuration without restarting. This goal allows for quicker turnarounds and an improved developer experience.
-
-Stop the Open Liberty instance if it is running, and start it in [dev mode](https://openliberty.io/docs/latest/development-mode.html) by running the ***liberty:dev*** goal in the ***start*** directory:
-
-
-```bash
-./mvnw liberty:dev
-```
-
-
-Dev mode automatically picks up changes that you make to your application and allows you to run tests by pressing the ***enter/return*** key in the active command-line session. When you’re working on your application, rather than rerunning Maven commands, press the ***enter/return*** key to verify your change.
-
-
-As before, you can see that the application is running by going to the ***http\://localhost:9080/system/properties*** URL.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/system/properties | jq
-```
-
-
-
-
-Now try updating Liberty's ***server.xml*** configuration file while the instance is running in dev mode. The ***system*** microservice does not currently include health monitoring to report whether the Liberty instance and the microservice that it runs are healthy. You can add health reports with the MicroProfile Health feature, which adds a ***/health*** endpoint to your application. If you try to access this endpoint now at the ***http\://localhost:9080/health/*** URL, you see a 404 error because the ***/health*** endpoint does not yet exist:
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl http://localhost:9080/health/
-```
-
-
-
-```
-Error 404: java.io.FileNotFoundException: SRVE0190E: File not found: /health
-```
-
-To add the MicroProfile Health feature to the Liberty instance, include the ***mpHealth*** feature in the ***server.xml***.
-
-Replace the Liberty ***server.xml*** configuration file.
-
-> To open the server.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-getting-started/start/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-getting-started/start/src/main/liberty/config/server.xml"}
-
-
-
-```xml
-<server description="Sample Liberty server">
-    <featureManager>
-        <platform>jakartaee-10.0</platform>
-        <platform>microprofile-7.0</platform>
-        <feature>restfulWS</feature>
-        <feature>jsonp</feature>
-        <feature>jsonb</feature>
-        <feature>cdi</feature>
-        <feature>mpHealth</feature>
-        <feature>mpConfig</feature>
-        <feature>mpMetrics</feature>
-    </featureManager>
-
-    <variable name="http.port" defaultValue="9080"/>
-    <variable name="https.port" defaultValue="9443"/>
-
-    <webApplication location="guide-getting-started.war" contextRoot="/" />
-    
-    <mpMetrics authentication="false"/>
-
-
-    <httpEndpoint host="*" httpPort="${http.port}"
-        httpsPort="${https.port}" id="defaultHttpEndpoint"/>
-
-    <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
-</server>
 ```
 
 
 Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
-After you make the file changes, Open Liberty automatically reloads its configuration. When enabled, the ***mpHealth*** feature automatically adds a ***/health*** endpoint to the application. You can see the instance being updated in the Liberty log displayed in your command-line session:
+The changes involve the ***getSystem*** method. Change the return type to ***CompletionStage\<Properties\>*** to make the method asynchronous. The method now has the return type of ***CompletionStage\<Properties\>*** so you aren't able to directly manipulate the ***Properties*** inner type. As you will see in the next section, you're able to indirectly use the ***Properties*** by chaining callbacks.
 
-```
-[INFO] [AUDIT] CWWKG0016I: Starting server configuration update.
-[INFO] [AUDIT] CWWKT0017I: Web application removed (default_host): http://foo:9080/
-[INFO] [AUDIT] CWWKZ0009I: The application io.openliberty.guides.getting-started has stopped successfully.
-[INFO] [AUDIT] CWWKG0017I: The server configuration was successfully updated in 0.284 seconds.
-[INFO] [AUDIT] CWWKT0016I: Web application available (default_host): http://foo:9080/health/
-[INFO] [AUDIT] CWWKF0012I: The server installed the following features: [mpHealth-4.0].
-[INFO] [AUDIT] CWWKF0008I: Feature update completed in 0.285 seconds.
-[INFO] [AUDIT] CWWKT0016I: Web application available (default_host): http://foo:9080/
-[INFO] [AUDIT] CWWKZ0003I: The application io.openliberty.guides.getting-started updated in 0.173 seconds.
-```
+::page{title="Updating a REST resource to asynchronously handle HTTP requests"}
 
+To reduce the processing time, you will update the ***/query/systemLoad*** endpoint to asynchronously send the requests. Multiple client requests will be sent synchronously in a loop. The asynchronous calls do not block the program so the endpoint needs to ensure that all calls are completed and all returned data is processed before proceeding.
 
-Try to access the ***/health*** endpoint again by visiting the ***http\://localhost:9080/health*** URL. You see the following JSON:
+Replace the ***QueryResource*** class.
 
+> To open the QueryResource.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-rest-client-async/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java, or click the following button
 
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/health | jq
-```
-
-
-
-```
-{
-    "checks":[],
-    "status":"UP"
-}
-```
-
-Now you can verify whether your Liberty instance is up and running.
-
-
-
-::page{title="Updating the source code without restarting Liberty"}
-
-The RESTful application that contains your ***system*** microservice runs in a Liberty instance from its ***.class*** file and other artifacts. Open Liberty automatically monitors these artifacts, and whenever they are updated, it updates the running instance without the need for the instance to be restarted.
-
-Look at your ***pom.xml*** file.
-
-
-Try updating the source code while Liberty is running in dev mode. At the moment, the ***/health*** endpoint reports whether the Liberty instance is running, but the endpoint doesn't provide any details on the microservices that are running inside of the instance.
-
-MicroProfile Health offers health checks for both readiness and liveness. A readiness check allows third-party services, such as Kubernetes, to know if the microservice is ready to process requests. A liveness check allows third-party services to determine if the microservice is running.
-
-Create the ***SystemReadinessCheck*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
-```
-
-
-> Then, to open the SystemReadinessCheck.java file in your IDE, select
-> ***File*** > ***Open*** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java, or click the following button
-
-::openFile{path="/home/project/guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java"}
+::openFile{path="/home/project/guide-microprofile-rest-client-async/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java"}
 
 
 
 ```java
-package io.openliberty.sample.system;
+package io.openliberty.guides.query;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import jakarta.enterprise.context.ApplicationScoped;
-
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.health.Readiness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 
-@Readiness
+import io.openliberty.guides.query.client.InventoryClient;
+
 @ApplicationScoped
-public class SystemReadinessCheck implements HealthCheck {
-
-    private static final String READINESS_CHECK = SystemResource.class.getSimpleName()
-                                                 + " Readiness Check";
+@Path("/query")
+public class QueryResource {
 
     @Inject
-    @ConfigProperty(name = "io_openliberty_guides_system_inMaintenance")
-    Provider<String> inMaintenance;
+    @RestClient
+    private InventoryClient inventoryClient;
 
-    @Override
-    public HealthCheckResponse call() {
-        if (inMaintenance != null && inMaintenance.get().equalsIgnoreCase("true")) {
-            return HealthCheckResponse.down(READINESS_CHECK);
+    @GET
+    @Path("/systemLoad")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Map<String, Properties> systemLoad() {
+        List<String> systems = inventoryClient.getSystems();
+        CountDownLatch remainingSystems = new CountDownLatch(systems.size());
+        final Holder systemLoads = new Holder();
+
+        for (String system : systems) {
+            inventoryClient.getSystem(system)
+                           .thenAcceptAsync(p -> {
+                                if (p != null) {
+                                    systemLoads.updateValues(p);
+                                }
+                                remainingSystems.countDown();
+                           })
+                           .exceptionally(ex -> {
+                                ex.printStackTrace();
+                                remainingSystems.countDown();
+                                return null;
+                           });
         }
-        return HealthCheckResponse.up(READINESS_CHECK);
+
+        try {
+            remainingSystems.await(30, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        return systemLoads.getValues();
     }
 
-}
-```
+    private class Holder {
+        private volatile Map<String, Properties> values;
 
+        Holder() {
+            this.values = new ConcurrentHashMap<String, Properties>();
+            init();
+        }
 
+        public Map<String, Properties> getValues() {
+            return this.values;
+        }
 
-The ***SystemReadinessCheck*** class verifies that the 
-***system*** microservice is not in maintenance by checking a config property.
+        public void updateValues(Properties p) {
+            final BigDecimal load = (BigDecimal) p.get("systemLoad");
 
-Create the ***SystemLivenessCheck*** class.
+            this.values.computeIfPresent("lowest", (key, curr_val) -> {
+                BigDecimal lowest = (BigDecimal) curr_val.get("systemLoad");
+                return load.compareTo(lowest) < 0 ? p : curr_val;
+            });
+            this.values.computeIfPresent("highest", (key, curr_val) -> {
+                BigDecimal highest = (BigDecimal) curr_val.get("systemLoad");
+                return load.compareTo(highest) > 0 ? p : curr_val;
+            });
+        }
 
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
-```
-
-
-> Then, to open the SystemLivenessCheck.java file in your IDE, select
-> ***File*** > ***Open*** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java, or click the following button
-
-::openFile{path="/home/project/guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java"}
-
-
-
-```java
-package io.openliberty.sample.system;
-
-import jakarta.enterprise.context.ApplicationScoped;
-
-import java.lang.management.MemoryMXBean;
-import java.lang.management.ManagementFactory;
-
-import org.eclipse.microprofile.health.Liveness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
-
-@Liveness
-@ApplicationScoped
-public class SystemLivenessCheck implements HealthCheck {
-
-    @Override
-    public HealthCheckResponse call() {
-        MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
-        long memUsed = memBean.getHeapMemoryUsage().getUsed();
-        long memMax = memBean.getHeapMemoryUsage().getMax();
-
-        return HealthCheckResponse.named(
-            SystemResource.class.getSimpleName() + " Liveness Check")
-                                  .status(memUsed < memMax * 0.9).build();
+        private void init() {
+            this.values.put("highest", new Properties());
+            this.values.put("lowest", new Properties());
+            this.values.get("highest").put("hostname", "temp_max");
+            this.values.get("lowest").put("hostname", "temp_min");
+            this.values.get("highest").put(
+                "systemLoad", new BigDecimal(Double.MIN_VALUE));
+            this.values.get("lowest").put(
+                "systemLoad", new BigDecimal(Double.MAX_VALUE));
+        }
     }
-
 }
 ```
 
 
 
-The ***SystemLivenessCheck*** class reports a status of 
-***DOWN*** if the microservice uses over 90% of the maximum amount of memory.
+First, the ***systemLoad*** endpoint first gets all the hostnames by calling ***getSystems()***. In the ***getSystem()*** method, multiple requests are sent asynchronously to the ***inventory*** service for each hostname. When the requests return, the ***thenAcceptAsync()*** method processes the returned data with the ***CompletionStage\<Properties\>*** interface.
 
-After you make the file changes, Open Liberty automatically reloads its configuration and the ***system*** application.
+The ***CompletionStage\<Properties\>*** interface represents a unit of computation. After a computation is complete, it can either be finished or it can be chained with more ***CompletionStage\<Properties\>*** interfaces using the ***thenAcceptAsync()*** method. Exceptions are handled in a callback that is provided to the ***exceptionally()*** method, which behaves like a catch block. When you return a ***CompletionStage\<Properties\>*** type in the resource, it doesn’t necessarily mean that the computation completed and the response was built. JAX-RS responds to the caller after the computation completes.
 
-The following messages display in your first command-line session:
+In the ***systemLoad()*** method a ***CountDownLatch*** object is used to track asynchronous requests. The ***countDown()*** method is called whenever a request is complete. When the ***CountDownLatch*** is at zero, it indicates that all asynchronous requests are complete. By using the ***await()*** method of the ***CountDownLatch***, the program waits for all the asynchronous requests to be complete. When all asynchronous requests are complete, the program resumes execution with all required data processed. 
 
-```
-[INFO] [AUDIT] CWWKT0017I: Web application removed (default_host): http://foo:9080/
-[INFO] [AUDIT] CWWKZ0009I: The application io.openliberty.guides.getting-started has stopped successfully.
-[INFO] [AUDIT] CWWKT0016I: Web application available (default_host): http://foo:9080/
-[INFO] [AUDIT] CWWKZ0003I: The application io.openliberty.guides.getting-started updated in 0.136 seconds.
-```
+A ***Holder*** class is used to wrap a variable called ***values*** that has the ***volatile*** keyword. The ***values*** variable is instantiated as a ***ConcurrentHashMap*** object. Together, the ***volatile*** keyword and ***ConcurrentHashMap*** type allow the ***Holder*** class to store system information and safely access it asynchronously from multiple threads.
 
 
-Access the ***/health*** endpoint again by going to the ***http\://localhost:9080/health*** URL. This time you see the overall status of your Liberty instance and the aggregated data of the liveness and readiness checks for the ***system*** microservice:
+::page{title="Building and running the application"}
 
+You will build and run the ***system***, ***inventory***, and ***query*** microservices in Docker containers. You can learn more about containerizing microservices with Docker in the [Containerizing microservices](https://openliberty.io/guides/containerize.html) guide.
 
-_To see the output for this URL in the IDE, run the following command at a terminal:_
+Start your Docker environment. Dockerfiles are provided for you to use.
 
-```bash
-curl -s http://localhost:9080/health | jq
-```
-
-
-
-```
-{  
-   "checks":[  
-      {  
-         "data":{},
-         "name":"SystemResource Readiness Check",
-         "status":"UP"
-      },
-      {  
-         "data":{},
-         "name":"SystemResource Liveness Check",
-         "status":"UP"
-      }
-   ],
-   "status":"UP"
-}
-```
-
-
-
-You can also access the ***/health/ready*** endpoint by going to the ***http\://localhost:9080/health/ready*** URL to view the data from the readiness health check. Similarly, access the ***/health/live*** endpoint by going to the ***http\://localhost:9080/health/live*** URL to view the data from the liveness health check.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/health/ready | jq
-```
-
-
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/health/live | jq
-```
-
-
-
-Making code changes and recompiling is fast and straightforward. Open Liberty dev mode automatically picks up changes in the ***.class*** files and artifacts, without needing to be restarted. Alternatively, you can run the ***run*** goal and manually repackage or recompile the application by using the Maven ***package*** goal or the Maven ***compile*** goal while Liberty is running. Dev mode was added to further improve the developer experience by minimizing turnaround times.
-
-
-
-::page{title="Checking the Open Liberty logs"}
-
-While Liberty is running in the foreground, it displays various console messages in the command-line session. These messages are also logged to the ***target/liberty/wlp/usr/servers/defaultServer/logs/console.log*** file. You can find the complete Liberty logs in the ***target/liberty/wlp/usr/servers/defaultServer/logs*** directory. The ***console.log*** and ***messages.log*** files are the primary log files that contain console output of the running application and the Liberty instance. More logs are created when runtime errors occur or whenever tracing is enabled. You can find the error logs in the ***ffdc*** directory and the tracing logs in the ***trace.log*** file.
-
-In addition to the log files that are generated automatically, you can enable logging of specific Java packages or classes by using the ***logging*** element:
-
-```
-<logging traceSpecification="<component_1>=<level>:<component_2>=<level>:..."/>
-```
-
-The ***component*** element is a Java package or class, and the ***level*** element is one of the following logging levels: ***off***, ***fatal***, ***severe***, ***warning***, ***audit***, ***info***, ***config***, ***detail***, ***fine***, ***finer***, ***finest***, ***all***.
-
-For more information about logging, see the [Trace log detail levels](https://www.openliberty.io/docs/latest/log-trace-configuration.html#log_details),  [logging element](https://www.openliberty.io/docs/latest/reference/config/logging.html), and [Log and trace configuration](https://www.openliberty.io/docs/latest/log-trace-configuration.html) documentation.
-
-Try enabling detailed logging of the MicroProfile Health feature by adding the ***logging*** element to your configuration file.
-
-Replace the Liberty ***server.xml*** configuration file.
-
-> To open the server.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-getting-started/start/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-getting-started/start/src/main/liberty/config/server.xml"}
-
-
-
-```xml
-<server description="Sample Liberty server">
-    <featureManager>
-        <platform>jakartaee-10.0</platform>
-        <platform>microprofile-7.0</platform>
-        <feature>restfulWS</feature>
-        <feature>jsonp</feature>
-        <feature>jsonb</feature>
-        <feature>cdi</feature>
-        <feature>mpHealth</feature>
-        <feature>mpConfig</feature>
-        <feature>mpMetrics</feature>
-    </featureManager>
-
-    <variable name="http.port" defaultValue="9080"/>
-    <variable name="https.port" defaultValue="9443"/>
-
-    <webApplication location="guide-getting-started.war" contextRoot="/" />
-    
-    <mpMetrics authentication="false"/>
-
-    <logging traceSpecification="com.ibm.ws.microprofile.health.*=all" />
-
-    <httpEndpoint host="*" httpPort="${http.port}"
-        httpsPort="${https.port}" id="defaultHttpEndpoint"/>
-
-    <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
-</server>
-```
-
-
-
-After you change the file, Open Liberty automatically reloads its configuration.
-
-Now, when you visit the ***/health*** endpoint, additional traces are logged in the ***trace.log*** file.
-
-```bash
-ls /home/project/guide-getting-started/start/target/liberty/wlp/usr/servers/defaultServer/logs
-```
-
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
-
-
-::page{title="Running the application in a Docker container"}
-
-
-To containerize the application, you need a ***Dockerfile***. This file contains a collection of instructions that define how a Docker image is built, what files are packaged into it, what commands run when the image runs as a container, and other information. You can find a complete ***Dockerfile*** in the ***start*** directory. This ***Dockerfile*** copies the ***.war*** file into a Docker image that contains the Java runtime and a preconfigured Open Liberty runtime.
-
-Run the Maven ***package*** goal from the ***start*** directory so that the ***.war*** file resides in the ***target*** directory.
+To build the application, run the Maven ***install*** and ***package*** goals from the command-line session in the ***start*** directory:
 
 
 ```bash
+./mvnw -pl models install
 ./mvnw package
 ```
 
 
 
-To build and containerize the application, run the following Docker build command in the ***start*** directory:
+Run the following commands to containerize the microservices:
 
 ```bash
-docker build -t openliberty-getting-started:1.0-SNAPSHOT .
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+docker build -t query:1.0-SNAPSHOT query/.
 ```
 
-The Docker ***openliberty-getting-started:1.0-SNAPSHOT*** image is also built from the ***Dockerfile***. To verify that the image is built, run the ***docker images*** command to list all local Docker images:
-
-```bash
-docker images
-```
-
-Your image should appear in the list of all Docker images:
-
-```
-REPOSITORY                     TAG             IMAGE ID        CREATED         SIZE
-openliberty-getting-started    1.0-SNAPSHOT    88173351adfa    2 minutes ago   780MB
-```
-
-Next, run the image as a container:
-```bash
-docker run -d --name gettingstarted-app -p 9080:9080 openliberty-getting-started:1.0-SNAPSHOT
-```
-
-There is a bit going on here, so here's a breakdown of the command:
-
-| *Flag* | *Description*
-| ---| ---
-| -d     | Runs the container in the background.
-| --name | Specifies a name for the container.
-| -p     | Maps the container ports to the host ports.
-
-The final argument in the ***docker run*** command is the Docker image name.
-
-Next, run the ***docker ps*** command to verify that your container started:
-```bash
-docker ps
-```
-
-Make sure that your container is running and does not have ***Exited*** as its status:
-
-```
-CONTAINER ID    IMAGE                         CREATED          STATUS           NAMES
-4294a6bdf41b    openliberty-getting-started   9 seconds ago    Up 11 seconds    gettingstarted-app
-```
-
-
-To access the application, go to the ***http\://localhost:9080/system/properties*** URL.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/system/properties | jq
-```
-
-
-
-To stop and remove the container, run the following commands:
-```bash
-docker stop gettingstarted-app && docker rm gettingstarted-app
-```
-
-To remove the image, run the following command:
-```bash
-docker rmi openliberty-getting-started:1.0-SNAPSHOT
-```
-
-
-::page{title="Developing the application in a Docker container"}
-
-The Open Liberty Maven plug-in includes a ***devc*** goal that simplifies developing your application in a Docker container by starting dev mode with container support. This goal builds a Docker image, mounts the required directories, binds the required ports, and then runs the application inside of a container. Dev mode also listens for any changes in the application source code or configuration and rebuilds the image and restarts the container as necessary.
-
-Build and run the container by running the devc goal from the ***start*** directory:
+Next, use the provided ***startContainers*** script to start the application in Docker containers. The script creates containers for Kafka and all of the microservices in the project, in addition to a network for the containers to communicate with each other. The script also creates three instances of the ***system*** microservice. 
 
 
 ```bash
-chmod 777 /home/project/guide-getting-started/start/target/liberty/wlp/usr/servers/defaultServer/logs
-./mvnw liberty:devc -DserverStartTimeout=300
+./scripts/startContainers.sh
 ```
 
-When you see the following message, Open Liberty is ready to run in dev mode:
 
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Open another command-line session and run the ***docker ps*** command to verify that your container started:
+The services might take several minutes to become available. Run the following curl command to confirm that the ***inventory*** microservice is up and running.
 ```bash
-docker ps
+curl -s http://localhost:9085/health | jq
 ```
 
-Your container should be running and have ***Up*** as its status:
-
-```
-CONTAINER ID        IMAGE                                 COMMAND                  CREATED             STATUS                         PORTS                                                                    NAMES
-17af26af0539        guide-getting-started-dev-mode        "/opt/ol/helpers/run…"   3 minutes ago       Up 3 minutes                   0.0.0.0:7777->7777/tcp, 0.0.0.0:9080->9080/tcp, 0.0.0.0:9443->9443/tcp   liberty-dev
-```
-
-
-To access the application, go to the ***http\://localhost:9080/system/properties*** URL. 
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+You can access the application by making requests to the ***query/systemLoad*** endpoint by running the following curl command:
 ```bash
-curl -s http://localhost:9080/system/properties | jq
+curl -s http://localhost:9080/query/systemLoad | jq
 ```
 
-
-
-Dev mode automatically picks up changes that you make to your application and allows you to run tests by pressing the ***enter/return*** key in the active command-line session.
-
-Update the ***server.xml*** file to change the context root from ***/*** to ***/dev***.
-
-Replace the Liberty ***server.xml*** configuration file.
-
-> To open the server.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-getting-started/start/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-getting-started/start/src/main/liberty/config/server.xml"}
-
-
-
-```xml
-<server description="Sample Liberty server">
-    <featureManager>
-        <platform>jakartaee-10.0</platform>
-        <platform>microprofile-7.0</platform>
-        <feature>restfulWS</feature>
-        <feature>jsonp</feature>
-        <feature>jsonb</feature>
-        <feature>cdi</feature>
-        <feature>mpHealth</feature>
-        <feature>mpConfig</feature>
-        <feature>mpMetrics</feature>
-    </featureManager>
-
-    <variable name="http.port" defaultValue="9080"/>
-    <variable name="https.port" defaultValue="9443"/>
-
-    <webApplication location="guide-getting-started.war" contextRoot="/dev" />
-    <mpMetrics authentication="false"/>
-
-    <logging traceSpecification="com.ibm.ws.microprofile.health.*=all" />
-
-    <httpEndpoint host="*" httpPort="${http.port}"
-        httpsPort="${https.port}" id="defaultHttpEndpoint"/>
-
-    <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
-</server>
-```
-
-
-
-After you make the file changes, Open Liberty automatically reloads its configuration. When you see the following message in your command-line session, Open Liberty is ready to run again:
+When the service is ready, you see an output similar to the following example which was formatted for readability. 
 
 ```
-The server has been restarted.
-************************************************************************
-*    Liberty is running in dev mode.
+{
+    "highest": {
+        "hostname" : "8841bd7d6fcd",
+        "systemLoad" : 6.96
+    },
+    "lowest": {
+        "hostname" : "37140ec44c9b",
+        "systemLoad" : 6.4
+    }
+}
 ```
 
-Update the ***mpData.js*** file to change the ***url*** in the ***getSystemPropertiesRequest*** method to reflect the new context root.
+Switching to an asynchronous programming model freed up the thread that handles requests to the ***inventory*** service. While requests process, the thread can handle other work or requests. In the ***/query/systemLoad*** endpoint, multiple systems are read and compared at once.
 
-
-Update the mpData.js file.
-
-> From the menu of the IDE, select 
-> ***File*** > ***Open*** > guide-getting-started/start/src/main/webapp/js/mpData.js, or click the following button
-
-::openFile{path="/home/project/guide-getting-started/start/src/main/webapp/js/mpData.js"}
-
-```
-function getSystemPropertiesRequest() {
-    var propToDisplay = ["java.vendor", "java.version", "user.name", "os.name", "wlp.install.dir", "wlp.server.name" ];
-    var url = "http://localhost:9080/dev/system/properties";
-    var req = new XMLHttpRequest();
-    var table = document.getElementById("systemPropertiesTable");
-    ...
-```
-
-Update the ***pom.xml*** file to change the context root from ***/*** to ***/dev*** in the ***maven-failsafe-plugin*** to reflect the new context root when you run functional tests.
-
-Replace the pom.xml file.
-
-> To open the pom.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-getting-started/start/pom.xml, or click the following button
-
-::openFile{path="/home/project/guide-getting-started/start/pom.xml"}
-
-
-
-```xml
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>guide-getting-started</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>war</packaging>
-
-    <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <!-- Liberty configuration -->
-        <liberty.var.http.port>9080</liberty.var.http.port>
-        <liberty.var.https.port>9443</liberty.var.https.port>
-    </properties>
-
-    <dependencies>
-        <!-- Provided dependencies -->
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>10.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>7.0</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-        <!-- For tests -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.12.2</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-client</artifactId>
-            <version>6.2.12.Final</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-json-binding-provider</artifactId>
-            <version>6.2.12.Final</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish</groupId>
-            <artifactId>jakarta.json</artifactId>
-            <version>2.0.1</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <!-- Enable liberty-maven plugin -->
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.11.3</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.4.0</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.3</version>
-            </plugin>
-            <!-- Plugin to run functional tests -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.3</version>
-                <configuration>
-                    <systemPropertyVariables>
-                        <http.port>${liberty.var.http.port}</http.port>
-                        <context.root>/dev</context.root>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-</project>
-```
-
-
-
-You can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode to verify your change.
-
-
-You can access the application at the ***http\://localhost:9080/dev/system/properties*** URL. Notice that the context root is now ***/dev***.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/dev/system/properties | jq
-```
-
-
-
-When you are finished, exit dev mode by pressing `Ctrl+C` in the command-line session that the container was started from. Exiting dev mode stops and removes the container. To check that the container was stopped, run the ***docker ps*** command.
-
-
-::page{title="Running the application from a minimal runnable JAR"}
-
-So far, Open Liberty was running out of the ***target/liberty/wlp*** directory, which effectively contains an Open Liberty installation and the deployed application. The final product of the Maven build is a server package for use in a continuous integration pipeline and, ultimately, a production deployment.
-
-Open Liberty supports a number of different server packages. The sample application currently generates a ***usr*** package that contains the Liberty runtime and application to be extracted onto an Open Liberty installation.
-
-Instead of creating a server package, you can generate a runnable JAR file that contains the application along with a Liberty runtime. This JAR file can then be run anywhere and deploy your application and runtime at the same time. To generate a runnable JAR file, override the  ***include*** property: 
+When you are done checking out the application, run the following script to stop the application:
 
 
 ```bash
-./mvnw liberty:package -Dinclude=runnable
+./scripts/stopContainers.sh
 ```
 
 
+::page{title="Testing the query microservice"}
 
-The packaging type is overridden from the ***usr*** package to the ***runnable*** package. This property then propagates to the ***liberty-maven-plugin*** plug-in, which generates the server package based on the ***openliberty-kernel*** package.
+You will create an endpoint test to test the basic functionality of the ***query*** microservice. If a test failure occurs, then you might have introduced a bug into the code.
 
-When the build completes, you can find the minimal runnable ***guide-getting-started.jar*** file in the ***target*** directory. This JAR file contains only the ***features*** that you explicitly enabled in your ***server.xml*** file. As a result, the generated JAR file is only about 50 MB.
+Create the ***QueryServiceIT*** class.
 
-To run the JAR file, first stop the Liberty instance if it's running. Then, navigate to the ***target*** directory and run the ***java -jar*** command:
-
+> Run the following touch command in your terminal
 ```bash
-java -jar guide-getting-started.jar
+touch /home/project/guide-microprofile-rest-client-async/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java
 ```
 
 
-When Liberty starts, go to the ***http\://localhost:9080/dev/system/properties*** URL to access your application that is now running out of the minimal runnable JAR file.
+> Then, to open the QueryServiceIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-rest-client-async/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-rest-client-async/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java"}
 
 
-_To see the output for this URL in the IDE, run the following command at a terminal:_
 
+```java
+package it.io.openliberty.guides.query;
+
+import java.nio.file.Paths;
+import java.time.Duration;
+import java.util.Map;
+import java.util.Properties;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.mockserver.client.MockServerClient;
+import org.mockserver.model.HttpRequest;
+import org.mockserver.model.HttpResponse;
+
+import org.testcontainers.containers.Network;
+import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.MockServerContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.images.builder.ImageFromDockerfile;
+import org.testcontainers.utility.DockerImageName;
+import org.jboss.resteasy.client.jaxrs.ResteasyClient;
+import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.UriBuilder;
+
+public class QueryServiceIT {
+
+    private static Logger logger = LoggerFactory.getLogger(QueryServiceIT.class);
+
+    public static QueryResourceClient client;
+
+    private static Network network = Network.newNetwork();
+
+    private static String testHost1 =
+        "{"
+            + "\"hostname\" : \"testHost1\","
+            + "\"systemLoad\" : 1.23"
+        + "}";
+    private static String testHost2 =
+        "{"
+            + "\"hostname\" : \"testHost2\","
+            + "\"systemLoad\" : 3.21"
+        + "}";
+    private static String testHost3 =
+        "{"
+            + "\"hostname\" : \"testHost3\","
+            + "\"systemLoad\" : 2.13"
+        + "}";
+
+    private static ImageFromDockerfile queryImage =
+        new ImageFromDockerfile("query:1.0-SNAPSHOT")
+            .withDockerfile(Paths.get("./Dockerfile"));
+
+    public static final DockerImageName MOCKSERVER_IMAGE = DockerImageName
+        .parse("mockserver/mockserver")
+        .withTag("mockserver-"
+                 + MockServerClient.class.getPackage().getImplementationVersion());
+
+    public static MockServerContainer mockServer =
+        new MockServerContainer(MOCKSERVER_IMAGE)
+            .withNetworkAliases("mock-server")
+            .withNetwork(network);
+
+    public static MockServerClient mockClient;
+
+    private static KafkaContainer kafkaContainer =
+        new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:latest"))
+            .withListener(() -> "kafka:19092")
+            .withNetwork(network);
+
+    private static GenericContainer<?> queryContainer =
+        new GenericContainer(queryImage)
+            .withNetwork(network)
+            .withExposedPorts(9080)
+            .waitingFor(Wait.forHttp("/health/ready"))
+            .withStartupTimeout(Duration.ofMinutes(3))
+            .withLogConsumer(new Slf4jLogConsumer(logger))
+            .dependsOn(kafkaContainer);
+
+    private static QueryResourceClient createRestClient(String urlPath) {
+        ClientBuilder builder = ResteasyClientBuilder.newBuilder();
+        ResteasyClient client = (ResteasyClient) builder.build();
+        ResteasyWebTarget target = client.target(UriBuilder.fromPath(urlPath));
+        return target.proxy(QueryResourceClient.class);
+    }
+
+    @BeforeAll
+    public static void startContainers() {
+        mockServer.start();
+        mockClient = new MockServerClient(
+            mockServer.getHost(),
+            mockServer.getServerPort());
+
+        kafkaContainer.start();
+
+        queryContainer.withEnv(
+            "InventoryClient/mp-rest/uri",
+            "http://mock-server:" + MockServerContainer.PORT);
+        queryContainer.start();
+
+        client = createRestClient("http://"
+            + queryContainer.getHost()
+            + ":" + queryContainer.getFirstMappedPort());
+    }
+    @BeforeEach
+    public void setup() throws InterruptedException {
+        mockClient.when(HttpRequest.request()
+                        .withMethod("GET")
+                        .withPath("/inventory/systems"))
+                    .respond(HttpResponse.response()
+                        .withStatusCode(200)
+                        .withBody("[\"testHost1\","
+                                + "\"testHost2\","
+                                + "\"testHost3\"]")
+                        .withHeader("Content-Type", "application/json"));
+
+        mockClient.when(HttpRequest.request()
+                        .withMethod("GET")
+                        .withPath("/inventory/systems/testHost1"))
+                    .respond(HttpResponse.response()
+                        .withStatusCode(200)
+                        .withBody(testHost1)
+                        .withHeader("Content-Type", "application/json"));
+
+        mockClient.when(HttpRequest.request()
+                        .withMethod("GET")
+                        .withPath("/inventory/systems/testHost2"))
+                    .respond(HttpResponse.response()
+                        .withStatusCode(200)
+                        .withBody(testHost2)
+                        .withHeader("Content-Type", "application/json"));
+
+        mockClient.when(HttpRequest.request()
+                        .withMethod("GET")
+                        .withPath("/inventory/systems/testHost3"))
+                    .respond(HttpResponse.response()
+                        .withStatusCode(200)
+                        .withBody(testHost3)
+                        .withHeader("Content-Type", "application/json"));
+    }
+
+    @AfterAll
+    public static void stopContainers() {
+        queryContainer.stop();
+        kafkaContainer.stop();
+        mockServer.stop();
+        network.close();
+    }
+
+    @Test
+    public void testLoads() {
+        Map<String, Properties> response = client.systemLoad();
+
+        assertEquals(
+            "testHost2",
+            response.get("highest").get("hostname"),
+            "Returned highest system load incorrect"
+        );
+        assertEquals(
+            "testHost1",
+            response.get("lowest").get("hostname"),
+            "Returned lowest system load incorrect"
+        );
+    }
+}
+```
+
+
+The ***testLoads()*** test case verifies that the ***query*** service can calculate the highest and lowest system loads. 
+
+
+
+### Running the tests
+
+
+Run the following commands to navigate to the ***query*** directory and verify that the tests pass by using the Maven ***verify*** goal:
 ```bash
-curl -s http://localhost:9080/dev/system/properties | jq
+export TESTCONTAINERS_RYUK_DISABLED=true
+cd /home/project/guide-microprofile-rest-client-async/start/query
+./mvnw verify
 ```
 
+For more information about disabling Ryuk, see the [Testcontainers custom configuratio](https://java.testcontainers.org/features/configuration/#disabling-ryuk) document.
 
+The tests might take a few minutes to complete. When the tests succeed, you see output similar to the following example:
 
-You can stop the Liberty instance by pressing `Ctrl+C` in the command-line session that the instance runs in.
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.query.QueryServiceIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 32.123 s - in it.io.openliberty.guides.query.QueryServiceIT
 
+Results:
 
-
-
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+```
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You've learned the basics of deploying and updating an application on Open Liberty.
-
+You have just modified an application to make asynchronous HTTP requests using Open Liberty and MicroProfile Rest Client.
 
 
 
@@ -890,32 +547,31 @@ You've learned the basics of deploying and updating an application on Open Liber
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-getting-started*** project by running the following commands:
+Delete the ***guide-microprofile-rest-client-async*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-getting-started
+rm -fr guide-microprofile-rest-client-async
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Getting%20started%20with%20Open%20Liberty&guide-id=cloud-hosted-guide-getting-started)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20RESTful%20services%20asynchronously%20with%20template%20interfaces&guide-id=cloud-hosted-guide-microprofile-rest-client-async)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-getting-started/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-getting-started/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-rest-client-async/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-rest-client-async/pulls)
 
 
 
 ### Where to next?
 
-* [Building a web application with Maven](https://openliberty.io/guides/maven-intro.html)
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
+* [Consuming RESTful services using the reactive JAX-RS client](https://openliberty.io/guides/reactive-rest-client.html)
 
 
 ### Log out of the session
