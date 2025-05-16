@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Persisting data with MongoDB guide!"}
+::page{title="Welcome to the Deploying microservices to Kubernetes guide!"}
 
-Learn how to persist data in your microservices to MongoDB, a document-oriented NoSQL database.
+Deploy microservices in Open Liberty Docker containers to Kubernetes and manage them with the Kubernetes CLI, kubectl.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,26 +14,38 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
+
+::page{title="What is Kubernetes?"}
+
+Kubernetes is an open source container orchestrator that automates many tasks involved in deploying, managing, and scaling containerized applications.
+
+Over the years, Kubernetes has become a major tool in containerized environments as containers are being further leveraged for all steps of a continuous delivery pipeline.
+
+### Why use Kubernetes?
+
+Managing individual containers can be challenging. A small team can easily manage a few containers for development but managing hundreds of containers can be a headache, even for a large team of experienced developers. Kubernetes is a tool for deployment in containerized environments. It handles scheduling, deployment, as well as mass deletion and creation of containers. It provides update rollout abilities on a large scale that would otherwise prove extremely tedious to do. Imagine that you updated a Docker image, which now needs to propagate to a dozen containers. While you could destroy and then re-create these containers, you can also run a short one-line command to have Kubernetes make all those updates for you. Of course, this is just a simple example. Kubernetes has a lot more to offer.
+
+### Architecture
+
+Deploying an application to Kubernetes means deploying an application to a Kubernetes cluster.
+
+A typical Kubernetes cluster is a collection of physical or virtual machines called nodes that run containerized applications. A cluster is made up of one parent node that manages the cluster, and many worker nodes that run the actual application instances inside Kubernetes objects called pods.
+
+A pod is a basic building block in a Kubernetes cluster. It represents a single running process that encapsulates a container or in some scenarios many closely coupled containers. Pods can be replicated to scale applications and handle more traffic. From the perspective of a cluster, a set of replicated pods is still one application instance, although it might be made up of dozens of instances of itself. A single pod or a group of replicated pods are managed by Kubernetes objects called controllers. A controller handles replication, self-healing, rollout of updates, and general management of pods. One example of a controller that you will use in this guide is a deployment.
+
+A pod or a group of replicated pods are abstracted through Kubernetes objects called services that define a set of rules by which the pods can be accessed. In a basic scenario, a Kubernetes service exposes a node port that can be used together with the cluster IP address to access the pods encapsulated by the service.
+
+To learn about the various Kubernetes resources that you can configure, see the [official Kubernetes documentation](https://kubernetes.io/docs/concepts/).
+
+
 ::page{title="What you'll learn"}
 
-You will learn how to use MongoDB to build and test a simple microservice that manages the members of a crew. The microservice will respond to ***POST***, ***GET***, ***PUT***, and ***DELETE*** requests that manipulate the database.
+You will learn how to deploy two microservices in Open Liberty containers to a local Kubernetes cluster. You will then manage your deployed microservices using the ***kubectl*** command line interface for Kubernetes. The ***kubectl*** CLI is your primary tool for communicating with and managing your Kubernetes cluster.
 
-The crew members will be stored in MongoDB as documents in the following JSON format:
+The two microservices you will deploy are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of the running container and it returns the pod's name in the HTTP header making replicas easy to distinguish from each other. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This process demonstrates how communication can be established between pods inside a cluster.
 
-```
-{
-  "_id": {
-    "$oid": "5dee6b079503234323db2ebc"
-  },
-  "Name": "Member1",
-  "Rank": "Captain",
-  "CrewID": "000001"
-}
-```
-
-This microservice connects to MongoDB by using Transport Layer Security (TLS) and injects a ***MongoDatabase*** instance into the service with a Contexts and Dependency Injection (CDI) producer. Additionally, MicroProfile Config is used to easily configure the MongoDB driver.
-
-For more information about CDI and MicroProfile Config, see the guides on [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html) and [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html).
+You will use a local single-node Kubernetes cluster.
 
 
 ::page{title="Getting started"}
@@ -47,11 +59,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-mongodb-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-intro.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-mongodb-intro.git
-cd guide-mongodb-intro
+git clone https://github.com/openliberty/guide-kubernetes-intro.git
+cd guide-kubernetes-intro
 ```
 
 
@@ -60,962 +72,510 @@ The ***start*** directory contains the starting project that you will build upon
 The ***finish*** directory contains the finished project that you will build.
 
 
-### Setting up MongoDB
 
-This guide uses Docker to run an instance of MongoDB. A multi-stage Dockerfile is provided for you. This Dockerfile uses the ***mongo*** image as the base image of the final stage and gathers the required configuration files. The resulting ***mongo*** image runs in a Docker container, and you must set up a new database for the microservice. Lastly, the truststore that's generated in the Docker image is copied from the container and placed into the Open Liberty configuration.
 
-You can find more details and configuration options on the [MongoDB website](https://docs.mongodb.com/manual/reference/configuration-options/). For more information about the ***mongo*** image, see [mongo](https://hub.docker.com/_/mongo) in Docker Hub.
+::page{title="Building and containerizing the microservices"}
 
-**Running MongoDB in a Docker container**
+The first step of deploying to Kubernetes is to build your microservices and containerize them with Docker.
 
-Run the following commands to use the Dockerfile to build the image, run the image in a Docker container, and map port ***27017*** from the container to your host machine:
+The starting Java project, which you can find in the ***start*** directory, is a multi-module Maven project that's made up of the ***system*** and ***inventory*** microservices. Each microservice resides in its own directory, ***start/system*** and ***start/inventory***. Each of these directories also contains a Dockerfile, which is necessary for building Docker images. If you're unfamiliar with Dockerfiles, check out the [Containerizing Microservices](https://openliberty.io/guides/containerize.html) guide, which covers Dockerfiles in depth.
 
-```bash
-sed -i 's=latest=7.0.15-rc1=g' assets/Dockerfile
-```
-
-```bash
-docker build -t mongo-sample -f assets/Dockerfile .
-docker run --name mongo-guide -p 27017:27017 -d mongo-sample
-```
-
-**Adding the truststore to the Open Liberty configuration**
-
-The truststore that's created in the container needs to be added to the Open Liberty configuration so that the Liberty can trust the certificate that MongoDB presents when they connect. Run the following command to copy the ***truststore.p12*** file from the container to the ***start*** and ***finish*** directories:
+Navigate to the ***start*** directory and build the applications by running the following commands:
 
 
 ```bash
-docker cp \
-  mongo-guide:/home/mongodb/certs/truststore.p12 \
-  start/src/main/liberty/config/resources/security
-docker cp \
-  mongo-guide:/home/mongodb/certs/truststore.p12 \
-  finish/src/main/liberty/config/resources/security
+cd start
+./mvnw clean package
 ```
 
 
-### Try what you'll build
 
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+Next, run the ***docker build*** commands to build container images for your application:
+```bash
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+```
 
-To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
+The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
+
+During the build, you'll see various Docker messages describing what images are being downloaded and built. When the build finishes, run the following command to list all local Docker images:
+```bash
+docker images
+```
+
+
+Verify that the ***system:1.0-SNAPSHOT*** and ***inventory:1.0-SNAPSHOT*** images are listed among them, for example:
+
+```
+REPOSITORY                                TAG                       
+inventory                                 1.0-SNAPSHOT
+system                                    1.0-SNAPSHOT
+openliberty/open-liberty                  kernel-slim-java11-openj9-ubi
+```
+
+If you don't see the ***system:1.0-SNAPSHOT*** and ***inventory:1.0-SNAPSHOT*** images, then check the Maven build log for any potential errors. If the images built without errors, push them to your container registry on IBM Cloud with the following commands:
 
 ```bash
-cd finish
-./mvnw liberty:run
-```
-
-After you see the following message, your Liberty instance is ready:
-
-```
-The defaultServer server is ready to run a smarter planet.
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
 ```
 
 
-You can now check out the service by clicking the following button:
+::page{title="Deploying the microservices"}
 
-::startApplication{port="9080" display="external" name="Launch application" route="/mongo"}
+Now that your Docker images are built, deploy them using a Kubernetes resource definition.
 
-After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+A Kubernetes resource definition is a yaml file that contains a description of all your deployments, services, or any other resources that you want to deploy. All resources can also be deleted from the cluster by using the same yaml file that you used to deploy them.
 
-```bash
-./mvnw liberty:stop
-```
-
-
-::page{title="Providing a MongoDatabase"}
-
-Navigate to the ***start*** directory to begin.
-
-```bash
-cd /home/project/guide-mongodb-intro/start
-```
-
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
-
-```bash
-./mvnw liberty:dev
-```
-
-After you see the following message, your Liberty instance is ready in dev mode:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
-
-With a CDI producer, you can easily provide a ***MongoDatabase*** to your microservice.
-
-Create the ***MongoProducer*** class.
+Create the Kubernetes configuration file in the ***start*** directory.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/mongo/MongoProducer.java
+touch /home/project/guide-kubernetes-intro/start/kubernetes.yaml
 ```
 
 
-> Then, to open the MongoProducer.java file in your IDE, select
-> ***File*** > ***Open*** > guide-mongodb-intro/start/src/main/java/io/openliberty/guides/mongo/MongoProducer.java, or click the following button
+> Then, to open the kubernetes.yaml file in your IDE, select
+> ***File*** > ***Open*** > guide-kubernetes-intro/start/kubernetes.yaml, or click the following button
 
-::openFile{path="/home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/mongo/MongoProducer.java"}
+::openFile{path="/home/project/guide-kubernetes-intro/start/kubernetes.yaml"}
 
 
 
-```java
-package io.openliberty.guides.mongo;
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: system-deployment
+  labels:
+    app: system
+spec:
+  selector:
+    matchLabels:
+      app: system
+  template:
+    metadata:
+      labels:
+        app: system
+    spec:
+      containers:
+      - name: system-container
+        image: system:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9090
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-deployment
+  labels:
+    app: inventory
+spec:
+  selector:
+    matchLabels:
+      app: inventory
+  template:
+    metadata:
+      labels:
+        app: inventory
+    spec:
+      containers:
+      - name: inventory-container
+        image: inventory:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9090
+        env:
+        - name: SYS_APP_HOSTNAME
+          value: system-service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: system-service
+spec:
+  type: NodePort
+  selector:
+    app: system
+  ports:
+  - protocol: TCP
+    port: 9090
+    targetPort: 9090
+    nodePort: 31000
 
-import java.util.Collections;
-
-import javax.net.ssl.SSLContext;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
-import com.ibm.websphere.crypto.PasswordUtil;
-import com.ibm.websphere.ssl.JSSEHelper;
-import com.ibm.websphere.ssl.SSLException;
-import com.mongodb.ConnectionString;
-import com.mongodb.MongoClientSettings;
-import com.mongodb.MongoCredential;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoDatabase;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.inject.Disposes;
-import jakarta.enterprise.inject.Produces;
-import jakarta.inject.Inject;
-
-@ApplicationScoped
-public class MongoProducer {
-
-    @Inject
-    @ConfigProperty(name = "mongo.hostname", defaultValue = "localhost")
-    String hostname;
-
-    @Inject
-    @ConfigProperty(name = "mongo.port", defaultValue = "27017")
-    int port;
-
-    @Inject
-    @ConfigProperty(name = "mongo.dbname", defaultValue = "testdb")
-    String dbName;
-
-    @Inject
-    @ConfigProperty(name = "mongo.user")
-    String user;
-
-    @Inject
-    @ConfigProperty(name = "mongo.pass.encoded")
-    String encodedPass;
-
-    @Produces
-    public MongoClient createMongo() throws SSLException {
-        String password = PasswordUtil.passwordDecode(encodedPass);
-        MongoCredential creds = MongoCredential.createCredential(
-                user,
-                dbName,
-                password.toCharArray()
-        );
-
-        SSLContext sslContext = JSSEHelper.getInstance().getSSLContext(
-                "outboundSSLContext",
-                Collections.emptyMap(),
-                null
-        );
-
-        return MongoClients.create(MongoClientSettings.builder()
-                   .applyConnectionString(
-                       new ConnectionString("mongodb://" + hostname + ":" + port))
-                   .credential(creds)
-                   .applyToSslSettings(builder -> {
-                       builder.enabled(true);
-                       builder.context(sslContext); })
-                   .build());
-    }
-
-    @Produces
-    public MongoDatabase createDB(
-            MongoClient client) {
-        return client.getDatabase(dbName);
-    }
-
-    public void close(
-            @Disposes MongoClient toClose) {
-        toClose.close();
-    }
-}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service
+spec:
+  type: NodePort
+  selector:
+    app: inventory
+  ports:
+  - protocol: TCP
+    port: 9090
+    targetPort: 9090
+    nodePort: 32000
 ```
 
 
 Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
+This file defines four Kubernetes resources. It defines two deployments and two services. A Kubernetes deployment is a resource that controls the creation and management of pods. A service exposes your deployment so that you can make requests to your containers. Three key items to look at when creating the deployments are the ***labels***, ***image***, and ***containerPort*** fields. The ***labels*** is a way for a Kubernetes service to reference specific deployments. The ***image*** is the name and tag of the Docker image that you want to use for this container. Finally, the ***containerPort*** is the port that your container exposes to access your application. For the services, the key point to understand is that they expose your deployments. The binding between deployments and services is specified by labels -- in this case the ***app*** label. You will also notice the service has a type of ***NodePort***. This means you can access these services from outside of your cluster via a specific port. In this case, the ports are ***31000*** and ***32000***, but port numbers can also be randomized if the ***nodePort*** field is not used.
 
+Update the image names so that the images in your IBM Cloud container registry are used, and remove the ***nodePort*** fields so that the ports can be generated automatically:
 
-
-The values from the ***microprofile-config.properties*** file are injected into the ***MongoProducer*** class. The ***MongoProducer*** class requires the following methods for the ***MongoClient***:
-
-* The ***createMongo()*** producer method returns an instance of ***MongoClient***. In this method, the username, database name, and decoded password are passed into the ***MongoCredential.createCredential()*** method to get an instance of ***MongoCredential***. The ***JSSEHelper*** gets the ***SSLContext*** from the ***outboundSSLContext*** in the ***server.xml*** configuration file. Then, a ***MongoClient*** instance is created.
-
-* The ***createDB()*** producer method returns an instance of ***MongoDatabase*** that depends on the ***MongoClient***. This method injects the ***MongoClient*** in its parameters and passes the database name into the ***MongoClient.getDatabase()*** method to get a ***MongoDatabase*** instance.
-
-* The ***close()*** method is a clean-up function for the ***MongoClient*** that closes the connection to the ***MongoDatabase*** instance.
-
-
-
-::page{title="Implementing the Create, Retrieve, Update, and Delete operations"}
-
-You are going to implement the basic create, retrieve, update, and delete (CRUD) operations in the ***CrewService*** class. The ***com.mongodb.client*** and ***com.mongodb.client.result*** packages are used to help implement these operations for the microservice. For more information about these packages, see the [com.mongodb.client](https://mongodb.github.io/mongo-java-driver/5.2.1/apidocs/mongodb-driver-sync/com/mongodb/client/package-summary.html) and [com.mongodb.client.result](https://mongodb.github.io/mongo-java-driver/5.2.1/apidocs/mongodb-driver-core/com/mongodb/client/result/package-summary.html) Javadoc. For more information about creating a RESTful service with JAX-RS, JSON-B, and Open Liberty, see the guide on [Creating a RESTful web serivce](https://openliberty.io/guides/rest-intro.html).
-
-Create the ***CrewService*** class.
-
-> Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/application/CrewService.java
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=nodePort: 31000==g' kubernetes.yaml
+sed -i 's=nodePort: 32000==g' kubernetes.yaml
 ```
 
-
-> Then, to open the CrewService.java file in your IDE, select
-> ***File*** > ***Open*** > guide-mongodb-intro/start/src/main/java/io/openliberty/guides/application/CrewService.java, or click the following button
-
-::openFile{path="/home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/application/CrewService.java"}
-
-
-
-```java
-package io.openliberty.guides.application;
-
-import java.util.Set;
-
-import java.io.StringWriter;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonArrayBuilder;
-import jakarta.json.Json;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-
-import jakarta.validation.Validator;
-import jakarta.validation.ConstraintViolation;
-
-import com.mongodb.client.FindIterable;
-import org.bson.Document;
-import org.bson.types.ObjectId;
-
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.result.DeleteResult;
-import com.mongodb.client.result.UpdateResult;
-
-import org.eclipse.microprofile.openapi.annotations.Operation;
-import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
-
-@Path("/crew")
-@ApplicationScoped
-public class CrewService {
-
-    @Inject
-    MongoDatabase db;
-
-    @Inject
-    Validator validator;
-
-    private JsonArray getViolations(CrewMember crewMember) {
-        Set<ConstraintViolation<CrewMember>> violations = validator.validate(
-                crewMember);
-
-        JsonArrayBuilder messages = Json.createArrayBuilder();
-
-        for (ConstraintViolation<CrewMember> v : violations) {
-            messages.add(v.getMessage());
-        }
-
-        return messages.build();
-    }
-
-    @POST
-    @Path("/")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @APIResponses({
-        @APIResponse(
-            responseCode = "200",
-            description = "Successfully added crew member."),
-        @APIResponse(
-            responseCode = "400",
-            description = "Invalid crew member configuration.") })
-    @Operation(summary = "Add a new crew member to the database.")
-    public Response add(CrewMember crewMember) {
-        JsonArray violations = getViolations(crewMember);
-
-        if (!violations.isEmpty()) {
-            return Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity(violations.toString())
-                    .build();
-        }
-
-        MongoCollection<Document> crew = db.getCollection("Crew");
-
-        Document newCrewMember = new Document();
-        newCrewMember.put("Name", crewMember.getName());
-        newCrewMember.put("Rank", crewMember.getRank());
-        newCrewMember.put("CrewID", crewMember.getCrewID());
-
-        crew.insertOne(newCrewMember);
-
-        return Response
-            .status(Response.Status.OK)
-            .entity(newCrewMember.toJson())
-            .build();
-    }
-
-    @GET
-    @Path("/")
-    @Produces(MediaType.APPLICATION_JSON)
-    @APIResponses({
-        @APIResponse(
-            responseCode = "200",
-            description = "Successfully listed the crew members."),
-        @APIResponse(
-            responseCode = "500",
-            description = "Failed to list the crew members.") })
-    @Operation(summary = "List the crew members from the database.")
-    public Response retrieve() {
-        StringWriter sb = new StringWriter();
-
-        try {
-            MongoCollection<Document> crew = db.getCollection("Crew");
-            sb.append("[");
-            boolean first = true;
-            FindIterable<Document> docs = crew.find();
-            for (Document d : docs) {
-                if (!first) {
-                    sb.append(",");
-                } else {
-                    first = false;
-                }
-                sb.append(d.toJson());
-            }
-            sb.append("]");
-        } catch (Exception e) {
-            e.printStackTrace(System.out);
-            return Response
-                .status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity("[\"Unable to list crew members!\"]")
-                .build();
-        }
-
-        return Response
-            .status(Response.Status.OK)
-            .entity(sb.toString())
-            .build();
-    }
-
-    @PUT
-    @Path("/{id}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @APIResponses({
-        @APIResponse(
-            responseCode = "200",
-            description = "Successfully updated crew member."),
-        @APIResponse(
-            responseCode = "400",
-            description = "Invalid object id or crew member configuration."),
-        @APIResponse(
-            responseCode = "404",
-            description = "Crew member object id was not found.") })
-    @Operation(summary = "Update a crew member in the database.")
-    public Response update(CrewMember crewMember,
-        @Parameter(
-            description = "Object id of the crew member to update.",
-            required = true
-        )
-        @PathParam("id") String id) {
-
-        JsonArray violations = getViolations(crewMember);
-
-        if (!violations.isEmpty()) {
-            return Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity(violations.toString())
-                    .build();
-        }
-
-        ObjectId oid;
-
-        try {
-            oid = new ObjectId(id);
-        } catch (Exception e) {
-            return Response
-                .status(Response.Status.BAD_REQUEST)
-                .entity("[\"Invalid object id!\"]")
-                .build();
-        }
-
-        MongoCollection<Document> crew = db.getCollection("Crew");
-
-        Document query = new Document("_id", oid);
-
-        Document newCrewMember = new Document();
-        newCrewMember.put("Name", crewMember.getName());
-        newCrewMember.put("Rank", crewMember.getRank());
-        newCrewMember.put("CrewID", crewMember.getCrewID());
-
-        UpdateResult updateResult = crew.replaceOne(query, newCrewMember);
-
-        if (updateResult.getMatchedCount() == 0) {
-            return Response
-                .status(Response.Status.NOT_FOUND)
-                .entity("[\"_id was not found!\"]")
-                .build();
-        }
-
-        newCrewMember.put("_id", oid);
-
-        return Response
-            .status(Response.Status.OK)
-            .entity(newCrewMember.toJson())
-            .build();
-    }
-
-    @DELETE
-    @Path("/{id}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @APIResponses({
-        @APIResponse(
-            responseCode = "200",
-            description = "Successfully deleted crew member."),
-        @APIResponse(
-            responseCode = "400",
-            description = "Invalid object id."),
-        @APIResponse(
-            responseCode = "404",
-            description = "Crew member object id was not found.") })
-    @Operation(summary = "Delete a crew member from the database.")
-    public Response remove(
-        @Parameter(
-            description = "Object id of the crew member to delete.",
-            required = true
-        )
-        @PathParam("id") String id) {
-
-        ObjectId oid;
-
-        try {
-            oid = new ObjectId(id);
-        } catch (Exception e) {
-            return Response
-                .status(Response.Status.BAD_REQUEST)
-                .entity("[\"Invalid object id!\"]")
-                .build();
-        }
-
-        MongoCollection<Document> crew = db.getCollection("Crew");
-
-        Document query = new Document("_id", oid);
-
-        DeleteResult deleteResult = crew.deleteOne(query);
-
-        if (deleteResult.getDeletedCount() == 0) {
-            return Response
-                .status(Response.Status.NOT_FOUND)
-                .entity("[\"_id was not found!\"]")
-                .build();
-        }
-
-        return Response
-            .status(Response.Status.OK)
-            .entity(query.toJson())
-            .build();
-    }
-}
-```
-
-
-
-
-In this class, a ***Validator*** is used to validate a ***CrewMember*** before the database is updated. The CDI producer is used to inject a ***MongoDatabase*** into the CrewService class.
-
-
-**Implementing the Create operation**
-
-The ***add()*** method handles the implementation of the create operation. An instance of ***MongoCollection*** is retrieved with the ***MongoDatabase.getCollection()*** method. The ***Document*** type parameter specifies that the ***Document*** type is used to store data in the ***MongoCollection***. Each crew member is converted into a ***Document***, and the ***MongoCollection.insertOne()*** method inserts a new crew member document.
-
-
-**Implementing the Retrieve operation**
-
-The ***retrieve()*** method handles the implementation of the retrieve operation. The ***Crew*** collection is retrieved with the ***MongoDatabase.getCollection()*** method. Then, the ***MongoCollection.find()*** method retrieves a ***FindIterable*** object. This object is iterable for all the crew members documents in the collection, so each crew member document is concatenated into a String array and returned.
-
-
-**Implementing the Update operation**
-
-The ***update()*** method handles the implementation of the update operation. After the ***Crew*** collection is retrieved, a document is created with the specified object ***id*** and is used to query the collection. Next, a new crew member ***Document*** is created with the updated configuration. The ***MongoCollection.replaceOne()*** method is called with the query and new crew member document. This method updates all of the matching queries with the new document. Because the object ***id*** is unique in the ***Crew*** collection, only one document is updated. The ***MongoCollection.replaceOne()*** method also returns an ***UpdateResult*** instance, which determines how many documents matched the query. If there are zero matches, then the object ***id*** doesn't exist.
-
-
-**Implementing the Delete operation**
-
-The ***remove()*** method handles the implementation of the delete operation. After the ***Crew*** collection is retrieved, a ***Document*** is created with the specified object ***id*** and is used to query the collection. Because the object ***id*** is unique in the ***Crew*** collection, only one document is deleted. After the document is deleted, the ***MongoCollection.deleteOne()*** method returns a ***DeleteResult*** instance, which determines how many documents were deleted. If zero documents were deleted, then the object ***id*** doesn't exist.
-
-
-
-::page{title="Configuring the MongoDB driver and the Liberty"}
-
-MicroProfile Config makes configuring the MongoDB driver simple because all of the configuration can be set in one place and injected into the CDI producer.
-
-Create the configuration file.
-
-> Run the following touch command in your terminal
+Run the following commands to deploy the resources as defined in kubernetes.yaml:
 ```bash
-touch /home/project/guide-mongodb-intro/start/src/main/resources/META-INF/microprofile-config.properties
+kubectl apply -f kubernetes.yaml
 ```
 
-
-> Then, to open the microprofile-config.properties file in your IDE, select
-> ***File*** > ***Open*** > guide-mongodb-intro/start/src/main/resources/META-INF/microprofile-config.properties, or click the following button
-
-::openFile{path="/home/project/guide-mongodb-intro/start/src/main/resources/META-INF/microprofile-config.properties"}
-
-
-
-```
-mongo.hostname=localhost
-mongo.port=27017
-mongo.dbname=testdb
-mongo.user=sampleUser
-mongo.pass.encoded={aes}APtt+/vYxxPa0jE1rhmZue9wBm3JGqFK3JR4oJdSDGWM1wLr1ckvqkqKjSB2Voty8g==
-```
-
-
-
-Values such as the hostname, port, and database name for the running MongoDB instance are set in this file. The user’s username and password are also set here. For added security, the password was encoded by using the [securityUtility encode command](https://openliberty.io/docs/latest/reference/command/securityUtility-encode.html).
-
-To create a CDI producer for MongoDB and connect over TLS, the Open Liberty needs to be correctly configured.
-
-Replace the Liberty ***server.xml*** configuration file.
-
-> To open the server.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-mongodb-intro/start/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-mongodb-intro/start/src/main/liberty/config/server.xml"}
-
-
-
-```xml
-<server description="Sample Liberty server">
-    <featureManager>
-        <platform>jakartaee-10.0</platform>
-        <platform>microprofile-7.0</platform>
-        <feature>beanValidation</feature>
-        <feature>cdi</feature>
-        <feature>jsonb</feature>
-        <feature>passwordUtilities-1.1</feature>
-        <feature>restfulWS</feature>
-        <feature>ssl-1.0</feature>
-        <feature>mpConfig</feature>
-        <feature>mpOpenAPI</feature>
-    </featureManager>
-
-    <variable name="http.port" defaultValue="9080"/>
-    <variable name="https.port" defaultValue="9443"/>
-    <variable name="app.context.root" defaultValue="/mongo"/>
-
-    <httpEndpoint
-        host="*" 
-        httpPort="${http.port}" 
-        httpsPort="${https.port}" 
-        id="defaultHttpEndpoint"
-    />
-
-    <webApplication 
-        location="guide-mongodb-intro.war" 
-        contextRoot="${app.context.root}"
-    />
-    <keyStore
-        id="outboundTrustStore" 
-        location="${server.output.dir}/resources/security/truststore.p12"
-        password="mongodb"
-        type="PKCS12" 
-    />
-    <ssl 
-        id="outboundSSLContext" 
-        keyStoreRef="defaultKeyStore" 
-        trustStoreRef="outboundTrustStore" 
-        sslProtocol="TLS" 
-    />
-</server>
-```
-
-
-
-The features that are required to create the CDI producer for MongoDB are [Contexts and Dependency Injection](https://openliberty.io/docs/latest/reference/feature/cdi.html) (***cdi***), [Secure Socket Layer](https://openliberty.io/docs/latest/reference/feature/ssl.html) (***ssl***), [MicroProfile Config](https://openliberty.io/docs/latest/reference/feature/mpConfig.html) (***mpConfig***), and [Password Utilities](https://openliberty.io/docs/latest/reference/feature/passwordUtilities.html) (***passwordUtilities***). These features are specified in the ***featureManager*** element. The Secure Socket Layer (SSL) context is configured in the ***server.xml*** configuration file so that the application can connect to MongoDB with TLS. The ***keyStore*** element points to the ***truststore.p12*** keystore file that was created in one of the previous sections. The ***ssl*** element specifies the ***defaultKeyStore*** as the keystore and ***outboundTrustStore*** as the truststore.
-
-After you replace the ***server.xml*** file, the Open Liberty configuration is automatically reloaded.
-
-
-::page{title="Running the application"}
-
-You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
-
-
-Wait until you see a message similar to the following example:
-
-```
-CWWKZ0001I: Application guide-mongodb-intro started in 5.715 seconds.
-```
-
-Click the following button to see the OpenAPI user interface (UI) that provides API documentation and a client to test the API endpoints that you create:
-
-::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
-
-**Try the Create operation**
-
-From the OpenAPI UI, test the create operation at the ***POST /api/crew*** endpoint by using the following code as the request body:
-
-```
-{
-  "name": "Member1",
-  "rank": "Officer",
-  "crewID": "000001"
-}
-```
-
-This request creates a new document in the ***Crew*** collection with a name of ***Member1***, rank of ***Officer***, and crew ID of ***000001***.
-
-You'll receive a response that contains the JSON object of the new crew member, as shown in the following example:
-```
-{
-  "Name": "Member1",
-  "Rank": "Officer",
-  "CrewID": "000001",
-  "_id": {
-    "$oid": "<<ID>>"
-  }
-}
-```
-
-
-
-The ***\<\<ID\>\>*** that you receive is a unique identifier in the collection. Save this value for future commands.
-
-**Try the Retrieve operation**
-
-From the OpenAPI UI, test the read operation at the ***GET /api/crew*** endpoint. This request gets all crew member documents from the collection.
-
-You'll receive a response that contains an array of all the members in your crew. The response might include crew members that were created in the **Try what you’ll build** section of this guide:
-```
-[
-  {
-    "_id": {
-      "$oid": "<<ID>>"
-    },
-    "Name": "Member1",
-    "Rank": "Officer",
-    "CrewID": "000001"
-  }
-]
-```
-
-
-**Try the Update operation**
-
-
-From the OpenAPI UI, test the update operation at the ***PUT /api/crew/{id}*** endpoint, where the ***{id}*** parameter is the ***\<\<ID\>\>*** that you saved from the create operation. Use the following code as the request body:
-
-```
-{
-  "name": "Member1",
-  "rank": "Captain",
-  "crewID": "000001"
-}
-```
-
-This request updates the rank of the crew member that you created from ***Officer*** to ***Captain***.
-
-You'll receive a response that contains the JSON object of the updated crew member, as shown in the following example:
-
-```
-{
-  "Name": "Member1",
-  "Rank": "Captain",
-  "CrewID": "000001",
-  "_id": {
-    "$oid": "<<ID>>"
-  }
-}
-```
-
-
-**Try the Delete operation**
-
-
-From the OpenAPI UI, test the delete operation at the ***DELETE/api/crew/{id}*** endpoint, where the ***{id}*** parameter is the ***\<\<ID\>\>*** that you saved from the create operation. This request removes the document that contains the specified crew member object ***id*** from the collection.
-
-You'll receive a response that contains the object ***id*** of the deleted crew member, as shown in the following example:
-
-```
-{
-  "_id": {
-    "$oid": "<<ID>>"
-  }
-}
-```
-
-
-Now, you can check out the microservice that you created by clicking the following button:
-
-::startApplication{port="9080" display="external" name="Launch application" route="/mongo"}
-
-
-
-::page{title="Testing the application"}
-
-Next, you'll create integration tests to ensure that the basic operations you implemented function correctly.
-
-Create the ***CrewServiceIT*** class.
-
-> Run the following touch command in your terminal
+When the apps are deployed, run the following command to check the status of your pods:
 ```bash
-touch /home/project/guide-mongodb-intro/start/src/test/java/it/io/openliberty/guides/application/CrewServiceIT.java
+kubectl get pods
+```
+
+You'll see an output similar to the following if all the pods are healthy and running:
+
+```
+NAME                                    READY     STATUS    RESTARTS   AGE
+system-deployment-6bd97d9bf6-4ccds      1/1       Running   0          15s
+inventory-deployment-645767664f-nbtd9   1/1       Running   0          15s
+```
+
+You can also inspect individual pods in more detail by running the following command:
+```bash
+kubectl describe pods
+```
+
+You can also issue the ***kubectl get*** and ***kubectl describe*** commands on other Kubernetes resources, so feel free to inspect all other resources.
+
+
+In this execise, you need to access the services by using the Kubernetes API. Run the following command to start a proxy to the Kubernetes API server:
+
+```bash
+kubectl proxy
+```
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following commands to store the proxy path of the ***system*** and ***inventory*** services.
+```bash
+SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/system-service/proxy
+INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/inventory-service/proxy
+```
+
+Run the following echo commands to verify the variables:
+
+```bash
+echo $SYSTEM_PROXY && echo $INVENTORY_PROXY
+```
+
+The output appears as shown in the following example:
+
+```
+localhost:8001/api/v1/namespaces/sn-labs-yourname/services/system-service/proxy
+localhost:8001/api/v1/namespaces/sn-labs-yourname/services/inventory-service/proxy
+```
+
+Then, use the following ***curl*** command to access your ***system*** microservice:
+
+```bash
+curl -s http://$SYSTEM_PROXY/system/properties | jq
+```
+
+Also, use the following ***curl*** command to access your ***inventory*** microservice:
+
+```bash
+curl -s http://$INVENTORY_PROXY/inventory/systems/system-service | jq
+```
+
+The ***http://$SYSTEM_PROXY/system/properties*** URL returns system properties and the name of the pod in an HTTP header that is called ***X-Pod-Name***. To view the header, you can use the ***-I*** option in the ***curl*** command when you make a request to the ***http://$SYSTEM_PROXY/system/properties*** URL.
+
+```bash
+curl -I http://$SYSTEM_PROXY/system/properties
+```
+
+The ***http://$INVENTORY_PROXY/inventory/systems/system-service*** URL adds properties from the ***system-service*** endpoint to the inventory Kubernetes Service. Making a request to the ***http://$INVENTORY_PROXY/inventory/systems/[kube-service]*** URL in general adds to the inventory. That result depends on whether the ***kube-service*** endpoint is a valid Kubernetes service that can be accessed.
+
+
+::page{title="Rolling update"}
+
+Without continuous updates, a Kubernetes cluster is susceptible to a denial of a service attack. Rolling updates continually install Kubernetes patches without disrupting the availability of the deployed applications. Update the yaml file as follows to add the ***rollingUpdate*** configuration. 
+
+Replace the Kubernetes configuration file
+
+> To open the kubernetes.yaml file in your IDE, select
+> ***File*** > ***Open*** > guide-kubernetes-intro/start/kubernetes.yaml, or click the following button
+
+::openFile{path="/home/project/guide-kubernetes-intro/start/kubernetes.yaml"}
+
+
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: system-deployment
+  labels:
+    app: system
+spec:
+  selector:
+    matchLabels:
+      app: system
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: system
+    spec:
+      containers:
+      - name: system-container
+        image: system:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9090
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-deployment
+  labels:
+    app: inventory
+spec:
+  selector:
+    matchLabels:
+      app: inventory
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: inventory
+    spec:
+      containers:
+      - name: inventory-container
+        image: inventory:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9090
+        env:
+        - name: SYS_APP_HOSTNAME
+          value: system-service
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: system-service
+spec:
+  type: NodePort
+  selector:
+    app: system
+  ports:
+  - protocol: TCP
+    port: 9090
+    targetPort: 9090
+    nodePort: 31000
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service
+spec:
+  type: NodePort
+  selector:
+    app: inventory
+  ports:
+  - protocol: TCP
+    port: 9090
+    targetPort: 9090
+    nodePort: 32000
 ```
 
 
-> Then, to open the CrewServiceIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-mongodb-intro/start/src/test/java/it/io/openliberty/guides/application/CrewServiceIT.java, or click the following button
 
-::openFile{path="/home/project/guide-mongodb-intro/start/src/test/java/it/io/openliberty/guides/application/CrewServiceIT.java"}
+The ***rollingUpdate*** configuration has two attributes, ***maxUnavailable*** and ***maxSurge***. The ***maxUnavailable*** attribute specifies the the maximum number of Kubernetes pods that can be unavailable during the update process. Similarly, the ***maxSurge*** attribute specifies the maximum number of additional pods that can be created during the update process.
 
+The ***readinessProbe*** allows Kubernetes to know whether the service is ready to handle requests. The readiness health check classes for the ***/health/ready*** endpoint to the ***inventory*** and ***system*** services are provided for you. If you want to learn more about how to use health checks in Kubernetes, check out the [Kubernetes-microprofile-health](https://openliberty.io/guides/kubernetes-microprofile-health.html) guide. 
 
+Update the image names and remove the ***nodePort*** fields by running the following commands:
+```bash
+cd /home/project/guide-kubernetes-intro/start
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=nodePort: 31000==g' kubernetes.yaml
+sed -i 's=nodePort: 32000==g' kubernetes.yaml
+```
 
-```java
-package it.io.openliberty.guides.application;
+Run the following command to deploy the ***inventory*** and ***system*** microservices with the new configuration:
+```bash
+kubectl apply -f kubernetes.yaml
+```
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+Run the following command to check the status of your pods are ready and running:
+```bash
+kubectl get pods
+```
 
-import java.io.StringReader;
-import java.util.ArrayList;
+::page{title="Scaling a deployment"}
 
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.TestMethodOrder;
+To use load balancing, you need to scale your deployments. When you scale a deployment, you replicate its pods, creating more running instances of your applications. Scaling is one of the primary advantages of Kubernetes because you can replicate your application to accommodate more traffic, and then descale your deployments to free up resources when the traffic decreases.
 
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonArrayBuilder;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonObjectBuilder;
-import jakarta.json.JsonReader;
-import jakarta.json.JsonValue;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.client.Entity;
+As an example, scale the ***system*** deployment to three pods by running the following command:
+```bash
+kubectl scale deployment/system-deployment --replicas=3
+```
 
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class CrewServiceIT {
+Use the following command to verify that two new pods have been created.
+```bash
+kubectl get pods
+```
 
-    private static Client client;
-    private static JsonArray testData;
-    private static String rootURL;
-    private static ArrayList<String> testIDs = new ArrayList<>(2);
-
-    @BeforeAll
-    public static void setup() {
-        client = ClientBuilder.newClient();
-
-        String port = System.getProperty("app.http.port");
-        String context = System.getProperty("app.context.root");
-        rootURL = "http://localhost:" + port + context;
-
-        JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
-        JsonObjectBuilder jsonBuilder = Json.createObjectBuilder();
-        jsonBuilder.add("name", "Member1");
-        jsonBuilder.add("crewID", "000001");
-        jsonBuilder.add("rank", "Captain");
-        arrayBuilder.add(jsonBuilder.build());
-        jsonBuilder = Json.createObjectBuilder();
-        jsonBuilder.add("name", "Member2");
-        jsonBuilder.add("crewID", "000002");
-        jsonBuilder.add("rank", "Engineer");
-        arrayBuilder.add(jsonBuilder.build());
-        testData = arrayBuilder.build();
-    }
-
-    @AfterAll
-    public static void teardown() {
-        client.close();
-    }
-
-    @Test
-    @Order(1)
-    public void testAddCrewMember() {
-        System.out.println("   === Adding " + testData.size()
-                + " crew members to the database. ===");
-
-        for (int i = 0; i < testData.size(); i++) {
-            JsonObject member = (JsonObject) testData.get(i);
-            String url = rootURL + "/api/crew";
-            Response response = client.target(url).request().post(Entity.json(member));
-            this.assertResponse(url, response);
-
-            JsonObject newMember = response.readEntity(JsonObject.class);
-            testIDs.add(newMember.getJsonObject("_id").getString("$oid"));
-
-            response.close();
-        }
-        System.out.println("      === Done. ===");
-    }
-
-    @Test
-    @Order(2)
-    public void testUpdateCrewMember() {
-        System.out.println("   === Updating crew member with id " + testIDs.get(0)
-                + ". ===");
-
-        JsonObject oldMember = (JsonObject) testData.get(0);
-
-        JsonObjectBuilder newMember = Json.createObjectBuilder();
-        newMember.add("name", oldMember.get("name"));
-        newMember.add("crewID", oldMember.get("crewID"));
-        newMember.add("rank", "Officer");
-
-        String url = rootURL + "/api/crew/" + testIDs.get(0);
-        Response response = client.target(url).request()
-                .put(Entity.json(newMember.build()));
-
-        this.assertResponse(url, response);
-
-        System.out.println("      === Done. ===");
-    }
-
-    @Test
-    @Order(3)
-    public void testGetCrewMembers() {
-        System.out.println("   === Listing crew members from the database. ===");
-
-        String url = rootURL + "/api/crew";
-        Response response = client.target(url).request().get();
-
-        this.assertResponse(url, response);
-
-        String responseText = response.readEntity(String.class);
-        JsonReader reader = Json.createReader(new StringReader(responseText));
-        JsonArray crew = reader.readArray();
-        reader.close();
-
-        int testMemberCount = 0;
-        for (JsonValue value : crew) {
-            JsonObject member = (JsonObject) value;
-            String id = member.getJsonObject("_id").getString("$oid");
-            if (testIDs.contains(id)) {
-                testMemberCount++;
-            }
-        }
-
-        assertEquals(testIDs.size(), testMemberCount,
-                "Incorrect number of testing members.");
-
-        System.out.println("      === Done. There are " + crew.size()
-                + " crew members. ===");
-
-        response.close();
-    }
-
-    @Test
-    @Order(4)
-    public void testDeleteCrewMember() {
-        System.out.println("   === Removing " + testIDs.size()
-                + " crew members from the database. ===");
-
-        for (String id : testIDs) {
-            String url = rootURL + "/api/crew/" + id;
-            Response response = client.target(url).request().delete();
-            this.assertResponse(url, response);
-            response.close();
-        }
-
-        System.out.println("      === Done. ===");
-    }
-
-    private void assertResponse(String url, Response response) {
-        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
-    }
-}
+```
+NAME                                    READY     STATUS    RESTARTS   AGE
+system-deployment-6bd97d9bf6-4ccds      1/1       Running   0          1m
+system-deployment-6bd97d9bf6-jf9rs      1/1       Running   0          25s
+system-deployment-6bd97d9bf6-x4zth      1/1       Running   0          25s
+inventory-deployment-645767664f-nbtd9   1/1       Running   0          1m
 ```
 
 
+Wait for your two new pods to be in the ready state, then make the following ***curl*** command:
 
-The test methods are annotated with the ***@Test*** annotation.
+```bash
+curl -I http://$SYSTEM_PROXY/system/properties
+```
 
-The following test cases are included in this class:
+Notice that the ***X-Pod-Name*** header has a different value when you call it multiple times. The value changes because three pods that all serve the ***system*** application are now running. Similarly, to descale your deployments you can use the same scale command with fewer replicas.
 
-* ***testAddCrewMember()*** verifies that new members are correctly added to the database.
+```bash
+kubectl scale deployment/system-deployment --replicas=1
+```
 
-* ***testUpdateCrewMember()*** verifies that a crew member's information is correctly updated.
+::page{title="Redeploy microservices"}
 
-* ***testGetCrewMembers()*** verifies that a list of crew members is returned by the microservice API.
+When you're building your application, you might want to quickly test a change. To run a quick test, you can rebuild your Docker images then delete and re-create your Kubernetes resources. Note that there is only one ***system*** pod after you redeploy because you're deleting all of the existing pods.
 
-* ***testDeleteCrewMember()*** verifies that the crew members are correctly removed from the database.
 
-### Running the tests
+```bash
+cd /home/project/guide-kubernetes-intro/start
+kubectl delete -f kubernetes.yaml
 
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+./mvnw clean package
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
 
-You'll see the following output:
+kubectl apply -f kubernetes.yaml
+```
+
+Updating your applications in this way is fine for development environments, but it is not suitable for production. If you want to deploy an updated image to a production cluster, you can update the container in your deployment with a new image. Once the new container is ready, Kubernetes automates both the creation of a new container and the decommissioning of the old one.
+
+
+::page{title="Testing microservices that are running on Kubernetes"}
+
+A few tests are included for you to test the basic functionality of the microservices. If a test failure occurs, then you might have introduced a bug into the code.  To run the tests, wait for all pods to be in the ready state before proceeding further. The default properties defined in the ***pom.xml*** are:
+
+| *Property*                        | *Description*
+| ---| ---
+| ***system.kube.service***       | Name of the Kubernetes Service wrapping the ***system*** pods, ***system-service*** by default.
+| ***system.service.root***       | The Kubernetes Service ***system-service*** root path, ***localhost:31000*** by default.
+| ***inventory.service.root*** | The Kubernetes Service ***inventory-service*** root path, ***localhost:32000*** by default.
+
+Navigate back to the ***start*** directory.
+
+
+Update the ***pom.xml*** files so that the ***system.service.root*** and ***inventory.service.root*** properties match the values to access the ***system*** and **inventory*** services.
+
+```bash
+sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' inventory/pom.xml
+sed -i 's=localhost:32000='"$INVENTORY_PROXY"'=g' inventory/pom.xml
+sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' system/pom.xml
+```
+
+Run the integration tests by using the following command:
+
+```bash
+./mvnw failsafe:integration-test
+```
+
+If the tests pass, you'll see an output similar to the following for each service respectively:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.application.CrewServiceIT
-   === Adding 2 crew members to the database. ===
-      === Done. ===
-   === Updating crew member with id 5df8e0a004ccc019976c7d0a. ===
-      === Done. ===
-   === Listing crew members from the database. ===
-      === Done. There are 2 crew members. ===
-   === Removing 2 crew members from the database. ===
-      === Done. ===
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.411 s - in it.io.openliberty.guides.application.CrewServiceIT
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.372 s - in it.io.openliberty.guides.system.SystemEndpointIT
+
 Results:
+
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+```
+
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.714 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+
+Results:
+
 Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
+
 ::page{title="Tearing down the environment"}
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
+Press **CTRL+C** to stop the proxy server that was started at step 6 ***Deploying the microservices***.
 
-Then, run the following commands to stop and remove the ***mongo-guide*** container and to remove the ***mongo-sample*** and ***mongo*** images.
-
+When you no longer need your deployed microservices, you can delete all Kubernetes resources by running the ***kubectl delete*** command:
 ```bash
-docker stop mongo-guide
-docker rm mongo-guide
-docker rmi mongo-sample
+kubectl delete -f kubernetes.yaml
 ```
+
+
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You've successfully accessed and persisted data to a MongoDB database from a Java microservice using Contexts and Dependency Injection (CDI) and MicroProfile Config with Open Liberty.
+You have just deployed two microservices that are running in Open Liberty to Kubernetes. You then scaled a microservice and ran integration tests against miroservices that are running in a Kubernetes cluster.
+
 
 
 
@@ -1024,36 +584,31 @@ You've successfully accessed and persisted data to a MongoDB database from a Jav
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-mongodb-intro*** project by running the following commands:
+Delete the ***guide-kubernetes-intro*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-mongodb-intro
+rm -fr guide-kubernetes-intro
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Persisting%20data%20with%20MongoDB&guide-id=cloud-hosted-guide-mongodb-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Deploying%20microservices%20to%20Kubernetes&guide-id=cloud-hosted-guide-kubernetes-intro)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-mongodb-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-mongodb-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-kubernetes-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-kubernetes-intro/pulls)
 
 
 
 ### Where to next?
 
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-
-**Learn more about MicroProfile**
-* [See the MicroProfile specs](https://microprofile.io/)
-* [View the MicroProfile API](https://openliberty.io/docs/ref/microprofile)
+* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+* [Managing microservice traffic using Istio](https://openliberty.io/guides/istio-intro.html)
 
 
 ### Log out of the session
