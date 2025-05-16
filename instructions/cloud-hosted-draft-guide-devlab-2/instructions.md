@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Accessing and persisting data in microservices using Java Persistence API (JPA) guide!"}
+::page{title="Welcome to the Running GraphQL queries and mutations using a GraphQL client guide!"}
 
-Learn how to use Java Persistence API (JPA) to access and persist data to a database for your microservices.
+
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -13,19 +13,18 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-
-
+Learn how to use the SmallRye GraphQL client's typesafe interface to query and mutate data from multiple microservices.
 
 ::page{title="What you'll learn"}
 
-You will learn how to use the Java Persistence API (JPA) to map Java objects to relational database tables and perform create, read, update and delete (CRUD) operations on the data in your microservices. 
+GraphQL is an open source data query language. You can use a GraphQL service to obtain data from multiple sources, such as APIs, databases, and other services, by sending a single request to a GraphQL service. GraphQL services require less data fetching than REST services, which results in faster application load times and lower data transfer costs. This guide assumes you have a basic understanding of [GraphQL concepts](https://openliberty.io/docs/latest/microprofile-graphql.html). If you're new to GraphQL, you might want to start with the [Optimizing REST queries for microservices with GraphQL](https://openliberty.io/guides/microprofile-graphql.html) guide first.
 
-JPA is a Jakarta EE specification for representing relational database table data as Plain Old Java Objects (POJO). JPA simplifies object-relational mapping (ORM) by using annotations to map Java objects to tables in a relational database. In addition to providing an efficient API for performing CRUD operations, JPA also reduces the burden of having to write JDBC and SQL code when performing database operations and takes care of database vendor-specific differences. This capability allows you to focus on the business logic of your application instead of wasting time implementing repetitive CRUD logic.
+You'll use the [SmallRye GraphQL client](https://github.com/smallrye/smallrye-graphql#client) to create a ***query*** microservice that will make requests to the ***graphql*** microservice. The ***graphql*** microservice retrieves data from multiple ***system*** microservices and is identical to the one created as part of the [Optimizing REST queries for microservices with GraphQL](https://openliberty.io/guides/microprofile-graphql.html) guide. 
 
-The application that you will be working with is an event manager, which is composed of a UI and an event microservice for creating, retrieving, updating, and deleting events. In this guide, you will be focused on the event microservice. The event microservice consists of a JPA entity class whose fields will be persisted to a database. The database logic is implemented in a Data Access Object (DAO) to isolate the database operations from the rest of the service. This DAO accesses and persists JPA entities to the database and can be injected and consumed by other components in the microservice. An Embedded Derby database is used as a data store for all the events.
+![GraphQL client application architecture where multiple system microservices are integrated behind the graphql service](https://raw.githubusercontent.com/OpenLiberty/guide-graphql-client/prod/assets/architecture.png)
 
-You will use JPA annotations to define an entity class whose fields are persisted to the database. The interaction between your service and the database is mediated by the persistence context that is managed by an entity manager. In a Jakarta EE environment, you can use an application-managed entity manager or a container-managed entity manager. In this guide, you will use a container-managed entity manager that is injected into the DAO so Liberty manages the opening and closing of the entity manager for you. 
 
+The results of the requests will be displayed at REST endpoints. OpenAPI will be used to help make the requests and display the data. To learn more about OpenAPI, check out the [Documenting RESTful APIs](https://openliberty.io/guides/microprofile-openapi.html) guide.
 
 ::page{title="Getting started"}
 
@@ -38,11 +37,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-jpa-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-graphql-client.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-jpa-intro.git
-cd guide-jpa-intro
+git clone https://github.com/openliberty/guide-graphql-client.git
+cd guide-graphql-client
 ```
 
 
@@ -50,424 +49,186 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-### Try what you'll build
 
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-
-To try out the application, run the following commands to navigate to the ***finish*** directory and deploy the ***frontendUI*** service to Open Liberty:
-
-
-```bash
-cd finish
-./mvnw -pl frontendUI liberty:run
-```
-
-Open another command-line session and run the following commands to navigate to the ***finish*** directory and deploy the ***backendServices*** to Open Liberty:
-```bash
-cd /home/project/guide-jpa-intro/finish
-./mvnw -pl backendServices liberty:run
-```
-
-
-After you see the following message in both command-line sessions, both your services are ready.
-
-```
-The defaultServer server is ready to run a smarter planet.
-```
-
-Click the following button to view the Event Manager application:
-::startApplication{port="9090" display="external" name="Visit Event Manager application" route="/"}
-The event application does not display any events because no events are stored in the database. Go ahead and click ***Create Event***, located in the left navigation bar. After entering an event name, location and time, click ***Submit*** to persist your event entity to the database. The event is now stored in the database and is visible in the list of current events.
-
-Notice that if you stop the Open Liberty instance and then restart it, the events created are still displayed in the list of current events. Ensure you are in the ***finish*** directory and run the following Maven goals to stop and then restart the instance:
-```bash
-cd /home/project/guide-jpa-intro/finish
-./mvnw -pl backendServices liberty:stop
-./mvnw -pl backendServices liberty:run
-```
-
-
-The events created are still displayed in the list of current events. The ***Update*** action link located beside each event allows you to make modifications to the persisted entity and the ***Delete*** action link allows you to remove entities from the database.
-
-After you are finished checking out the application, stop the Open Liberty instances by pressing `Ctrl+C` in the command-line sessions where you ran the ***backendServices*** and ***frontendUI*** services. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another command-line session for the ***frontendUI*** and ***backendServices*** services:
-```bash
-cd /home/project/guide-jpa-intro/finish
-./mvnw -pl frontendUI liberty:stop
-./mvnw -pl backendServices liberty:stop
-```
-
-
-
-::page{title="Defining a JPA entity class"}
+::page{title="Implementing a GraphQL client"}
 
 Navigate to the ***start*** directory to begin.
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
-
-Run the following commands to start the ***frontendUI*** service in dev mode:
 ```bash
-cd /home/project/guide-jpa-intro/start
-./mvnw -pl frontendUI liberty:dev
+cd /home/project/guide-graphql-client/start
 ```
 
-Open another command-line session and run the following commands to start the ***backendServices*** in dev mode:
-```bash
-cd /home/project/guide-jpa-intro/start
-./mvnw -pl backendServices liberty:dev
-```
+The [SmallRye GraphQL client](https://github.com/smallrye/smallrye-graphql#client) is used to implement the GraphQL client service. The SmallRye GraphQL client supports two types of clients: typesafe and dynamic. A typesafe client is easy to use and provides a high-level approach, while a dynamic client provides a more customizable and low-level approach to handle operations and responses. You will implement a typesafe client microservice. 
 
-After you see the following message, your Liberty instance is ready in dev mode:
+The typesafe client interface contains a method for each resolver available in the ***graphql*** microservice. The JSON objects returned by the ***graphql*** microservice are converted to Java objects.
 
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command line to listen for file changes. Open another command-line session to continue, or open the project in your editor.
-
-To store Java objects in a database, you must define a JPA entity class. A JPA entity is a Java object whose non-transient and non-static fields will be persisted to the database. Any Plain Old Java Object (POJO) class can be designated as a JPA entity. However, the class must be annotated with the ***@Entity*** annotation, must not be declared final and must have a public or protected non-argument constructor. JPA maps an entity type to a database table and persisted instances will be represented as rows in the table.
-
-The ***Event*** class is a data model that represents events in the event microservice and is annotated with JPA annotations.
-
-Create the ***Event*** class.
+Create the ***GraphQlClient*** interface.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/models/Event.java
+touch /home/project/guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/client/GraphQlClient.java
 ```
 
 
-> Then, to open the Event.java file in your IDE, select
-> ***File*** > ***Open*** > guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/models/Event.java, or click the following button
+> Then, to open the GraphQlClient.java file in your IDE, select
+> ***File*** > ***Open*** > guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/client/GraphQlClient.java, or click the following button
 
-::openFile{path="/home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/models/Event.java"}
+::openFile{path="/home/project/guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/client/GraphQlClient.java"}
 
 
 
 ```java
-package io.openliberty.guides.event.models;
+package io.openliberty.guides.query.client;
 
-import java.io.Serializable;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import jakarta.persistence.NamedQuery;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Column;
-import jakarta.persistence.GenerationType;
+import org.eclipse.microprofile.graphql.Query;
+import org.eclipse.microprofile.graphql.Mutation;
+import org.eclipse.microprofile.graphql.Name;
 
-@Entity
-@Table(name = "Event")
-@NamedQuery(name = "Event.findAll", query = "SELECT e FROM Event e")
-@NamedQuery(name = "Event.findEvent", query = "SELECT e FROM Event e WHERE "
-    + "e.name = :name AND e.location = :location AND e.time = :time")
-public class Event implements Serializable {
-    private static final long serialVersionUID = 1L;
+import io.openliberty.guides.graphql.models.SystemInfo;
+import io.openliberty.guides.graphql.models.SystemLoad;
+import io.smallrye.graphql.client.typesafe.api.GraphQLClientApi;
 
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Id
-    @Column(name = "eventId")
-    private int id;
+@GraphQLClientApi
+public interface GraphQlClient {
+    @Query
+    SystemInfo system(@Name("hostname") String hostname);
 
-    @Column(name = "eventLocation")
-    private String location;
-    @Column(name = "eventTime")
-    private String time;
-    @Column(name = "eventName")
-    private String name;
+    @Query("systemLoad")
+    SystemLoad[] getSystemLoad(@Name("hostnames") String[] hostnames);
 
-    public Event() {
-    }
+    @Mutation
+    boolean editNote(@Name("hostname") String host, @Name("note") String note);
 
-    public Event(String name, String location, String time) {
-        this.name = name;
-        this.location = location;
-        this.time = time;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
-    }
-
-    public String getTime() {
-        return time;
-    }
-
-    public void setTime(String time) {
-        this.time = time;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + id;
-        result = prime * result + ((location == null) ? 0 : location.hashCode());
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
-        result = prime * result
-                 + (int) (serialVersionUID ^ (serialVersionUID >>> 32));
-        result = prime * result + ((time == null) ? 0 : time.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        Event other = (Event) obj;
-        if (location == null) {
-            if (other.location != null) {
-                return false;
-            }
-        } else if (!location.equals(other.location)) {
-            return false;
-        }
-        if (time == null) {
-            if (other.time != null) {
-                return false;
-            }
-        } else if (!time.equals(other.time)) {
-            return false;
-        }
-        if (name == null) {
-            if (other.name != null) {
-                return false;
-            }
-        } else if (!name.equals(other.name)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        return "Event [name=" + name + ", location=" + location + ", time=" + time
-                + "]";
-    }
 }
-
 ```
 
 
 Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-The following table breaks down the new annotations:
+The ***GraphQlClient*** interface is annotated with the ***@GraphQlClientApi*** annotation. This annotation denotes that this interface is used to create a typesafe GraphQL client.
 
-| *Annotation*    | *Description*
-| ---| ---
-| ***@Entity*** | Declares the class as an entity
-| ***@Table***  | Specifies details of the table such as name 
-| ***@NamedQuery*** | Specifies a predefined database query that is run by an ***EntityManager*** instance.
-| ***@Id***       |  Declares the primary key of the entity
-| ***@GeneratedValue***    | Specifies the strategy used for generating the value of the primary key. The ***strategy = GenerationType.AUTO*** code indicates that the generation strategy is automatically selected
-| ***@Column***    | Specifies that the field is mapped to a column in the database table. The ***name*** attribute is optional and indicates the name of the column in the table
+Inside the interface, a method header is written for each resolver available in the ***graphql*** microservice. The names of the methods match the names of the resolvers in the GraphQL schema. Resolvers that require input variables have the input variables passed in using the ***@Name*** annotation on the method inputs. The return types of the methods should match those of the GraphQL resolvers.
 
+For example, the ***system()*** method maps to the ***system*** resolver. The resolver returns a ***SystemInfo*** object, which is described by the ***SystemInfo*** class. Thus, the ***system()*** method returns the type ***SystemInfo***.
 
-::page{title="Configuring JPA"}
+The name of each resolver is the method name, but it can be overridden with the ***@Query*** or ***@Mutation*** annotations. For example, the name of the method ***getSystemLoad*** is overridden as ***systemLoad***. The GraphQL request that goes over the wire will use the name overridden by the ***@Query*** and ***@Mutation*** annotation. Similarly, the name of the method inputs can be overridden by the ***@Name*** annotation. For example, input ***host*** is overridden as ***hostname*** in the ***editNote()*** method. 
 
-The ***persistence.xml*** file is a configuration file that defines a persistence unit. The persistence unit specifies configuration information for the entity manager.
+The ***editNote*** ***mutation*** operation has the ***@Mutation*** annotation on it. A ***mutation*** operation allows you to modify data, in this case, it allows you to add and edit a note to the system service. If the ***@Mutation*** annotation were not placed on the method, it would be treated as if it mapped to a ***query*** operation. 
 
-Create the configuration file.
+Create the ***QueryResource*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-jpa-intro/start/backendServices/src/main/resources/META-INF/persistence.xml
+touch /home/project/guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java
 ```
 
 
-> Then, to open the persistence.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-jpa-intro/start/backendServices/src/main/resources/META-INF/persistence.xml, or click the following button
+> Then, to open the QueryResource.java file in your IDE, select
+> ***File*** > ***Open*** > guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java, or click the following button
 
-::openFile{path="/home/project/guide-jpa-intro/start/backendServices/src/main/resources/META-INF/persistence.xml"}
-
-
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<persistence version="2.2"
-    xmlns="http://xmlns.jcp.org/xml/ns/persistence" 
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence 
-                        http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd">
-    <persistence-unit name="jpa-unit" transaction-type="JTA">
-        <jta-data-source>jdbc/eventjpadatasource</jta-data-source>
-        <properties>
-            <property name="jakarta.persistence.schema-generation.database.action"
-                      value="create"/>
-            <property name="jakarta.persistence.schema-generation.scripts.action"
-                      value="create"/>
-            <property name="jakarta.persistence.schema-generation.scripts.create-target"
-                      value="createDDL.ddl"/>
-        </properties>
-    </persistence-unit>
-</persistence>
-```
-
-
-
-The persistence unit is defined by the ***persistence-unit*** XML element. The ***name*** attribute is required and is used to identify the persistent unit when using the ***@PersistenceContext*** annotation to inject the entity manager later in this guide. The ***transaction-type="JTA"*** attribute specifies to use Java Transaction API (JTA) transaction management. Because of using a container-managed entity manager, JTA transactions must be used. 
-
-A JTA transaction type requires a JTA data source to be provided. The ***jta-data-source*** element specifies the Java Naming and Directory Interface (JNDI) name of the data source that is used. The ***data source*** has already been configured for you in the ***backendServices/src/main/liberty/config/server.xml*** file. This data source configuration is where the Java Database Connectivity (JDBC) connection is defined along with some database vendor-specific properties.
-
-
-The ***jakarta.persistence.schema-generation*** properties are used here so that you aren't required to manually create a database table to run this sample application. To learn more about the JPA schema generation and available properties, see [Schema Generation, Section 9.4 of the JPA Specification](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html#a12917)
-
-
-::page{title="Performing CRUD operations using JPA"}
-
-The CRUD operations are defined in the DAO. To perform these operations by using JPA, you need an ***EventDao*** class. 
-
-Create the ***EventDao*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/dao/EventDao.java
-```
-
-
-> Then, to open the EventDao.java file in your IDE, select
-> ***File*** > ***Open*** > guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/dao/EventDao.java, or click the following button
-
-::openFile{path="/home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/dao/EventDao.java"}
+::openFile{path="/home/project/guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java"}
 
 
 
 ```java
-package io.openliberty.guides.event.dao;
+package io.openliberty.guides.query;
 
-import java.util.List;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
+import io.openliberty.guides.graphql.models.NoteInfo;
+import io.openliberty.guides.graphql.models.SystemInfo;
+import io.openliberty.guides.graphql.models.SystemLoad;
+import io.openliberty.guides.query.client.GraphQlClient;
+import io.smallrye.graphql.client.typesafe.api.TypesafeGraphQLClientBuilder;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
-import io.openliberty.guides.event.models.Event;
+@ApplicationScoped
+@Path("query")
+public class QueryResource {
 
-import jakarta.enterprise.context.RequestScoped;
+    private GraphQlClient gc = TypesafeGraphQLClientBuilder.newBuilder()
+                                                   .build(GraphQlClient.class);
 
-@RequestScoped
-public class EventDao {
-
-    @PersistenceContext(name = "jpa-unit")
-    private EntityManager em;
-
-    public void createEvent(Event event) {
-        em.persist(event);
+    @GET
+    @Path("system/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public SystemInfo querySystem(@PathParam("hostname") String hostname) {
+        return gc.system(hostname);
     }
 
-    public Event readEvent(int eventId) {
-        return em.find(Event.class, eventId);
+    @GET
+    @Path("systemLoad/{hostnames}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public SystemLoad[] querySystemLoad(@PathParam("hostnames") String hostnames) {
+        String[] hostnameArray = hostnames.split(",");
+        return gc.getSystemLoad(hostnameArray);
     }
 
-    public void updateEvent(Event event) {
-        em.merge(event);
-    }
-
-    public void deleteEvent(Event event) {
-        em.remove(event);
-    }
-
-    public List<Event> readAllEvents() {
-        return em.createNamedQuery("Event.findAll", Event.class).getResultList();
-    }
-
-    public List<Event> findEvent(String name, String location, String time) {
-        return em.createNamedQuery("Event.findEvent", Event.class)
-            .setParameter("name", name)
-            .setParameter("location", location)
-            .setParameter("time", time).getResultList();
+    @POST
+    @Path("mutation/system/note")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response editNote(NoteInfo text) {
+        if (gc.editNote(text.getHostname(), text.getText())) {
+            return Response.ok().build();
+        } else {
+            return Response.serverError().build();
+        }
     }
 }
 ```
 
 
 
-To use the entity manager at runtime, inject it into the CDI bean through the ***@PersistenceContext*** annotation. The entity manager interacts with the persistence context. Every ***EntityManager*** instance is associated with a persistence context. The persistence context manages a set of entities and is aware of the different states that an entity can have. The persistence context synchronizes with the database when a transaction commits.
+The ***QueryResource*** class uses the ***GraphQlClient*** interface to make requests to the ***graphql*** microservice and display the results. In a real application, you would make requests to an external GraphQL service, and you might do further manipulation of the data after retrieval.
 
-The ***EventDao*** class has a method for each CRUD operation, so let's break them down:
+The ***TypesafeGraphQLClientBuilder*** class creates a client object that implements the ***GraphQlClient*** interface and can interact with the ***graphql*** microservice. The ***GraphQlClient*** client can make requests to the URL specified by the ***graphql.server*** variable in the ***server.xml*** file. The client is used in the ***querySystem()***, ***querySystemLoad()***, and ***editNote()*** methods.
 
-* The ***createEvent()*** method persists an instance of the ***Event*** entity class to the data store by calling the ***persist()*** method on an ***EntityManager*** instance. The entity instance becomes managed and changes to it will be tracked by the entity manager.
+Add the SmallRye GraphQL client dependency to the project configuration file.
 
-* The ***readEvent()*** method returns an instance of the ***Event*** entity class with the specified primary key by calling the ***find()*** method on an ***EntityManager*** instance. If the event instance is found, it is returned in a managed state, but, if the event instance is not found, ***null*** is returned.
-
-* The ***readAllEvents()*** method demonstrates an alternative way to retrieve event objects from the database. This method returns a list of instances of the ***Event*** entity class by using the ***Event.findAll*** query specified in the ***@NamedQuery*** annotation on the ***Event*** class. Similarly, the ***findEvent()*** method uses the ***Event.findEvent*** named query to find an event with the given name, location and time. 
-
-
-* The ***updateEvent()*** method creates a managed instance of a detached entity instance. The entity manager automatically tracks all managed entity objects in its persistence context for changes and synchronizes them with the database. However, if an entity becomes detached, you must merge that entity into the persistence context by calling the ***merge()*** method so that changes to loaded fields of the detached entity are tracked.
-
-* The ***deleteEvent()*** method removes an instance of the ***Event*** entity class from the database by calling the ***remove()*** method on an ***EntityManager*** instance. The state of the entity is changed to removed and is removed from the database upon transaction commit. 
-
-The DAO is injected into the ***backendServices/src/main/java/io/openliberty/guides/event/resources/EventResource.java*** class and used to access and persist data. The ***@Transactional*** annotation is used in the ***EventResource*** class to declaratively control the transaction boundaries on the ***@RequestScoped*** CDI bean. This ensures that the methods run within the boundaries of an active global transaction, which is why it is not necessary to explicitly begin, commit or rollback transactions. At the end of the transactional method invocation, the transaction commits and the persistence context flushes any changes to Event entity instances it is managing to the database.
-
-
-
-::page{title="Configuring the Derby driver and the Liberty Maven plugin"}
-
-To use a Derby database, you need to download its libraries and store them to the Liberty shared resources directory. Configure the Liberty Maven plug-in in the ***pom.xml*** file of the ***backendServices*** service.
-
-Replace the ***backendServices/pom.xml*** configuration file.
+Replace the Maven project file.
 
 > To open the pom.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-jpa-intro/start/backendServices/pom.xml, or click the following button
+> ***File*** > ***Open*** > guide-graphql-client/start/query/pom.xml, or click the following button
 
-::openFile{path="/home/project/guide-jpa-intro/start/backendServices/pom.xml"}
+::openFile{path="/home/project/guide-graphql-client/start/query/pom.xml"}
 
 
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.openliberty.guides</groupId>
-    <artifactId>backendServices</artifactId>
-    <packaging>war</packaging>
+    <artifactId>guide-graphql-client-query</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
 
     <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
         <!-- Liberty configuration -->
-        <backend.service.http.port>5050</backend.service.http.port>
-        <backend.service.https.port>5051</backend.service.https.port>
+        <liberty.var.http.port>9084</liberty.var.http.port>
+        <liberty.var.https.port>9447</liberty.var.https.port>
     </properties>
 
     <dependencies>
         <!-- Provided dependencies -->
         <dependency>
             <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-web-api</artifactId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
             <version>10.0.0</version>
             <scope>provided</scope>
         </dependency>
@@ -478,10 +239,40 @@ Replace the ***backendServices/pom.xml*** configuration file.
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
+        
+        <!-- Required dependencies -->
+        <dependency>
+           <groupId>io.openliberty.guides</groupId>
+           <artifactId>guide-graphql-client-models</artifactId>
+           <version>1.0-SNAPSHOT</version>
+        </dependency>
+        
+        <!-- GraphQL API dependencies -->
+        <dependency>
+            <groupId>io.smallrye</groupId>
+            <artifactId>smallrye-graphql-client</artifactId>
+            <version>2.11.0</version>
+        </dependency>
+        <dependency>
+            <groupId>io.smallrye</groupId>
+            <artifactId>smallrye-graphql-client-implementation-vertx</artifactId>
+            <version>2.11.0</version>
+        </dependency>
+        <dependency>
+            <groupId>io.smallrye.stork</groupId>
+            <artifactId>stork-core</artifactId>
+            <version>2.7.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.17</version>
+        </dependency>
+             
         <!-- For tests -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
+            <artifactId>junit-jupiter</artifactId>
             <version>5.12.2</version>
             <scope>test</scope>
         </dependency>
@@ -503,73 +294,62 @@ Replace the ***backendServices/pom.xml*** configuration file.
             <version>2.0.1</version>
             <scope>test</scope>
         </dependency>
-        <!-- Derby from https://mvnrepository.com/artifact/org.apache.derby/derby -->
         <dependency>
-            <groupId>org.apache.derby</groupId>
-            <artifactId>derby</artifactId>
-            <version>10.17.1.0</version>
-            <scope>provided</scope>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>1.21.0</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.derby</groupId>
-            <artifactId>derbyshared</artifactId>
-            <version>10.17.1.0</version>
-            <scope>provided</scope>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>1.21.0</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.derby</groupId>
-            <artifactId>derbytools</artifactId>
-            <version>10.17.1.0</version>
-            <scope>provided</scope>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.7.36</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
+
     <build>
         <finalName>${project.artifactId}</finalName>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.4.0</version>
-            </plugin>
             <!-- Enable liberty-maven plugin -->
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
                 <version>3.11.3</version>
-                <configuration>
-                    <copyDependencies>
-                        <location>${project.build.directory}/liberty/wlp/usr/shared/resources</location>
-                        <dependency>
-                            <groupId>org.apache.derby</groupId>
-                            <artifactId>derby</artifactId>
-                        </dependency>
-                        <dependency>
-                            <groupId>org.apache.derby</groupId>
-                            <artifactId>derbyshared</artifactId>
-                        </dependency>
-                        <dependency>
-                            <groupId>org.apache.derby</groupId>
-                            <artifactId>derbytools</artifactId>
-                        </dependency>
-                    </copyDependencies>
-                </configuration>
             </plugin>
-            <!-- Plugin to run unit tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.4.0</version>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.5.3</version>
             </plugin>
-            <!-- Plugin to run integration tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <version>3.5.3</version>
                 <configuration>
                     <systemPropertyVariables>
-                        <backend.http.port>${backend.service.http.port}</backend.http.port>
+                        <http.port>${liberty.var.http.port}</http.port>
                     </systemPropertyVariables>
                 </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
@@ -578,205 +358,481 @@ Replace the ***backendServices/pom.xml*** configuration file.
 
 
 
+The ***smallrye-graphql-client*** dependencies provide the classes that you use to interact with a ***graphql*** microservice.
 
-This configuration adds three required Derby dependencies to the ***dependencies*** configuration so Maven can download the Derby libraries locally. The ***copyDependencies*** configuration instructs the Liberty Maven plug-in to copy the Derby libraries to the Liberty shared resources directory that is specified through the ***location*** configuration, and is referenced in the ***derbyJDBCLib*** ***library*** configuration of the ***server.xml*** file.
+To run the service, you must correctly configure the Liberty.
 
-In the terminal where you started the ***backendServices*** microservice, type ***r*** and press the ***enter/return*** key to restart the Liberty instance and pick up the Derby libraries.
+Replace the Liberty server.xml configuration file.
+
+> To open the server.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-graphql-client/start/query/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-graphql-client/start/query/src/main/liberty/config/server.xml"}
 
 
 
-::page{title="Running the application"}
+```xml
+<server description="Query Service">
 
-After you see the following message, your Liberty instance is ready in dev mode:
+  <featureManager>
+    <platform>jakartaee-10.0</platform>
+    <platform>microprofile-7.0</platform>
+    <feature>restfulWS</feature>
+    <feature>cdi</feature>
+    <feature>jsonb</feature>
+    <feature>mpConfig</feature>
+    <feature>mpOpenAPI</feature>
+  </featureManager>
 
+  <variable name="http.port" defaultValue="9084"/>
+  <variable name="https.port" defaultValue="9447"/>
+  <variable name="graphql.server" defaultValue="http://graphql:9082/graphql"/>
+
+  <httpEndpoint host="*" httpPort="${http.port}"
+      httpsPort="${https.port}" id="defaultHttpEndpoint"/>
+
+  <webApplication location="guide-graphql-client-query.war" contextRoot="/"/>
+</server>
 ```
-**************************************************************
-*    Liberty is running in dev mode.
-```
 
 
-Click the following button to view the Event Manager application:
-::startApplication{port="9090" display="external" name="Visit Event Manager application" route="/"}
 
-Click ***Create Event*** in the left navigation bar to create events that are persisted to the database. After you create an event, it is available to view, update, and delete in the ***Current Events*** section.
+The ***graphql.server*** variable is defined in the ***server.xml*** file. This variable defines where the GraphQL client makes requests to.
 
 
-::page{title="Testing the application"}
+::page{title="Building and running the application"}
 
-Create the ***EventEntityIT*** class.
+From the ***start*** directory, run the following commands:
 
-> Run the following touch command in your terminal
+
 ```bash
-touch /home/project/guide-jpa-intro/start/backendServices/src/test/java/it/io/openliberty/guides/event/EventEntityIT.java 
+./mvnw -pl models install
+./mvnw package
 ```
 
-
-> Then, to open the EventEntityIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-jpa-intro/start/backendServices/src/test/java/it/io/openliberty/guides/event/EventEntityIT.java, or click the following button
-
-::openFile{path="/home/project/guide-jpa-intro/start/backendServices/src/test/java/it/io/openliberty/guides/event/EventEntityIT.java"}
+The Maven ***install*** goal compiles and packages the object types you created to a ***.jar*** file. This allows them to be used by the ***system*** and ***graphql*** services. The Maven ***package*** goal packages the ***system***, ***graphql***, and ***query*** services to ***.war*** files. 
 
 
 
-```java
-package it.io.openliberty.guides.event;
+Dockerfiles are already set up for you. Build your Docker images with the following commands:
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+```bash
+docker build -t system:1.0-java11-SNAPSHOT --build-arg JAVA_VERSION=java11 system/.
+docker build -t system:1.0-java17-SNAPSHOT --build-arg JAVA_VERSION=java17 system/.
+docker build -t graphql:1.0-SNAPSHOT graphql/.
+docker build -t query:1.0-SNAPSHOT query/.
+```
 
-import java.util.HashMap;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.Form;
-import jakarta.ws.rs.core.Response.Status;
+Run these Docker images using the provided ***startContainers*** script. The script creates a network for the services to communicate through. It creates the two ***system*** microservices, a ***graphql*** microservice, and a ***query*** microservice that interact with each other.
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import io.openliberty.guides.event.models.Event;
 
-public class EventEntityIT extends EventIT {
+```bash
+./scripts/startContainers.sh
+```
 
-    private static final String JSONFIELD_LOCATION = "location";
-    private static final String JSONFIELD_NAME = "name";
-    private static final String JSONFIELD_TIME = "time";
-    private static final String EVENT_TIME = "12:00 PM, January 1 2018";
-    private static final String EVENT_LOCATION = "IBM";
-    private static final String EVENT_NAME = "JPA Guide";
-    private static final String UPDATE_EVENT_TIME = "12:00 PM, February 1 2018";
-    private static final String UPDATE_EVENT_LOCATION = "IBM Updated";
-    private static final String UPDATE_EVENT_NAME = "JPA Guide Updated";
+The containers might take some time to become available. 
 
-    private static final int NO_CONTENT_CODE = Status.NO_CONTENT.getStatusCode();
-    private static final int NOT_FOUND_CODE = Status.NOT_FOUND.getStatusCode();
+::page{title="Accessing the application"}
 
-    @BeforeAll
-    public static void oneTimeSetup() {
-        port = System.getProperty("backend.http.port");
-        baseUrl = "http://localhost:" + port + "/";
-    }
 
-    @BeforeEach
-    public void setup() {
-        form = new Form();
-        client = ClientBuilder.newClient();
 
-        eventForm = new HashMap<String, String>();
+To access the client service, there are several available REST endpoints that test the API endpoints that you created. 
 
-        eventForm.put(JSONFIELD_NAME, EVENT_NAME);
-        eventForm.put(JSONFIELD_LOCATION, EVENT_LOCATION);
-        eventForm.put(JSONFIELD_TIME, EVENT_TIME);
-    }
+**Try the query operations**
 
-    @Test
-    public void testInvalidRead() {
-        assertEquals(true, getIndividualEvent(-1).isEmpty(),
-          "Reading an event that does not exist should return an empty list");
-    }
+First, make a GET request to the ***/query/system/{hostname}*** endpoint by the following command. This request retrieves the system properties for the specified ***hostname***.
 
-    @Test
-    public void testInvalidDelete() {
-        int deleteResponse = deleteRequest(-1);
-        assertEquals(NOT_FOUND_CODE, deleteResponse,
-          "Trying to delete an event that does not exist should return the "
-          + "HTTP response code " + NOT_FOUND_CODE);
-    }
+The ***hostname*** is set to ***system-java11***. You can try out the operations using the hostname ***system-java17*** as well. 
 
-    @Test
-    public void testInvalidUpdate() {
-        int updateResponse = updateRequest(eventForm, -1);
-        assertEquals(NOT_FOUND_CODE, updateResponse,
-          "Trying to update an event that does not exist should return the "
-          + "HTTP response code " + NOT_FOUND_CODE);
-    }
+```bash
+curl -s 'http://localhost:9084/query/system/system-java11' | jq
+```
+You can expect a response similar to the following example:
 
-    @Test
-    public void testReadIndividualEvent() {
-        int postResponse = postRequest(eventForm);
-        assertEquals(NO_CONTENT_CODE, postResponse,
-          "Creating an event should return the HTTP reponse code " + NO_CONTENT_CODE);
 
-        Event e = new Event(EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
-        JsonObject event = findEvent(e);
-        event = getIndividualEvent(event.getInt("id"));
-        assertData(event, EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
-
-        int deleteResponse = deleteRequest(event.getInt("id"));
-        assertEquals(NO_CONTENT_CODE, deleteResponse,
-          "Deleting an event should return the HTTP response code " + NO_CONTENT_CODE);
-    }
-
-    @Test
-    public void testCRUD() {
-        int eventCount = getRequest().size();
-        int postResponse = postRequest(eventForm);
-        assertEquals(NO_CONTENT_CODE, postResponse,
-          "Creating an event should return the HTTP reponse code " + NO_CONTENT_CODE);
-
-        Event e = new Event(EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
-        JsonObject event = findEvent(e);
-        assertData(event, EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
-
-        eventForm.put(JSONFIELD_NAME, UPDATE_EVENT_NAME);
-        eventForm.put(JSONFIELD_LOCATION, UPDATE_EVENT_LOCATION);
-        eventForm.put(JSONFIELD_TIME, UPDATE_EVENT_TIME);
-        int updateResponse = updateRequest(eventForm, event.getInt("id"));
-        assertEquals(NO_CONTENT_CODE, updateResponse,
-          "Updating an event should return the HTTP response code " + NO_CONTENT_CODE);
-
-        e = new Event(UPDATE_EVENT_NAME, UPDATE_EVENT_LOCATION, UPDATE_EVENT_TIME);
-        event = findEvent(e);
-        assertData(event, UPDATE_EVENT_NAME, UPDATE_EVENT_LOCATION, UPDATE_EVENT_TIME);
-
-        int deleteResponse = deleteRequest(event.getInt("id"));
-        assertEquals(NO_CONTENT_CODE, deleteResponse,
-          "Deleting an event should return the HTTP response code " + NO_CONTENT_CODE);
-        assertEquals(eventCount, getRequest().size(),
-          "Total number of events stored should be the same after testing "
-          + "CRUD operations.");
-    }
-
-    @AfterEach
-    public void teardown() {
-        response.close();
-        client.close();
-    }
-
+```
+{
+  "hostname": "system-java11",
+  "java": {
+    "vendor": "IBM Corporation",
+    "version": "11.0.18"
+  },
+  "osArch": "amd64",
+  "osName": "Linux",
+  "osVersion": "5.15.0-67-generic",
+  "systemMetrics": {
+    "heapSize": 536870912,
+    "nonHeapSize": -1,
+    "processors": 2
+  },
+  "username": "default"
 }
 ```
 
 
 
-The ***testInvalidRead()***, ***testInvalidDelete()*** and ***testInvalidUpdate()*** methods use a primary key that is not in the database to test reading, updating and deleting an event that does not exist, respectively.
+You can retrieve the information about the resource usage of any number of system services by making a GET request at ***/query/systemLoad/{hostnames}*** endpoint. 
+The ***hostnames*** are set to ***system-java11,system-java17***.
 
-The ***testReadIndividualEvent()*** method persists a test event to the database and retrieves the event object from the database using the primary key of the entity.
+```bash
+curl -s 'http://localhost:9084/query/systemLoad/system-java11,system-java17' | jq
+```
 
-The ***testCRUD()*** method creates a test event and persists it to the database. The event object is then retrieved from the database to verify that the test event was actually persisted. Next, the name, location, and time of the test event are updated. The event object is retrieved from the database to verify that the updated event is stored. Finally, the updated test event is deleted and one final check is done to ensure that the updated test event is no longer stored in the database.
+You can expect the following response is similar to the following example:
+
+
+```
+[
+  {
+    "hostname": "system-java11",
+    "loadData": {
+      "heapUsed": 30090920,
+      "loadAverage": 0.08,
+      "nonHeapUsed": 87825316
+    }
+  },
+  {
+    "hostname": "system-java17",
+    "loadData": {
+      "heapUsed": 39842888,
+      "loadAverage": 0.08,
+      "nonHeapUsed": 93098960
+    }
+  }
+]
+```
+
+
+**Try the mutation operation**
+
+You can also make POST requests to add a note to a system service at the ***/query/mutation/system/note*** endpoint.
+To add a note to the system service running on Java 8, run the following command:
+
+```bash
+curl -i -X 'POST' 'http://localhost:9084/query/mutation/system/note' -H 'Content-Type: application/json' -d '{"hostname": "system-java11","text": "I am trying out GraphQL on Open Liberty!"}'
+```
+
+You will recieve a `200` response code, similar to below, if the request is processed succesfully. 
+
+```
+HTTP/1.1 200 OK
+Content-Language: en-US
+Content-Length: 0
+Date: Fri, 21 Apr 2023 14:17:47 GMT
+```
+
+You can see the note you added to the system service at the ***GET /query/system/{hostname}*** endpoint.
+
+::page{title="Tearing down the environment"}
+
+When you're done checking out the application, run the following script to stop the application:
+
+
+```bash
+./scripts/stopContainers.sh
+```
+
+::page{title="Testing the application"}
+
+Although you can test your application manually, you should rely on automated tests. In this section, you'll create integration tests using Testcontainers to verify that the basic operations you implemented function correctly. 
+
+First, create a RESTful client interface for the ***query*** microservice.
+
+Create the ***QueryResourceClient.java*** interface.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceClient.java
+```
+
+
+> Then, to open the QueryResourceClient.java file in your IDE, select
+> ***File*** > ***Open*** > guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceClient.java, or click the following button
+
+::openFile{path="/home/project/guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceClient.java"}
+
+
+
+```java
+package it.io.openliberty.guides.query;
+
+import java.util.List;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+import io.openliberty.guides.graphql.models.SystemInfo;
+import io.openliberty.guides.graphql.models.SystemLoad;
+import io.openliberty.guides.graphql.models.NoteInfo;
+
+@ApplicationScoped
+@Path("query")
+public interface QueryResourceClient {
+
+    @GET
+    @Path("system/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    SystemInfo querySystem(@PathParam("hostname") String hostname);
+
+    @GET
+    @Path("systemLoad/{hostnames}")
+    @Produces(MediaType.APPLICATION_JSON)
+    List<SystemLoad> querySystemLoad(@PathParam("hostnames") String hostnames);
+
+    @POST
+    @Path("mutation/system/note")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    Response editNote(NoteInfo text);
+}
+```
+
+
+
+This interface declares ***querySystem()***, ***querySystemLoad()***, and ***editNote()*** methods for accessing each of the endpoints that are set up to access the ***query*** microservice.
+
+Create the test container class that accesses the ***query*** image that you built in previous section.
+
+Create the ***LibertyContainer.java*** file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/LibertyContainer.java
+```
+
+
+> Then, to open the LibertyContainer.java file in your IDE, select
+> ***File*** > ***Open*** > guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/LibertyContainer.java, or click the following button
+
+::openFile{path="/home/project/guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/LibertyContainer.java"}
+
+
+
+```java
+package it.io.openliberty.guides.query;
+
+import org.jboss.resteasy.client.jaxrs.ResteasyClient;
+import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
+
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.UriBuilder;
+
+public class LibertyContainer extends GenericContainer<LibertyContainer> {
+
+    static final Logger LOGGER = LoggerFactory.getLogger(LibertyContainer.class);
+    private String baseURL;
+
+    public LibertyContainer(final String dockerImageName) {
+        super(dockerImageName);
+        waitingFor(Wait.forLogMessage("^.*CWWKF0011I.*$", 1));
+        this.addExposedPorts(9084);
+        return;
+    }
+
+    public <T> T createRestClient(Class<T> clazz) {
+        String urlPath = getBaseURL();
+        ClientBuilder builder = ResteasyClientBuilder.newBuilder();
+        ResteasyClient client = (ResteasyClient) builder.build();
+        ResteasyWebTarget target = client.target(UriBuilder.fromPath(urlPath));
+        return target.proxy(clazz);
+    }
+
+    public String getBaseURL() throws IllegalStateException {
+        if (baseURL != null) {
+            return baseURL;
+        }
+        if (!this.isRunning()) {
+            throw new IllegalStateException(
+                "Container must be running to determine hostname and port");
+        }
+        baseURL =  "http://" + this.getContainerIpAddress()
+            + ":" + this.getFirstMappedPort();
+        System.out.println("TEST: " + baseURL);
+        return baseURL;
+    }
+}
+```
+
+
+
+The ***createRestClient()*** method creates a REST client instance with the ***QueryResourceClient*** interface. The ***getBaseURL()*** method constructs the URL that can access the ***query*** image.
+
+Now, create your integration test cases.
+
+Create the ***QueryResourceIT.java*** file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceIT.java
+```
+
+
+> Then, to open the QueryResourceIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceIT.java, or click the following button
+
+::openFile{path="/home/project/guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.query;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
+import java.util.List;
+import jakarta.ws.rs.core.Response;
+import io.openliberty.guides.graphql.models.NoteInfo;
+import io.openliberty.guides.graphql.models.SystemLoad;
+import io.openliberty.guides.graphql.models.SystemLoadData;
+import io.openliberty.guides.graphql.models.SystemInfo;
+
+@Testcontainers
+@TestMethodOrder(OrderAnnotation.class)
+public class QueryResourceIT {
+
+    private static Logger logger = LoggerFactory.getLogger(QueryResourceIT.class);
+    private static String system8ImageName = "system:1.0-java11-SNAPSHOT";
+    private static String queryImageName = "query:1.0-SNAPSHOT";
+    private static String graphqlImageName = "graphql:1.0-SNAPSHOT";
+
+    public static QueryResourceClient client;
+    public static Network network = Network.newNetwork();
+
+    @Container
+    public static GenericContainer<?> systemContainer
+        = new GenericContainer<>(system8ImageName)
+              .withNetwork(network)
+              .withExposedPorts(9080)
+              .withNetworkAliases("system-java11")
+              .withLogConsumer(new Slf4jLogConsumer(logger));
+
+    @Container
+    public static LibertyContainer graphqlContainer
+        = new LibertyContainer(graphqlImageName)
+              .withNetwork(network)
+              .withExposedPorts(9082)
+              .withNetworkAliases("graphql")
+              .withLogConsumer(new Slf4jLogConsumer(logger));
+
+    @Container
+    public static LibertyContainer libertyContainer
+        = new LibertyContainer(queryImageName)
+              .withNetwork(network)
+              .withExposedPorts(9084)
+              .withLogConsumer(new Slf4jLogConsumer(logger));
+
+    @BeforeAll
+    public static void setupTestClass() throws Exception {
+        System.out.println("TEST: Starting Liberty Container setup");
+        client = libertyContainer.createRestClient(QueryResourceClient.class);
+    }
+
+    @Test
+    @Order(1)
+    public void testGetSystem() {
+        System.out.println("TEST: Testing get system /system/system-java11");
+        SystemInfo systemInfo = client.querySystem("system-java11");
+        assertEquals(systemInfo.getHostname(), "system-java11");
+        assertNotNull(systemInfo.getOsVersion(), "osVersion is null");
+        assertNotNull(systemInfo.getJava(), "java is null");
+        assertNotNull(systemInfo.getSystemMetrics(), "systemMetrics is null");
+    }
+
+    @Test
+    @Order(2)
+    public void testGetSystemLoad() {
+        System.out.println("TEST: Testing get system load /systemLoad/system-java11");
+        List<SystemLoad> systemLoad = client.querySystemLoad("system-java11");
+        assertEquals(systemLoad.get(0).getHostname(), "system-java11");
+        SystemLoadData systemLoadData = systemLoad.get(0).getLoadData();
+        assertNotNull(systemLoadData.getLoadAverage(), "loadAverage is null");
+        assertNotNull(systemLoadData.getHeapUsed(), "headUsed is null");
+        assertNotNull(systemLoadData.getNonHeapUsed(), "nonHeapUsed is null");
+    }
+
+    @Test
+    @Order(3)
+    public void testEditNote() {
+        System.out.println("TEST: Testing editing note /mutation/system/note");
+        NoteInfo note = new NoteInfo();
+        note.setHostname("system-java11");
+        note.setText("I am trying out GraphQL on Open Liberty!");
+        Response response = client.editNote(note);
+        assertEquals(200, response.getStatus(), "Incorrect response code");
+        SystemInfo systemInfo = client.querySystem("system-java11");
+        assertEquals(systemInfo.getNote(), "I am trying out GraphQL on Open Liberty!");
+    }
+}
+```
+
+
+
+Define the ***systemContainer*** test container to start up the ***system-java11*** image, the ***graphqlContainer*** test container to start up the ***graphql*** image, and the ***libertyContainer*** test container to start up the ***query*** image. Make sure that the containers use the same network.
+
+The ***@Testcontainers*** annotation finds all fields that are annotated with the ***@Container*** annotation and calls their container lifecycle methods. The ***static*** function declaration on each container indicates that this container will be started only once before any test method is executed and stopped after the last test method is executed.
+
+The ***testGetSystem()*** verifies the ***/query/system/{hostname}*** endpoint with ***hostname*** set to ***system-java11***.
+
+The ***testGetSystemLoad()*** verifies the ***/query/systemLoad/{hostnames}*** endpoint with ***hostnames*** set to ***system-java11***.
+
+The ***testEditNote()*** verifies the mutation operation at the ***/query/mutation/system/note*** endpoint.
+
+
+The required ***dependencies*** are already added to the ***pom.xml*** Maven configuration file for you, including JUnit5, JBoss RESTEasy client, Glassfish JSON, Testcontainers, and Log4J libraries.
+
+To enable running the integration test by the Maven ***verify*** goal, the ***maven-failsafe-plugin*** plugin is also required.
 
 ### Running the tests
 
-Since you started Open Liberty in dev mode, press the ***enter/return*** key in the command-line session where you started the ***backendServices*** service to run the tests for the ***backendServices***.
+You can run the Maven ***verify*** goal, which compiles the java files, starts the containers, runs the tests, and then stops the containers.
+
+
+You will see the following output:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.event.EventEntityIT
-Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.703 sec - in it.io.openliberty.guides.event.EventEntityIT
+Running it.io.openliberty.guides.query.QueryResourceIT
+...
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 11.694 s - in it.io.openliberty.guides.query.QueryResourceIT
 
 Results :
 
-Tests run: 5, Failures: 0, Errors: 0, Skipped: 0 
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 ```
-
-When you are done checking out the services, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the ***frontendUI*** and ***backendServices*** services.
 
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You learned how to map Java objects to database tables by defining a JPA entity class whose instances are represented as rows in the table. You have injected a container-managed entity manager into a DAO and learned how to perform CRUD operations in your microservice in Open Liberty.
+You just learnt how to use a GraphQL client to run GraphQL queries and mutations!
 
 
 
@@ -786,30 +842,30 @@ You learned how to map Java objects to database tables by defining a JPA entity 
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-jpa-intro*** project by running the following commands:
+Delete the ***guide-graphql-client*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-jpa-intro
+rm -fr guide-graphql-client
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Accessing%20and%20persisting%20data%20in%20microservices%20using%20Java%20Persistence%20API%20(JPA)&guide-id=cloud-hosted-guide-jpa-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Running%20GraphQL%20queries%20and%20mutations%20using%20a%20GraphQL%20client&guide-id=cloud-hosted-guide-graphql-client)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-jpa-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-jpa-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-graphql-client/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-graphql-client/pulls)
 
 
 
 ### Where to next?
 
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Optimizing REST queries for microservices with GraphQL](https://openliberty.io/guides/microprofile-graphql.html)
 
 
 ### Log out of the session
