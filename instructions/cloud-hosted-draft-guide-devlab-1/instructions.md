@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Consuming RESTful services asynchronously with template interfaces guide!"}
+::page{title="Welcome to the Enabling Cross-Origin Resource Sharing (CORS) guide!"}
 
-Learn how to use MicroProfile Rest Client to invoke RESTful microservices asynchronously over HTTP.
+Learn how to enable Cross-Origin Resource Sharing (CORS) in Open Liberty without writing Java code.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,26 +14,41 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 ::page{title="What you'll learn"}
 
-You will learn how to build a MicroProfile Rest Client to access remote RESTful services using asynchronous method calls. You'll update the template interface for a MicroProfile Rest Client to use the ***CompletionStage*** return type. The template interface maps to the remote service that you want to call. A ***CompletionStage*** interface allows you to work with the result of your remote service call asynchronously.
+You will learn how to add two Liberty configurations to enable CORS. Next, you will write and run tests to validate that the CORS configurations work. These tests send two different CORS requests to a REST service that has two different endpoints.
 
-*What is asynchronous programming?*
+### CORS and its purpose
 
-Imagine asynchronous programming as a restaurant. After you're seated, a waiter takes your order. Then, you must wait a few minutes for your food to be prepared. While your food is being prepared, your waiter may take more orders or serve other tables. After your food is ready, your waiter brings out the food to your table. However, in a synchronous model, the waiter must wait for your food to be prepared before serving any other customers. This method blocks other customers from placing orders or receiving their food.
+Cross-Origin Resource Sharing (CORS) is a W3C specification and mechanism that you can use to request restricted resources from a domain outside the current domain. In other words, CORS is a technique for consuming an API served from an origin different than yours.
 
-You can perform lengthy operations, such as input/output (I/O), without blocking with asynchronous methods. The I/O operation can occur in the background and a callback notifies the caller to continue its computation when the original request is complete. As a result, the original thread frees up so it can handle other work rather than wait for the I/O to complete. Revisiting the restaurant analogy, food is prepared asynchronously in the kitchen and your waiter is freed up to attend to other tables.
+CORS is useful for requesting different kinds of data from websites that aren't your own. These types of data might include images, videos, scripts, stylesheets, iFrames, or web fonts.
 
-In the context of REST clients, HTTP request calls can be time consuming. The network might be slow, or maybe the upstream service is overwhelmed and can't respond quickly. These lengthy operations can block the execution of your thread when it's in use and prevent other work from being completed.
+However, you cannot request resources from another website domain without proper permission. In JavaScript, cross-origin requests with an ***XMLHttpRequest*** API and Ajax cannot happen unless CORS is enabled on the server that receives the request. Otherwise, same-origin security policy prevents the requests. For example, a web page that is served from the ***http://aboutcors.com*** server sends a request to get data to the ***http://openliberty.io*** server. Because of security concerns, browsers block the server response unless the server adds HTTP response headers to allow the web page to consume the data.
 
-The application in this guide consists of three microservices, ***system***, ***inventory***, and ***query***. Every 15 seconds the ***system*** microservice calculates and publishes an event that contains its average system load. The ***inventory*** microservice subscribes to that information so that it can keep an updated list of all the systems and their current system loads. 
+Different ports and different protocols also trigger CORS. For example, the ***http://abc.xyz:1234*** domain is considered to be different from the ***https://abc.xyz:4321*** domain.
 
-![Reactive Inventory System](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-rest-client-async/prod/assets/QueryService.png)
+Open Liberty has built-in support for CORS that gives you an easy and powerful way to configure the runtime to handle CORS requests without the need to write Java code.
 
+### Types of CORS requests
 
-The microservice that you will modify is the ***query*** service. It communicates with the ***inventory*** service to determine which system has the highest system load and which system has the lowest system load. 
+Familiarize yourself with two kinds of CORS requests to understand the attributes that you will add in the two CORS configurations.
 
-The ***system*** and ***inventory*** microservices use MicroProfile Reactive Messaging to send and receive the system load events. If you want to learn more about reactive messaging, see the [Creating Reactive Java Microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
+#### Simple CORS request
+
+According to the CORS specification, an HTTP request is a simple CORS request if the request method is ***GET***, ***HEAD***, or ***POST***. The header fields are any one of the ***Accept***, ***Accept-Language***, ***Content-Language***, or ***Content-Type*** headers. The ***Content-Type*** header has a value of ***application/x-www-form-urlencoded***, ***multipart/form-data***, or ***text/plain***.
+
+When clients, such as browsers, send simple CORS requests to servers on different domains, the clients include an ***Origin*** header with the original (referring)  host name as the value. If the server allows the origin, the server includes an ***Access-Control-Allow-Origin*** header with a list of allowed origins or an asterisk (*) in the response back to the client. The asterisk indicates that all origins are allowed to access the endpoint on the server.
+
+#### Preflight CORS request
+
+A CORS request is not a simple CORS request if a client first sends a preflight CORS request before it sends the actual request. For example, the client sends a preflight request before it sends a ***DELETE*** HTTP request. To determine whether the request is safe to send, the client sends a preflight request, which is an ***OPTIONS*** HTTP request, to gather more information about the server. This preflight request has the ***Origin*** header and other headers to indicate the HTTP method and headers of the actual request to be sent after the preflight request.
+
+Once the server receives the preflight request, if the origin is allowed, the server responds with headers that indicate the HTTP methods and headers that are allowed in the actual requests. The response might include more CORS-related headers.
+
+Next, the client sends the actual request, and the server responds.
+
 
 ::page{title="Getting started"}
 
@@ -46,11 +61,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-rest-client-async.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-cors.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-microprofile-rest-client-async.git
-cd guide-microprofile-rest-client-async
+git clone https://github.com/openliberty/guide-cors.git
+cd guide-cors
 ```
 
 
@@ -58,487 +73,390 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-::page{title="Updating the template interface of a REST client to use asynchronous methods"}
 
 
-To begin, run the following command to navigate to the ***start*** directory:
+::page{title="Enabling CORS"}
+Navigate to the ***start*** directory to begin.
 ```bash
-cd /home/project/guide-microprofile-rest-client-async/start
+cd /home/project/guide-cors/start
 ```
 
-The ***query*** service uses a MicroProfile Rest Client to access the ***inventory*** service. You will update the methods in the template interface for this client to be asynchronous.
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
-Replace the ***InventoryClient*** interface.
+```bash
+mvn liberty:dev
+```
 
-> To open the InventoryClient.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-rest-client-async/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java, or click the following button
+After you see the following message, your Liberty instance is ready in dev mode:
 
-::openFile{path="/home/project/guide-microprofile-rest-client-async/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java"}
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+
+You will use a REST service that is already provided for you to test your CORS configurations. You can find this service in the ***src/main/java/io/openliberty/guides/cors/*** directory.
+
+You will send a simple request to the ***/configurations/simple*** endpoint and the preflight request to the ***/configurations/preflight*** endpoint.
+
+
+### Enabling a simple CORS configuration
+Configure the Liberty to allow the ***/configurations/simple*** endpoint to accept a ***simple*** CORS request. Add a simple CORS configuration to the Liberty ***server.xml*** configuration file:
+
+Replace the Liberty ***server.xml*** configuration file.
+
+> To open the server.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-cors/start/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-cors/start/src/main/liberty/config/server.xml"}
 
 
 
-```java
-package io.openliberty.guides.query.client;
+```xml
+<server description="Sample Liberty server">
 
-import java.util.List;
-import java.util.Properties;
-import java.util.concurrent.CompletionStage;
+    <featureManager>
+        <platform>jakartaee-10.0</platform>
+        <feature>restfulWS</feature>
+        <feature>jsonb</feature>
+    </featureManager>
 
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
+    <variable name="http.port" defaultValue="9080"/>
+    <variable name="https.port" defaultValue="9443"/>
 
-import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+    <httpEndpoint id="defaultHttpEndpoint"
+        host="*" httpPort="${http.port}" httpsPort="${https.port}"/>
 
-@Path("/inventory")
-@RegisterRestClient(configKey = "InventoryClient", baseUri = "http://localhost:9085")
-public interface InventoryClient extends AutoCloseable {
+    <webApplication location="guide-cors.war" contextRoot="/"/>
 
-    @GET
-    @Path("/systems")
-    @Produces(MediaType.APPLICATION_JSON)
-    List<String> getSystems();
+    <cors domain="/configurations/simple"
+        allowedOrigins="http://openliberty.io"
+        allowedMethods="GET"
+        allowCredentials="true"
+        exposeHeaders="MyHeader"/>
 
-    @GET
-    @Path("/systems/{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    CompletionStage<Properties> getSystem(
-        @PathParam("hostname") String hostname);
 
-}
+</server>
 ```
 
 
 Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
-The changes involve the ***getSystem*** method. Change the return type to ***CompletionStage\<Properties\>*** to make the method asynchronous. The method now has the return type of ***CompletionStage\<Properties\>*** so you aren't able to directly manipulate the ***Properties*** inner type. As you will see in the next section, you're able to indirectly use the ***Properties*** by chaining callbacks.
+The CORS configuration contains the following attributes:
 
-::page{title="Updating a REST resource to asynchronously handle HTTP requests"}
+| *Configuration Attribute* | *Value*
+| ---| ---
+|***domain*** | The endpoint to be configured for CORS requests. The value is set to ***/configurations/simple***.
+|***allowedOrigins*** | Origins that are allowed to access the endpoint. The value is set to ***http://openliberty.io***.
+|***allowedMethods*** | HTTP methods that a client is allowed to use when it makes requests to the endpoint. The value is set to ***GET***.
+|***allowCredentials*** | A boolean that indicates whether the user credentials can be included in the request. The value is set to ***true***.
+|***exposeHeaders*** | Headers that are safe to expose to clients. The value is set to ***MyHeader***.
 
-To reduce the processing time, you will update the ***/query/systemLoad*** endpoint to asynchronously send the requests. Multiple client requests will be sent synchronously in a loop. The asynchronous calls do not block the program so the endpoint needs to ensure that all calls are completed and all returned data is processed before proceeding.
+For more information about these and other CORS attributes, see the [cors element documentation](https://www.openliberty.io/docs/latest/reference/config/cors.html).
 
-Replace the ***QueryResource*** class.
+Save the changes to the ***server.xml*** configuration file. The ***/configurations/simple*** endpoint is now ready to be tested with a simple CORS request.
 
-> To open the QueryResource.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-rest-client-async/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java, or click the following button
+The Open Liberty instance was started in dev mode at the beginning of the guide and all the changes were automatically picked up.
 
-::openFile{path="/home/project/guide-microprofile-rest-client-async/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java"}
+Now, test the simple CORS configuration that you added. Add the ***testSimpleCorsRequest*** method to the ***CorsIT*** class.
 
+Replace the ***CorsIT*** class.
 
+> To open the CorsIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-cors/start/src/test/java/it/io/openliberty/guides/cors/CorsIT.java, or click the following button
 
-```java
-package io.openliberty.guides.query;
-
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-
-import org.eclipse.microprofile.rest.client.inject.RestClient;
-
-import io.openliberty.guides.query.client.InventoryClient;
-
-@ApplicationScoped
-@Path("/query")
-public class QueryResource {
-
-    @Inject
-    @RestClient
-    private InventoryClient inventoryClient;
-
-    @GET
-    @Path("/systemLoad")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Map<String, Properties> systemLoad() {
-        List<String> systems = inventoryClient.getSystems();
-        CountDownLatch remainingSystems = new CountDownLatch(systems.size());
-        final Holder systemLoads = new Holder();
-
-        for (String system : systems) {
-            inventoryClient.getSystem(system)
-                           .thenAcceptAsync(p -> {
-                                if (p != null) {
-                                    systemLoads.updateValues(p);
-                                }
-                                remainingSystems.countDown();
-                           })
-                           .exceptionally(ex -> {
-                                ex.printStackTrace();
-                                remainingSystems.countDown();
-                                return null;
-                           });
-        }
-
-        try {
-            remainingSystems.await(30, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        return systemLoads.getValues();
-    }
-
-    private class Holder {
-        private volatile Map<String, Properties> values;
-
-        Holder() {
-            this.values = new ConcurrentHashMap<String, Properties>();
-            init();
-        }
-
-        public Map<String, Properties> getValues() {
-            return this.values;
-        }
-
-        public void updateValues(Properties p) {
-            final BigDecimal load = (BigDecimal) p.get("systemLoad");
-
-            this.values.computeIfPresent("lowest", (key, curr_val) -> {
-                BigDecimal lowest = (BigDecimal) curr_val.get("systemLoad");
-                return load.compareTo(lowest) < 0 ? p : curr_val;
-            });
-            this.values.computeIfPresent("highest", (key, curr_val) -> {
-                BigDecimal highest = (BigDecimal) curr_val.get("systemLoad");
-                return load.compareTo(highest) > 0 ? p : curr_val;
-            });
-        }
-
-        private void init() {
-            this.values.put("highest", new Properties());
-            this.values.put("lowest", new Properties());
-            this.values.get("highest").put("hostname", "temp_max");
-            this.values.get("lowest").put("hostname", "temp_min");
-            this.values.get("highest").put(
-                "systemLoad", new BigDecimal(Double.MIN_VALUE));
-            this.values.get("lowest").put(
-                "systemLoad", new BigDecimal(Double.MAX_VALUE));
-        }
-    }
-}
-```
-
-
-
-First, the ***systemLoad*** endpoint first gets all the hostnames by calling ***getSystems()***. In the ***getSystem()*** method, multiple requests are sent asynchronously to the ***inventory*** service for each hostname. When the requests return, the ***thenAcceptAsync()*** method processes the returned data with the ***CompletionStage\<Properties\>*** interface.
-
-The ***CompletionStage\<Properties\>*** interface represents a unit of computation. After a computation is complete, it can either be finished or it can be chained with more ***CompletionStage\<Properties\>*** interfaces using the ***thenAcceptAsync()*** method. Exceptions are handled in a callback that is provided to the ***exceptionally()*** method, which behaves like a catch block. When you return a ***CompletionStage\<Properties\>*** type in the resource, it doesn’t necessarily mean that the computation completed and the response was built. JAX-RS responds to the caller after the computation completes.
-
-In the ***systemLoad()*** method a ***CountDownLatch*** object is used to track asynchronous requests. The ***countDown()*** method is called whenever a request is complete. When the ***CountDownLatch*** is at zero, it indicates that all asynchronous requests are complete. By using the ***await()*** method of the ***CountDownLatch***, the program waits for all the asynchronous requests to be complete. When all asynchronous requests are complete, the program resumes execution with all required data processed. 
-
-A ***Holder*** class is used to wrap a variable called ***values*** that has the ***volatile*** keyword. The ***values*** variable is instantiated as a ***ConcurrentHashMap*** object. Together, the ***volatile*** keyword and ***ConcurrentHashMap*** type allow the ***Holder*** class to store system information and safely access it asynchronously from multiple threads.
-
-
-::page{title="Building and running the application"}
-
-You will build and run the ***system***, ***inventory***, and ***query*** microservices in Docker containers. You can learn more about containerizing microservices with Docker in the [Containerizing microservices](https://openliberty.io/guides/containerize.html) guide.
-
-Start your Docker environment. Dockerfiles are provided for you to use.
-
-To build the application, run the Maven ***install*** and ***package*** goals from the command-line session in the ***start*** directory:
-
-
-```bash
-./mvnw -pl models install
-./mvnw package
-```
-
-
-
-Run the following commands to containerize the microservices:
-
-```bash
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-docker build -t query:1.0-SNAPSHOT query/.
-```
-
-Next, use the provided ***startContainers*** script to start the application in Docker containers. The script creates containers for Kafka and all of the microservices in the project, in addition to a network for the containers to communicate with each other. The script also creates three instances of the ***system*** microservice. 
-
-
-```bash
-./scripts/startContainers.sh
-```
-
-
-The services might take several minutes to become available. Run the following curl command to confirm that the ***inventory*** microservice is up and running.
-```bash
-curl -s http://localhost:9085/health | jq
-```
-
-You can access the application by making requests to the ***query/systemLoad*** endpoint by running the following curl command:
-```bash
-curl -s http://localhost:9080/query/systemLoad | jq
-```
-
-When the service is ready, you see an output similar to the following example which was formatted for readability. 
-
-```
-{
-    "highest": {
-        "hostname" : "8841bd7d6fcd",
-        "systemLoad" : 6.96
-    },
-    "lowest": {
-        "hostname" : "37140ec44c9b",
-        "systemLoad" : 6.4
-    }
-}
-```
-
-Switching to an asynchronous programming model freed up the thread that handles requests to the ***inventory*** service. While requests process, the thread can handle other work or requests. In the ***/query/systemLoad*** endpoint, multiple systems are read and compared at once.
-
-When you are done checking out the application, run the following script to stop the application:
-
-
-```bash
-./scripts/stopContainers.sh
-```
-
-
-::page{title="Testing the query microservice"}
-
-You will create an endpoint test to test the basic functionality of the ***query*** microservice. If a test failure occurs, then you might have introduced a bug into the code.
-
-Create the ***QueryServiceIT*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-microprofile-rest-client-async/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java
-```
-
-
-> Then, to open the QueryServiceIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-rest-client-async/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-rest-client-async/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java"}
+::openFile{path="/home/project/guide-cors/start/src/test/java/it/io/openliberty/guides/cors/CorsIT.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.query;
+package it.io.openliberty.guides.cors;
 
-import java.nio.file.Paths;
-import java.time.Duration;
-import java.util.Map;
-import java.util.Properties;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.mockserver.client.MockServerClient;
-import org.mockserver.model.HttpRequest;
-import org.mockserver.model.HttpResponse;
-
-import org.testcontainers.containers.Network;
-import org.testcontainers.containers.KafkaContainer;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.MockServerContainer;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.images.builder.ImageFromDockerfile;
-import org.testcontainers.utility.DockerImageName;
-import org.jboss.resteasy.client.jaxrs.ResteasyClient;
-import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
-import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.UriBuilder;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.util.Map;
+import java.util.Map.Entry;
 
-public class QueryServiceIT {
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-    private static Logger logger = LoggerFactory.getLogger(QueryServiceIT.class);
+public class CorsIT {
 
-    public static QueryResourceClient client;
+    String port = System.getProperty("http.port");
+    String pathToHost = "http://localhost:" + port + "/";
 
-    private static Network network = Network.newNetwork();
-
-    private static String testHost1 =
-        "{"
-            + "\"hostname\" : \"testHost1\","
-            + "\"systemLoad\" : 1.23"
-        + "}";
-    private static String testHost2 =
-        "{"
-            + "\"hostname\" : \"testHost2\","
-            + "\"systemLoad\" : 3.21"
-        + "}";
-    private static String testHost3 =
-        "{"
-            + "\"hostname\" : \"testHost3\","
-            + "\"systemLoad\" : 2.13"
-        + "}";
-
-    private static ImageFromDockerfile queryImage =
-        new ImageFromDockerfile("query:1.0-SNAPSHOT")
-            .withDockerfile(Paths.get("./Dockerfile"));
-
-    public static final DockerImageName MOCKSERVER_IMAGE = DockerImageName
-        .parse("mockserver/mockserver")
-        .withTag("mockserver-"
-                 + MockServerClient.class.getPackage().getImplementationVersion());
-
-    public static MockServerContainer mockServer =
-        new MockServerContainer(MOCKSERVER_IMAGE)
-            .withNetworkAliases("mock-server")
-            .withNetwork(network);
-
-    public static MockServerClient mockClient;
-
-    private static KafkaContainer kafkaContainer =
-        new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:latest"))
-            .withListener(() -> "kafka:19092")
-            .withNetwork(network);
-
-    private static GenericContainer<?> queryContainer =
-        new GenericContainer(queryImage)
-            .withNetwork(network)
-            .withExposedPorts(9080)
-            .waitingFor(Wait.forHttp("/health/ready"))
-            .withStartupTimeout(Duration.ofMinutes(3))
-            .withLogConsumer(new Slf4jLogConsumer(logger))
-            .dependsOn(kafkaContainer);
-
-    private static QueryResourceClient createRestClient(String urlPath) {
-        ClientBuilder builder = ResteasyClientBuilder.newBuilder();
-        ResteasyClient client = (ResteasyClient) builder.build();
-        ResteasyWebTarget target = client.target(UriBuilder.fromPath(urlPath));
-        return target.proxy(QueryResourceClient.class);
-    }
-
-    @BeforeAll
-    public static void startContainers() {
-        mockServer.start();
-        mockClient = new MockServerClient(
-            mockServer.getHost(),
-            mockServer.getServerPort());
-
-        kafkaContainer.start();
-
-        queryContainer.withEnv(
-            "InventoryClient/mp-rest/uri",
-            "http://mock-server:" + MockServerContainer.PORT);
-        queryContainer.start();
-
-        client = createRestClient("http://"
-            + queryContainer.getHost()
-            + ":" + queryContainer.getFirstMappedPort());
-    }
     @BeforeEach
-    public void setup() throws InterruptedException {
-        mockClient.when(HttpRequest.request()
-                        .withMethod("GET")
-                        .withPath("/inventory/systems"))
-                    .respond(HttpResponse.response()
-                        .withStatusCode(200)
-                        .withBody("[\"testHost1\","
-                                + "\"testHost2\","
-                                + "\"testHost3\"]")
-                        .withHeader("Content-Type", "application/json"));
-
-        mockClient.when(HttpRequest.request()
-                        .withMethod("GET")
-                        .withPath("/inventory/systems/testHost1"))
-                    .respond(HttpResponse.response()
-                        .withStatusCode(200)
-                        .withBody(testHost1)
-                        .withHeader("Content-Type", "application/json"));
-
-        mockClient.when(HttpRequest.request()
-                        .withMethod("GET")
-                        .withPath("/inventory/systems/testHost2"))
-                    .respond(HttpResponse.response()
-                        .withStatusCode(200)
-                        .withBody(testHost2)
-                        .withHeader("Content-Type", "application/json"));
-
-        mockClient.when(HttpRequest.request()
-                        .withMethod("GET")
-                        .withPath("/inventory/systems/testHost3"))
-                    .respond(HttpResponse.response()
-                        .withStatusCode(200)
-                        .withBody(testHost3)
-                        .withHeader("Content-Type", "application/json"));
-    }
-
-    @AfterAll
-    public static void stopContainers() {
-        queryContainer.stop();
-        kafkaContainer.stop();
-        mockServer.stop();
-        network.close();
+    public void setUp() {
+        System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
     }
 
     @Test
-    public void testLoads() {
-        Map<String, Properties> response = client.systemLoad();
+    public void testSimpleCorsRequest() throws IOException {
+        HttpURLConnection connection = HttpUtils.sendRequest(
+                        pathToHost + "configurations/simple", "GET",
+                        TestData.simpleRequestHeaders);
+        checkCorsResponse(connection, TestData.simpleResponseHeaders);
 
-        assertEquals(
-            "testHost2",
-            response.get("highest").get("hostname"),
-            "Returned highest system load incorrect"
-        );
-        assertEquals(
-            "testHost1",
-            response.get("lowest").get("hostname"),
-            "Returned lowest system load incorrect"
-        );
+        printResponseHeaders(connection, "Simple CORS Request");
     }
+
+
+    public void checkCorsResponse(HttpURLConnection connection,
+                    Map<String, String> expectedHeaders) throws IOException {
+        assertEquals(200, connection.getResponseCode(), "Invalid HTTP response code");
+        expectedHeaders.forEach((responseHeader, value) -> {
+            assertEquals(value, connection.getHeaderField(responseHeader),
+                            "Unexpected value for " + responseHeader + " header");
+        });
+    }
+
+    public static void printResponseHeaders(HttpURLConnection connection,
+                    String label) {
+        System.out.println("--- " + label + " ---");
+        Map<String, java.util.List<String>> map = connection.getHeaderFields();
+        for (Entry<String, java.util.List<String>> entry : map.entrySet()) {
+            System.out.println("Header " + entry.getKey() + " = " + entry.getValue());
+        }
+        System.out.println();
+    }
+
 }
 ```
 
 
-The ***testLoads()*** test case verifies that the ***query*** service can calculate the highest and lowest system loads. 
 
+The ***testSimpleCorsRequest*** test simulates a client. It first sends a simple CORS request to the ***/configurations/simple*** endpoint, and then it checks for a valid response and expected headers. Lastly, it prints the response headers for you to inspect.
 
+The request is a ***GET*** HTTP request with the following header:
 
-### Running the tests
+| *Request Header* | *Request Value*
+| ---| ---
+| Origin | The value is set to ***http://openliberty.io***. Indicates that the request originates from ***http://openliberty.io***.
 
+Expect the following response headers and values if the simple CORS request is successful, and the Liberty instance is correctly configured:
 
-Run the following commands to navigate to the ***start*** directory and verify that the tests pass by using the Maven ***verify*** goal:
-```bash
-export TESTCONTAINERS_RYUK_DISABLED=true
-cd /home/project/guide-microprofile-rest-client-async/start
-./mvnw -pl query verify
+| *Response Header* | *Response Value*
+| ---| ---
+| Access-Control-Allow-Origin | The expected value is ***http://openliberty.io***. Indicates whether a resource can be shared based on the returning value of the Origin request header ***http://openliberty.io***.
+| Access-Control-Allow-Credentials | The expected value is ***true***. Indicates that the user credentials can be included in the request.
+| Access-Control-Expose-Headers |  The expected value is ***MyHeader***. Indicates that the header ***MyHeader*** is safe to expose.
+
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+
+If the ***testSimpleCorsRequest*** test passes, the response headers with their values from the endpoint are printed. The ***/configurations/simple*** endpoint now accepts simple CORS requests.
+
+Response headers with their values from the endpoint:
+```
+--- Simple CORS Request ---
+Header null = [HTTP/1.1 200 OK]
+Header Access-Control-Expose-Headers = [MyHeader]
+Header Access-Control-Allow-Origin = [http://openliberty.io]
+Header Access-Control-Allow-Credentials = [true]
+Header Content-Length = [22]
+Header Content-Language = [en-CA]
+Header Date = [Thu, 21 Mar 2019 17:50:09 GMT]
+Header Content-Type = [text/plain]
+Header X-Powered-By = [Servlet/4.0]
 ```
 
-For more information about disabling Ryuk, see the [Testcontainers custom configuratio](https://java.testcontainers.org/features/configuration/#disabling-ryuk) document.
+### Enabling a preflight CORS configuration
 
-The tests might take a few minutes to complete. When the tests succeed, you see output similar to the following example:
+Configure the Liberty to allow the ***/configurations/preflight*** endpoint to accept a ***preflight*** CORS request. Add another CORS configuration in the Liberty ***server.xml*** configuration file:
 
+Replace the Liberty ***server.xml*** configuration file.
+
+> To open the server.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-cors/start/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-cors/start/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="Sample Liberty server">
+
+    <featureManager>
+        <platform>jakartaee-10.0</platform>
+        <feature>restfulWS</feature>
+        <feature>jsonb</feature>
+    </featureManager>
+
+    <variable name="http.port" defaultValue="9080"/>
+    <variable name="https.port" defaultValue="9443"/>
+
+    <httpEndpoint id="defaultHttpEndpoint"
+        host="*" httpPort="${http.port}" httpsPort="${https.port}"/>
+
+    <webApplication location="guide-cors.war" contextRoot="/"/>
+
+    <cors domain="/configurations/simple"
+        allowedOrigins="http://openliberty.io"
+        allowedMethods="GET"
+        allowCredentials="true"
+        exposeHeaders="MyHeader"/>
+
+    <cors domain="/configurations/preflight"
+        allowedOrigins="*"
+        allowedMethods="OPTIONS, DELETE"
+        allowCredentials="true"
+        allowedHeaders="MyOwnHeader1, MyOwnHeader2"
+        maxAge="10"/>
+
+</server>
 ```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.query.QueryServiceIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 32.123 s - in it.io.openliberty.guides.query.QueryServiceIT
 
-Results:
 
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+
+The preflight CORS configuration has different values than the simple CORS configuration.
+
+| *Configuration Attribute* | *Value*
+| ---| ---
+| ***domain***|The value is set to ***/configurations/preflight*** because the ***domain*** is a different endpoint.
+| ***allowedOrigins***| Origins that are allowed to access the endpoint. The value is set to an asterisk (*) to allow requests from all origins.
+| ***allowedMethods***| HTTP methods that a client is allowed to use when it makes requests to the endpoint. The value is set to ***OPTIONS, DELETE***.
+| ***allowCredentials***| A boolean that indicates whether the user credentials can be included in the request. The value is set to ***true***.
+
+The following attributes were added:
+
+* ***allowedHeaders***: Headers that a client can use in requests. Set the value to ***MyOwnHeader1, MyOwnHeader2***.
+* ***maxAge***: The number of seconds that a client can cache a response to a preflight request. Set the value to ***10***.
+
+Save the changes to the ***server.xml*** configuration file. The ***/configurations/preflight*** endpoint is now ready to be tested with a preflight CORS request.
+
+Add another test to the ***CorsIT.java*** file to test the preflight CORS configuration that you just added:
+
+Replace the ***CorsIT*** class.
+
+> To open the CorsIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-cors/start/src/test/java/it/io/openliberty/guides/cors/CorsIT.java, or click the following button
+
+::openFile{path="/home/project/guide-cors/start/src/test/java/it/io/openliberty/guides/cors/CorsIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.cors;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+public class CorsIT {
+
+    String port = System.getProperty("http.port");
+    String pathToHost = "http://localhost:" + port + "/";
+
+    @BeforeEach
+    public void setUp() {
+        System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
+    }
+
+    @Test
+    public void testSimpleCorsRequest() throws IOException {
+        HttpURLConnection connection = HttpUtils.sendRequest(
+                        pathToHost + "configurations/simple", "GET",
+                        TestData.simpleRequestHeaders);
+        checkCorsResponse(connection, TestData.simpleResponseHeaders);
+
+        printResponseHeaders(connection, "Simple CORS Request");
+    }
+
+    @Test
+    public void testPreflightCorsRequest() throws IOException {
+        HttpURLConnection connection = HttpUtils.sendRequest(
+                        pathToHost + "configurations/preflight", "OPTIONS",
+                        TestData.preflightRequestHeaders);
+        checkCorsResponse(connection, TestData.preflightResponseHeaders);
+
+        printResponseHeaders(connection, "Preflight CORS Request");
+    }
+
+    public void checkCorsResponse(HttpURLConnection connection,
+                    Map<String, String> expectedHeaders) throws IOException {
+        assertEquals(200, connection.getResponseCode(), "Invalid HTTP response code");
+        expectedHeaders.forEach((responseHeader, value) -> {
+            assertEquals(value, connection.getHeaderField(responseHeader),
+                            "Unexpected value for " + responseHeader + " header");
+        });
+    }
+
+    public static void printResponseHeaders(HttpURLConnection connection,
+                    String label) {
+        System.out.println("--- " + label + " ---");
+        Map<String, java.util.List<String>> map = connection.getHeaderFields();
+        for (Entry<String, java.util.List<String>> entry : map.entrySet()) {
+            System.out.println("Header " + entry.getKey() + " = " + entry.getValue());
+        }
+        System.out.println();
+    }
+
+}
 ```
+
+
+
+The ***testPreflightCorsRequest*** test simulates a client sending a preflight CORS request. It first sends the request to the ***/configurations/preflight*** endpoint, and then it checks for a valid response and expected headers. Lastly, it prints the response headers for you to inspect.
+
+The request is an ***OPTIONS*** HTTP request with the following headers:
+
+| *Request Header* | *Request Value*
+| ---| ---
+| Origin | The value is set to ***anywebsiteyoulike.com***. Indicates that the request originates from ***anywebsiteyoulike.com***.
+| Access-Control-Request-Method | The value is set to ***DELETE***. Indicates that the HTTP DELETE method will be used in the actual request.
+| Access-Control-Request-Headers | The value is set to ***MyOwnHeader2***. Indicates the header ***MyOwnHeader2*** will be used in the actual request.
+
+Expect the following response headers and values if the preflight CORS request is successful, and the Liberty instance is correctly configured:
+
+| *Response Header* | *Response Value*
+| ---| ---
+| Access-Control-Max-Age | The expected value is ***10***. Indicates that the preflight request can be cached within ***10*** seconds.
+| Access-Control-Allow-Origin | The expected value is ***anywebsiteyoulike.com***. Indicates whether a resource can be shared based on the returning value of the Origin request header ***anywebsiteyoulike.com***.
+| Access-Control-Allow-Methods | The expected value is ***OPTIONS, DELETE***. Indicates that HTTP OPTIONS and DELETE methods can be used in the actual request.
+| Access-Control-Allow-Credentials | The expected value is ***true***. Indicates that the user credentials can be included in the request.
+| Access-Control-Allow-Headers | The expected value is ***MyOwnHeader1, MyOwnHeader2***. Indicates that the header ***MyOwnHeader1*** and ***MyOwnHeader2*** are safe to expose.
+
+The ***Access-Control-Allow-Origin*** header has a value of ***anywebsiteyoulike.com*** because the Liberty is configured to allow all origins, and the request came with an origin of ***anywebsiteyoulike.com***.
+
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+
+If the ***testPreflightCorsRequest*** test passes, the response headers with their values from the endpoint are printed. The ***/configurations/preflight*** endpoint now allows preflight CORS requests.
+
+Response headers with their values from the endpoint:
+```
+--- Preflight CORS Request ---
+Header null = [HTTP/1.1 200 OK]
+Header Access-Control-Allow-Origin = [anywebsiteyoulike.com]
+Header Access-Control-Allow-Methods = [OPTIONS, DELETE]
+Header Access-Control-Allow-Credentials = [true]
+Header Content-Length = [0]
+Header Access-Control-Max-Age = [10]
+Header Date = [Thu, 21 Mar 2019 18:21:13 GMT]
+Header Content-Language = [en-CA]
+Header Access-Control-Allow-Headers = [MyOwnHeader1, MyOwnHeader2]
+Header X-Powered-By = [Servlet/4.0]
+```
+
+You can modify the Liberty configuration and the test code to experiment with the various CORS configuration attributes.
+
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
+
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You have just modified an application to make asynchronous HTTP requests using Open Liberty and MicroProfile Rest Client.
+You enabled CORS support in Open Liberty. You added two different CORS configurations to allow two kinds of CORS requests in the Liberty **server.xml** configuration file.
+
 
 
 
@@ -547,31 +465,31 @@ You have just modified an application to make asynchronous HTTP requests using O
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-microprofile-rest-client-async*** project by running the following commands:
+Delete the ***guide-cors*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-microprofile-rest-client-async
+rm -fr guide-cors
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20RESTful%20services%20asynchronously%20with%20template%20interfaces&guide-id=cloud-hosted-guide-microprofile-rest-client-async)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Enabling%20Cross-Origin%20Resource%20Sharing%20(CORS)&guide-id=cloud-hosted-guide-cors)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-rest-client-async/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-rest-client-async/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-cors/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-cors/pulls)
 
 
 
 ### Where to next?
 
-* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
-* [Consuming RESTful services using the reactive JAX-RS client](https://openliberty.io/guides/reactive-rest-client.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
 
 
 ### Log out of the session
