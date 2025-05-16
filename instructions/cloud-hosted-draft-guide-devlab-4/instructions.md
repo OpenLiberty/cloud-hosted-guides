@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Enabling distributed tracing in microservices with OpenTelemetry and Jaeger guide!"}
+::page{title="Welcome to the Using Docker containers to develop microservices guide!"}
 
-Distributed tracing helps teams keep track of requests between microservices. MicroProfile Telemetry adopts OpenTelemetry tracing, so you can observe requests across your distributed systems.
+Learn how to use Docker containers for iterative development.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -15,20 +15,34 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 ::page{title="What you'll learn"}
 
-The complexity of microservices architecture can make it more difficult to understand how services depend on or affect each other and to identify sources of latency or inaccuracies.
+You will learn how to set up, run, and iteratively develop a simple REST application in a container with Open Liberty and Docker.
 
-One way to increase the observability of an application is by emitting traces. [OpenTelemetry](https://opentelemetry.io/) is a set of APIs, SDKs, tooling, and integrations designed to create and manage telemetry data such as traces, metrics, and logs. MicroProfile Telemetry adopts OpenTelemetry so your Java applications can benefit from both manual and automatic traces.
+Open Liberty is a lightweight open framework for building fast and efficient cloud-native Java microservices. It’s small, lightweight, and designed with modern cloud-native application development in mind. Open Liberty simplifies the development process for these applications by automating the repetitive actions associated with running applications inside containers, like rebuilding the image and stopping and starting the container. 
 
-Traces represent requests, which can contain multiple operations or spans. Each span comprises a name, time-related data, log messages, and metadata that describe what occurred during a transaction. Spans are associated with a context, which identifies the request within which the span occurred. Developers can then follow a single request between services through a potentially complex distributed system. Exporters send the data that MicroProfile Telemetry collects to Jaeger so you can visualize and monitor the generated spans.
+You'll also learn how to create and run automated tests for your application and container.
 
-The diagram shows multiple services, which is where distributed tracing is valuable. However, for simplicity, in this guide, you'll configure only the ***system*** and ***inventory*** services to use [Jaeger](https://www.jaegertracing.io/) for distributed tracing with MicroProfile Telemetry. You'll run these services in two separate JVMs made of two Open Liberty instances to demonstrate tracing in a distributed environment.
+The implementation of the REST application can be found in the ***start/src*** directory. To learn more about this application and how to build it, check out the [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) guide.
 
-![Application architecture](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/architecture_diagram.png)
+### What is Docker?
 
+Docker is a tool that you can use to deploy and run applications with containers. You can think of Docker like a virtual machine that runs various applications. However, unlike a typical virtual machine, you can run these applications simultaneously on a single system and independent of one another.
 
+Learn more about Docker on the [official Docker website](https://www.docker.com/what-docker).
 
+### What is a container?
+
+A container is a lightweight, stand-alone package that contains a piece of software that is bundled together with the entire environment that it needs to run. Containers are small compared to regular images and can run on any environment where Docker is set up. Moreover, you can run multiple containers on a single machine at the same time in isolation from each other.
+
+Learn more about containers on the [official Docker website](https://www.docker.com/what-container).
+
+### Why use a container to develop?
+
+Consider a scenario where you need to deploy your application on another environment. Your application works on your local machine, but when you try to run it on your cloud production environment, it breaks. You do some debugging and discover that you built your application with Java 8, but this cloud production environment has only Java 11 installed. Although this issue is generally easy to fix, you don't want your application to be missing dozens of version-specific dependencies. You can develop your application in this cloud environment, but that requires you to rebuild and repackage your application every time you update your code and wish to test it.
+
+To avoid this kind of problem, you can instead choose to develop your application in a container locally, bundled together with the entire environment that it needs to run. By doing this, you know that at any point in your iterative development process, the application can run inside that container. This helps avoid any unpleasant surprises when you go to test or deploy your application down the road. Containers run quickly and do not have a major impact on the speed of your iterative development.
 
 ::page{title="Getting started"}
 
@@ -41,11 +55,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-telemetry-jaeger.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-docker.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-microprofile-telemetry-jaeger.git
-cd guide-microprofile-telemetry-jaeger
+git clone https://github.com/openliberty/guide-docker.git
+cd guide-docker
 ```
 
 
@@ -53,108 +67,102 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-### Try what you'll build
-
-Run the following `docker` command to start the Jaeger server:
+In this IBM Cloud environment, you need to change the user home to ***/home/project*** by running the following command:
 ```bash
-docker run -d --name jaeger \
-  -e COLLECTOR_ZIPKIN_HOST_PORT=:9411 \
-  -e COLLECTOR_OTLP_ENABLED=true \
-  -p 6831:6831/udp \
-  -p 6832:6832/udp \
-  -p 5778:5778 \
-  -p 16686:16686 \
-  -p 4317:4317 \
-  -p 4318:4318 \
-  -p 14250:14250 \
-  -p 14268:14268 \
-  -p 14269:14269 \
-  -p 9411:9411 \
-  jaegertracing/all-in-one:1.46
+sudo usermod -d /home/project theia
 ```
 
-You can find information about the Jaeger server and instructions for starting the all-in-one executable file in the [Jaeger documentation](https://www.jaegertracing.io/docs/1.46/getting-started/#all-in-one).
 
-Before you proceed, make sure that your Jaeger server is up and running. Click the following button to visit the Jaeger service:
+::page{title="Creating the Dockerfile"}
 
-::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
+The first step to running your application inside of a Docker container is creating a Dockerfile. A Dockerfile is a collection of instructions for building a Docker image that can then be run as a container. Every Dockerfile begins with a parent or base image on top of which various commands are run. For example, you can start your image from scratch and run commands that download and install Java, or you can start from an image that already contains a Java installation.
 
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-
-
-
-Navigate to the ***finish*** directory. Run the following Maven goal to build the ***system*** service and deploy it to Open Liberty:
+Navigate to the ***start*** directory to begin.
 ```bash
-cd /home/project/guide-microprofile-telemetry-jaeger/finish
-./mvnw -pl system liberty:run
+cd /home/project/guide-docker/start
 ```
 
-Open another command-line session and navigate to the ***finish*** directory again. Run the following Maven goal to build the ***inventory*** service and deploy it to Open Liberty:
+Create the ***Dockerfile*** in the ***start*** directory.
+
+> Run the following touch command in your terminal
 ```bash
-cd /home/project/guide-microprofile-telemetry-jaeger/finish
-./mvnw -pl inventory liberty:run
+touch /home/project/guide-docker/start/Dockerfile
 ```
 
 
-After you see the following message in both command-line sessions, both of your services are ready:
+> Then, to open the Dockerfile file in your IDE, select
+> ***File*** > ***Open*** > guide-docker/start/Dockerfile, or click the following button
+
+::openFile{path="/home/project/guide-docker/start/Dockerfile"}
+
+
 
 ```
-The defaultServer server is ready to run a smarter planet.
+FROM icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi
+
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
+
+LABEL \
+  org.opencontainers.image.authors="Your Name" \
+  org.opencontainers.image.vendor="IBM" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-docker" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="system" \
+  version="$VERSION-$REVISION" \
+  summary="The system microservice from the Docker Guide" \
+  description="This image contains the system microservice running with the Open Liberty runtime."
+
+USER root
+
+COPY --chown=1001:0 src/main/liberty/config/server.xml /config/
+RUN features.sh
+COPY --chown=1001:0 target/*.war /config/apps/
+RUN configure.sh
+USER 1001
 ```
 
 
-Open another command-line session and run the following curl command from the terminal:
-```bash
-curl -s http://localhost:9081/inventory/systems/localhost | jq
-```
-
-When you visit this endpoint, you make two GET HTTP requests, one to the ***system*** service and another to the ***inventory*** service. Both of these requests are configured to be traced, so a new trace is recorded in Jaeger. To view the traces, click the following button to visit the Jaeger service:
-
-::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
-
-You can view the traces for the ***system*** or ***inventory*** services under the **Search** tab. If you see only the **jaeger-query** option in the drop-down menu, wait a little longer and refresh the page to see the application services.
-
-Select the services in the **Select A Service** menu and click the **Find Traces** button at the end of the section. You will see the following result:
-
-![Get traces for the inventory service](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_service_spans.png)
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
+The ***FROM*** instruction initializes a new build stage and indicates the parent image from which your image is built. If you don't need a parent image, then use ***FROM scratch***, which makes your image a base image. In this case, you’re using the ***icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi*** image as your parent image, which comes with the latest Open Liberty runtime.
 
-The trace has five spans, four from the ***inventory*** service and one from the ***system*** service. Click the trace to view its details. Under **Service & Operation**, you see the spans in this trace. You can inspect each span by clicking it to reveal more detailed information, such as the times that a request was received and a response was sent.
+The ***COPY*** instructions are structured as ***COPY*** ***[--chown=\<user\>:\<group\>]*** ***\<source\>*** ***\<destination\>***. They copy local files into the specified destination within your Docker image. In this case, the Liberty configuration file that is located at ***src/main/liberty/config/server.xml*** is copied to the ***/config/*** destination directory.
 
-![Inventory details spans](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_details_spans.png)
+The ***RUN*** instructions execute commands in a new layer on top of the current image and commit the results. In this case, they run the ***features.sh*** and ***configure.sh*** scripts to install the required features and finalize the server configuration for your Open Liberty application.
+
+The ***features.sh*** script adds the requested XML snippets to enable Liberty features by using [featureUtility](https://openliberty.io/docs/latest/reference/command/featureUtility-commands.html). Because you're starting with the ***kernel-slim*** image, which provides only the bare minimum server, the script reads your ***server.xml*** file to identify the required features and installs them into your Docker image.
+
+The ***configure.sh*** script adds the requested server configurations, applies any interim fixes, and populates caches to optimize the runtime.
+
+### Writing a .dockerignore file
 
 
+When Docker runs a build, it sends all of the files and directories that are located in the same directory as the Dockerfile to its build context, making them available for use in instructions like ***ADD*** and ***COPY***. If there are files or directories you wish to exclude from the build context, you can add them to a ***.dockerignore*** file. By adding files that aren't nessecary for building your image to the ***.dockerignore*** file, you can decrease the image's size and speed up the building process. You may also want to exclude files that contain sensitive information, such as a ***.git*** folder or private keys, from the build context. 
 
-After you’re finished reviewing the application, stop the Open Liberty instances by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***inventory*** services. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
+A ***.dockerignore*** file is available to you in the ***start*** directory. This file includes the ***pom.xml*** file and some system files.
 
 
-```bash
-cd /home/project/guide-microprofile-telemetry-jaeger/finish
-./mvnw -pl system liberty:stop
-./mvnw -pl inventory liberty:stop
-```
+::page{title="Launching Open Liberty in dev mode"}
 
-::page{title="Building the application "}
+The Open Liberty Maven plug-in includes a ***devc*** goal that builds a Docker image, mounts the required directories, binds the required ports, and then runs the application inside of a container. This [dev mode](https://openliberty.io/docs/latest/development-mode.html), also listens for any changes in the application source code or configuration and rebuilds the image and restarts the container as necessary.
 
-You need to start the services to see basic traces appear in Jaeger.
-
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
-
-Open a command-line session and navigate to the ***start*** directory. Run the following Maven goal to start the ***system*** service in dev mode:
-
+In this IBM Cloud environment, you need to pre-create the ***logs*** directory by running the following commands:
 
 ```bash
-cd /home/project/guide-microprofile-telemetry-jaeger/start
-./mvnw -pl system liberty:dev
+mkdir -p /home/project/guide-docker/start/target/liberty/wlp/usr/servers/defaultServer/logs
+chmod 777 /home/project/guide-docker/start/target/liberty/wlp/usr/servers/defaultServer/logs
 ```
 
-Open a command-line session and navigate to the ***start*** directory again. Run the following Maven goal to start the ***inventory*** service in dev mode:
 
+Build and run the container by running the ***devc*** goal from the ***start*** directory:
 
 ```bash
-cd /home/project/guide-microprofile-telemetry-jaeger/start
-./mvnw -pl inventory liberty:dev
+./mvnw liberty:devc
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
@@ -164,534 +172,205 @@ After you see the following message, your Liberty instance is ready in dev mode:
 *    Liberty is running in dev mode.
 ```
 
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+Open another command-line session and run the following command to make sure that your container is running and didn’t crash:
+
+```bash
+docker ps 
+```
+
+You should see something similar to the following output:
+
+```
+CONTAINER ID        IMAGE                   COMMAND                  CREATED             STATUS              PORTS                                                                    NAMES
+ee2daf0b33e1        guide-docker-dev-mode   "/opt/ol/helpers/run…"   2 minutes ago       Up 2 minutes        0.0.0.0:7777->7777/tcp, 0.0.0.0:9080->9080/tcp, 0.0.0.0:9443->9443/tcp   liberty-dev
+```
 
 
-When the runtime instances start, you can find the ***system*** service by running the following curl command:
+To view a full list of all available containers, you can run the ***docker ps -a*** command.
+
+
+If your container runs without problems, run the following ***curl*** command to get a JSON response that contains the system properties of the JVM in your container.
+
 ```bash
 curl -s http://localhost:9080/system/properties | jq
 ```
 
-and the ***inventory*** service by running the following curl command:
+
+::page{title="Updating the application while the container is running"}
+
+With your container running, make the following update to the source code:
+
+Update the ***PropertiesResource*** class.
+
+> To open the PropertiesResource.java file in your IDE, select
+> ***File*** > ***Open*** > guide-docker/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java, or click the following button
+
+::openFile{path="/home/project/guide-docker/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java"}
+
+
+
+```java
+package io.openliberty.guides.rest;
+
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Produces;
+
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.json.Json;
+
+@Path("properties-new")
+public class PropertiesResource {
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public JsonObject getProperties() {
+
+        JsonObjectBuilder builder = Json.createObjectBuilder();
+
+        System.getProperties()
+              .entrySet()
+              .stream()
+              .forEach(entry -> builder.add((String) entry.getKey(),
+                                            (String) entry.getValue()));
+
+       return builder.build();
+    }
+}
+```
+
+
+
+Change the endpoint of your application from ***properties*** to ***properties-new*** by changing the ***@Path*** annotation to ***"properties-new"***.
+
+
+After you make the file changes, Open Liberty automatically updates the application. To see the changes reflected in the application, run the following command in a terminal:
+
 ```bash
-curl -s http://localhost:9081/inventory/systems | jq
-```
-
-::page{title="Enabling Telemetry implementation "}
-
-Navigate to the ***start*** directory to begin.
-
-MicroProfile Telemetry allows you to observe traces without modifying the source code in your Jakarta RESTful applications. You can enable the ***mpTelemetry*** feature in the ***server.xml*** configuration file.
-
-Replace the ***server.xml*** file of the system service:
-
-> To open the server.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-telemetry-jaeger/start/system/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/system/src/main/liberty/config/server.xml"}
-
-
-
-```xml
-<server description="system service">
-
-    <featureManager>
-        <platform>jakartaee-10.0</platform>
-        <platform>microprofile-7.0</platform>
-        <feature>cdi</feature>
-        <feature>jsonb</feature>
-        <feature>jsonp</feature>
-        <feature>restfulWS</feature>
-        <feature>mpTelemetry</feature>
-    </featureManager>
-
-    <httpEndpoint httpPort="${http.port}"
-                  httpsPort="${https.port}"
-                  id="defaultHttpEndpoint" host="*" />
-
-    <webApplication location="guide-microprofile-telemetry-jaeger-system.war"
-                    contextRoot="/" />
-
-</server>
+curl -s http://localhost:9080/system/properties-new | jq
 ```
 
 
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+::page{title="Testing the container"}
 
 
-The ***mpTelemetry*** feature is now enabled in the ***server.xml*** of the ***system*** service.
+You can test this service manually by starting a Liberty instance and going to the ***http://localhost:9080/system/properties-new*** URL.
+However, automated tests are a much better approach because they trigger a failure if a change introduces a bug. JUnit and the JAX-RS Client API provide a simple environment to test the application. You can write tests for the individual units of code outside of a running Liberty instance, or you can write them to call the instance directly. In this example, you will create a test that calls the instance directly.
 
-Replace the ***server.xml*** file of the inventory service:
-
-> To open the server.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main/liberty/config/server.xml"}
-
-
-
-```xml
-<server description="inventory service">
-
-    <featureManager>
-        <platform>jakartaee-10.0</platform>
-        <platform>microprofile-7.0</platform>
-        <feature>cdi</feature>
-        <feature>jsonb</feature>
-        <feature>jsonp</feature>
-        <feature>restfulWS</feature>
-        <feature>mpConfig</feature>
-        <feature>mpTelemetry</feature>
-    </featureManager>
-
-    <httpEndpoint httpPort="${http.port}"
-                  httpsPort="${https.port}"
-                  id="defaultHttpEndpoint" host="*" />
-
-    <webApplication location="guide-microprofile-telemetry-jaeger-inventory.war"
-                    contextRoot="/">
-    </webApplication>
-
-</server>
-```
-
-
-
-The ***mpTelemetry*** feature is now enabled in the ***server.xml*** of the ***inventory*** service.
-
-
-By default, MicroProfile Telemetry tracing is off. To enable any tracing aspects, specify the ***otel*** properties in the MicroProfile configuration file. 
-
-Create the ***microprofile-config.properties*** file of the system service:
+Create the ***EndpointIT*** test class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-microprofile-telemetry-jaeger/start/system/src/main/resources/META-INF/microprofile-config.properties
+touch /home/project/guide-docker/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
 ```
 
 
-> Then, to open the microprofile-config.properties file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-telemetry-jaeger/start/system/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+> Then, to open the EndpointIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-docker/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/system/src/main/resources/META-INF/microprofile-config.properties"}
-
-
-
-```
-otel.service.name=system
-otel.sdk.disabled=false
-otel.metrics.exporter=none
-otel.logs.exporter=none
-```
-
-
-
-The MicroProfile properties file sets the ***otel.service.name*** property with the ***system*** service name, sets the ***otel.sdk.disabled*** property to ***false*** to enable tracing, sets the ***otel.metrics.exporter*** property to ***none*** to disable metrics, and sets the ***otel.logs.exporter*** property to ***none*** to disable exporting logs.
-
-
-Replace the ***microprofile-config.properties*** file of the inventory service:
-
-> To open the microprofile-config.properties file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/resources/META-INF/microprofile-config.properties, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main/resources/META-INF/microprofile-config.properties"}
-
-
-
-```
-io.openliberty.guides.inventory.client.SystemClient/mp-rest/url=http://localhost:9080/system
-otel.service.name=inventory
-otel.sdk.disabled=false
-otel.metrics.exporter=none
-otel.logs.exporter=none
-```
-
-
-
-Similarly, specify the ***otel*** properties for the ***inventory*** service.
-
-For more information about these and other Telemetry properties, see the [MicroProfile Config properties for MicroProfile Telemetry](https://openliberty.io/docs/latest/reference/microprofile-config-properties.html#telemetry) documentation.
-
-
-To run the ***system*** and ***inventory*** services, run the following curl command:
-```bash
-curl -s http://localhost:9081/inventory/systems/localhost | jq
-```
-
-To view the traces, click the following button to visit the Jaeger service:
-
-::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
-
-You can view the traces for the ***system*** or ***inventory*** services under the **Search** tab. Select the services in the **Select A Service** menu and click the **Find Traces** button at the end of the section. You'll see the result as:
-
-![Default spans](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/default_spans.png)
-
-
-
-Verify that there are two spans from the ***inventory*** service and one span from the ***system*** service. Click the trace to view its details.
-
-![Details default spans](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/details_default_spans.png)
-
-
-::page{title="Enabling explicit distributed tracing"}
-
-Automatic instrumentation only instruments Jakarta RESTful web services and MicroProfile REST clients. To get further spans on other operations, such as database calls, you can add manual instrumentation to the source code.
-
-### Enabling OpenTelemetry APIs
-
-The MicroProfile Telemetry feature has been enabled to trace all REST endpoints by default in the previous section. To further control and customize traces, use the ***@WithSpan*** annotation to enable particular methods. You can also inject a ***Tracer*** object to create and customize spans.
-
-Replace the ***server.xml*** file of the inventory service:
-
-> To open the server.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main/liberty/config/server.xml"}
-
-
-
-```xml
-<server description="inventory service">
-
-    <featureManager>
-        <platform>jakartaee-10.0</platform>
-        <platform>microprofile-7.0</platform>
-        <feature>cdi</feature>
-        <feature>jsonb</feature>
-        <feature>jsonp</feature>
-        <feature>restfulWS</feature>
-        <feature>mpConfig</feature>
-        <feature>mpTelemetry</feature>
-    </featureManager>
-
-    <httpEndpoint httpPort="${http.port}"
-                  httpsPort="${https.port}"
-                  id="defaultHttpEndpoint" host="*" />
-
-    <webApplication location="guide-microprofile-telemetry-jaeger-inventory.war"
-                    contextRoot="/">
-        <!-- enable visibility to third party apis -->
-        <classloader apiTypeVisibility="+third-party"/>
-    </webApplication>
-
-</server>
-```
-
-
-
-The OpenTelemetry APIs are exposed as third-party APIs in Open Liberty. To add the visibility of OpenTelemetry APIs to the application, add ***third-party*** to the types of API packages that this class loader supports. Instead of explicitly configuring a list of API packages that includes ***third-party***, set the ***+third-party*** value to the ***apiTypeVisibility*** attribute in the ***classLoader*** configuration. This configuration adds ***third-party*** to the default list of API package types that are supported.
-
-
-### Enabling tracing in Jakarta CDI beans
-
-You can trace your Jakarta CDI beans by annotating their methods with a ***@WithSpan*** annotation.
-
-Replace the ***InventoryManager*** class:
-
-> To open the InventoryManager.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
+::openFile{path="/home/project/guide-docker/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java"}
 
 
 
 ```java
+package it.io.openliberty.guides.rest;
 
-package io.openliberty.guides.inventory;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.ArrayList;
-import java.util.Properties;
+import org.junit.jupiter.api.Test;
 
-import io.opentelemetry.instrumentation.annotations.WithSpan;
-import io.opentelemetry.instrumentation.annotations.SpanAttribute;
+import jakarta.json.JsonObject;
 
-import io.openliberty.guides.inventory.client.SystemClient;
-import io.openliberty.guides.inventory.model.InventoryList;
-import io.openliberty.guides.inventory.model.SystemData;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import java.util.List;
-import java.util.Collections;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
-@ApplicationScoped
-public class InventoryManager {
-
-    @Inject
-    @ConfigProperty(name = "system.http.port")
-    private int SYSTEM_PORT;
-
-    private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
-    private SystemClient systemClient = new SystemClient();
-
-    public Properties get(String hostname) {
-        systemClient.init(hostname, SYSTEM_PORT);
-        Properties properties = systemClient.getProperties();
-        return properties;
-    }
-
-    @WithSpan
-    public InventoryList list() {
-        return new InventoryList(systems);
-    }
-
-    @WithSpan("Inventory Manager Add")
-    public void add(@SpanAttribute("hostname") String host,
-                    Properties systemProps) {
-        Properties props = new Properties();
-        props.setProperty("os.name", systemProps.getProperty("os.name"));
-        props.setProperty("user.name", systemProps.getProperty("user.name"));
-        SystemData system = new SystemData(host, props);
-        if (!systems.contains(system)) {
-            systems.add(system);
-        }
-    }
-
-    int clear() {
-        int propertiesClearedCount = systems.size();
-        systems.clear();
-        return propertiesClearedCount;
-    }
-}
-
-```
-
-
-
-The ***list()*** and ***add()*** methods are annotated with the ***@WithSpan*** annotation, which can accept an optional parameter that functions as the span name. In this example, the default span name assigned to the ***list()*** method is automatically generated through the instrumentation. You can also specify a custom span name. For example, ***Inventory Manager Add*** is specified as the span name for the ***add()*** method. The OpenTelemetry instrumentation provides a new span for each method. You can now collect and trace the spans across different services. 
-
-Optionally, you can include parameters and their values in the span by using the ***@SpanAttribute*** annotation. For example, the ***@SpanAttribute*** annotation specifies ***hostname*** as the attribute name for the ***host*** parameter , which helps trace the parameter within the ***add*** span.
-
-To learn more about how to use OpenTelemetry annotations to instrument code, see the [OpenTelemetry Annotations](https://opentelemetry.io/docs/instrumentation/java/automatic/annotations/) documentation.
-
-
-
-Now, you can check out the traces that are generated by the ***@WithSpan*** annotation. Run the following curl command:
-```bash
-curl -s http://localhost:9081/inventory/systems | jq
-```
-
-and click the following button to visit the Jaeger service:
-
-::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
-
-Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result as:
-
-![Inventory Manager span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_manager_span.png)
-
-
-
-Verify that there are two spans from the ***inventory*** service. Click the trace to view its details. You'll see the ***InventoryManager.list*** span that is created by the ***@WithSpan*** annotation.
-
-![Inventory Manager list span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_manager_list_span.png)
-
-
-
-To check out the information generated by the ***@SpanAttribute*** annotation, run the following curl command:
-```bash
-curl -s http://localhost:9081/inventory/systems/localhost | jq
-```
-
-Click the following button to visit the Jaeger service:
-
-::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
-
-
-Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You will see the following result:
-
-![Get traces for the inventory service](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_service_4_spans.png)
-
-
-
-Verify that there are three spans from the ***inventory*** service and one span from the ***system*** service. Click the trace to view its details.
-
-![Inventory details spans](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_details_4_spans.png)
-
-
-
-Click the ***Inventory Manager Add*** span and its ***Tags***. You can see the ***hostname*** tag with the ***localhost*** value that is created by the ***@SpanAttribute*** annotation.
-
-![Inventory Manager add span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_manager_add_span.png)
-
-
-
-### Injecting a custom Tracer object
-
-The MicroProfile Telemetry specification makes the underlying OpenTelemetry Tracer instance available. The configured Tracer is accessed by injecting it into a bean. You can use it to instrument your code to create traces.
-
-Replace the ***InventoryResource*** class:
-
-> To open the InventoryResource.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java"}
-
-
-
-```java
-package io.openliberty.guides.inventory;
-
-import java.util.Properties;
-
-import io.opentelemetry.api.trace.Tracer;
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.context.Scope;
-
-import io.openliberty.guides.inventory.model.InventoryList;
-import jakarta.enterprise.context.RequestScoped;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.Response;
 
-@RequestScoped
-@Path("/systems")
-public class InventoryResource {
 
-    @Inject
-    private InventoryManager manager;
+public class EndpointIT {
 
-    @Inject
-    private Tracer tracer;
+    @Test
+    public void testGetProperties() {
+        String port = System.getProperty("liberty.test.port");
+        String url = "http://localhost:" + port + "/";
 
-    @GET
-    @Path("/{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getPropertiesForHost(@PathParam("hostname") String hostname) {
-        Span getPropertiesSpan = tracer.spanBuilder("GettingProperties").startSpan();
-        Properties props = null;
-        try (Scope scope = getPropertiesSpan.makeCurrent()) {
-            props = manager.get(hostname);
-            if (props == null) {
-                getPropertiesSpan.addEvent("Cannot get properties");
-                return Response.status(Response.Status.NOT_FOUND)
-                         .entity("{ \"error\" : \"Unknown hostname or the system "
-                               + "service may not be running on " + hostname + "\" }")
-                         .build();
-            }
-            getPropertiesSpan.addEvent("Received properties");
-            manager.add(hostname, props);
-        } finally {
-            getPropertiesSpan.end();
-        }
-        return Response.ok(props).build();
+        Client client = ClientBuilder.newClient();
 
-    }
+        WebTarget target = client.target(url + "system/properties-new");
+        Response response = target.request().get();
+        JsonObject obj = response.readEntity(JsonObject.class);
 
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public InventoryList listContents() {
-        return manager.list();
-    }
+        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
 
-    @DELETE
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response clearContents() {
-        int cleared = manager.clear();
+        assertEquals("/opt/ol/wlp/output/defaultServer/",
+                     obj.getString("server.output.dir"),
+                     "The system property for the server output directory should match "
+                     + "the Open Liberty container image.");
 
-        if (cleared == 0) {
-            return Response.status(Response.Status.NOT_MODIFIED)
-                           .build();
-        }
-        return Response.status(Response.Status.OK)
-                       .build();
+        response.close();
     }
 }
-
 ```
 
 
 
-To access the Tracer, the ***@Inject*** annotation from the Contexts and Dependency Injections API injects the Tracer into a bean. 
-
-Before the ***InventoryManager*** calls the ***system*** service, it creates and starts a span called the ***GettingProperties*** by using the ***spanBuilder()*** and ***startSpan()*** Tracer APIs.
-
-When you start a span, you must also end it by calling ***end()*** on the span. If you don't end a span, it won't be recorded at all and won't show up in Jaeger. This code ensures that ***end()*** is always called by including it in a ***finally*** block.
-
-After you start the span, make it current with the ***makeCurrent()*** call. Making a span current means that any new spans created in the same thread, either automatically by Open Liberty or manually by calling the API, will use this span as their parent span.
-
-The ***makeCurrent()*** call returns a ***Scope***. Make sure to always close the ***Scope***, which stops the span from being current and makes the previous span current again. Use a ***try-with-resources*** block, which automatically closes the ***Scope*** at the end of the block.
-
-Use the ***addEvent()*** Span API to create an event when the properties are received and an event when it fails to get the properties from the ***system*** service. Use the ***end()*** Span API to mark the ***GettingProperties*** span as completed.
-
-
-
-To check out the traces that contain the ***GettingProperties*** span, run the following curl command:
-```bash
-curl -s http://localhost:9081/inventory/systems/localhost | jq
-```
-
-Click the following button to visit the Jaeger service:
-
-::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
-
-Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result:
-
-![Get traces for the inventory service](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_service_spans.png)
-
-
-
-Verify that there are four spans from the ***inventory*** service and one span from the ***system*** service. Click the trace to view its details. You'll see the ***GettingProperties*** span.
-
-![Inventory details spans](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_details_spans.png)
-
-
-
-To check out the event adding to the ***GettingProperties*** span, run the following curl command:
-```bash
-curl -s http://localhost:9081/inventory/systems/unknown | jq
-```
-
-Click the following button to visit the Jaeger service:
-
-::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
-
-Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You will see the following result:
-
-![Get traces for unknown hostname](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_service_unknown_spans.png)
-
-
-
-There are two spans from the ***inventory*** service. Click the trace to view its details. You'll see the ***GettingProperties*** span. Click the ***GettingProperties*** span and its ***Logs***. You can see the ***Cannot get properties*** message.
-
-![Logs at GettingProperties span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/logs_at_gettingProperties.png)
-
-
-
-To learn more about how to use OpenTelemetry APIs to instrument code, see the [OpenTelemetry Manual Instrumentation](https://opentelemetry.io/docs/instrumentation/java/manual/) documentation.
-
-
-::page{title="Testing the application "}
-
-Manually verify the traces by inspecting them on the Jaeger server. You will find some tests included to test the basic functionality of the services. If any of the tests fail, you might have introduced a bug into the code.
+This test makes a request to the ***/system/properties-new*** endpoint and checks to make sure that the response has a valid status code, and that the information in the response is correct. 
 
 ### Running the tests
 
-Since you started Open Liberty in dev mode, run the tests for the ***system*** and ***inventory*** services by pressing the ***enter/return*** key in the command-line sessions where you started the services.
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
 
-When you are done checking out the services, exit dev mode by pressing `Ctrl+C` in the shell sessions where you ran the ***system*** and ***inventory*** services.
+You will see the following output:
 
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.rest.EndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.884 sec - in it.io.openliberty.guides.rest.EndpointIT
 
-Finally, stop the ***Jaeger*** service that you started in the previous step.
-```bash
-docker stop jaeger
-docker rm jaeger
+Results :
+
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 ```
 
+When you are finished, press `Ctrl+C` in the session that the dev mode was
+started from to stop and remove the container.
+
+
+::page{title="Starting dev mode with run options"}
+
+Another useful feature of dev mode with a container is the ability to pass additional options to the ***docker run*** command. You can do this by adding the ***dockerRunOpts*** tag to the ***pom.xml*** file under the ***configuration*** tag of the Liberty Maven Plugin. Here is an example of an environment variable being passed in:
+
+```
+<groupId>io.openliberty.tools</groupId>
+<artifactId>liberty-maven-plugin</artifactId>
+<version>3.11.2</version>
+<configuration>
+    <dockerRunOpts>-e ENV_VAR=exampleValue</dockerRunOpts>
+</configuration>
+```
+
+If the Dockerfile isn't located in the directory that the ***devc*** goal is being run from, you can add the ***dockerfile*** tag to specify the location. Using this parameter sets the context for building the Docker image to the directory that contains this file.
+
+Additionally, both of these options can be passed from the command line when running the ***devc*** goal by adding ***-D*** as such:
+
+```bash
+./mvnw liberty:devc \
+-DdockerRunOpts="-e ENV_VAR=exampleValue" \
+-Ddockerfile="./path/to/file"
+```
+
+To learn more about dev mode with a container and its different features, check out the [Documentation](http://github.com/OpenLiberty/ci.maven/blob/main/docs/dev.md#devc-container-mode).
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just used MicroProfile Telemetry in Open Liberty to customize how and which traces are delivered to Jaeger.
+You just iteratively developed a simple REST application in a container with Open Liberty and Docker.
 
-
-Try out one of the related MicroProfile guides. These guides demonstrate more technologies that you can learn to expand on what you built in this guide.
 
 
 ### Clean up your environment
@@ -699,32 +378,31 @@ Try out one of the related MicroProfile guides. These guides demonstrate more te
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-microprofile-telemetry-jaeger*** project by running the following commands:
+Delete the ***guide-docker*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-microprofile-telemetry-jaeger
+rm -fr guide-docker
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Enabling%20distributed%20tracing%20in%20microservices%20with%20OpenTelemetry%20and%20Jaeger&guide-id=cloud-hosted-guide-microprofile-telemetry-jaeger)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Using%20Docker%20containers%20to%20develop%20microservices&guide-id=cloud-hosted-guide-docker)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-telemetry-jaeger/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-telemetry-jaeger/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-docker/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-docker/pulls)
 
 
 
 ### Where to next?
 
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-* [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html)
-* [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Containerizing microservices](https://openliberty.io/guides/containerize.html)
 
 
 ### Log out of the session
