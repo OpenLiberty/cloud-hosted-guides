@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Enabling Cross-Origin Resource Sharing (CORS) guide!"}
+::page{title="Welcome to the Securing microservices with JSON Web Tokens guide!"}
 
-Learn how to enable Cross-Origin Resource Sharing (CORS) in Open Liberty without writing Java code.
+You'll explore how to control user and role access to microservices with MicroProfile JSON Web Token (MicroProfile JWT).
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -17,38 +17,24 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You will learn how to add two Liberty configurations to enable CORS. Next, you will write and run tests to validate that the CORS configurations work. These tests send two different CORS requests to a REST service that has two different endpoints.
+You will add token-based authentication mechanisms to authenticate, authorize, and verify users by implementing MicroProfile JWT in the ***system*** microservice.
 
-### CORS and its purpose
+A JSON Web Token (JWT) is a self-contained token that is designed to securely transmit information as a JSON object. The information in this JSON object is digitally signed and can be trusted and verified by the recipient.
 
-Cross-Origin Resource Sharing (CORS) is a W3C specification and mechanism that you can use to request restricted resources from a domain outside the current domain. In other words, CORS is a technique for consuming an API served from an origin different than yours.
+For microservices, a token-based authentication mechanism offers a lightweight way for security controls and security tokens to propagate user identities across different services. JSON Web Token is becoming the most common token format because it follows well-defined and known standards.
 
-CORS is useful for requesting different kinds of data from websites that aren't your own. These types of data might include images, videos, scripts, stylesheets, iFrames, or web fonts.
+MicroProfile JWT standards define the required format of JWT for authentication and authorization. The standards also map JWT claims to various Jakarta EE container APIs and make the set of claims available through getter methods.
 
-However, you cannot request resources from another website domain without proper permission. In JavaScript, cross-origin requests with an ***XMLHttpRequest*** API and Ajax cannot happen unless CORS is enabled on the server that receives the request. Otherwise, same-origin security policy prevents the requests. For example, a web page that is served from the ***http://aboutcors.com*** server sends a request to get data to the ***http://openliberty.io*** server. Because of security concerns, browsers block the server response unless the server adds HTTP response headers to allow the web page to consume the data.
+In this guide, the application uses JWTs to authenticate a user, allowing them to make authorized requests to a secure backend service.
 
-Different ports and different protocols also trigger CORS. For example, the ***http://abc.xyz:1234*** domain is considered to be different from the ***https://abc.xyz:4321*** domain.
+You will be working with two services, a ***frontend*** service and a secure ***system*** backend service. The ***frontend*** service logs a user in, builds a JWT, and makes authorized requests to the secure ***system*** service for JVM system properties. The following diagram depicts the application that is used in this guide:
 
-Open Liberty has built-in support for CORS that gives you an easy and powerful way to configure the runtime to handle CORS requests without the need to write Java code.
+![JWT frontend and system services](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-jwt/prod/assets/JWT_Diagram.png)
 
-### Types of CORS requests
 
-Familiarize yourself with two kinds of CORS requests to understand the attributes that you will add in the two CORS configurations.
+The user signs in to the ***frontend*** service with a username and a password, at which point a JWT is created. The ***frontend*** service then makes requests, with the JWT included, to the ***system*** backend service. The secure ***system*** service verifies the JWT to ensure that the request came from the authorized ***frontend*** service. After the JWT is validated, the information in the claims, such as the user's role, can be trusted and used to determine which system properties the user has access to.
 
-#### Simple CORS request
-
-According to the CORS specification, an HTTP request is a simple CORS request if the request method is ***GET***, ***HEAD***, or ***POST***. The header fields are any one of the ***Accept***, ***Accept-Language***, ***Content-Language***, or ***Content-Type*** headers. The ***Content-Type*** header has a value of ***application/x-www-form-urlencoded***, ***multipart/form-data***, or ***text/plain***.
-
-When clients, such as browsers, send simple CORS requests to servers on different domains, the clients include an ***Origin*** header with the original (referring)  host name as the value. If the server allows the origin, the server includes an ***Access-Control-Allow-Origin*** header with a list of allowed origins or an asterisk (*) in the response back to the client. The asterisk indicates that all origins are allowed to access the endpoint on the server.
-
-#### Preflight CORS request
-
-A CORS request is not a simple CORS request if a client first sends a preflight CORS request before it sends the actual request. For example, the client sends a preflight request before it sends a ***DELETE*** HTTP request. To determine whether the request is safe to send, the client sends a preflight request, which is an ***OPTIONS*** HTTP request, to gather more information about the server. This preflight request has the ***Origin*** header and other headers to indicate the HTTP method and headers of the actual request to be sent after the preflight request.
-
-Once the server receives the preflight request, if the origin is allowed, the server responds with headers that indicate the HTTP methods and headers that are allowed in the actual requests. The response might include more CORS-related headers.
-
-Next, the client sends the actual request, and the server responds.
-
+To learn more about JSON Web Tokens, check out the [jwt.io website](https://jwt.io/introduction/). If you want to learn more about how JWTs can be used for user authentication and authorization, check out the Open Liberty [Single Sign-on documentation](https://openliberty.io/docs/latest/single-sign-on.html).
 
 ::page{title="Getting started"}
 
@@ -61,11 +47,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-cors.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-jwt.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-cors.git
-cd guide-cors
+git clone https://github.com/openliberty/guide-microprofile-jwt.git
+cd guide-microprofile-jwt
 ```
 
 
@@ -73,18 +59,89 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
+### Try what you'll build
+
+The ***finish*** directory contains the finished JWT security implementation for the services in the application. Try the finished application before you build your own.
+
+To try out the application, run the following commands to navigate to the ***finish*** directory and deploy the ***frontend*** service to Open Liberty:
 
 
-::page{title="Enabling CORS"}
-Navigate to the ***start*** directory to begin.
 ```bash
-cd /home/project/guide-cors/start
+cd finish
+./mvnw -pl frontend liberty:run
 ```
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+Open another command-line session and run the following commands to navigate to the ***finish*** directory and deploy the ***system*** service to Open Liberty:
+
 
 ```bash
-./mvnw liberty:dev
+cd finish
+./mvnw -pl system liberty:run
+```
+
+After you see the following message in both command-line sessions, both of your services are ready:
+
+```
+The defaultServer server is ready to run a smarter planet.
+```
+
+
+To launch the front-end web application, click the following button. From here, you can log in to the application with the form-based login.
+::startApplication{port="9090" display="external" name="Launch Application" route="/login.jsf"}
+
+Log in with one of the following usernames and its corresponding password:
+
+| *Username* | *Password* | *Role*
+| --- | --- | ---
+| bob | bobpwd | admin, user
+| alice | alicepwd | user
+| carl | carlpwd | user
+
+You're redirected to a page that displays information that the front end requested from the ***system*** service, such as the system username. If you log in as an ***admin***, you can also see the current OS. Click ***Log Out*** and log in as a ***user***. You'll see the message ***You are not authorized to access this system property*** because the ***user*** role doesn't have sufficient privileges to view current OS information. 
+
+Additionally, the ***groups*** claim of the JWT is read by the ***system*** service and requested by the front end to be displayed.
+
+
+You can try accessing these services without a JWT by going to the ***system*** endpoint. Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following curl command from the terminal in the IDE:
+```bash
+curl -k https://localhost:8443/system/properties/os
+```
+
+The response is empty because you don't have access. Access is granted if a valid JWT is sent with the request. The following error also appears in the command-line session of the ***system*** service:
+
+```
+[ERROR] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
+```
+
+When you are done with the application, stop both the ***frontend*** and ***system*** services by pressing `Ctrl+C` in the command-line sessions where you ran them. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
+
+
+```bash
+./mvnw -pl system liberty:stop
+./mvnw -pl frontend liberty:stop
+```
+
+
+::page{title="Creating the secure system service"}
+
+
+To begin, run the following command to navigate to the ***start*** directory:
+```bash
+cd /home/project/guide-microprofile-jwt/start
+```
+
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following commands to start the ***frontend*** service in dev mode:
+
+
+```bash
+./mvnw -pl frontend liberty:dev
+```
+
+Open another command-line session and run the following commands to navigate to the ***system*** directory and start the ***system*** service in dev mode:
+
+
+```bash
+./mvnw -pl system liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
@@ -94,134 +151,211 @@ After you see the following message, your Liberty instance is ready in dev mode:
 *    Liberty is running in dev mode.
 ```
 
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+The ***system*** service provides endpoints for the ***frontend*** service to use to request system properties. This service is secure and requires a valid JWT to be included in requests that are made to it. The claims in the JWT are used to determine what properties the user has access to.
 
-You will use a REST service that is already provided for you to test your CORS configurations. You can find this service in the ***src/main/java/io/openliberty/guides/cors/*** directory.
+Create the secure ***system*** service.
 
-You will send a simple request to the ***/configurations/simple*** endpoint and the preflight request to the ***/configurations/preflight*** endpoint.
+Create the ***SystemResource*** class.
 
-
-### Enabling a simple CORS configuration
-Configure the Liberty to allow the ***/configurations/simple*** endpoint to accept a ***simple*** CORS request. Add a simple CORS configuration to the Liberty ***server.xml*** configuration file:
-
-Replace the Liberty ***server.xml*** configuration file.
-
-> To open the server.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-cors/start/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-cors/start/src/main/liberty/config/server.xml"}
-
-
-
-```xml
-<server description="Sample Liberty server">
-
-    <featureManager>
-        <platform>jakartaee-10.0</platform>
-        <feature>restfulWS</feature>
-        <feature>jsonb</feature>
-    </featureManager>
-
-    <variable name="http.port" defaultValue="9080"/>
-    <variable name="https.port" defaultValue="9443"/>
-
-    <httpEndpoint id="defaultHttpEndpoint"
-        host="*" httpPort="${http.port}" httpsPort="${https.port}"/>
-
-    <webApplication location="guide-cors.war" contextRoot="/"/>
-
-    <cors domain="/configurations/simple"
-        allowedOrigins="http://openliberty.io"
-        allowedMethods="GET"
-        allowCredentials="true"
-        exposeHeaders="MyHeader"/>
-
-
-</server>
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java
 ```
 
 
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+> Then, to open the SystemResource.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java, or click the following button
 
-
-The CORS configuration contains the following attributes:
-
-| *Configuration Attribute* | *Value*
-| ---| ---
-|***domain*** | The endpoint to be configured for CORS requests. The value is set to ***/configurations/simple***.
-|***allowedOrigins*** | Origins that are allowed to access the endpoint. The value is set to ***http://openliberty.io***.
-|***allowedMethods*** | HTTP methods that a client is allowed to use when it makes requests to the endpoint. The value is set to ***GET***.
-|***allowCredentials*** | A boolean that indicates whether the user credentials can be included in the request. The value is set to ***true***.
-|***exposeHeaders*** | Headers that are safe to expose to clients. The value is set to ***MyHeader***.
-
-For more information about these and other CORS attributes, see the [cors element documentation](https://www.openliberty.io/docs/latest/reference/config/cors.html).
-
-Save the changes to the ***server.xml*** configuration file. The ***/configurations/simple*** endpoint is now ready to be tested with a simple CORS request.
-
-The Open Liberty instance was started in dev mode at the beginning of the guide and all the changes were automatically picked up.
-
-Now, test the simple CORS configuration that you added. Add the ***testSimpleCorsRequest*** method to the ***CorsIT*** class.
-
-Replace the ***CorsIT*** class.
-
-> To open the CorsIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-cors/start/src/test/java/it/io/openliberty/guides/cors/CorsIT.java, or click the following button
-
-::openFile{path="/home/project/guide-cors/start/src/test/java/it/io/openliberty/guides/cors/CorsIT.java"}
+::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.cors;
+package io.openliberty.guides.system;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import jakarta.json.JsonArray;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.annotation.security.RolesAllowed;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.util.Map;
-import java.util.Map.Entry;
+import org.eclipse.microprofile.jwt.Claim;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+@RequestScoped
+@Path("/properties")
+public class SystemResource {
 
-public class CorsIT {
+    @Inject
+    @Claim("groups")
+    private JsonArray roles;
 
-    String port = System.getProperty("http.port");
-    String pathToHost = "http://localhost:" + port + "/";
-
-    @BeforeEach
-    public void setUp() {
-        System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
+    @GET
+    @Path("/username")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({ "admin", "user" })
+    public String getUsername() {
+        return System.getProperties().getProperty("user.name");
     }
 
-    @Test
-    public void testSimpleCorsRequest() throws IOException {
-        HttpURLConnection connection = HttpUtils.sendRequest(
-                        pathToHost + "configurations/simple", "GET",
-                        TestData.simpleRequestHeaders);
-        checkCorsResponse(connection, TestData.simpleResponseHeaders);
-
-        printResponseHeaders(connection, "Simple CORS Request");
+    @GET
+    @Path("/os")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({ "admin" })
+    public String getOS() {
+        return System.getProperties().getProperty("os.name");
     }
 
+    @GET
+    @Path("/jwtroles")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({ "admin", "user" })
+    public String getRoles() {
+        return roles.toString();
+    }
+}
+```
 
-    public void checkCorsResponse(HttpURLConnection connection,
-                    Map<String, String> expectedHeaders) throws IOException {
-        assertEquals(200, connection.getResponseCode(), "Invalid HTTP response code");
-        expectedHeaders.forEach((responseHeader, value) -> {
-            assertEquals(value, connection.getHeaderField(responseHeader),
-                            "Unexpected value for " + responseHeader + " header");
-        });
+
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
+
+This class has role-based access control. The role names that are used in the ***@RolesAllowed*** annotations are mapped to group names in the ***groups*** claim of the JWT, which results in an authorization decision wherever the security constraint is applied.
+
+The ***/username*** endpoint returns the system's username and is annotated with the ***@RolesAllowed({"admin, "user"})*** annotation. Only authenticated users with the role of ***admin*** or ***user*** can access this endpoint.
+
+The ***/os*** endpoint returns the system's current OS. Here, the ***@RolesAllowed*** annotation is limited to ***admin***, meaning that only authenticated users with the role of ***admin*** are able to access the endpoint.
+
+While the ***@RolesAllowed*** annotation automatically reads from the ***groups*** claim of the JWT to make an authorization decision, you can also manually access the claims of the JWT by using the ***@Claim*** annotation. In this case, the ***groups*** claim is injected into the ***roles*** JSON array. The roles that are parsed from the ***groups*** claim of the JWT are then exposed back to the front end at the ***/jwtroles*** endpoint. To read more about different claims and ways to access them, check out the [MicroProfile JWT documentation](https://github.com/eclipse/microprofile-jwt-auth/blob/master/spec/src/main/asciidoc/interoperability.asciidoc).
+
+
+::page{title="Creating a client to access the secure system service"}
+
+Create a RESTful client interface for the ***frontend*** service.
+
+Create the ***SystemClient*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java
+```
+
+
+> Then, to open the SystemClient.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java"}
+
+
+
+```java
+package io.openliberty.guides.frontend.client;
+
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.HeaderParam;
+
+import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+
+@RegisterRestClient(baseUri = "https://localhost:8443/system")
+@Path("/properties")
+@RequestScoped
+public interface SystemClient extends AutoCloseable {
+
+    @GET
+    @Path("/os")
+    @Produces(MediaType.APPLICATION_JSON)
+    String getOS(@HeaderParam("Authorization") String authHeader);
+
+    @GET
+    @Path("/username")
+    @Produces(MediaType.APPLICATION_JSON)
+    String getUsername(@HeaderParam("Authorization") String authHeader);
+
+    @GET
+    @Path("/jwtroles")
+    @Produces(MediaType.APPLICATION_JSON)
+    String getJwtRoles(@HeaderParam("Authorization") String authHeader);
+}
+```
+
+
+
+This interface declares methods for accessing each of the endpoints that were
+previously set up in the ***system*** service.
+
+The MicroProfile Rest Client feature automatically builds and generates a client implementation based on what is defined in the ***SystemClient*** interface. You don't need to set up the client and connect with the remote service.
+
+As discussed, the ***system*** service is secured and requests made to it must include a valid JWT in the ***Authorization*** header. The ***@HeaderParam*** annotations include the JWT by specifying that the value of the ***String authHeader*** parameter, which contains the JWT, be used as the value for the ***Authorization*** header. This header is included in all of the requests that are made to the ***system*** service through this client.
+
+Create the application bean that the front-end UI uses to request data.
+
+Create the ***ApplicationBean*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java
+```
+
+
+> Then, to open the ApplicationBean.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java"}
+
+
+
+```java
+package io.openliberty.guides.frontend;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+
+import io.openliberty.guides.frontend.client.SystemClient;
+import io.openliberty.guides.frontend.util.SessionUtils;
+
+
+@ApplicationScoped
+@Named
+public class ApplicationBean {
+
+    @Inject
+    @RestClient
+    private SystemClient defaultRestClient;
+
+    public String getJwt() {
+        String jwtTokenString = SessionUtils.getJwtToken();
+        String authHeader = "Bearer " + jwtTokenString;
+        return authHeader;
     }
 
-    public static void printResponseHeaders(HttpURLConnection connection,
-                    String label) {
-        System.out.println("--- " + label + " ---");
-        Map<String, java.util.List<String>> map = connection.getHeaderFields();
-        for (Entry<String, java.util.List<String>> entry : map.entrySet()) {
-            System.out.println("Header " + entry.getKey() + " = " + entry.getValue());
+    public String getOs() {
+        String authHeader = getJwt();
+        String os;
+        try {
+            os = defaultRestClient.getOS(authHeader);
+        } catch (Exception e) {
+            return "You are not authorized to access this system property";
         }
-        System.out.println();
+        return os;
+    }
+
+    public String getUsername() {
+        String authHeader = getJwt();
+        return defaultRestClient.getUsername(authHeader);
+    }
+
+    public String getJwtRoles() {
+        String authHeader = getJwt();
+        return defaultRestClient.getJwtRoles(authHeader);
     }
 
 }
@@ -229,175 +363,279 @@ public class CorsIT {
 
 
 
-The ***testSimpleCorsRequest*** test simulates a client. It first sends a simple CORS request to the ***/configurations/simple*** endpoint, and then it checks for a valid response and expected headers. Lastly, it prints the response headers for you to inspect.
+The application bean is used to populate the table in the front end by making requests for data through the ***defaultRestClient***, which is an injected instance of the ***SystemClient*** class that you created. The ***getOs()***, ***getUsername()***, and ***getJwtRoles()*** methods call their associated methods of the ***SystemClient*** class with the ***authHeader*** passed in as a parameter. The ***authHeader*** is a string that consists of the JWT with ***Bearer*** prefixed to it. The ***authHeader*** is included in the ***Authorization*** header of the subsequent requests that are made by the ***defaultRestClient*** instance.
 
-The request is a ***GET*** HTTP request with the following header:
 
-| *Request Header* | *Request Value*
-| ---| ---
-| Origin | The value is set to ***http://openliberty.io***. Indicates that the request originates from ***http://openliberty.io***.
+The JWT for these requests is retrieved from the session attributes with the ***getJwt()*** method. The JWT is stored in the session attributes by the provided ***LoginBean*** class. When the user logs in to the front end, the ***doLogin()*** method is called and builds the JWT. Then, the ***setAttribute()*** method stores it as an ***HttpSession*** attribute. The JWT is built by using the ***JwtBuilder*** APIs in the ***buildJwt()*** method. You can see that the ***claim()*** method is being used to set the ***groups*** and the ***aud*** claims of the token. The ***groups*** claim is used to provide the role-based access that you implemented. The ***aud*** claim is used to specify the audience that the JWT is intended for.
 
-Expect the following response headers and values if the simple CORS request is successful, and the Liberty instance is correctly configured:
+::page{title="Configuring MicroProfile JWT"}
 
-| *Response Header* | *Response Value*
-| ---| ---
-| Access-Control-Allow-Origin | The expected value is ***http://openliberty.io***. Indicates whether a resource can be shared based on the returning value of the Origin request header ***http://openliberty.io***.
-| Access-Control-Allow-Credentials | The expected value is ***true***. Indicates that the user credentials can be included in the request.
-| Access-Control-Expose-Headers |  The expected value is ***MyHeader***. Indicates that the header ***MyHeader*** is safe to expose.
+Configure the ***mpJwt*** feature in the ***microprofile-config.properties*** file for the ***system*** service.
 
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+Create the microprofile-config.properties file.
 
-If the ***testSimpleCorsRequest*** test passes, the response headers with their values from the endpoint are printed. The ***/configurations/simple*** endpoint now accepts simple CORS requests.
-
-Response headers with their values from the endpoint:
-```
---- Simple CORS Request ---
-Header null = [HTTP/1.1 200 OK]
-Header Access-Control-Expose-Headers = [MyHeader]
-Header Access-Control-Allow-Origin = [http://openliberty.io]
-Header Access-Control-Allow-Credentials = [true]
-Header Content-Length = [22]
-Header Content-Language = [en-CA]
-Header Date = [Thu, 21 Mar 2019 17:50:09 GMT]
-Header Content-Type = [text/plain]
-Header X-Powered-By = [Servlet/4.0]
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-jwt/start/system/src/main/resources/META-INF/microprofile-config.properties
 ```
 
-### Enabling a preflight CORS configuration
 
-Configure the Liberty to allow the ***/configurations/preflight*** endpoint to accept a ***preflight*** CORS request. Add another CORS configuration in the Liberty ***server.xml*** configuration file:
+> Then, to open the microprofile-config.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-jwt/start/system/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
-Replace the Liberty ***server.xml*** configuration file.
+::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/main/resources/META-INF/microprofile-config.properties"}
+
+
+
+```
+mp.jwt.verify.issuer=http://openliberty.io
+mp.jwt.token.header=Authorization
+mp.jwt.token.cookie=Bearer
+mp.jwt.verify.audiences=systemService, adminServices
+mp.jwt.verify.publickey.algorithm=RS256
+```
+
+
+
+The following table breaks down some of the properties:
+
+| *Property* |   *Description*
+| ---| ---
+| ***mp.jwt.verify.issuer*** | Specifies the expected value of the issuer claim on an incoming JWT. Incoming JWTs with an issuer claim that's different from this expected value aren't considered valid.
+| ***mp.jwt.token.header***  | With this property, you can control the HTTP request header, which is expected to contain a JWT. You can either specify Authorization, by default, or the Cookie values.
+| ***mp.jwt.token.cookie*** | Specifies the name of the cookie, which is expected to contain a JWT token. The default value is Bearer.
+| ***mp.jwt.verify.audiences*** |  With this property, you can create a list of allowable audience (aud) values. At least one of these values must be found in the claim. Previously, this configuration was included in the ***server.xml*** file.
+| ***mp.jwt.decrypt.key.location*** | With this property, you can specify the location of the Key Management key. It is a Private key that is used to decrypt the Content Encryption key, which is then used to decrypt the JWE ciphertext. This private key must correspond to the public key that is used to encrypt the Content Encryption key.
+| ***mp.jwt.verify.publickey.algorithm*** | With this property, you can control the Public Key Signature Algorithm that is supported by the MicroProfile JWT endpoint. The default value is RS256. Previously, this configuration was included in the ***server.xml*** file.
+
+For more information about these and other JWT properties, see the [MicroProfile Config properties for MicroProfile JSON Web Token documentation](https://openliberty.io/docs/latest/reference/microprofile-config-properties.html#jwt).
+
+Next, add the MicroProfile JSON Web Token feature to the Liberty ***server.xml*** configuration file for the ***system*** service.
+
+Replace the system ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-cors/start/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-jwt/start/system/src/main/liberty/config/server.xml, or click the following button
 
-::openFile{path="/home/project/guide-cors/start/src/main/liberty/config/server.xml"}
+::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/main/liberty/config/server.xml"}
 
 
 
 ```xml
 <server description="Sample Liberty server">
 
-    <featureManager>
-        <platform>jakartaee-10.0</platform>
-        <feature>restfulWS</feature>
-        <feature>jsonb</feature>
-    </featureManager>
+  <featureManager>
+    <platform>jakartaee-10.0</platform>
+    <platform>microprofile-7.0</platform>
+    <feature>restfulWS</feature>
+    <feature>jsonb</feature>
+    <feature>jsonp</feature>
+    <feature>cdi</feature>
+    <feature>mpConfig</feature>
+    <feature>mpRestClient</feature>
+    <feature>appSecurity</feature>
+    <feature>servlet</feature>
+    <feature>mpJwt</feature>
+  </featureManager>
 
-    <variable name="http.port" defaultValue="9080"/>
-    <variable name="https.port" defaultValue="9443"/>
+  <variable name="http.port" defaultValue="8080"/>
+  <variable name="https.port" defaultValue="8443"/>
 
-    <httpEndpoint id="defaultHttpEndpoint"
-        host="*" httpPort="${http.port}" httpsPort="${https.port}"/>
+  <keyStore id="defaultKeyStore" password="secret"/>
 
-    <webApplication location="guide-cors.war" contextRoot="/"/>
-
-    <cors domain="/configurations/simple"
-        allowedOrigins="http://openliberty.io"
-        allowedMethods="GET"
-        allowCredentials="true"
-        exposeHeaders="MyHeader"/>
-
-    <cors domain="/configurations/preflight"
-        allowedOrigins="*"
-        allowedMethods="OPTIONS, DELETE"
-        allowCredentials="true"
-        allowedHeaders="MyOwnHeader1, MyOwnHeader2"
-        maxAge="10"/>
+  <httpEndpoint host="*" httpPort="${http.port}" httpsPort="${https.port}"
+                id="defaultHttpEndpoint"/>
+                 
+  <webApplication location="system.war" contextRoot="/"/>
 
 </server>
 ```
 
 
 
-The preflight CORS configuration has different values than the simple CORS configuration.
+The ***mpJwt*** feature adds the libraries that are required for MicroProfile JWT implementation.
 
-| *Configuration Attribute* | *Value*
-| ---| ---
-| ***domain***|The value is set to ***/configurations/preflight*** because the ***domain*** is a different endpoint.
-| ***allowedOrigins***| Origins that are allowed to access the endpoint. The value is set to an asterisk (*) to allow requests from all origins.
-| ***allowedMethods***| HTTP methods that a client is allowed to use when it makes requests to the endpoint. The value is set to ***OPTIONS, DELETE***.
-| ***allowCredentials***| A boolean that indicates whether the user credentials can be included in the request. The value is set to ***true***.
 
-The following attributes were added:
+::page{title="Building and running the application"}
 
-* ***allowedHeaders***: Headers that a client can use in requests. Set the value to ***MyOwnHeader1, MyOwnHeader2***.
-* ***maxAge***: The number of seconds that a client can cache a response to a preflight request. Set the value to ***10***.
+Because you are running the ***frontend*** and ***system*** services in dev mode, the changes that you made were automatically picked up. You're now ready to check out your application in your browser.
 
-Save the changes to the ***server.xml*** configuration file. The ***/configurations/preflight*** endpoint is now ready to be tested with a preflight CORS request.
 
-Add another test to the ***CorsIT.java*** file to test the preflight CORS configuration that you just added:
+To launch the front-end web application, click the following button:
+::startApplication{port="9090" display="external" name="Launch Application" route="/login.jsf"}
 
-Replace the ***CorsIT*** class.
+Log in with one of the following usernames and its corresponding password:
 
-> To open the CorsIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-cors/start/src/test/java/it/io/openliberty/guides/cors/CorsIT.java, or click the following button
+| *Username* | *Password* | *Role*
+| --- | --- | ---
+| bob | bobpwd | admin, user
+| alice | alicepwd | user
+| carl | carlpwd | user
 
-::openFile{path="/home/project/guide-cors/start/src/test/java/it/io/openliberty/guides/cors/CorsIT.java"}
+After you log in as an ***admin***, you can see the information that's retrieved from the ***system*** service. Click ***Log Out*** and log in as a ***user***. With successfully implemented role-based access in the application, if you log in as a ***user*** role, you don't have access to the OS property.
+
+You can also see the value of the ***groups*** claim in the row with the ***Roles:*** label. These roles are read from the JWT and sent back to the front end to be displayed.
+
+
+You can check that the ***system*** service is secured against unauthenticated requests by going to the **system** endpoint. Run the following curl command from the terminal in the IDE:
+```bash
+curl -k https://localhost:8443/system/properties/os
+```
+
+You'll see an empty response because you didn't authenticate with a valid JWT. 
+
+In the front end, you see your JWT displayed in the row with the ***JSON Web Token*** label.
+
+To see the specific information that this JWT holds, you can enter it into the token reader on the [JWT.io website](https://JWT.io). The token reader shows you the header, which contains information about the JWT, as shown in the following example:
+
+```
+{
+  "kid": "NPzyG3ZMzljUwQgbzi44",
+  "typ": "JWT",
+  "alg": "RS256"
+}
+```
+
+The token reader also shows you the payload, which contains the claims information:
+
+```
+{
+  "token_type": "Bearer",
+  "sub": "bob",
+  "upn": "bob",
+  "groups": [ "admin", "user" ],
+  "iss": "http://openliberty.io",
+  "exp": 1596723489,
+  "iat": 1596637089
+}
+```
+
+You can learn more about these claims in the [MicroProfile JWT documentation](https://github.com/eclipse/microprofile-jwt-auth/blob/master/spec/src/main/asciidoc/interoperability.asciidoc).
+
+
+::page{title="Testing the application"}
+
+You can manually check that the ***system*** service is secure by making requests to each of the endpoints with and without valid JWTs. However, automated tests are a much better approach because they are more reliable and trigger a failure if a breaking change is introduced.
+
+Create the ***SystemEndpointIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
+```
+
+
+> Then, to open the SystemEndpointIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.cors;
+package it.io.openliberty.guides.system;
 
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.Invocation.Builder;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MediaType;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.util.Map;
-import java.util.Map.Entry;
+import it.io.openliberty.guides.system.util.JwtBuilder;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+public class SystemEndpointIT {
 
-public class CorsIT {
+    static String authHeaderAdmin;
+    static String authHeaderUser;
+    static String urlOS;
+    static String urlUsername;
+    static String urlRoles;
 
-    String port = System.getProperty("http.port");
-    String pathToHost = "http://localhost:" + port + "/";
+    @BeforeAll
+    public static void setup() throws Exception {
+        String urlBase = "http://" + System.getProperty("hostname")
+                 + ":" + System.getProperty("http.port")
+                 + "/system/properties";
+        urlOS = urlBase + "/os";
+        urlUsername = urlBase + "/username";
+        urlRoles = urlBase + "/jwtroles";
 
-    @BeforeEach
-    public void setUp() {
-        System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
+        authHeaderAdmin = "Bearer " + new JwtBuilder().createAdminJwt("testUser");
+        authHeaderUser = "Bearer " + new JwtBuilder().createUserJwt("testUser");
     }
 
     @Test
-    public void testSimpleCorsRequest() throws IOException {
-        HttpURLConnection connection = HttpUtils.sendRequest(
-                        pathToHost + "configurations/simple", "GET",
-                        TestData.simpleRequestHeaders);
-        checkCorsResponse(connection, TestData.simpleResponseHeaders);
+    public void testOSEndpoint() {
+        Response response = makeRequest(urlOS, authHeaderAdmin);
+        assertEquals(200, response.getStatus(),
+                    "Incorrect response code from " + urlOS);
+        assertEquals(System.getProperty("os.name"), response.readEntity(String.class),
+                "The system property for the local and remote JVM should match");
 
-        printResponseHeaders(connection, "Simple CORS Request");
+        response = makeRequest(urlOS, authHeaderUser);
+        assertEquals(403, response.getStatus(),
+                    "Incorrect response code from " + urlOS);
+
+        response = makeRequest(urlOS, null);
+        assertEquals(401, response.getStatus(),
+                    "Incorrect response code from " + urlOS);
+
+        response.close();
     }
 
     @Test
-    public void testPreflightCorsRequest() throws IOException {
-        HttpURLConnection connection = HttpUtils.sendRequest(
-                        pathToHost + "configurations/preflight", "OPTIONS",
-                        TestData.preflightRequestHeaders);
-        checkCorsResponse(connection, TestData.preflightResponseHeaders);
+    public void testUsernameEndpoint() {
+        Response response = makeRequest(urlUsername, authHeaderAdmin);
+        assertEquals(200, response.getStatus(),
+                "Incorrect response code from " + urlUsername);
 
-        printResponseHeaders(connection, "Preflight CORS Request");
+        response = makeRequest(urlUsername, authHeaderUser);
+        assertEquals(200, response.getStatus(),
+                "Incorrect response code from " + urlUsername);
+
+        response = makeRequest(urlUsername, null);
+        assertEquals(401, response.getStatus(),
+                "Incorrect response code from " + urlUsername);
+
+        response.close();
     }
 
-    public void checkCorsResponse(HttpURLConnection connection,
-                    Map<String, String> expectedHeaders) throws IOException {
-        assertEquals(200, connection.getResponseCode(), "Invalid HTTP response code");
-        expectedHeaders.forEach((responseHeader, value) -> {
-            assertEquals(value, connection.getHeaderField(responseHeader),
-                            "Unexpected value for " + responseHeader + " header");
-        });
+    @Test
+    public void testRolesEndpoint() {
+        Response response = makeRequest(urlRoles, authHeaderAdmin);
+        assertEquals(200, response.getStatus(),
+                "Incorrect response code from " + urlRoles);
+        assertEquals("[\"admin\",\"user\"]", response.readEntity(String.class),
+                "Incorrect groups claim in token " + urlRoles);
+
+        response = makeRequest(urlRoles, authHeaderUser);
+        assertEquals(200, response.getStatus(),
+                "Incorrect response code from " + urlRoles);
+        assertEquals("[\"user\"]", response.readEntity(String.class),
+                "Incorrect groups claim in token " + urlRoles);
+
+        response = makeRequest(urlRoles, null);
+        assertEquals(401, response.getStatus(),
+                "Incorrect response code from " + urlRoles);
+
+        response.close();
     }
 
-    public static void printResponseHeaders(HttpURLConnection connection,
-                    String label) {
-        System.out.println("--- " + label + " ---");
-        Map<String, java.util.List<String>> map = connection.getHeaderFields();
-        for (Entry<String, java.util.List<String>> entry : map.entrySet()) {
-            System.out.println("Header " + entry.getKey() + " = " + entry.getValue());
+    private Response makeRequest(String url, String authHeader) {
+        try (Client client = ClientBuilder.newClient()) {
+            Builder builder = client.target(url).request();
+            builder.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+            if (authHeader != null) {
+            builder.header(HttpHeaders.AUTHORIZATION, authHeader);
+            }
+            Response response = builder.get();
+            return response;
         }
-        System.out.println();
     }
 
 }
@@ -405,58 +643,39 @@ public class CorsIT {
 
 
 
-The ***testPreflightCorsRequest*** test simulates a client sending a preflight CORS request. It first sends the request to the ***/configurations/preflight*** endpoint, and then it checks for a valid response and expected headers. Lastly, it prints the response headers for you to inspect.
+The ***testOSEndpoint()***, ***testUsernameEndpoint()***, and ***testRolesEndpoint()*** tests test the ***/os***, ***/username***, and ***/roles*** endpoints.
 
-The request is an ***OPTIONS*** HTTP request with the following headers:
+Each test makes three requests to its associated endpoint. The first ***makeRequest()*** call has a JWT with the ***admin*** role. The second ***makeRequest()*** call has a JWT with the ***user*** role. The third ***makeRequest()*** call has no JWT at all. The responses to these requests are checked based on the role-based access rules for the endpoints. The ***admin*** requests should be successful on all endpoints. The ***user*** requests should be denied by the ***/os*** endpoint but successfully access the ***/username*** and ***/jwtroles*** endpoints. The requests that don't include a JWT should be denied access to all endpoints.
 
-| *Request Header* | *Request Value*
-| ---| ---
-| Origin | The value is set to ***anywebsiteyoulike.com***. Indicates that the request originates from ***anywebsiteyoulike.com***.
-| Access-Control-Request-Method | The value is set to ***DELETE***. Indicates that the HTTP DELETE method will be used in the actual request.
-| Access-Control-Request-Headers | The value is set to ***MyOwnHeader2***. Indicates the header ***MyOwnHeader2*** will be used in the actual request.
+### Running the tests
 
-Expect the following response headers and values if the preflight CORS request is successful, and the Liberty instance is correctly configured:
+Because you started Open Liberty in dev mode, press the ***enter/return*** key from the command-line session of the ***system*** service to run the tests. You see the following output:
 
-| *Response Header* | *Response Value*
-| ---| ---
-| Access-Control-Max-Age | The expected value is ***10***. Indicates that the preflight request can be cached within ***10*** seconds.
-| Access-Control-Allow-Origin | The expected value is ***anywebsiteyoulike.com***. Indicates whether a resource can be shared based on the returning value of the Origin request header ***anywebsiteyoulike.com***.
-| Access-Control-Allow-Methods | The expected value is ***OPTIONS, DELETE***. Indicates that HTTP OPTIONS and DELETE methods can be used in the actual request.
-| Access-Control-Allow-Credentials | The expected value is ***true***. Indicates that the user credentials can be included in the request.
-| Access-Control-Allow-Headers | The expected value is ***MyOwnHeader1, MyOwnHeader2***. Indicates that the header ***MyOwnHeader1*** and ***MyOwnHeader2*** are safe to expose.
-
-The ***Access-Control-Allow-Origin*** header has a value of ***anywebsiteyoulike.com*** because the Liberty is configured to allow all origins, and the request came with an origin of ***anywebsiteyoulike.com***.
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
-
-If the ***testPreflightCorsRequest*** test passes, the response headers with their values from the endpoint are printed. The ***/configurations/preflight*** endpoint now allows preflight CORS requests.
-
-Response headers with their values from the endpoint:
 ```
---- Preflight CORS Request ---
-Header null = [HTTP/1.1 200 OK]
-Header Access-Control-Allow-Origin = [anywebsiteyoulike.com]
-Header Access-Control-Allow-Methods = [OPTIONS, DELETE]
-Header Access-Control-Allow-Credentials = [true]
-Header Content-Length = [0]
-Header Access-Control-Max-Age = [10]
-Header Date = [Thu, 21 Mar 2019 18:21:13 GMT]
-Header Content-Language = [en-CA]
-Header Access-Control-Allow-Headers = [MyOwnHeader1, MyOwnHeader2]
-Header X-Powered-By = [Servlet/4.0]
+-------------------------------------------------------
+  T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.system.SystemEndpointIT
+[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
+[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
+[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.648 s - in it.io.openliberty.guides.system.SystemEndpointIT
+
+Results:
+
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-You can modify the Liberty configuration and the test code to experiment with the various CORS configuration attributes.
+The three errors in the output are expected and result from the ***system*** service successfully rejecting the requests that didn't include a JWT.
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
+When you are finished testing the application, stop both the ***frontend*** and ***system*** services by pressing `Ctrl+C` in the command-line sessions where you ran them. 
 
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You enabled CORS support in Open Liberty. You added two different CORS configurations to allow two kinds of CORS requests in the Liberty **server.xml** configuration file.
-
+You learned how to use MicroProfile JWT to validate JWTs, authenticate and authorize users to secure your microservices in Open Liberty.
 
 
 
@@ -465,31 +684,32 @@ You enabled CORS support in Open Liberty. You added two different CORS configura
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-cors*** project by running the following commands:
+Delete the ***guide-microprofile-jwt*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-cors
+rm -fr guide-microprofile-jwt
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Enabling%20Cross-Origin%20Resource%20Sharing%20(CORS)&guide-id=cloud-hosted-guide-cors)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Securing%20microservices%20with%20JSON%20Web%20Tokens&guide-id=cloud-hosted-guide-microprofile-jwt)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-cors/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-cors/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-jwt/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-jwt/pulls)
 
 
 
 ### Where to next?
 
+* [Authenticating users through social media providers](https://openliberty.io/guides/social-media-login.html)
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 
 
 ### Log out of the session
