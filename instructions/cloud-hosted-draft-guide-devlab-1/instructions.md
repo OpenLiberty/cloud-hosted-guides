@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Deploying a microservice to Kubernetes using Open Liberty Operator guide!"}
+::page{title="Welcome to the Streaming updates to a client using Server-Sent Events guide!"}
 
-Explore how to deploy a microservice to Kubernetes using Open Liberty Operator.
+Learn how to stream updates from a MicroProfile Reactive Messaging service to a front-end client by using Server-Sent Events (SSE).
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -17,15 +17,24 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You will learn how to deploy a cloud-native application with a microservice to Kubernetes using the Open Liberty Operator. 
+You will learn how to stream messages from a MicroProfile Reactive Messaging service to a front-end client by using Server-Sent Events (SSE).
 
-[Kubernetes](https://www.kubernetes.io/) is a container orchestration system. It streamlines the DevOps process by providing an intuitive development pipeline. It also provides integration with multiple tools to make the deployment and management of cloud applications easier. You can learn more about Kubernetes by checking out the [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html) guide.
+MicroProfile Reactive Messaging provides an easy way for Java services to send requests to other Java services, and asynchronously receive and process the responses as a stream of events. SSE provides a framework to stream the data in these events to a browser client.
 
-[Kubernetes operators](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/#operators-in-kubernetes) provide an easy way to automate the management and updating of applications by abstracting away some of the details of cloud application management. To learn more about operators, check out this [Operators tech topic article](https://www.openshift.com/learn/topics/operators). 
+### What is SSE?
 
-The application in this guide consists of one microservice, ***system***. The system microservice returns the JVM system properties of its host.
+Server-Sent Events is an API that allows clients to subscribe to a stream of events that is pushed from a server. First, the client makes a connection with the server over HTTP. The server continuously pushes events to the client as long as the connection persists. SSE differs from traditional HTTP requests, which use one request for one response. SSE also differs from Web Sockets in that SSE is unidirectional from the server to the client, and Web Sockets allow for bidirectional communication.
 
-You will deploy the ***system*** microservice by using the Open Liberty Operator. The [Open Liberty Operator](https://github.com/OpenLiberty/open-liberty-operator) packages, deploys, and manages Open Liberty applications on Kubernetes-based clusters. The Open Liberty Operator watches Open Liberty resources and creates various Kubernetes resources, including ***Deployments***, ***Services***, and ***Routes***, depending on the configurations. The Operator then continuously compares the current state of the resources, the desired state of application deployment, and reconciles them when necessary.
+For example, an application that provides real-time stock quotes might use SSE to push price updates from the server to the browser as soon as the server receives them. Such an application wouldn't need Web Sockets because the data travels in only one direction, and polling the server by using HTTP requests wouldn't provide real-time updates.
+
+The application that you will build in this guide consists of a ***frontend*** service, a ***bff*** (backend for frontend) service, and three instances of a ***system*** service. The ***system*** services periodically publish messages that contain their hostname and current system load. The ***bff*** service receives the messages from the ***system*** services and pushes the contents as SSE to a JavaScript client in the ***frontend*** service. This client uses the events to update a table in the UI that displays each system's hostname and its periodically updating load. The following diagram depicts the application that is used in this guide:
+
+![SSE Diagram](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-messaging-sse/prod/assets/SSE_Diagram.png)
+
+
+In this guide, you will set up the ***bff*** service by creating an endpoint that clients can use to subscribe to events. You will also enable the service to read from the reactive messaging channel and push the contents to subscribers via SSE. After that, you will configure the Kafka connectors to allow the ***bff*** service to receive messages from the ***system*** services. Finally, you will configure the client in the ***frontend*** service to subscribe to these events, consume them, and display them in the UI.
+
+To learn more about the reactive Java services that are used in this guide, check out the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
 
 
@@ -40,11 +49,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-openliberty-operator-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-reactive-messaging-sse.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-openliberty-operator-intro.git
-cd guide-openliberty-operator-intro
+git clone https://github.com/openliberty/guide-reactive-messaging-sse.git
+cd guide-reactive-messaging-sse
 ```
 
 
@@ -54,305 +63,289 @@ The ***finish*** directory contains the finished project that you will build.
 
 
 
-::page{title="Installing the Operator"}
+::page{title="Setting up SSE in the bff service"}
 
+In this section, you will create a REST API for SSE in the ***bff*** service. When a client makes a request to this endpoint, the initial connection between the client and server is established and the client is subscribed to receive events that are pushed from the server. Later in this guide, the client in the ***frontend*** service uses this endpoint to subscribe to the events that are pushed from the ***bff*** service.
 
-The Open Liberty Operator is already installed in this Skills Network environment. To learn how to install the Open Liberty Operator yourself, see the [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators) guide or the [Open Liberty Operator documentation](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1.adoc#operator-installation).
+Additionally, you will enable the ***bff*** service to read messages from the incoming stream and push the contents as events to subscribers via SSE.
 
-To check that the Open Liberty Operator has been installed successfully, run the following command to view all the supported API resources that are available through the Open Liberty Operator:
-```bash
-kubectl api-resources --api-group=apps.openliberty.io
-```
+Navigate to the ***start*** directory to begin.
 
-Look for the following output, which shows the [custom resource definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRDs) that can be used by the Open Liberty Operator:
-
-```
-NAME                      SHORTNAMES         APIVERSION               NAMESPACED   KIND
-openlibertyapplications   olapp,olapps       apps.openliberty.io/v1   true         OpenLibertyApplication
-openlibertydumps          oldump,oldumps     apps.openliberty.io/v1   true         OpenLibertyDump
-openlibertytraces         oltrace,oltraces   apps.openliberty.io/v1   true         OpenLibertyTrace
-```
-
-Each CRD defines a kind of object that can be used, which is specified in the previous example by the ***KIND*** value. The ***SHORTNAME*** value specifies alternative names that you can substitute in the configuration to refer to an object kind. For example, you can refer to the ***OpenLibertyApplication*** object kind by one of its specified shortnames, such as ***olapps***. 
-
-The ***openlibertyapplications*** CRD defines a set of configurations for deploying an Open Liberty-based application, including the application image, number of instances, and storage settings. The Open Liberty Operator watches for changes to instances of the ***OpenLibertyApplication*** object kind and creates Kubernetes resources that are based on the configuration that is defined in the CRD.
-
-::page{title="Deploying the system microservice to Kubernetes"}
-
-To deploy the ***system*** microservice, you must first package the microservice, then create and build a runnable container image of the packaged microservice.
-
-### Packaging the microservice
-
-Ensure that you are in the ***start*** directory and run the following command to package the ***system*** microservice:
-
-
-```bash
-cd /home/project/guide-openliberty-operator-intro/start
-./mvnw clean package
-```
-
-### Building the image
-
-Run the ***docker build*** command to build the container image for your application:
-```bash
-docker build -t system:1.0-SNAPSHOT system/.
-```
-
-The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
-
-
-Next, push your image to the container registry on IBM Cloud with the following commands:
-
-```bash
-docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
-```
-
-Run the following command to check the docker images:
-```bash
-docker images
-```
-
-The output is similar to the following example:
-```
-REPOSITORY                          TAG                             IMAGE ID       CREATED         SIZE
-us.icr.io/sn-labs-yourname/system   1.0-SNAPSHOT                    5c5890296d6e   2 minutes ago   723MB
-system                              1.0-SNAPSHOT                    5c5890296d6e   2 minutes ago   723MB
-icr.io/appcafe/open-liberty         kernel-slim-java11-openj9-ubi   e959985784c2   2 days ago      659MB
-```
-
-Now you're ready to deploy the image.
-
-### Deploying the image
-
-You can configure the specifics of the Open Liberty Operator-controlled deployment with a YAML configuration file.
-
-Create the ***deploy.yaml*** configuration file in the ***start*** directory.
+Create the BFFResource class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-openliberty-operator-intro/start/deploy.yaml
+touch /home/project/guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java
 ```
 
 
-> Then, to open the deploy.yaml file in your IDE, select
-> ***File*** > ***Open*** > guide-openliberty-operator-intro/start/deploy.yaml, or click the following button
+> Then, to open the BFFResource.java file in your IDE, select
+> ***File*** > ***Open*** > guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java, or click the following button
 
-::openFile{path="/home/project/guide-openliberty-operator-intro/start/deploy.yaml"}
+::openFile{path="/home/project/guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java"}
 
 
 
-```yaml
-apiVersion: apps.openliberty.io/v1
-kind: OpenLibertyApplication
-metadata:
-  name: system
-  labels:
-    name: system
-spec:
-  applicationImage: system:1.0-SNAPSHOT
-  service:
-    port: 9443
-  expose: true
-  route:
-    pathType: ImplementationSpecific
-  env:
-    - name: WLP_LOGGING_MESSAGE_FORMAT
-      value: "json"
-    - name: WLP_LOGGING_MESSAGE_SOURCE
-      value: "message,trace,accessLog,ffdc,audit"
+```java
+package io.openliberty.guides.bff;
+
+import io.openliberty.guides.models.SystemLoad;
+
+import org.eclipse.microprofile.reactive.messaging.Incoming;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.sse.OutboundSseEvent;
+import jakarta.ws.rs.sse.Sse;
+import jakarta.ws.rs.sse.SseBroadcaster;
+import jakarta.ws.rs.sse.SseEventSink;
+import java.util.logging.Logger;
+
+@ApplicationScoped
+@Path("/sse")
+public class BFFResource {
+
+    private Logger logger = Logger.getLogger(BFFResource.class.getName());
+
+    private Sse sse;
+    private SseBroadcaster broadcaster;
+
+    @GET
+    @Path("/")
+    @Produces(MediaType.SERVER_SENT_EVENTS)
+    public void subscribeToSystem(
+        @Context SseEventSink sink,
+        @Context Sse sse
+        ) {
+
+        if (this.sse == null || this.broadcaster == null) {
+            this.sse = sse;
+            this.broadcaster = sse.newBroadcaster();
+        }
+
+        this.broadcaster.register(sink);
+        logger.info("New sink registered to broadcaster.");
+    }
+
+    private void broadcastData(String name, Object data) {
+        if (broadcaster != null) {
+            OutboundSseEvent event = sse.newEventBuilder()
+                                        .name(name)
+                                        .data(data.getClass(), data)
+                                        .mediaType(MediaType.APPLICATION_JSON_TYPE)
+                                        .build();
+            broadcaster.broadcast(event);
+        } else {
+            logger.info("Unable to send SSE. Broadcaster context is not set up.");
+        }
+    }
+
+    @Incoming("systemLoad")
+    public void getSystemLoadMessage(SystemLoad sl)  {
+        logger.info("Message received from system.load topic. " + sl.toString());
+        broadcastData("systemLoad", sl);
+    }
+}
 ```
 
 
 Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-The ***deploy.yaml*** file is configured to deploy one ***OpenLibertyApplication*** resource, ***system***, which is controlled by the Open Liberty Operator.
+### Creating the SSE API endpoint
 
-The ***applicationImage*** parameter defines what container image is deployed as part of the ***OpenLibertyApplication*** CRD. This parameter follows the ***\\<image-name\\>[:tag]*** format. The parameter can also point to an image hosted on an external registry, such as Docker Hub. The ***system*** microservice is configured to use the ***image*** created from the earlier build. 
+The ***subscribeToSystem()*** method allows clients to subscribe to events via an HTTP ***GET*** request to the ***/bff/sse/*** endpoint. The ***@Produces(MediaType.SERVER_SENT_EVENTS)*** annotation sets the ***Content-Type*** in the response header to ***text/event-stream***. This content type indicates that client requests that are made to this endpoint are to receive Server-Sent Events. Additionally, the method parameters take in an instance of the ***SseEventSink*** class and the ***Sse*** class, both of which are injected using the ***@Context*** annotation. First, the method checks if the ***sse*** and ***broadcaster*** instance variables are assigned. If these variables aren't assigned, the ***sse*** variable is obtained from the ***@Context*** injection and the ***broadcaster*** variable is obtained by using the ***Sse.newBroadcaster()*** method. Then, the ***register()*** method is called to register the ***SseEventSink*** instance to the ***SseBroadcaster*** instance to subscribe to events.
 
-The ***env*** parameter is used to specify environment variables that are passed to the container at runtime.
+For more information about these interfaces, see the Javadocs for [OutboundSseEvent](https://openliberty.io/docs/latest/reference/javadoc/liberty-jakartaee10-javadoc.html?path=liberty-jakartaee10-javadoc/jakarta/ws/rs/sse/OutboundSseEvent.html) and [OutboundSseEvent.Builder](https://openliberty.io/docs/latest/reference/javadoc/liberty-jakartaee10-javadoc.html?path=liberty-jakartaee10-javadoc/jakarta/ws/rs/sse/OutboundSseEvent.Builder.html).
 
-Additionally, the microservice includes the ***service*** and ***expose*** parameters. The ***service.port*** parameter specifies which port is exposed by the container, allowing the microservice to be accessed from outside the container. To access the microservice from outside of the cluster, it must be exposed by setting the ***expose*** parameter to ***true***. After you expose the microservice, the Operator automatically creates and configures routes for external access to your microservice.
+### Reading from the reactive messaging channel
+
+The ***getSystemLoadMessage()*** method receives the message that contains the hostname and the average system load. The ***@Incoming("systemLoad")*** annotation indicates that the method retrieves the message by connecting to the ***systemLoad*** channel in Kafka, which you configure in the next section.
+
+Each time a message is received, the ***getSystemLoadMessage()*** method is called, and the hostname and system load contained in that message are broadcasted in an event to all subscribers.
+
+### Broadcasting events
+
+Broadcasting events is handled in the ***broadcastData()*** method. First, it checks whether the ***broadcaster*** value is ***null***. The ***broadcaster*** value must include at least one subscriber or there's no client to send the event to. If the ***broadcaster*** value is specified, the ***OutboundSseEvent*** interface is created by using the ***Sse.newEventBuilder()*** method, where the ***name*** of the event, the ***data*** it contains, and the ***mediaType*** are set. The ***OutboundSseEvent*** interface is then broadcasted, or sent to all registered sinks, by invoking the ***SseBroadcaster.broadcast()*** method.
 
 
-Run the following commands to update the **applicationImage** with the **pullSecret** and deploy the **system** microservice with the previously explained configuration:
+You just set up an endpoint in the ***bff*** service that the client in the ***frontend*** service can use to subscribe to events. You also enabled the service to read from the reactive messaging channel and broadcast the information as events to subscribers via SSE.
+
+
+::page{title="Configuring the Kafka connector for the bff service"}
+
+A complete ***system*** service is provided for you in the ***start/system*** directory. The ***system*** service is the producer of the messages that are published to the Kafka messaging system. The periodically published messages contain the system's hostname and a calculation of the average system load (its CPU usage) for the last minute.
+
+Configure the Kafka connector in the ***bff*** service to receive the messages from the ***system*** service.
+
+Create the microprofile-config.properties file.
+
+> Run the following touch command in your terminal
 ```bash
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
-kubectl apply -f deploy.yaml
+touch /home/project/guide-reactive-messaging-sse/start/bff/src/main/resources/META-INF/microprofile-config.properties
 ```
 
-Next, run the following command to view your newly created ***OpenLibertyApplications*** resources:
+
+> Then, to open the microprofile-config.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-reactive-messaging-sse/start/bff/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+
+::openFile{path="/home/project/guide-reactive-messaging-sse/start/bff/src/main/resources/META-INF/microprofile-config.properties"}
+
+
+
+```
+mp.messaging.connector.liberty-kafka.bootstrap.servers=kafka:9092
+
+mp.messaging.incoming.systemLoad.connector=liberty-kafka
+mp.messaging.incoming.systemLoad.topic=system.load
+mp.messaging.incoming.systemLoad.key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
+mp.messaging.incoming.systemLoad.value.deserializer=io.openliberty.guides.models.SystemLoad$SystemLoadDeserializer
+mp.messaging.incoming.systemLoad.group.id=bff
+```
+
+
+
+The ***bff*** service uses an incoming connector to receive messages through the ***systemLoad*** channel. The messages are then published by the ***system*** service to the ***system.load***  topic in the Kafka message broker. The ***key.deserializer*** and ***value.deserializer*** properties define how to deserialize the messages. The ***group.id*** property defines a unique name for the consumer group. All of these properties are required by the [Apache Kafka Consumer Configs](https://kafka.apache.org/documentation/#consumerconfigs) documentation.
+
+
+
+::page{title="Configuring the frontend service to subscribe to and consume events"}
+
+In this section, you will configure the client in the ***frontend*** service to subscribe to events and display their contents in a table in the UI.
+
+The front-end UI is a table where each row contains the hostname and load of one of the three ***system*** services. The HTML and styling for the UI is provided for you but you must populate the table with information that is received from the Server-Sent Events.
+
+Create the index.js file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js
+```
+
+
+> Then, to open the index.js file in your IDE, select
+> ***File*** > ***Open*** > guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js, or click the following button
+
+::openFile{path="/home/project/guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js"}
+
+
+
+```javascript
+function initSSE() {
+    var source = new EventSource('http://localhost:9084/bff/sse', { withCredentials: true });
+    source.addEventListener(
+        'systemLoad',
+        systemLoadHandler
+    );
+}
+
+function systemLoadHandler(event) {
+    var system = JSON.parse(event.data);
+    if (document.getElementById(system.hostname)) {
+        document.getElementById(system.hostname).cells[1].innerHTML =
+                                        system.loadAverage.toFixed(2);
+    } else {
+        var tableRow = document.createElement('tr');
+        tableRow.id = system.hostname;
+        tableRow.innerHTML = '<td>' + system.hostname + '</td><td>'
+                             + system.loadAverage.toFixed(2) + '</td>';
+        document.getElementById('sysPropertiesTableBody').appendChild(tableRow);
+    }
+}
+
+
+```
+
+
+
+### Subscribing to SSE
+
+The ***initSSE()*** method is called when the page first loads. This method subscribes the client to the SSE by creating a new instance of the ***EventSource*** interface and specifying the ***http://localhost:9084/bff/sse*** URL in the parameters. To connect to the server, the ***EventSource*** interface makes a ***GET*** request to this endpoint with a request header of ***Accept: text/event-stream***.
+
+In this IBM cloud environment, you need to update the ***EventSource*** URL with the ***bff*** service domain instead of ***localhost***. Run the following command:
+```bash
+BFF_DOMAIN=${USERNAME}-9084.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+sed -i 's=http://localhost:9084='"https://$BFF_DOMAIN"'=g' /home/project/guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js
+```
+
+
+
+Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
+
+Because this request comes from ***localhost:9080*** and is made to ***localhost:9084***, it must follow the Cross-Origin Resource Sharing (CORS) specification to avoid being blocked by the browser. To enable CORS for the client, set the ***withCredentials*** configuration element to true in the parameters of the ***EventSource*** interface. CORS is already enabled for you in the ***bff*** service. To learn more about CORS, check out the [CORS guide](https://openliberty.io/guides/cors.html).
+
+
+### Consuming the SSE
+
+The ***EventSource.addEventListener()*** method is called to add an event listener. This event listener listens for events with the name of ***systemLoad***. The ***systemLoadHandler()*** function is set as the handler function, and each time an event is received, this function is called. The ***systemLoadHandler()*** function will take the event object and parse the event's data property from a JSON string into a JavaScript object. The contents of this object are used to update the table with the system hostname and load. If a system is already present in the table, the load is updated, otherwise a new row is added for the system.
+
+
+::page{title="Building and running the application"}
+
+To build the application, navigate to the ***start*** directory and run the following Maven ***install*** and ***package*** goals from the command line:
 
 ```bash
-kubectl get OpenLibertyApplications
+cd /home/project/guide-reactive-messaging-sse/start
+./mvnw -pl models install
+./mvnw package
 ```
 
-You can also replace ***OpenLibertyApplications*** with the shortname ***olapps***.
 
-Look for output that is similar to the following example:
-
-```
-NAME      IMAGE                  EXPOSED   RECONCILED   AGE
-system    system:1.0-SNAPSHOT    true      True         10s
-```
-
-A ***RECONCILED*** state value of ***True*** indicates that the operator was able to successfully process the ***OpenLibertyApplications*** instances. Run the following command to view details of your microservice:
+Run the following commands to containerize the ***frontend***, ***bff***, and ***system*** services:
 
 ```bash
-kubectl describe olapps/system
+docker build -t frontend:1.0-SNAPSHOT frontend/.
+docker build -t bff:1.0-SNAPSHOT bff/.
+docker build -t system:1.0-SNAPSHOT system/.
 ```
 
-This example shows part of the ***olapps/system*** output:
+Next, use the following ***startContainers.sh*** script to start the application in Docker containers:
 
-```
-Name:         system
-Namespace:    default
-Labels:       app.kubernetes.io/part-of=system
-              name=system
-Annotations:  <none>
-API Version:  apps.openliberty.io/v1
-Kind:         OpenLibertyApplication
-
-...
-```
-
-::page{title="Accessing the microservice"}
-
-To access the exposed ***system*** microservice, the service must be port-forwarded. Run the following command to set up port forwarding to access the ***system*** service:
-
-
-```bash
-kubectl port-forward svc/system 9443
-```
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Access the microservice by running the following command:
-```bash
-curl -k -s https://localhost:9443/system/properties | jq
-```
-
-When you're done trying out the microservice, press **CTRL+C** in the command line session where you ran the ***kubectl port-forward*** command to stop the port forwarding.
-
-Run the following command to remove the deployed ***system*** microservice:
-```bash
-kubectl delete -f deploy.yaml
-```
-
-::page{title="Specifying optional parameters"}
-
-You can also use the Open Liberty Operator to implement optional parameters in your application deployment by specifying the associated CRDs in your ***deploy.yaml*** file. For example, you can configure the [Kubernetes liveness, readiness and startup probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/). Visit the [Open Liberty Operator user guide](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1.adoc#configuration) to find all of the supported optional CRDs.
-
-To configure the Kubernetes liveness, readiness and startup probes by using the Open Liberty Operator, specify the ***probes*** in your ***deploy.yaml*** file. The ***startup*** probe verifies whether deployed application is fully initialized before the liveness probe takes over. Then, the ***liveness*** probe determines whether the application is running and the ***readiness*** probe determines whether the application is ready to process requests. For more information about application health checks, see the [Checking the health of microservices on Kubernetes](https://openliberty.io/guides/kubernetes-microprofile-health.html) guide.
-
-Replace the ***deploy.yaml*** configuration file.
-
-> To open the deploy.yaml file in your IDE, select
-> ***File*** > ***Open*** > guide-openliberty-operator-intro/start/deploy.yaml, or click the following button
-
-::openFile{path="/home/project/guide-openliberty-operator-intro/start/deploy.yaml"}
-
-
-
-```yaml
-apiVersion: apps.openliberty.io/v1
-kind: OpenLibertyApplication
-metadata:
-  name: system
-  labels:
-    name: system
-spec:
-  applicationImage: system:1.0-SNAPSHOT
-  service:
-    port: 9443
-  expose: true
-  route:
-    pathType: ImplementationSpecific
-  env:
-    - name: WLP_LOGGING_MESSAGE_FORMAT
-      value: "json"
-    - name: WLP_LOGGING_MESSAGE_SOURCE
-      value: "message,trace,accessLog,ffdc,audit"
-  probes:
-    startup:
-      failureThreshold: 12
-      httpGet:
-        path: /health/started
-        port: 9443
-        scheme: HTTPS
-      initialDelaySeconds: 30
-      periodSeconds: 2
-      timeoutSeconds: 10
-    liveness:
-      failureThreshold: 12
-      httpGet:
-        path: /health/live
-        port: 9443
-        scheme: HTTPS
-      initialDelaySeconds: 30
-      periodSeconds: 2
-      timeoutSeconds: 10
-    readiness:
-      failureThreshold: 12
-      httpGet:
-        path: /health/ready
-        port: 9443
-        scheme: HTTPS
-      initialDelaySeconds: 30
-      periodSeconds: 2
-      timeoutSeconds: 10
-```
-
-
-
-The health check endpoints ***/health/started***, ***/health/live*** and ***/health/ready*** are already created for you. 
-
-
-Run the following commands to update the **applicationImage** with the **pullSecret** and redeploy the **system** microservice with the new configuration:
-```bash
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
-kubectl apply -f deploy.yaml
-```
-Run the following command to check status of the pods:
-```bash
-kubectl describe pods | grep health
-```
-
-Look for the following output to confirm that the health checks are successfully applied and working:
-
-```
-Liveness:   http-get http://:9080/health/live delay=30s timeout=10s period=2s #success=1 #failure=12
-Readiness:  http-get http://:9080/health/ready delay=30s timeout=10s period=2s #success=1 #failure=12
-Startup:    http-get http://:9080/health/started delay=30s timeout=10s period=2s #success=1 #failure=12
-```
-
-Run the following command to set up port forwarding to access the ***system*** service:
 
 
 ```bash
-kubectl port-forward svc/system 9443
+./scripts/startContainers.sh
 ```
 
-Access the microservice by running the following command:
+This script creates a network for the containers to communicate with each other. It also creates containers for Kafka, the ***frontend*** service, the ***bff*** service , and three instances of the ***system*** service.
+
+
+The application might take some time to get ready. Run the following command to confirm that the ***bff*** microservice is up and running:
 ```bash
-curl -k -s https://localhost:9443/system/properties | jq
+curl -s http://localhost:9084/health | jq
 ```
 
-When you're done trying out the microservice, press **CTRL+C** in the command line session where you ran the ***kubectl port-forward*** command to stop the port forwarding.
+Once your application is up and running, use the following command to get the URL. Open your browser and check out your ***front*** service by going to the URL that the command returns.
+```bash
+echo https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+```
+
+The latest version of most modern web browsers supports Server-Sent Events. The exception is Internet Explorer, which does not support SSE. When you visit the URL, look for a table similar to the following example:
+
+![System table](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-messaging-sse/prod/assets/system_table.png)
+
+
+The table contains three rows, one for each of the running ***system*** containers. If you can see the loads updating, you know that your ***bff*** service is successfully receiving messages and broadcasting them as SSE to the client in the ***frontend*** service.
+
 
 ::page{title="Tearing down the environment"}
 
+Run the following script to stop the application:
 
-When you no longer need your deployed microservice, you can delete all resources by running the following command:
 
 ```bash
-kubectl delete -f deploy.yaml
+./scripts/stopContainers.sh
 ```
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just deployed a microservice running in Open Liberty to Kubernetes and configured the Kubernetes liveness, readiness and startup probes by using the Open Liberty Operator.
+You developed an application that subscribes to Server-Sent Events by using MicroProfile Reactive Messaging, Open Liberty, and Kafka.
 
 
 
@@ -361,32 +354,41 @@ You just deployed a microservice running in Open Liberty to Kubernetes and confi
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-openliberty-operator-intro*** project by running the following commands:
+Delete the ***guide-reactive-messaging-sse*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-openliberty-operator-intro
+rm -fr guide-reactive-messaging-sse
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Deploying%20a%20microservice%20to%20Kubernetes%20using%20Open%20Liberty%20Operator&guide-id=cloud-hosted-guide-openliberty-operator-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Streaming%20updates%20to%20a%20client%20using%20Server-Sent%20Events&guide-id=cloud-hosted-guide-reactive-messaging-sse)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-openliberty-operator-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-openliberty-operator-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-reactive-messaging-sse/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-reactive-messaging-sse/pulls)
 
 
 
 ### Where to next?
 
-* [Deploying microservices to OpenShift 3](https://openliberty.io/guides/cloud-openshift.html)
-* [Deploying microservices to OpenShift 4 using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html)
-* [Deploying microservices to an OKD cluster using Minishift](https://openliberty.io/guides/okd.html)
+* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
+* [Acknowledging messages using MicroProfile Reactive Messaging](https://openliberty.io/guides/microprofile-reactive-messaging-acknowledgment.html)
+* [Integrating RESTful services with a reactive system](https://openliberty.io/guides/microprofile-reactive-messaging-rest-integration.html)
+* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
+* [Containerizing microservices](https://openliberty.io/guides/containerize.html)
+
+**Learn more about MicroProfile**
+* [See the MicroProfile specs](https://microprofile.io/)
+* [View the MicroProfile API](https://openliberty.io/docs/ref/microprofile)
+* [View the MicroProfile Reactive Messaging Specification](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/microprofile-reactive-messaging-spec.html#_microprofile_reactive_messaging)
+* [View the JAX-RS Server-Sent Events API](https://openliberty.io/docs/ref/javaee/8/#package=javax/ws/rs/sse/package-frame.html&class=javax/ws/rs/sse/package-summary.html)
+* [View the Server-Sent Events HTML Specification](https://html.spec.whatwg.org/multipage/server-sent-events.html)
 
 
 ### Log out of the session
