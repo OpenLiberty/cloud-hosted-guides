@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Configuring microservices guide!"}
+::page{title="Welcome to the Externalizing environment-specific microservice configuration for CI/CD guide!"}
 
-Learn how to provide external configuration to microservices using MicroProfile Config.
+Learn how to create environment-specific configurations for microservices by using MicroProfile Config configuration profiles for easy management and portable deployments throughout the CI/CD lifecycle.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -17,11 +17,16 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You will learn how to externalize and inject both static and dynamic configuration properties for microservices using MicroProfile Config.
+Managing configurations for microservices can be challenging, especially when configurations require adjustments across various stages of the software development and delivery lifecycle. The MicroProfile Config configuration profile feature, also known as the [Config Profile](https://download.eclipse.org/microprofile/microprofile-config-3.0/microprofile-config-spec-3.0.html#configprofile), is a direct solution to this challenge. It simplifies the management of microservice configurations across diverse environments - from development to production and throughout the  continuous integration/continuous delivery (CI/CD) pipeline. By externalizing and tailoring configuration properties to each environment, the CI/CD process becomes more seamless, so you can concentrate on perfecting your application code and capabilities.
 
-You will learn to aggregate multiple configuration sources, assign prioritization values to these sources, merge configuration values, and create custom configuration sources.
+You'll learn how to provide environment-specific configurations by using the MicroProfile Config configuration profile feature. You'll work with the MicroProfile Config API to create configuration profiles that use profile-specific configuration properties and configuration sources.
 
-The application that you will be working with is an ***inventory*** service which stores the information about various JVMs running on different hosts. Whenever a request is made to the ***inventory*** service to retrieve the JVM system properties of a particular host, the ***inventory*** service will communicate with the ***system*** service on that host to get these system properties. You will add configuration properties to simulate if a service is down for maintenance.
+This guide builds on the [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html) guide and the [Configuring microservices](https://openliberty.io/guides/microprofile-config.html) guide. If you are not familiar with externalizing the configuration of microservices, it will be helpful to read the [External configuration of microservices](https://openliberty.io/docs/latest/external-configuration.html) document and complete the aforementioned guides before you proceed.
+
+The application that you will work with is a ***query*** service, which fetches information about the running JVM from a ***system*** microservice. You'll use configuration profiles to externalize and manage the configurations across the development, testing, and production environments.
+
+![System and query services DevOps](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-config-profile/prod/assets/system-query-devops.png)
+
 
 
 ::page{title="Getting started"}
@@ -35,11 +40,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-config.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-config-profile.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-microprofile-config.git
-cd guide-microprofile-config
+git clone https://github.com/openliberty/guide-microprofile-config-profile.git
+cd guide-microprofile-config-profile
 ```
 
 
@@ -47,823 +52,458 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-### Try what you'll build
+::page{title="Creating a configuration profile for the dev environment"}
 
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+The dev environment is used to test, experiment, debug, and refine your code, ensuring an application's functional readiness before progressing to subsequent stages in a software development and delivery lifecycle.
 
-To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
+Navigate to the ***start*** directory to begin.
 
-```bash
-cd finish
-./mvnw liberty:run
-```
-
-After you see the following message, your Liberty instance is ready:
-
-```
-The defaultServer server is ready to run a smarter planet.
-```
+The starting Java project, which you can find in the ***start*** directory, is a multi-module Maven project comprised of the ***system*** and ***query*** microservices. Each microservice is in its own corresponding directory, ***system*** and ***query***.
 
 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following curl command to test the availability of the ***system*** microservice and retrieve the system information:
-```bash
-curl -s http://localhost:9080/system/properties | jq
-```
 
-Run the following curl command to test the availability of the **inventory** microservice and retrieve the information for a list of all previously registered hosts:
-```bash
-curl -s http://localhost:9080/inventory/systems | jq
-```
+The ***system*** microservice contains the three Maven build profiles: ***dev***, ***test***, and ***prod***, in which the ***dev*** profile is set as the default. Each build profile defines properties for a particular deployment configuration that the microservice uses.
 
-In addition, you can run the following curl command to access a third microservice, which retrieves and aggregates all of the configuration properties and sources that are added throughout this guide.
-```bash
-curl -s http://localhost:9080/config | jq
-```
+The MicroProfile Config configuration profile feature supplies configurations for different environments when only a single profile is active. The active profile is set using the ***mp.config.profile*** property. You can set it in any of the [configuration sources](https://openliberty.io/docs/latest/external-configuration.html#default) and it is read once during application startup. When a profile is active, its associated configuration properties are used. For the ***query*** service, the ***mp.config.profile*** property is set to ***dev*** in its Maven ***pom.xml***. This Liberty configuration variable indicates to the runtime that ***dev*** is the active configuration profile.
 
-After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
+
+Open a command-line session and run the following commands to navigate to the ***system*** directory and start the ***system*** service in the ***dev*** environment:
 
 ```bash
-./mvnw liberty:stop
+cd /home/project/guide-microprofile-config-profile/start/system
+mvn liberty:dev
 ```
 
-::page{title="Ordering multiple configuration sources"}
-
-
-To begin, run the following command to navigate to the **start** directory:
-```bash
-cd /home/project/guide-microprofile-config/start
-```
-
-
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+Open another command-line session and run the following commands to navigate to the ***query*** directory and start the ***query*** service in the ***dev*** environment:
 
 ```bash
-./mvnw liberty:dev
+cd /home/project/guide-microprofile-config-profile/start/query
+mvn liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
-**************************************************************
-*    Liberty is running in dev mode.
+**************************************************
+*     Liberty is running in dev mode.
 ```
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-MicroProfile Config combines configuration properties from multiple sources, each known as a ConfigSource. Each ConfigSource has a specified priority, defined by its ***config_ordinal*** value.
 
-A higher ordinal value means that the values taken from this ConfigSource will override values from ConfigSources with a lower ordinal value.
+In the dev environment, the ***dev*** configuration profile is set in the ***system/pom.xml*** file as the configuration profile to use for running the ***system*** service. The ***system*** service runs on HTTP port ***9081*** and HTTPS port ***9444*** using the context root ***system/dev***. It uses a basic user registry with username ***alice*** and password ***alicepwd*** for resource authorization. Note that the ***basicRegistry*** element is a simple registry configuration for learning purposes. For more information on user registries, see the [User registries documentation](https://openliberty.io/docs/latest/user-registries-application-security.html).
 
-The following four sources are the default configuration sources:
+Click the following button to check out the ***query*** service:
 
-* A ***\<variable name="..." value="..."/\>*** element in the server.xml file has a default ordinal of 500.
-* System properties has a default ordinal of 400. (e.g. ***bootstrap.properties*** file)
-* Environment variables have a default ordinal of 300. (e.g. ***server.env*** file)
-* The ***META-INF/microprofile-config.properties*** configuration property file on the classpath has a default ordinal of 100.
-
-Access the ***src/main/resources/META-INF/microprofile-config.properties*** local configuration file. This configuration file is the default configuration source for an application that uses MicroProfile Config.
+::startApplication{port="9085" display="external" name="Check out the query service" route="/query/systems/localhost"}
 
 
-::page{title="Injecting static configuration"}
+The ***query*** service returns the message: ***{"fail":"Failed to reach the client localhost."}***. This is because the current ***query*** service uses the default properties in the ***query/src/main/resources/META-INF/microprofile-config.properties*** file to access the ***system*** service.
 
-The MicroProfile Config API is included in the MicroProfile dependency that is specified in your ***pom.xml*** file. Look for the dependency with the ***microprofile*** artifact ID. This dependency provides a library that allows you to use the MicroProfile Config API to externalize configurations for your microservices. The ***mpConfig*** feature is also enabled in the ***src/main/liberty/config/server.xml*** file.
+For proper communication with the development ***system*** service, the ***query*** service uses properties in the ***dev*** configuration profile.
 
-
-
-Now navigate to the ***src/main/resources/META-INF/microprofile-config.properties*** local configuration file to check some static configuration. This configuration file is the default configuration source for an application that uses MicroProfile Config.
-
-The ***io_openliberty_guides_port_number*** property that has already been defined in this file, determines the port number of the REST service.
+![System service running in development environment](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-config-profile/prod/assets/system-query-devops-development.png)
 
 
-To use this configuration property,
-create the ***InventoryConfig.java*** class.
+There are two ways to define configuration properties that are associated with your configuration profile. The first is as individual configuration properties associated with a configuration profile that can be specified in any kind of MicroProfile configuration source. The second is through default ***microprofile-config.properties*** configuration files embedded in your application that can be associated with different configuration profiles. The former allows for flexibility in defining profile-specific configuration properties in the best configuration sources for your needs while the latter enables default profiles of configuration properties to be provided in your application.
+
+### Creating profile-specific configuration properties
+
+This approach involves directly associating individual configuration properties with a configuration profile. To define a configuration property for a particular config profile, use the ***%\<config_profile_id\>.\<property_name\>=\<value\>*** syntax, where ***\<config_profile_id\>*** is the unique identifier for the configuration profile and ***\<property_name\>*** is the name of the property that you want to set.
+
+Replace the ***microprofile-config.properties*** file.
+
+> To open the microprofile-config.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties"}
+
+
+
+```
+system.httpsPort=9443
+system.user=admin
+system.password=adminpwd
+system.contextRoot=system
+
+%dev.system.httpsPort=9444
+%dev.system.user=alice
+%dev.system.password=alicepwd
+%dev.system.contextRoot=system/dev
+```
+
+
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+
+
+
+Configure the ***%dev.**** properties in the ***microprofile-config.properties*** file based on the values from the ***dev*** profile of the ***system*** service.
+
+Because the active profile is set to ***dev***, each ***%dev.**** property overrides the value of the plain non-profile-specific property. For example, in this case, the ***%dev.system.httpsPort*** property overrides the ***system.httpsPort*** property and the value is resolved to ***9444***.
+
+Because you are running the ***query*** service in dev mode, the changes that you made are automatically picked up.
+
+Click the following button to try out the application:
+
+::startApplication{port="9085" display="external" name="Try out the application" route="/query/systems/localhost"}
+
+You can see the current OS and Java version in JSON format.
+
+
+### Creating profile-specific ***microprofile-config.properties*** configuration files
+
+Creating profile-specific ***microprofile-config.properties*** configuration files is a structured way to provide and manage more extensive sets of default configurations. You can create a configuration file for each configuration profile in the ***META-INF*** folder on the classpath of your application by using the ***microprofile-config-\<config_profile_id\>*** naming convention, where ***\<config_profile_id\>*** is the unique identifier for a configuration profile. After you create the file, you can add your configuration properties to it with the standard ***\<property_name\>=\<value\>*** syntax.
+
+Open another command-line session.
+
+Create the ***microprofile-config-dev.properties*** file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
+touch /home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-dev.properties
 ```
 
 
-> Then, to open the InventoryConfig.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java, or click the following button
+> Then, to open the microprofile-config-dev.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-dev.properties, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java"}
-
-
-
-```java
-package io.openliberty.guides.inventory;
-
-import jakarta.enterprise.context.RequestScoped;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import io.openliberty.guides.config.Email;
-
-@RequestScoped
-public class InventoryConfig {
-
-  @Inject
-  @ConfigProperty(name = "io_openliberty_guides_port_number")
-  private int portNumber;
-
-  private Provider<Boolean> inMaintenance;
+::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-dev.properties"}
 
 
-  public int getPortNumber() {
-    return portNumber;
-  }
 
-
-}
+```
+system.httpsPort=9444
+system.user=alice
+system.password=alicepwd
+system.contextRoot=system/dev
 ```
 
 
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-Inject the ***io_openliberty_guides_port_number*** property, and add the ***getPortNumber()*** class method to the ***InventoryConfig.java*** file.
+Define the ***system.**** properties in the ***microprofile-config-dev.properties*** file based on the values from the ***dev*** profile of the ***system*** service.
 
-The ***@Inject*** annotation injects the port number directly, the injection value is static and fixed on application starting.
+Replace the ***microprofile-config.properties*** file.
 
-The ***getPortNumber()*** method directly returns the value of ***portNumber*** because it has been injected.
+> To open the microprofile-config.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
-::page{title="Injecting dynamic configuration"}
-
-Note that three default config sources mentioned above are static and fixed on application starting, so the properties within them cannot be modified while the Liberty is running. However, you can externalize configuration data out of the application package, through the creation of custom configuration sources, so that the service updates configuration changes dynamically.
-
-### Creating custom configuration sources
+::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties"}
 
 
-Custom configuration sources can be created by implementing the ***org.eclipse.microprofile.config.spi.ConfigSource*** interface and using the ***java.util.ServiceLoader*** mechanism.
 
-A ***CustomConfigSource.json*** JSON file has already been created in the ***resources*** directory. This JSON file simulates a remote configuration resource in real life. This file contains 4 custom config properties and has an ordinal of ***150***. To use these properties in the application, the data object needs to be transformed from this JSON file to the configuration for your application.
+```
+system.httpsPort=9443
+system.user=admin
+system.password=adminpwd
+system.contextRoot=system
 
-To link this JSON file to your application and to implement the ***ConfigSource*** interface,
+```
 
-create the ***CustomConfigSource*** class.
+
+
+
+Remove the ***%dev.**** properties from the ***microprofile-config.properties*** file.
+
+Because the active profile is set to ***dev***, any ***system.**** properties specified in the ***microprofile-config-dev.properties*** file take precedence over the ***system.**** property values in the ***microprofile-config.properties*** file.
+
+Now, click the following button to try out the application again:
+
+::startApplication{port="9085" display="external" name="Try out the application" route="/query/systems/localhost"}
+
+You can see the current OS and Java version in JSON format.
+
+When you are done checking out the application in ***dev*** environment, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***query*** services.
+
+::page{title="Creating a configuration profile for the test environment"}
+
+In CI/CD, the test environment is where integration tests ensure the readiness and quality of an application. A good testing configuration not only ensures smooth operations but also aligns the environment closely with potential production settings.
+
+![System service running in testing environment](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-config-profile/prod/assets/system-query-devops-testing.png)
+
+
+Create the ***microprofile-config-test.properties*** file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomConfigSource.java
+touch /home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-test.properties
 ```
 
 
-> Then, to open the CustomConfigSource.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomConfigSource.java, or click the following button
+> Then, to open the microprofile-config-test.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-test.properties, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomConfigSource.java"}
+::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-test.properties"}
 
 
 
-```java
-package io.openliberty.guides.config;
-
-import jakarta.json.stream.JsonParser;
-import jakarta.json.stream.JsonParser.Event;
-import jakarta.json.Json;
-import java.math.BigDecimal;
-import java.io.StringReader;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import org.eclipse.microprofile.config.spi.ConfigSource;
-
-/**
- * User-provided ConfigSources are dynamic.
- * The getProperties() method will be periodically invoked by the runtime
- * to retrieve up-to-date values. The frequency is controlled by
- * the microprofile.config.refresh.rate Java system property,
- * which is in milliseconds and can be customized.
- */
-public class CustomConfigSource implements ConfigSource {
-
-  String fileLocation = System.getProperty("user.dir").split("target")[0]
-      + "resources/CustomConfigSource.json";
-
-  @Override
-  public int getOrdinal() {
-    return Integer.parseInt(getProperties().get("config_ordinal"));
-  }
-
-  @Override
-  public Set<String> getPropertyNames() {
-    return getProperties().keySet();
-  }
-
-  @Override
-  public String getValue(String key) {
-    return getProperties().get(key);
-  }
-
-  @Override
-  public String getName() {
-    return "Custom Config Source: file:" + this.fileLocation;
-  }
-
-  public Map<String, String> getProperties() {
-    Map<String, String> m = new HashMap<String, String>();
-    String jsonData = this.readFile(this.fileLocation);
-    JsonParser parser = Json.createParser(new StringReader(jsonData));
-    String key = null;
-    while (parser.hasNext()) {
-      final Event event = parser.next();
-      switch (event) {
-      case KEY_NAME:
-        key = parser.getString();
-        break;
-      case VALUE_STRING:
-        String string = parser.getString();
-        m.put(key, string);
-        break;
-      case VALUE_NUMBER:
-        BigDecimal number = parser.getBigDecimal();
-        m.put(key, number.toString());
-        break;
-      case VALUE_TRUE:
-        m.put(key, "true");
-        break;
-      case VALUE_FALSE:
-        m.put(key, "false");
-        break;
-      default:
-        break;
-      }
-    }
-    parser.close();
-    return m;
-  }
-
-  public String readFile(String fileName) {
-    String result = "";
-    try {
-      BufferedReader br = new BufferedReader(new FileReader(fileName));
-      StringBuilder sb = new StringBuilder();
-      String line = br.readLine();
-      while (line != null) {
-        sb.append(line);
-        line = br.readLine();
-      }
-      result = sb.toString();
-      br.close();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    return result;
-  }
-}
+```
+system.httpsPort=9445
+system.user=bob
+system.password=bobpwd
+system.contextRoot=system/test
 ```
 
 
 
-The ***getProperties()*** method reads the key value pairs from the ***resources/CustomConfigSource.json*** JSON file and writes the information into a map.
 
-Finally, register the custom configuration source.
+Define the ***system.**** properties in the ***microprofile-config-test.properties*** file based on the values from the ***test*** profile of the ***system*** service.
 
-Create the configuration file.
+Create the ***QueryEndpointIT*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.ConfigSource
+touch /home/project/guide-microprofile-config-profile/start/query/src/test/java/it/io/openliberty/guides/query/QueryEndpointIT.java
 ```
 
 
-> Then, to open the org.eclipse.microprofile.config.spi.ConfigSource file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.ConfigSource, or click the following button
+> Then, to open the QueryEndpointIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/test/java/it/io/openliberty/guides/query/QueryEndpointIT.java, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.ConfigSource"}
-
-
-
-```
-io.openliberty.guides.config.CustomConfigSource
-```
-
-
-
-Add the fully qualified class name of the configuration source into it.
-
-
-### Enabling dynamic configuration injection
-
-Now that the custom configuration source has successfully been set up, you can enable dynamic configuration injection of the properties being set in this ConfigSource. To enable this dynamic injection,
-
-replace the ***InventoryConfig.java*** class.
-
-> To open the InventoryConfig.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java"}
+::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/test/java/it/io/openliberty/guides/query/QueryEndpointIT.java"}
 
 
 
 ```java
-package io.openliberty.guides.inventory;
-
-import jakarta.enterprise.context.RequestScoped;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import io.openliberty.guides.config.Email;
-
-@RequestScoped
-public class InventoryConfig {
-
-  @Inject
-  @ConfigProperty(name = "io_openliberty_guides_port_number")
-  private int portNumber;
-
-  @Inject
-  @ConfigProperty(name = "io_openliberty_guides_inventory_inMaintenance")
-  private Provider<Boolean> inMaintenance;
-
-
-  public int getPortNumber() {
-    return portNumber;
-  }
-
-  public boolean isInMaintenance() {
-    return inMaintenance.get();
-  }
-
-}
-```
-
-
-Inject the ***io_openliberty_guides_inventory_inMaintenance*** property, and add the ***isInMaintenance()*** class method.
-
-The ***@Inject*** and ***@ConfigProperty*** annotations inject the ***io_openliberty_guides_inventory_inMaintenance*** configuration property from the ***CustomConfigSource.json*** file. The ***Provider\<\>*** interface used, forces the service to retrieve the inMaintenance value just in time. This retrieval of the value just in time makes the config injection dynamic and able to change without having to restart the application.
-
-Every time that you invoke the ***inMaintenance.get()*** method, the ***Provider\<\>*** interface picks up the latest value of the ***io_openliberty_guides_inventory_inMaintenance*** property from configuration sources.
-
-
-::page{title="Creating custom converters"}
-
-Configuration values are purely Strings. MicroProfile Config API has built-in converters that automatically converts configured Strings into target types such as ***int***, ***Integer***, ***boolean***, ***Boolean***, ***float***, ***Float***, ***double*** and ***Double***. Therefore, in the previous section, it is type-safe to directly set the variable type to ***Provider\<Boolean\>***.
-
-To convert configured Strings to an arbitrary class type, such as the ***Email*** class type,
-replace the ***Email*** Class.
-
-> To open the Email.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/Email.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/Email.java"}
-
-
-
-```java
-
-package io.openliberty.guides.config;
-
-public class Email {
-  private String name;
-  private String domain;
-
-  public Email(String value) {
-    String[] components = value.split("@");
-    if (components.length == 2) {
-      name = components[0];
-      domain = components[1];
-    }
-  }
-
-  public String getEmailName() {
-    return name;
-  }
-
-  public String getEmailDomain() {
-    return domain;
-  }
-
-  public String toString() {
-    return name + "@" + domain;
-  }
-}
-```
-
-
-
-To use this ***Email*** class type, add a custom converter by implementing the generic interface ***org.eclipse.microprofile.config.spi.Converter\<T\>***. The Type parameter of the interface is the target type the String is converted to.
-
-Create the ***CustomEmailConverter*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomEmailConverter.java
-```
-
-
-> Then, to open the CustomEmailConverter.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomEmailConverter.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomEmailConverter.java"}
-
-
-
-```java
-package io.openliberty.guides.config;
-
-import org.eclipse.microprofile.config.spi.Converter;
-
-public class CustomEmailConverter implements Converter<Email> {
-
-  @Override
-  public Email convert(String value) {
-    return new Email(value);
-  }
-
-}
-```
-
-
-
-This implements the ***Converter\<T\>*** interface.
-
-To register your implementation,
-create the configuration file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.Converter
-```
-
-
-> Then, to open the org.eclipse.microprofile.config.spi.Converter file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.Converter, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.Converter"}
-
-
-
-```
-io.openliberty.guides.config.CustomEmailConverter
-```
-
-
-Add the fully qualified class name of the custom converter into it.
-
-To use the custom ***Email*** converter,
-replace the ***InventoryConfig*** class.
-
-> To open the InventoryConfig.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java"}
-
-
-
-```java
-package io.openliberty.guides.inventory;
-
-import jakarta.enterprise.context.RequestScoped;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import io.openliberty.guides.config.Email;
-
-@RequestScoped
-public class InventoryConfig {
-
-  @Inject
-  @ConfigProperty(name = "io_openliberty_guides_port_number")
-  private int portNumber;
-
-  @Inject
-  @ConfigProperty(name = "io_openliberty_guides_inventory_inMaintenance")
-  private Provider<Boolean> inMaintenance;
-
-  @Inject
-  @ConfigProperty(name = "io_openliberty_guides_email")
-  private Provider<Email> email;
-
-  public int getPortNumber() {
-    return portNumber;
-  }
-
-  public boolean isInMaintenance() {
-    return inMaintenance.get();
-  }
-
-  public Email getEmail() {
-    return email.get();
-  }
-}
-```
-
-
-Inject the ***io_openliberty_guides_email*** property, and add the ***getEmail()*** method.
-
-::page{title="Adding configuration to the microservice"}
-
-To use externalized configuration in the ***inventory*** service,
-replace the ***InventoryResource*** class.
-
-> To open the InventoryResource.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java"}
-
-
-
-```java
-package io.openliberty.guides.inventory;
-
-import java.util.Properties;
-
-import jakarta.enterprise.context.RequestScoped;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-
-
-
-@RequestScoped
-@Path("systems")
-public class InventoryResource {
-
-  @Inject
-  InventoryManager manager;
-
-  @Inject
-  InventoryConfig inventoryConfig;
-
-  @GET
-  @Path("{hostname}")
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response getPropertiesForHost(@PathParam("hostname") String hostname) {
-
-    if (!inventoryConfig.isInMaintenance()) {
-      Properties props = manager.get(hostname, inventoryConfig.getPortNumber());
-      if (props == null) {
-        return Response.status(Response.Status.NOT_FOUND)
-                       .entity("{ \"error\" : \"Unknown hostname or the system service "
-                       + "may not be running on " + hostname + "\" }")
-                       .build();
-      }
-
-      manager.add(hostname, props);
-      return Response.ok(props).build();
-    } else {
-      return Response.status(Response.Status.SERVICE_UNAVAILABLE)
-                     .entity("{ \"error\" : \"Service is currently in maintenance. "
-                     + "Contact: " + inventoryConfig.getEmail().toString() + "\" }")
-                     .build();
-    }
-  }
-
-  @GET
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response listContents() {
-    if (!inventoryConfig.isInMaintenance()) {
-      return Response.ok(manager.list()).build();
-    } else {
-      return Response.status(Response.Status.SERVICE_UNAVAILABLE)
-                     .entity("{ \"error\" : \"Service is currently in maintenance. "
-                     + "Contact: " + inventoryConfig.getEmail().toString() + "\" }")
-                     .build();
-    }
-  }
-
-}
-
-```
-
-
-To add configuration to the ***inventory*** service, the ***InventoryConfig*** object is injected to the existing class.
-
-The port number from the configuration is retrieved by the ***inventoryConfig.getPortNumber()*** method and passed to the ***manager.get()*** method as a parameter.
-
-To determine whether the inventory service is in maintenance or not (according to the configuration value), ***inventoryConfig.isInMaintenance()*** class method is used. If you set the ***io_openliberty_guides_inventory_inMaintenance*** property to ***true*** in the configuration, the inventory service returns the message, ***ERROR: Service is currently in maintenance***, along with the contact email. The email configuration value can be obtained by calling ***inventoryConfig.getEmail()*** method.
-
-
-
-
-::page{title="Running the application"}
-
-You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
-
-
-While the Liberty is running, run the following curl command to access the ***system*** microservice:
-```bash
-curl -s http://localhost:9080/system/properties | jq
-```
-
-and run the following curl command to access the ***inventory*** microservice:
-```bash
-curl -s http://localhost:9080/inventory/systems | jq
-```
-
-You can find the service that retrieves configuration information that is specific to this guide by running the following curl command:
-```bash
-curl -s http://localhost:9080/config | jq
-```
-
-The ***config_ordinal*** value of the custom configuration source is set to ***150***. It overrides configuration values of the default ***microprofile-config.properties*** source, which has a ***config_ordinal*** value of ***100***.
-
-
-
-
-Play with this application by changing configuration values for each property in the ***resources/CustomConfigSource.json*** file. Your changes are added dynamically, and you do not need to restart the Liberty. Rerun the following curl command to see the dynamic changes:
-```bash
-curl -s http://localhost:9080/config | jq
-```
-
-For example, change ***io_openliberty_guides_inventory_inMaintenance*** from ***false*** to ***true***, then try to access http://localhost:9080/inventory/systems again by running the following curl command:
-```bash
-curl -s http://localhost:9080/inventory/systems | jq
-```
-
-The following message displays: ***ERROR: Service is currently in maintenance***.
-
-
-
-::page{title="Testing the application"}
-
-Create the ***ConfigurationIT*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-microprofile-config/start/src/test/java/it/io/openliberty/guides/config/ConfigurationIT.java
-```
-
-
-> Then, to open the ConfigurationIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-config/start/src/test/java/it/io/openliberty/guides/config/ConfigurationIT.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-config/start/src/test/java/it/io/openliberty/guides/config/ConfigurationIT.java"}
-
-
-
-```java
-package it.io.openliberty.guides.config;
+package it.io.openliberty.guides.query;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import jakarta.json.JsonObject;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.core.Response;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
+public class QueryEndpointIT {
 
-@TestMethodOrder(OrderAnnotation.class)
-public class ConfigurationIT {
+    private static String port = System.getProperty("http.port");
+    private static String baseUrl = "http://localhost:" + port + "/query";
+    private static String systemHost = System.getProperty("system.host");
 
-  private String port;
-  private String baseUrl;
-  private Client client;
+    private static Client client;
 
-  private final String INVENTORY_HOSTS = "inventory/systems";
-  private final String USER_DIR = System.getProperty("user.dir");
-  private final String DEFAULT_CONFIG_FILE = USER_DIR
-      + "/src/main/resources/META-INF/microprofile-config.properties";
-  private final String CUSTOM_CONFIG_FILE = USER_DIR.split("target")[0]
-      + "/resources/CustomConfigSource.json";
-  private final String INV_MAINTENANCE_PROP = "io_openliberty_guides"
-      + "_inventory_inMaintenance";
-
-  @BeforeEach
-  public void setup() {
-    port = System.getProperty("http.port");
-    baseUrl = "http://localhost:" + port + "/";
-    ConfigITUtil.setDefaultJsonFile(CUSTOM_CONFIG_FILE);
-
-    client = ClientBuilder.newClient();
-  }
-
-  @AfterEach
-  public void teardown() {
-    ConfigITUtil.setDefaultJsonFile(CUSTOM_CONFIG_FILE);
-    client.close();
-  }
-
-  @Test
-  @Order(1)
-  public void testInitialServiceStatus() {
-    boolean status = Boolean.valueOf(ConfigITUtil.readPropertyValueInFile(
-        INV_MAINTENANCE_PROP, DEFAULT_CONFIG_FILE));
-    if (!status) {
-      Response response = ConfigITUtil.getResponse(client, baseUrl + INVENTORY_HOSTS);
-
-      int expected = Response.Status.OK.getStatusCode();
-      int actual = response.getStatus();
-      assertEquals(expected, actual);
-    } else {
-      assertEquals(
-         "{ \"error\" : \"Service is currently in maintenance."
-         + "Contact: admin@guides.openliberty.io\" }",
-          ConfigITUtil.getStringFromURL(client, baseUrl + INVENTORY_HOSTS),
-          "The Inventory Service should be in maintenance");
+    @BeforeEach
+    public void setup() {
+        client = ClientBuilder.newClient();
     }
-  }
 
-  @Test
-  @Order(2)
-  public void testPutServiceInMaintenance() {
-    Response response = ConfigITUtil.getResponse(client, baseUrl + INVENTORY_HOSTS);
+    @AfterEach
+    public void teardown() {
+        client.close();
+    }
 
-    int expected = Response.Status.OK.getStatusCode();
-    int actual = response.getStatus();
-    assertEquals(expected, actual);
+    @Test
+    public void testQuerySystem() {
 
-    ConfigITUtil.switchInventoryMaintenance(CUSTOM_CONFIG_FILE, true);
+        Response response = this.getResponse(baseUrl + "/systems/" + systemHost);
+        this.assertResponse(baseUrl, response);
 
-    String error = ConfigITUtil.getStringFromURL(client, baseUrl + INVENTORY_HOSTS);
+        JsonObject jsonObj = response.readEntity(JsonObject.class);
+        assertNotNull(jsonObj.getString("os.name"), "os.name is null");
+        assertNotNull(jsonObj.getString("java.version"), "java.version is null");
 
-    assertEquals(
-         "{ \"error\" : \"Service is currently in maintenance. "
-         + "Contact: admin@guides.openliberty.io\" }",
-        error, "The inventory service should be down in the end");
-  }
+        response.close();
+    }
 
-  @Test
-  @Order(3)
-  public void testChangeEmail() {
-    ConfigITUtil.switchInventoryMaintenance(CUSTOM_CONFIG_FILE, true);
+    @Test
+    public void testUnknownHost() {
+        Response response = this.getResponse(baseUrl + "/systems/unknown");
+        this.assertResponse(baseUrl, response);
 
-    String error = ConfigITUtil.getStringFromURL(client, baseUrl + INVENTORY_HOSTS);
+        JsonObject json = response.readEntity(JsonObject.class);
+        assertEquals("Failed to reach the client unknown.", json.getString("fail"),
+            "Fail message is wrong.");
+        response.close();
+    }
 
-    assertEquals(
-         "{ \"error\" : \"Service is currently in maintenance. "
-         + "Contact: admin@guides.openliberty.io\" }",
-        error, "The email should be admin@guides.openliberty.io in the beginning");
+    private Response getResponse(String url) {
+        return client.target(url).request().get();
+    }
 
-    ConfigITUtil.changeEmail(CUSTOM_CONFIG_FILE, "service@guides.openliberty.io");
-
-    error = ConfigITUtil.getStringFromURL(client, baseUrl + INVENTORY_HOSTS);
-
-    assertEquals(
-         "{ \"error\" : \"Service is currently in maintenance. "
-         + "Contact: service@guides.openliberty.io\" }",
-        error, "The email should be service@guides.openliberty.io in the beginning");
-  }
+    private void assertResponse(String url, Response response) {
+        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+    }
 
 }
 ```
 
 
 
+Implement endpoint tests to test the basic functionality of the ***query*** microservice. If a test failure occurs, you might have introduced a bug into the code.
+
+See the following descriptions of test cases:
+
+* ***testQuerySystem()*** verifies the ***/query/systems/{hostname}*** endpoint.
+
+* ***testUnknownHost()*** verifies that an unknown host or a host that does not expose their JVM system properties is correctly handled with a fail message.
+
+### Running the tests in the test environment
+
+Now, navigate to the ***start*** directory.
 
 
-The ***testInitialServiceStatus()*** test case reads the value of the ***io_openliberty_guides_inventory_inMaintenance*** configuration property in the ***META-INF/microprofile-config.properties*** file and checks the HTTP response of the inventory service. If the configuration value is ***false***, the service returns a valid response. Otherwise, the service returns the following message: ***ERROR: Service is currently in maintenance***.
 
-Because the ***io_openliberty_guides_inventory_inMaintenance*** configuration property is set to ***false*** by default, the ***testPutServiceInMaintenance()*** test case first checks that the inventory service is not in maintenance in the beginning. Next, this test switches the value of the ***io_openliberty_guides_inventory_inMaintenance*** configuration property to ***true***. In the end, the inventory service returns the following message: ***ERROR: Service is currently in maintenance***.
+Test the application under the ***test*** environment by running the following script that contains different Maven goals to ***build***, ***start***, ***test***, and ***stop*** the services.
 
-The ***testChangeEmail()*** test case first puts the ***inventory*** service in maintenance, then it changes the email address in the configuration file. In the end, the ***inventory*** service should display the error message with the latest email address.
+```bash
+cd /home/project/guide-microprofile-config-profile/start
+./scripts/testApp.sh
+```
 
-In addition, a few endpoint tests have been provided for you to test the basic functionality of the ***inventory*** and ***system*** services. If a test failure occurs, then you must have introduced a bug into the code. Remember that you must register the custom configuration source and custom converter in the ***src/main/resources/META-INF/services/*** directory. If you don't complete these steps, the tests will fail. These tests run automatically as a part of the integration test suite.
-
-
-### Running the tests
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
-
-You see the following output:
+If the tests pass, you see output similar to the following example:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.config.ConfigurationIT
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 5.92 s - in it.io.openliberty.guides.config.ConfigurationIT
 Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.017 s - in it.io.openliberty.guides.system.SystemEndpointIT
-Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-[WARNING ] Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
-Could not send Message.
-[err] The specified host is unknown.
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.077 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.539 s - in it.io.openliberty.guides.system.SystemEndpointIT
 
 Results:
 
-Tests run: 7, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+
+...
+
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.query.QueryEndpointIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.706 s - in it.io.openliberty.guides.query.QueryEndpointIT
+
+Results:
+
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+
 ```
 
-The warning and error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the ***testUnknownHost()*** test from the ***InventoryEndpointIT*** integration test.
+::page{title="Next steps"}
 
-To see whether the tests detect a failure, remove the configuration resetting line in the ***setup()*** method of the ***ConfigurationIT.java*** file. Then, manually change some configuration values in the ***resources/CustomConfigSource.json*** file. Rerun the tests. You will see a test failure occur.
+Deploying the application to a Kubernetes environment using the Open Liberty Operator is an optional learning step in this guide.
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
+To further explore deploying microservices using Kubernetes and the Open Liberty Operator, you can read the following guides:
+
+ [Deploying a microservice to Kubernetes using Open Liberty Operator](https://openliberty.io/guides/openliberty-operator-intro.html)
+ [Deploying a microservice to OpenShift 4 using Open Liberty Operator](https://openliberty.io/guides/openliberty-operator-openshift.html)
+
+A secure production environment is essential for application security. In the previous sections, you learned how to use the MicroProfile Config API to externalize credentials and other properties for accessing the ***system*** service. This strategy makes the application more adaptable to different environments without the need to change code and rebuild your application.
+
+In the this section, you'll learn how to use Kubernetes secrets to provide the credentials and how to pass them to the ***query*** service by using MicroProfile Config.
+
+### Deploying the application in the prod environment with Kubernetes
+
+
+
+
+
+
+Before deploying, create the Dockerfile files for both ***system*** and ***query*** microservices. Then, build their ***.war*** files and Docker images in the ***start*** directory.
+
+```bash
+cp /home/project/guide-microprofile-config-profile/finish/system/Dockerfile /home/project/guide-microprofile-config-profile/start/system
+cp /home/project/guide-microprofile-config-profile/finish/query/Dockerfile /home/project/guide-microprofile-config-profile/start/query
+cd /home/project/guide-microprofile-config-profile/start
+mvn -P prod clean package
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t query:1.0-SNAPSHOT query/.
+```
+
+The Maven ***clean*** and ***package*** goals can clean the ***target*** directories and build the ***.war*** application files from scratch. The ***microprofile-config-dev.properties*** and ***microprofile-config-test.properties*** files of the ***query*** microservice are excluded from the ***prod*** build. The default ***microprofile-config.properties*** file is automatically applied.
+
+The Docker ***build*** command packages the ***.war*** files of the ***system*** and ***query*** microservices with their default configuration into your Docker images.
+
+After building the images, push your images to the container registry on IBM Cloud with the following commands:
+
+```bash
+docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+docker tag query:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/query:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/query:1.0-SNAPSHOT
+```
+
+And, you can create a Kubernetes secret for storing sensitive data such as credentials.
+
+```bash
+kubectl create secret generic sys-app-credentials \
+        --from-literal username=$USERNAME \
+        --from-literal password=password
+```
+
+For more information about managing secrets, see the [Managing Secrets using kubectl](https://kubernetes.io/docs/tasks/configmap-secret/managing-secret-using-kubectl) documentation.
+
+Finally, write up the ***deploy.yaml*** deployment file to configure the deployment of the ***system*** and ***query*** microservices by using the Open Liberty Operator. The ***sys-app-credentials*** Kubernetes secrets set the environment variables ***DEFAULT_USERNAME*** and ***DEFAULT_PASSWORD*** for the ***system*** microservice, and ***SYSTEM_USER*** and ***SYSTEM_PASSWORD*** for the ***query*** microservice.
+
+```bash
+cp /home/project/guide-microprofile-config-profile/finish/deploy.yaml /home/project/guide-microprofile-config-profile/start
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"${SN_ICR_NAMESPACE}"'/system:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
+sed -i 's=query:1.0-SNAPSHOT=us.icr.io/'"${SN_ICR_NAMESPACE}"'/query:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
+```
+
+If you want to override another property, you can specify it in the ***env*** sections of the ***deploy.yaml*** file. For example, set the ***CONTEXT_ROOT*** environment variable in the ***system*** deployment and the ***SYSTEM_CONTEXTROOT*** environment variable in the ***query*** deployment.
+
+After the images and the secret are ready, you can deploy the microservices to your production environment with Kubernetes.
+
+```bash
+kubectl apply -f deploy.yaml
+```
+When the apps are deployed, run the following command to check the status of your pods:
+```bash
+kubectl get pods
+```
+
+You'll see an output similar to the following example if all the pods are healthy and running:
+
+```
+----
+NAME                     READY   STATUS    RESTARTS   AGE
+query-7b7b6db4b6-cqtqx   1/1     Running   0          4s
+system-bc85bc8dc-rw5pb   1/1     Running   0          5s
+----
+```
+
+To access the exposed **query** microservice, the service must be port-forwarded. Run the following command to set up port forwarding to access the **query** service:
+
+```bash
+kubectl port-forward svc/query 9448
+```
+
+Open another command-line session and access the microservice by running the following command:
+```bash
+curl -k -s "https://localhost:9448/query/systems/system.${SN_ICR_NAMESPACE}.svc" | jq
+```
+
+You'll see an output similar to the following example:
+
+```
+{
+  "hostname": "system.sn-labs-username.svc",
+  "java.version": "11.0.23",
+  "os.name": "Linux"
+}
+```
+
+After trying out the microservice, press **CTRL+C** in the command line session where you ran the `kubectl port-forward` command to stop the port forwarding, and then delete all resources by running the following commands:
+```bash
+cd /home/project/guide-microprofile-config-profile/start
+kubectl delete -f deploy.yaml
+kubectl delete secret sys-app-credentials
+docker image prune -a -f
+```
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just built and tested a MicroProfile application with MicroProfile Config in Open Liberty.
+You just learned how to use the MicroProfile Config's configuration profile feature to configure your application for multiple CI/CD environments.
 
 
-Feel free to try one of the related guides. They demonstrate new technologies that you can learn and expand on top what you built in this guide.
+Feel free to try one of the related guides. They demonstrate new technologies that you can learn to expand on what you built in this guide.
 
 
 ### Clean up your environment
@@ -871,32 +511,31 @@ Feel free to try one of the related guides. They demonstrate new technologies th
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-microprofile-config*** project by running the following commands:
+Delete the ***guide-microprofile-config-profile*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-microprofile-config
+rm -fr guide-microprofile-config-profile
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Configuring%20microservices&guide-id=cloud-hosted-guide-microprofile-config)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Externalizing%20environment-specific%20microservice%20configuration%20for%20CI/CD&guide-id=cloud-hosted-guide-microprofile-config-profile)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-config/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-config/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-config-profile/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-config-profile/pulls)
 
 
 
 ### Where to next?
 
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 * [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
 
 
 ### Log out of the session
