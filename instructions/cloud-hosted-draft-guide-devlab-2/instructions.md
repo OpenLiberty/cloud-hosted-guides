@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Running GraphQL queries and mutations using a GraphQL client guide!"}
+::page{title="Welcome to the Validating constraints with microservices guide!"}
 
-
+Explore how to use bean validation to validate user input data for microservices.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -13,18 +13,17 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-Learn how to use the SmallRye GraphQL client's typesafe interface to query and mutate data from multiple microservices.
 
 ::page{title="What you'll learn"}
 
-GraphQL is an open source data query language. You can use a GraphQL service to obtain data from multiple sources, such as APIs, databases, and other services, by sending a single request to a GraphQL service. GraphQL services require less data fetching than REST services, which results in faster application load times and lower data transfer costs. This guide assumes you have a basic understanding of [GraphQL concepts](https://openliberty.io/docs/latest/microprofile-graphql.html). If you're new to GraphQL, you might want to start with the [Optimizing REST queries for microservices with GraphQL](https://openliberty.io/guides/microprofile-graphql.html) guide first.
+You will learn the basics of writing and testing a microservice that uses bean validation and the new functionality of Bean Validation 2.0. The service uses bean validation to validate that the supplied JavaBeans meet the defined constraints.
 
-You'll use the [SmallRye GraphQL client](https://github.com/smallrye/smallrye-graphql#client) to create a ***query*** microservice that will make requests to the ***graphql*** microservice. The ***graphql*** microservice retrieves data from multiple ***system*** microservices and is identical to the one created as part of the [Optimizing REST queries for microservices with GraphQL](https://openliberty.io/guides/microprofile-graphql.html) guide. 
+Bean Validation is a Java specification that simplifies data validation and error checking. Bean validation uses a standard way to validate data stored in JavaBeans. Validation can be performed manually or with integration with other specifications and frameworks, such as Contexts and Dependency Injection (CDI), Java Persistence API (JPA), or JavaServer Faces (JSF). To set rules on data, apply constraints by using annotations or XML configuration files. Bean validation provides both built-in constraints and the ability to create custom constraints. Bean validation allows for validation of both JavaBean fields and methods. For method-level validation, both the input parameters and return value can be validated.
 
-![GraphQL client application architecture where multiple system microservices are integrated behind the graphql service](https://raw.githubusercontent.com/OpenLiberty/guide-graphql-client/prod/assets/architecture.png)
+Several additional built-in constraints are included in Bean Validation 2.0, which reduces the need for custom validation in common validation scenarios. Some of the new built-in constraints include ***@Email***, ***@NotBlank***, ***@Positive***, and ***@Negative***. Also in Bean Validation 2.0, you can now specify constraints on type parameters.
 
+The example microservice uses both field-level and method-level validation as well as several of the built-in constraints and a custom constraint.
 
-The results of the requests will be displayed at REST endpoints. OpenAPI will be used to help make the requests and display the data. To learn more about OpenAPI, check out the [Documenting RESTful APIs](https://openliberty.io/guides/microprofile-openapi.html) guide.
 
 ::page{title="Getting started"}
 
@@ -37,11 +36,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-graphql-client.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-bean-validation.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-graphql-client.git
-cd guide-graphql-client
+git clone https://github.com/openliberty/guide-bean-validation.git
+cd guide-bean-validation
 ```
 
 
@@ -50,55 +49,152 @@ The ***start*** directory contains the starting project that you will build upon
 The ***finish*** directory contains the finished project that you will build.
 
 
-::page{title="Implementing a GraphQL client"}
+### Try what you'll build
 
-Navigate to the ***start*** directory to begin.
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+
+To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
 
 ```bash
-cd /home/project/guide-graphql-client/start
+cd finish
+./mvnw liberty:run
 ```
 
-The [SmallRye GraphQL client](https://github.com/smallrye/smallrye-graphql#client) is used to implement the GraphQL client service. The SmallRye GraphQL client supports two types of clients: typesafe and dynamic. A typesafe client is easy to use and provides a high-level approach, while a dynamic client provides a more customizable and low-level approach to handle operations and responses. You will implement a typesafe client microservice. 
+After you see the following message, your Liberty instance is ready:
 
-The typesafe client interface contains a method for each resolver available in the ***graphql*** microservice. The JSON objects returned by the ***graphql*** microservice are converted to Java objects.
+```
+The defaultServer server is ready to run a smarter planet.
+```
 
-Create the ***GraphQlClient*** interface.
+Once your application is up and running, click the following button to check out your service by visiting the ***/openapi/ui*** endpoint.
+::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
+You see the OpenAPI user interface documenting the REST endpoints used in this guide. If you are interested in learning more about OpenAPI, read [Documenting RESTful APIs](https://openliberty.io/guides/microprofile-openapi.html). Expand the ***/beanvalidation/validatespacecraft POST request to validate your spacecraft bean*** section and click ***Try it out***. Copy the following example input into the text box:
+
+```bash
+{
+  "astronaut": {
+    "name": "Libby",
+    "age": 25,
+    "emailAddress": "libbybot@openliberty.io"
+  },
+  "destinations": {
+    "Mars": 500
+  },
+  "serialNumber": "Liberty0001"
+}
+```
+
+Click ***Execute*** and you receive the response ***No Constraint Violations*** because the values specified pass the constraints you will create in this guide. Now try copying the following value into the box:
+
+```bash
+{
+  "astronaut": {
+    "name": "Libby",
+    "age": 12,
+    "emailAddress": "libbybot@openliberty.io"
+  },
+  "destinations": {
+    "Mars": 500
+  },
+  "serialNumber": "Liberty0001"
+}
+```
+
+This time you receive ***Constraint Violation Found: must be greater than or equal to 18*** as a response because the age specified was under the minimum age of 18. Try other combinations of values to get a feel for the constraints that will be defined in this guide.
+
+After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+
+```bash
+./mvnw liberty:stop
+```
+
+::page{title="Applying constraints on the JavaBeans"}
+
+Navigate to the ***start*** directory to begin.
+```bash
+cd /home/project/guide-bean-validation/start
+```
+
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+
+```bash
+./mvnw liberty:dev
+```
+
+After you see the following message, your Liberty instance is ready in dev mode:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+
+First, create the JavaBeans to be constrained. 
+Create the ***Astronaut*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/client/GraphQlClient.java
+touch /home/project/guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/Astronaut.java
 ```
 
 
-> Then, to open the GraphQlClient.java file in your IDE, select
-> ***File*** > ***Open*** > guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/client/GraphQlClient.java, or click the following button
+> Then, to open the Astronaut.java file in your IDE, select
+> ***File*** > ***Open*** > guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/Astronaut.java, or click the following button
 
-::openFile{path="/home/project/guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/client/GraphQlClient.java"}
+::openFile{path="/home/project/guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/Astronaut.java"}
 
 
 
 ```java
-package io.openliberty.guides.query.client;
+package io.openliberty.guides.beanvalidation;
 
-import org.eclipse.microprofile.graphql.Query;
-import org.eclipse.microprofile.graphql.Mutation;
-import org.eclipse.microprofile.graphql.Name;
+import java.io.Serializable;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Email;
 
-import io.openliberty.guides.graphql.models.SystemInfo;
-import io.openliberty.guides.graphql.models.SystemLoad;
-import io.smallrye.graphql.client.typesafe.api.GraphQLClientApi;
+public class Astronaut implements Serializable {
 
-@GraphQLClientApi
-public interface GraphQlClient {
-    @Query
-    SystemInfo system(@Name("hostname") String hostname);
+    private static final long serialVersionUID = 1L;
 
-    @Query("systemLoad")
-    SystemLoad[] getSystemLoad(@Name("hostnames") String[] hostnames);
+    @NotBlank
+    private String name;
 
-    @Mutation
-    boolean editNote(@Name("hostname") String host, @Name("note") String note);
+    @Min(18)
+    @Max(100)
+    private Integer age;
 
+    @Email
+    private String emailAddress;
+
+    public Astronaut() {
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Integer getAge() {
+        return age;
+    }
+
+    public String getEmailAddress() {
+        return emailAddress;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setAge(Integer age) {
+        this.age = age;
+    }
+
+    public void setEmailAddress(String emailAddress) {
+        this.emailAddress = emailAddress;
+    }
 }
 ```
 
@@ -106,740 +202,595 @@ public interface GraphQlClient {
 Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-The ***GraphQlClient*** interface is annotated with the ***@GraphQlClientApi*** annotation. This annotation denotes that this interface is used to create a typesafe GraphQL client.
+The bean stores the attributes of an astronaut, ***name***, ***age***, and ***emailAddress***, and provides getters and setters to access and set the values.
 
-Inside the interface, a method header is written for each resolver available in the ***graphql*** microservice. The names of the methods match the names of the resolvers in the GraphQL schema. Resolvers that require input variables have the input variables passed in using the ***@Name*** annotation on the method inputs. The return types of the methods should match those of the GraphQL resolvers.
+The ***Astronaut*** class has the following constraints applied:
 
-For example, the ***system()*** method maps to the ***system*** resolver. The resolver returns a ***SystemInfo*** object, which is described by the ***SystemInfo*** class. Thus, the ***system()*** method returns the type ***SystemInfo***.
+* The astronaut needs to have a name. Bean Validation 2.0 provides a built-in ***@NotBlank*** constraint, which ensures the value is not null and contains one character that isn't a blank space. The annotation constrains the ***name*** field.
 
-The name of each resolver is the method name, but it can be overridden with the ***@Query*** or ***@Mutation*** annotations. For example, the name of the method ***getSystemLoad*** is overridden as ***systemLoad***. The GraphQL request that goes over the wire will use the name overridden by the ***@Query*** and ***@Mutation*** annotation. Similarly, the name of the method inputs can be overridden by the ***@Name*** annotation. For example, input ***host*** is overridden as ***hostname*** in the ***editNote()*** method. 
+* The email supplied needs to be a valid email address. Another built-in constraint in Bean Validation 2.0 is ***@Email***, which can validate that the ***Astronaut*** bean includes a correctly formatted email address. The annotation constrains the ***emailAddress*** field.
 
-The ***editNote*** ***mutation*** operation has the ***@Mutation*** annotation on it. A ***mutation*** operation allows you to modify data, in this case, it allows you to add and edit a note to the system service. If the ***@Mutation*** annotation were not placed on the method, it would be treated as if it mapped to a ***query*** operation. 
+* The astronaut needs to be between 18 and 100 years old. Bean validation allows you to specify multiple constraints on a single field. The ***@Min*** and ***@Max*** built-in constraints applied to the ***age*** field check that the astronaut is between the ages of 18 and 100.
 
-Create the ***QueryResource*** class.
+In this example, the annotation is on the field value itself. You can also place the annotation on the getter method, which has the same effect.
+
+Create the ***Spacecraft*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java
+touch /home/project/guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/Spacecraft.java
 ```
 
 
-> Then, to open the QueryResource.java file in your IDE, select
-> ***File*** > ***Open*** > guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java, or click the following button
+> Then, to open the Spacecraft.java file in your IDE, select
+> ***File*** > ***Open*** > guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/Spacecraft.java, or click the following button
 
-::openFile{path="/home/project/guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java"}
+::openFile{path="/home/project/guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/Spacecraft.java"}
 
 
 
 ```java
-package io.openliberty.guides.query;
+package io.openliberty.guides.beanvalidation;
 
-import io.openliberty.guides.graphql.models.NoteInfo;
-import io.openliberty.guides.graphql.models.SystemInfo;
-import io.openliberty.guides.graphql.models.SystemLoad;
-import io.openliberty.guides.query.client.GraphQlClient;
-import io.smallrye.graphql.client.typesafe.api.TypesafeGraphQLClientBuilder;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
+import java.io.Serializable;
+import java.util.Map;
+import java.util.HashMap;
 
-@ApplicationScoped
-@Path("query")
-public class QueryResource {
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.inject.Named;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.validation.Valid;
 
-    private GraphQlClient gc = TypesafeGraphQLClientBuilder.newBuilder()
-                                                   .build(GraphQlClient.class);
+@Named
+@RequestScoped
+public class Spacecraft implements Serializable {
 
-    @GET
-    @Path("system/{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public SystemInfo querySystem(@PathParam("hostname") String hostname) {
-        return gc.system(hostname);
+    private static final long serialVersionUID = 1L;
+
+    @Valid
+    private Astronaut astronaut;
+
+    private Map<@NotBlank String, @Positive Integer> destinations;
+
+    @SerialNumber
+    private String serialNumber;
+
+    public Spacecraft() {
+        destinations = new HashMap<String, Integer>();
     }
 
-    @GET
-    @Path("systemLoad/{hostnames}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public SystemLoad[] querySystemLoad(@PathParam("hostnames") String hostnames) {
-        String[] hostnameArray = hostnames.split(",");
-        return gc.getSystemLoad(hostnameArray);
+    public void setAstronaut(Astronaut astronaut) {
+        this.astronaut = astronaut;
     }
 
-    @POST
-    @Path("mutation/system/note")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response editNote(NoteInfo text) {
-        if (gc.editNote(text.getHostname(), text.getText())) {
-            return Response.ok().build();
-        } else {
-            return Response.serverError().build();
+    public void setDestinations(Map<String, Integer> destinations) {
+        this.destinations = destinations;
+    }
+
+    public void setSerialNumber(String serialNumber) {
+        this.serialNumber = serialNumber;
+    }
+
+    public Astronaut getAstronaut() {
+        return astronaut;
+    }
+
+    public Map<String, Integer> getDestinations() {
+        return destinations;
+    }
+
+    public String getSerialNumber() {
+        return serialNumber;
+    }
+
+    @AssertTrue
+    public boolean launchSpacecraft(@NotNull String launchCode) {
+        if (launchCode.equals("OpenLiberty")) {
+            return true;
         }
+        return false;
     }
 }
 ```
 
 
 
-The ***QueryResource*** class uses the ***GraphQlClient*** interface to make requests to the ***graphql*** microservice and display the results. In a real application, you would make requests to an external GraphQL service, and you might do further manipulation of the data after retrieval.
 
-The ***TypesafeGraphQLClientBuilder*** class creates a client object that implements the ***GraphQlClient*** interface and can interact with the ***graphql*** microservice. The ***GraphQlClient*** client can make requests to the URL specified by the ***graphql.server*** variable in the ***server.xml*** file. The client is used in the ***querySystem()***, ***querySystemLoad()***, and ***editNote()*** methods.
+The ***Spacecraft*** bean contains 3 fields, ***astronaut***, ***serialNumber***, and ***destinations***. The JavaBean needs to be a CDI managed bean to allow for method-level validation, which uses CDI interceptions. Because the ***Spacecraft*** bean is a CDI managed bean, a scope is necessary. A request scope is used in this example. To learn more about CDI, see [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html).
 
-Add the SmallRye GraphQL client dependency to the project configuration file.
+The ***Spacecraft*** class has the following constraints applied:
 
-Replace the Maven project file.
+* Every destination that is specified needs a name and a positive distance. In Bean Validation 2.0, you can specify constraints on type parameters. The ***@NotBlank*** and ***@Positive*** annotations constrain the ***destinations*** map so that the destination name is not blank, and the distance is positive. The ***@Positive*** constraint ensures that numeric value fields are greater than 0.
 
-> To open the pom.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-graphql-client/start/query/pom.xml, or click the following button
+* A correctly formatted serial number is required. In addition to specifying the built-in constraints, you can create custom constraints to allow user-defined validation rules. The ***@SerialNumber*** annotation that constrains the ***serialNumber*** field is a custom constraint, which you will create later.
 
-::openFile{path="/home/project/guide-graphql-client/start/query/pom.xml"}
+Because you already specified constraints on the ***Astronaut*** bean, the constraints do not need to be respecified in the ***Spacecraft*** bean. Instead, because of the ***@Valid*** annotation on the field, all the nested constraints on the ***Astronaut*** bean are validated.
+
+You can also use bean validation with CDI to provide method-level validation. The ***launchSpacecraft()*** method on the ***Spacecraft*** bean accepts a ***launchCode*** parameter, and if the ***launchCode*** parameter is ***OpenLiberty***, the method returns ***true*** that the spacecraft is launched. Otherwise, the method returns ***false***. The ***launchSpacecraft()*** method uses both parameter and return value validation. The ***@NotNull*** constraint eliminates the need to manually check within the method that the parameter is not null. Additionally, the method has the ***@AssertTrue*** return-level constraint to enforce that the method must return the ***true*** boolean.
+
+::page{title="Creating custom constraints"}
+
+To create the custom constraint for ***@SerialNumber***, begin by creating an annotation.
+
+
+Replace the annotation.
+
+> To open the SerialNumber.java file in your IDE, select
+> ***File*** > ***Open*** > guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/SerialNumber.java, or click the following button
+
+::openFile{path="/home/project/guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/SerialNumber.java"}
 
 
 
-```xml
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+```java
+package io.openliberty.guides.beanvalidation;
 
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>guide-graphql-client-query</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>war</packaging>
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-    <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <!-- Liberty configuration -->
-        <liberty.var.http.port>9084</liberty.var.http.port>
-        <liberty.var.https.port>9447</liberty.var.https.port>
-    </properties>
+import jakarta.validation.Constraint;
+import jakarta.validation.Payload;
 
-    <dependencies>
-        <!-- Provided dependencies -->
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>10.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>7.0</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-        
-        <!-- Required dependencies -->
-        <dependency>
-           <groupId>io.openliberty.guides</groupId>
-           <artifactId>guide-graphql-client-models</artifactId>
-           <version>1.0-SNAPSHOT</version>
-        </dependency>
-        
-        <!-- GraphQL API dependencies -->
-        <dependency>
-            <groupId>io.smallrye</groupId>
-            <artifactId>smallrye-graphql-client</artifactId>
-            <version>2.11.0</version>
-        </dependency>
-        <dependency>
-            <groupId>io.smallrye</groupId>
-            <artifactId>smallrye-graphql-client-implementation-vertx</artifactId>
-            <version>2.11.0</version>
-        </dependency>
-        <dependency>
-            <groupId>io.smallrye.stork</groupId>
-            <artifactId>stork-core</artifactId>
-            <version>2.7.3</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>2.0.17</version>
-        </dependency>
-             
-        <!-- For tests -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.12.2</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-client</artifactId>
-            <version>6.2.12.Final</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-json-binding-provider</artifactId>
-            <version>6.2.12.Final</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish</groupId>
-            <artifactId>jakarta.json</artifactId>
-            <version>2.0.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>testcontainers</artifactId>
-            <version>1.21.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>1.21.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>1.7.36</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+@Target({ FIELD })
+@Retention(RUNTIME)
+@Documented
+@Constraint(validatedBy = { SerialNumberValidator.class })
+public @interface SerialNumber {
 
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <!-- Enable liberty-maven plugin -->
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.11.3</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.4.0</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.3</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.3</version>
-                <configuration>
-                    <systemPropertyVariables>
-                        <http.port>${liberty.var.http.port}</http.port>
-                    </systemPropertyVariables>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-</project>
+    String message() default "serial number is not valid.";
+
+    Class<?>[] groups() default {};
+
+    Class<? extends Payload>[] payload() default {};
+}
 ```
 
 
 
-The ***smallrye-graphql-client*** dependencies provide the classes that you use to interact with a ***graphql*** microservice.
 
-To run the service, you must correctly configure the Liberty.
+The ***@Target*** annotation indicates the element types to which you can apply the custom constraint. Because the ***@SerialNumber*** constraint is used only on a field, only the ***FIELD*** target is specified.
 
-Replace the Liberty server.xml configuration file.
+When you define a constraint annotation, the specification requires the ***RUNTIME*** retention policy.
+
+The ***@Constraint*** annotation specifies the class that contains the validation logic for the custom constraint.
+
+In the ***SerialNumber*** body, the ***message()*** method provides the message that is output when a validation constraint is violated. The ***groups()*** and ***payload()*** methods associate this constraint only with certain groups or payloads. The defaults are used in the example.
+
+Now, create the class that provides the validation for the ***@SerialNumber*** constraint.
+
+Replace the ***SerialNumberValidator*** class.
+
+> To open the SerialNumberValidator.java file in your IDE, select
+> ***File*** > ***Open*** > guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/SerialNumberValidator.java, or click the following button
+
+::openFile{path="/home/project/guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/SerialNumberValidator.java"}
+
+
+
+```java
+package io.openliberty.guides.beanvalidation;
+
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
+
+public class SerialNumberValidator
+    implements ConstraintValidator<SerialNumber, Object> {
+
+    @Override
+    public boolean isValid(Object arg0, ConstraintValidatorContext arg1) {
+        boolean isValid = false;
+        if (arg0 == null) {
+            return isValid;
+        }
+        String serialNumber = arg0.toString();
+        isValid = serialNumber.length() == 11 && serialNumber.startsWith("Liberty");
+        try {
+            Integer.parseInt(serialNumber.substring(7));
+        } catch (Exception ex) {
+            isValid = false;
+        }
+        return isValid;
+    }
+}
+```
+
+
+
+
+The ***SerialNumberValidator*** class has one method, ***isValid()***, which contains the custom validation logic. In this case, the serial number must start with ***Liberty*** followed by 4 numbers, such as ***Liberty0001***. If the supplied serial number matches the constraint, ***isValid()*** returns ***true***. If the serial number does not match, it returns ***false***.
+
+::page{title="Programmatically validating constraints"}
+
+Next, create a service to programmatically validate the constraints on the ***Spacecraft*** and ***Astronaut*** JavaBeans.
+
+
+
+Create the ***BeanValidationEndpoint*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/BeanValidationEndpoint.java
+```
+
+
+> Then, to open the BeanValidationEndpoint.java file in your IDE, select
+> ***File*** > ***Open*** > guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/BeanValidationEndpoint.java, or click the following button
+
+::openFile{path="/home/project/guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/BeanValidationEndpoint.java"}
+
+
+
+```java
+package io.openliberty.guides.beanvalidation;
+
+import java.util.Set;
+
+import jakarta.inject.Inject;
+import jakarta.validation.Validator;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
+
+@Path("/")
+public class BeanValidationEndpoint {
+
+    @Inject
+    Validator validator;
+
+    @Inject
+    Spacecraft bean;
+
+    @POST
+    @Path("/validatespacecraft")
+    @Produces(MediaType.TEXT_PLAIN)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Operation(summary = "POST request to validate your spacecraft bean")
+    public String validateSpacecraft(
+        @RequestBody(description = "Specify the values to create the "
+                + "Astronaut and Spacecraft beans.",
+            content = @Content(mediaType = "application/json",
+                schema = @Schema(implementation = Spacecraft.class)))
+        Spacecraft spacecraft) {
+
+            Set<ConstraintViolation<Spacecraft>> violations
+                = validator.validate(spacecraft);
+
+            if (violations.size() == 0) {
+                return "No Constraint Violations";
+            }
+
+            StringBuilder sb = new StringBuilder();
+            for (ConstraintViolation<Spacecraft> violation : violations) {
+                sb.append("Constraint Violation Found: ")
+                .append(violation.getMessage())
+                .append(System.lineSeparator());
+            }
+            return sb.toString();
+    }
+
+    @POST
+    @Path("/launchspacecraft")
+    @Produces(MediaType.TEXT_PLAIN)
+    @Operation(summary = "POST request to specify a launch code")
+    public String launchSpacecraft(
+        @RequestBody(description = "Enter the launch code.  Must not be "
+                + "null and must equal OpenLiberty for successful launch.",
+            content = @Content(mediaType = "text/plain"))
+        String launchCode) {
+            try {
+                bean.launchSpacecraft(launchCode);
+                return "launched";
+            } catch (ConstraintViolationException ex) {
+                return ex.getMessage();
+            }
+    }
+}
+```
+
+
+
+
+Two resources, a validator and an instance of the ***Spacecraft*** JavaBean, are injected into the class. The default validator is used and is obtained through CDI injection. However, you can also obtain the default validator with resource injection or a JNDI lookup. The ***Spacecraft*** JavaBean is injected so that the method-level constraints can be validated.
+
+The programmatic validation takes place in the ***validateSpacecraft()*** method. To validate the data, the ***validate()*** method is called on the ***Spacecraft*** bean. Because the ***Spacecraft*** bean contains the ***@Valid*** constraint on the ***Astronaut*** bean, both JavaBeans are validated. Any constraint violations found during the call to the ***validate()*** method are returned as a set of ***ConstraintViolation*** objects.
+
+The method level validation occurs in the ***launchSpacecraft()*** method. A call is then made to the ***launchSpacecraft()*** method on the ***Spacecraft*** bean, which throws a ***ConstraintViolationException*** exception if either of the method-level constraints is violated.
+
+::page{title="Enabling the Bean Validation feature"}
+
+Finally, add the Bean Validation feature in the application by updating the Liberty ***server.xml*** configuration file.
+
+Replace the Liberty ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-graphql-client/start/query/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-bean-validation/start/src/main/liberty/config/server.xml, or click the following button
 
-::openFile{path="/home/project/guide-graphql-client/start/query/src/main/liberty/config/server.xml"}
+::openFile{path="/home/project/guide-bean-validation/start/src/main/liberty/config/server.xml"}
 
 
 
 ```xml
-<server description="Query Service">
+<server description="Liberty Server for Bean Validation Guide">
 
-  <featureManager>
-    <platform>jakartaee-10.0</platform>
-    <platform>microprofile-7.0</platform>
-    <feature>restfulWS</feature>
-    <feature>cdi</feature>
-    <feature>jsonb</feature>
-    <feature>mpConfig</feature>
-    <feature>mpOpenAPI</feature>
-  </featureManager>
+    <featureManager>
+        <platform>jakartaee-10.0</platform>
+        <platform>microprofile-7.0</platform>
+        <feature>beanValidation</feature>
+        <feature>cdi</feature>
+        <feature>restfulWS</feature>
+        <feature>jsonb</feature>
+        <feature>mpOpenAPI</feature>
+    </featureManager>
 
-  <variable name="http.port" defaultValue="9084"/>
-  <variable name="https.port" defaultValue="9447"/>
-  <variable name="graphql.server" defaultValue="http://graphql:9082/graphql"/>
+    <variable name="http.port" defaultValue="9080"/>
+    <variable name="https.port" defaultValue="9443"/>
+    <variable name="app.context.root" defaultValue="Spacecraft"/>
 
-  <httpEndpoint host="*" httpPort="${http.port}"
-      httpsPort="${https.port}" id="defaultHttpEndpoint"/>
+    <httpEndpoint httpPort="${http.port}" httpsPort="${https.port}"
+        id="defaultHttpEndpoint" host="*" />
 
-  <webApplication location="guide-graphql-client-query.war" contextRoot="/"/>
+   <webApplication location="guide-bean-validation.war" contextRoot="${app.context.root}"/>
 </server>
 ```
 
 
 
-The ***graphql.server*** variable is defined in the ***server.xml*** file. This variable defines where the GraphQL client makes requests to.
+You can now use the ***beanValidation*** feature to validate that the supplied JavaBeans meet the defined constraints.
 
 
-::page{title="Building and running the application"}
+::page{title="Running the application"}
 
-From the ***start*** directory, run the following commands:
+You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
-
-```bash
-./mvnw -pl models install
-./mvnw package
-```
-
-The Maven ***install*** goal compiles and packages the object types you created to a ***.jar*** file. This allows them to be used by the ***system*** and ***graphql*** services. The Maven ***package*** goal packages the ***system***, ***graphql***, and ***query*** services to ***.war*** files. 
-
-
-
-Dockerfiles are already set up for you. Build your Docker images with the following commands:
+Click the following button to check out your service by visiting the ***/openapi/ui*** endpoint:
+::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
+Expand the ***/beanvalidation/validatespacecraft POST request to validate your spacecraft bean*** section and click ***Try it out***. Copy the following example input into the text box:
 
 ```bash
-docker build -t system:1.0-java11-SNAPSHOT --build-arg JAVA_VERSION=java11 system/.
-docker build -t system:1.0-java17-SNAPSHOT --build-arg JAVA_VERSION=java17 system/.
-docker build -t graphql:1.0-SNAPSHOT graphql/.
-docker build -t query:1.0-SNAPSHOT query/.
-```
-
-Run these Docker images using the provided ***startContainers*** script. The script creates a network for the services to communicate through. It creates the two ***system*** microservices, a ***graphql*** microservice, and a ***query*** microservice that interact with each other.
-
-
-```bash
-./scripts/startContainers.sh
-```
-
-The containers might take some time to become available. 
-
-::page{title="Accessing the application"}
-
-
-
-To access the client service, there are several available REST endpoints that test the API endpoints that you created. 
-
-**Try the query operations**
-
-First, make a GET request to the ***/query/system/{hostname}*** endpoint by the following command. This request retrieves the system properties for the specified ***hostname***.
-
-The ***hostname*** is set to ***system-java11***. You can try out the operations using the hostname ***system-java17*** as well. 
-
-```bash
-curl -s 'http://localhost:9084/query/system/system-java11' | jq
-```
-You can expect a response similar to the following example:
-
-
-```
 {
-  "hostname": "system-java11",
-  "java": {
-    "vendor": "IBM Corporation",
-    "version": "11.0.18"
+  "astronaut": {
+    "name": "Libby",
+    "age": 25,
+    "emailAddress": "libbybot@openliberty.io"
   },
-  "osArch": "amd64",
-  "osName": "Linux",
-  "osVersion": "5.15.0-67-generic",
-  "systemMetrics": {
-    "heapSize": 536870912,
-    "nonHeapSize": -1,
-    "processors": 2
+  "destinations": {
+    "Mars": 500
   },
-  "username": "default"
+  "serialNumber": "Liberty0001"
 }
 ```
 
+Click ***Execute*** and you receive the response ***No Constraint Violations*** because the values specified pass previously defined constraints.
 
-
-You can retrieve the information about the resource usage of any number of system services by making a GET request at ***/query/systemLoad/{hostnames}*** endpoint. 
-The ***hostnames*** are set to ***system-java11,system-java17***.
-
-```bash
-curl -s 'http://localhost:9084/query/systemLoad/system-java11,system-java17' | jq
-```
-
-You can expect the following response is similar to the following example:
-
+Next, modify the following values, all of which break the previously defined constraints:
 
 ```
-[
-  {
-    "hostname": "system-java11",
-    "loadData": {
-      "heapUsed": 30090920,
-      "loadAverage": 0.08,
-      "nonHeapUsed": 87825316
-    }
-  },
-  {
-    "hostname": "system-java17",
-    "loadData": {
-      "heapUsed": 39842888,
-      "loadAverage": 0.08,
-      "nonHeapUsed": 93098960
-    }
-  }
-]
+Age = 10
+Email = libbybot
+SerialNumber = Liberty1
 ```
 
-
-**Try the mutation operation**
-
-You can also make POST requests to add a note to a system service at the ***/query/mutation/system/note*** endpoint.
-To add a note to the system service running on Java 8, run the following command:
-
-```bash
-curl -i -X 'POST' 'http://localhost:9084/query/mutation/system/note' -H 'Content-Type: application/json' -d '{"hostname": "system-java11","text": "I am trying out GraphQL on Open Liberty!"}'
-```
-
-You will recieve a `200` response code, similar to below, if the request is processed succesfully. 
+After you click ***Execute***, the response contains the following constraint violations:
 
 ```
-HTTP/1.1 200 OK
-Content-Language: en-US
-Content-Length: 0
-Date: Fri, 21 Apr 2023 14:17:47 GMT
+Constraint Violation Found: serial number is not valid.
+Constraint Violation Found: must be greater than or equal to 18
+Constraint Violation Found: must be a well-formed email address
 ```
 
-You can see the note you added to the system service at the ***GET /query/system/{hostname}*** endpoint.
-
-::page{title="Tearing down the environment"}
-
-When you're done checking out the application, run the following script to stop the application:
+To try the method-level validation, expand the ***/beanvalidation/launchspacecraft POST request to specify a launch code*** section. Enter ***OpenLiberty*** in the text box. Note that ***launched*** is returned because the launch code passes the defined constraints. Replace ***OpenLiberty*** with anything else to note that a constraint violation is returned.
 
 
-```bash
-./scripts/stopContainers.sh
-```
+::page{title="Testing the constraints"}
 
-::page{title="Testing the application"}
+Now, write automated tests to drive the previously created service. 
 
-Although you can test your application manually, you should rely on automated tests. In this section, you'll create integration tests using Testcontainers to verify that the basic operations you implemented function correctly. 
-
-First, create a RESTful client interface for the ***query*** microservice.
-
-Create the ***QueryResourceClient.java*** interface.
+Create ***BeanValidationIT*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceClient.java
+touch /home/project/guide-bean-validation/start/src/test/java/it/io/openliberty/guides/beanvalidation/BeanValidationIT.java
 ```
 
 
-> Then, to open the QueryResourceClient.java file in your IDE, select
-> ***File*** > ***Open*** > guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceClient.java, or click the following button
+> Then, to open the BeanValidationIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-bean-validation/start/src/test/java/it/io/openliberty/guides/beanvalidation/BeanValidationIT.java, or click the following button
 
-::openFile{path="/home/project/guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceClient.java"}
+::openFile{path="/home/project/guide-bean-validation/start/src/test/java/it/io/openliberty/guides/beanvalidation/BeanValidationIT.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.query;
+package it.io.openliberty.guides.beanvalidation;
 
-import java.util.List;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import io.openliberty.guides.beanvalidation.Astronaut;
+import io.openliberty.guides.beanvalidation.Spacecraft;
+
+import java.util.HashMap;
+
+import jakarta.json.bind.Jsonb;
+import jakarta.json.bind.JsonbBuilder;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
-import io.openliberty.guides.graphql.models.SystemInfo;
-import io.openliberty.guides.graphql.models.SystemLoad;
-import io.openliberty.guides.graphql.models.NoteInfo;
-
-@ApplicationScoped
-@Path("query")
-public interface QueryResourceClient {
-
-    @GET
-    @Path("system/{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    SystemInfo querySystem(@PathParam("hostname") String hostname);
-
-    @GET
-    @Path("systemLoad/{hostnames}")
-    @Produces(MediaType.APPLICATION_JSON)
-    List<SystemLoad> querySystemLoad(@PathParam("hostnames") String hostnames);
-
-    @POST
-    @Path("mutation/system/note")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    Response editNote(NoteInfo text);
-}
-```
-
-
-
-This interface declares ***querySystem()***, ***querySystemLoad()***, and ***editNote()*** methods for accessing each of the endpoints that are set up to access the ***query*** microservice.
-
-Create the test container class that accesses the ***query*** image that you built in previous section.
-
-Create the ***LibertyContainer.java*** file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/LibertyContainer.java
-```
-
-
-> Then, to open the LibertyContainer.java file in your IDE, select
-> ***File*** > ***Open*** > guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/LibertyContainer.java, or click the following button
-
-::openFile{path="/home/project/guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/LibertyContainer.java"}
-
-
-
-```java
-package it.io.openliberty.guides.query;
-
-import org.jboss.resteasy.client.jaxrs.ResteasyClient;
-import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
-import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
-
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.UriBuilder;
-
-public class LibertyContainer extends GenericContainer<LibertyContainer> {
-
-    static final Logger LOGGER = LoggerFactory.getLogger(LibertyContainer.class);
-    private String baseURL;
-
-    public LibertyContainer(final String dockerImageName) {
-        super(dockerImageName);
-        waitingFor(Wait.forLogMessage("^.*CWWKF0011I.*$", 1));
-        this.addExposedPorts(9084);
-        return;
-    }
-
-    public <T> T createRestClient(Class<T> clazz) {
-        String urlPath = getBaseURL();
-        ClientBuilder builder = ResteasyClientBuilder.newBuilder();
-        ResteasyClient client = (ResteasyClient) builder.build();
-        ResteasyWebTarget target = client.target(UriBuilder.fromPath(urlPath));
-        return target.proxy(clazz);
-    }
-
-    public String getBaseURL() throws IllegalStateException {
-        if (baseURL != null) {
-            return baseURL;
-        }
-        if (!this.isRunning()) {
-            throw new IllegalStateException(
-                "Container must be running to determine hostname and port");
-        }
-        baseURL =  "http://" + this.getContainerIpAddress()
-            + ":" + this.getFirstMappedPort();
-        System.out.println("TEST: " + baseURL);
-        return baseURL;
-    }
-}
-```
-
-
-
-The ***createRestClient()*** method creates a REST client instance with the ***QueryResourceClient*** interface. The ***getBaseURL()*** method constructs the URL that can access the ***query*** image.
-
-Now, create your integration test cases.
-
-Create the ***QueryResourceIT.java*** file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceIT.java
-```
-
-
-> Then, to open the QueryResourceIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceIT.java, or click the following button
-
-::openFile{path="/home/project/guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceIT.java"}
-
-
-
-```java
-package it.io.openliberty.guides.query;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.List;
-import jakarta.ws.rs.core.Response;
-import io.openliberty.guides.graphql.models.NoteInfo;
-import io.openliberty.guides.graphql.models.SystemLoad;
-import io.openliberty.guides.graphql.models.SystemLoadData;
-import io.openliberty.guides.graphql.models.SystemInfo;
+public class BeanValidationIT {
 
-@Testcontainers
-@TestMethodOrder(OrderAnnotation.class)
-public class QueryResourceIT {
+    private Client client;
+    private static String port;
 
-    private static Logger logger = LoggerFactory.getLogger(QueryResourceIT.class);
-    private static String system8ImageName = "system:1.0-java11-SNAPSHOT";
-    private static String queryImageName = "query:1.0-SNAPSHOT";
-    private static String graphqlImageName = "graphql:1.0-SNAPSHOT";
+    @BeforeEach
+    public void setup() {
+        client = ClientBuilder.newClient();
+        port = System.getProperty("http.port");
+    }
 
-    public static QueryResourceClient client;
-    public static Network network = Network.newNetwork();
-
-    @Container
-    public static GenericContainer<?> systemContainer
-        = new GenericContainer<>(system8ImageName)
-              .withNetwork(network)
-              .withExposedPorts(9080)
-              .withNetworkAliases("system-java11")
-              .withLogConsumer(new Slf4jLogConsumer(logger));
-
-    @Container
-    public static LibertyContainer graphqlContainer
-        = new LibertyContainer(graphqlImageName)
-              .withNetwork(network)
-              .withExposedPorts(9082)
-              .withNetworkAliases("graphql")
-              .withLogConsumer(new Slf4jLogConsumer(logger));
-
-    @Container
-    public static LibertyContainer libertyContainer
-        = new LibertyContainer(queryImageName)
-              .withNetwork(network)
-              .withExposedPorts(9084)
-              .withLogConsumer(new Slf4jLogConsumer(logger));
-
-    @BeforeAll
-    public static void setupTestClass() throws Exception {
-        System.out.println("TEST: Starting Liberty Container setup");
-        client = libertyContainer.createRestClient(QueryResourceClient.class);
+    @AfterEach
+    public void teardown() {
+        client.close();
     }
 
     @Test
-    @Order(1)
-    public void testGetSystem() {
-        System.out.println("TEST: Testing get system /system/system-java11");
-        SystemInfo systemInfo = client.querySystem("system-java11");
-        assertEquals(systemInfo.getHostname(), "system-java11");
-        assertNotNull(systemInfo.getOsVersion(), "osVersion is null");
-        assertNotNull(systemInfo.getJava(), "java is null");
-        assertNotNull(systemInfo.getSystemMetrics(), "systemMetrics is null");
+    public void testNoFieldLevelConstraintViolations() throws Exception {
+        Astronaut astronaut = new Astronaut();
+        astronaut.setAge(25);
+        astronaut.setEmailAddress("libby@openliberty.io");
+        astronaut.setName("Libby");
+        Spacecraft spacecraft = new Spacecraft();
+        spacecraft.setAstronaut(astronaut);
+        spacecraft.setSerialNumber("Liberty1001");
+        HashMap<String, Integer> destinations = new HashMap<String, Integer>();
+        destinations.put("Mars", 1500);
+        destinations.put("Pluto", 10000);
+        spacecraft.setDestinations(destinations);
+
+        Jsonb jsonb = JsonbBuilder.create();
+        String spacecraftJSON = jsonb.toJson(spacecraft);
+        Response response = postResponse(getURL(port, "validatespacecraft"),
+                spacecraftJSON, false);
+        String actualResponse = response.readEntity(String.class);
+        String expectedResponse = "No Constraint Violations";
+
+        assertEquals(expectedResponse, actualResponse,
+                "Unexpected response when validating beans.");
     }
 
     @Test
-    @Order(2)
-    public void testGetSystemLoad() {
-        System.out.println("TEST: Testing get system load /systemLoad/system-java11");
-        List<SystemLoad> systemLoad = client.querySystemLoad("system-java11");
-        assertEquals(systemLoad.get(0).getHostname(), "system-java11");
-        SystemLoadData systemLoadData = systemLoad.get(0).getLoadData();
-        assertNotNull(systemLoadData.getLoadAverage(), "loadAverage is null");
-        assertNotNull(systemLoadData.getHeapUsed(), "headUsed is null");
-        assertNotNull(systemLoadData.getNonHeapUsed(), "nonHeapUsed is null");
+    public void testFieldLevelConstraintViolation() throws Exception {
+        Astronaut astronaut = new Astronaut();
+        astronaut.setAge(25);
+        astronaut.setEmailAddress("libby");
+        astronaut.setName("Libby");
+
+        Spacecraft spacecraft = new Spacecraft();
+        spacecraft.setAstronaut(astronaut);
+        spacecraft.setSerialNumber("Liberty123");
+
+        HashMap<String, Integer> destinations = new HashMap<String, Integer>();
+        destinations.put("Mars", -100);
+        spacecraft.setDestinations(destinations);
+
+        Jsonb jsonb = JsonbBuilder.create();
+        String spacecraftJSON = jsonb.toJson(spacecraft);
+        Response response = postResponse(getURL(port, "validatespacecraft"),
+                spacecraftJSON, false);
+        String actualResponse = response.readEntity(String.class);
+        String expectedDestinationResponse = "must be greater than 0";
+        assertTrue(actualResponse.contains(expectedDestinationResponse),
+                "Expected response to contain: " + expectedDestinationResponse);
+        String expectedEmailResponse = "must be a well-formed email address";
+        assertTrue(actualResponse.contains(expectedEmailResponse),
+                "Expected response to contain: " + expectedEmailResponse);
+        String expectedSerialNumberResponse = "serial number is not valid";
+        assertTrue(actualResponse.contains(expectedSerialNumberResponse),
+                "Expected response to contain: " + expectedSerialNumberResponse);
     }
 
     @Test
-    @Order(3)
-    public void testEditNote() {
-        System.out.println("TEST: Testing editing note /mutation/system/note");
-        NoteInfo note = new NoteInfo();
-        note.setHostname("system-java11");
-        note.setText("I am trying out GraphQL on Open Liberty!");
-        Response response = client.editNote(note);
-        assertEquals(200, response.getStatus(), "Incorrect response code");
-        SystemInfo systemInfo = client.querySystem("system-java11");
-        assertEquals(systemInfo.getNote(), "I am trying out GraphQL on Open Liberty!");
+    public void testNoMethodLevelConstraintViolations() throws Exception {
+        String launchCode = "OpenLiberty";
+        Response response = postResponse(getURL(port, "launchspacecraft"),
+                launchCode, true);
+
+        String actualResponse = response.readEntity(String.class);
+        String expectedResponse = "launched";
+
+        assertEquals(expectedResponse, actualResponse,
+                "Unexpected response from call to launchSpacecraft");
+
+    }
+
+    @Test
+    public void testMethodLevelConstraintViolation() throws Exception {
+        String launchCode = "incorrectCode";
+        Response response = postResponse(getURL(port, "launchspacecraft"),
+                launchCode, true);
+
+        String actualResponse = response.readEntity(String.class);
+        assertTrue(
+                actualResponse.contains("must be true"),
+                "Unexpected response from call to launchSpacecraft");
+    }
+
+    private Response postResponse(String url, String value,
+                                  boolean isMethodLevel) {
+        if (isMethodLevel) {
+                return client.target(url).request().post(Entity.text(value));
+        } else {
+                return client.target(url).request().post(Entity.entity(value,
+                MediaType.APPLICATION_JSON));
+        }
+    }
+
+    private String getURL(String port, String function) {
+        return "http://localhost:" + port + "/Spacecraft/beanvalidation/"
+                + function;
     }
 }
 ```
 
 
 
-Define the ***systemContainer*** test container to start up the ***system-java11*** image, the ***graphqlContainer*** test container to start up the ***graphql*** image, and the ***libertyContainer*** test container to start up the ***query*** image. Make sure that the containers use the same network.
 
-The ***@Testcontainers*** annotation finds all fields that are annotated with the ***@Container*** annotation and calls their container lifecycle methods. The ***static*** function declaration on each container indicates that this container will be started only once before any test method is executed and stopped after the last test method is executed.
+The ***@BeforeEach*** annotation causes the ***setup()*** method to execute before the test cases. The ***setup()*** method retrieves the port number for the Open Liberty and creates a ***Client*** that is used throughout the tests, which are described as follows:
 
-The ***testGetSystem()*** verifies the ***/query/system/{hostname}*** endpoint with ***hostname*** set to ***system-java11***.
+* The ***testNoFieldLevelConstraintViolations()*** test case verifies that constraint violations do not occur when valid data is supplied to the ***Astronaut*** and ***Spacecraft*** bean attributes.
 
-The ***testGetSystemLoad()*** verifies the ***/query/systemLoad/{hostnames}*** endpoint with ***hostnames*** set to ***system-java11***.
+* The ***testFieldLevelConstraintViolation()*** test case verifies that the appropriate constraint violations occur when data that is supplied to the ***Astronaut*** and ***Spacecraft*** attributes violates the defined constraints. Because 3 constraint violations are defined, 3 ***ConstraintViolation*** objects are returned as a set from the ***validate*** call. The 3 expected messages are ***"must be greater than 0"*** for the negative distance specified in the destination map, ***"must be a well-formed email address"*** for the incorrect email address, and the custom ***"serial number is not valid"*** message for the serial number.
 
-The ***testEditNote()*** verifies the mutation operation at the ***/query/mutation/system/note*** endpoint.
+* The ***testNoMethodLevelConstraintViolations()*** test case verifies that the method-level constraints that are specified on the ***launchSpacecraft()*** method of the ***Spacecraft*** bean are validated when the method is called with no violations. In this test, the call to the ***launchSpacecraft()*** method is made with the ***OpenLiberty*** argument. A value of ***true*** is returned, which passes the specified constraints.
 
+* The ***testMethodLevelConstraintViolation()*** test case verifies that a ***ConstraintViolationException*** exception is thrown when one of the method-level constraints is violated. A call with an incorrect parameter, ***incorrectCode***, is made to the ***launchSpacecraft()*** method of the ***Spacecraft*** bean. The method returns ***false***, which violates the defined constraint, and a ***ConstraintViolationException*** exception is thrown. The exception includes the constraint violation message, which in this example is ***must be true***.
 
-The required ***dependencies*** are already added to the ***pom.xml*** Maven configuration file for you, including JUnit5, JBoss RESTEasy client, Glassfish JSON, Testcontainers, and Log4J libraries.
-
-To enable running the integration test by the Maven ***verify*** goal, the ***maven-failsafe-plugin*** plugin is also required.
 
 ### Running the tests
 
-You can run the Maven ***verify*** goal, which compiles the java files, starts the containers, runs the tests, and then stops the containers.
-
-
-```bash
-cd /home/project/guide-graphql-client/start
-export TESTCONTAINERS_RYUK_DISABLED=true
-./mvnw verify
-```
-
-You will see the following output:
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.query.QueryResourceIT
-...
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 11.694 s - in it.io.openliberty.guides.query.QueryResourceIT
+Running it.io.openliberty.guides.beanvalidation.BeanValidationIT
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.493 sec - in
+it.io.openliberty.guides.beanvalidation.BeanValidationIT
 
 Results :
 
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just learnt how to use a GraphQL client to run GraphQL queries and mutations!
-
+You developed and tested a Java microservice by using bean validation and Open Liberty.
 
 
 
@@ -848,30 +799,30 @@ You just learnt how to use a GraphQL client to run GraphQL queries and mutations
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-graphql-client*** project by running the following commands:
+Delete the ***guide-bean-validation*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-graphql-client
+rm -fr guide-bean-validation
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Running%20GraphQL%20queries%20and%20mutations%20using%20a%20GraphQL%20client&guide-id=cloud-hosted-guide-graphql-client)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Validating%20constraints%20with%20microservices&guide-id=cloud-hosted-guide-bean-validation)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-graphql-client/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-graphql-client/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-bean-validation/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-bean-validation/pulls)
 
 
 
 ### Where to next?
 
-* [Optimizing REST queries for microservices with GraphQL](https://openliberty.io/guides/microprofile-graphql.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 
 
 ### Log out of the session
