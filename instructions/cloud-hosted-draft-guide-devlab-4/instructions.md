@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Using Docker containers to develop microservices guide!"}
+::page{title="Welcome to the Building a dynamic web application with integrated user interface and backend logic guide!"}
 
-Learn how to use Docker containers for iterative development.
+Learn how to build a dynamic web application using Jakarta Faces, Jakarta Contexts and Dependency Injection, and Jakarta Expression Language.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -15,34 +15,15 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 ::page{title="What you'll learn"}
 
-You will learn how to set up, run, and iteratively develop a simple REST application in a container with Open Liberty and Docker.
+You'll learn how to build a dynamic web application using Jakarta Faces for the user interface (UI), Jakarta Contexts and Dependency Injection (CDI) for managing backend logic, and Jakarta Expression Language (EL) for data binding.
 
-Open Liberty is a lightweight open framework for building fast and efficient cloud-native Java microservices. It’s small, lightweight, and designed with modern cloud-native application development in mind. Open Liberty simplifies the development process for these applications by automating the repetitive actions associated with running applications inside containers, like rebuilding the image and stopping and starting the container. 
+Jakarta Faces is a framework for building component-based web applications that simplifies UI development by managing reusable components, handling user interactions, and binding data to backend logic. It provides built-in lifecycle management, event handling, and server-side validation, reducing the need for manual request processing. Jakarta Faces also includes tag libraries that allows developers define UI components using markup and connect them to backend objects without writing repetitive setup code.
 
-You'll also learn how to create and run automated tests for your application and container.
+To further streamline development, Jakarta Faces works with CDI to manage backend components. CDI allows beans to be automatically created and injected where needed, making it easier to manage application logic. Jakarta Expression Language enables data binding between the UI and backend, allowing UI components to dynamically display data and trigger backend actions.
 
-The implementation of the REST application can be found in the ***start/src*** directory. To learn more about this application and how to build it, check out the [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) guide.
-
-### What is Docker?
-
-Docker is a tool that you can use to deploy and run applications with containers. You can think of Docker like a virtual machine that runs various applications. However, unlike a typical virtual machine, you can run these applications simultaneously on a single system and independent of one another.
-
-Learn more about Docker on the [official Docker website](https://www.docker.com/what-docker).
-
-### What is a container?
-
-A container is a lightweight, stand-alone package that contains a piece of software that is bundled together with the entire environment that it needs to run. Containers are small compared to regular images and can run on any environment where Docker is set up. Moreover, you can run multiple containers on a single machine at the same time in isolation from each other.
-
-Learn more about containers on the [official Docker website](https://www.docker.com/what-container).
-
-### Why use a container to develop?
-
-Consider a scenario where you need to deploy your application on another environment. Your application works on your local machine, but when you try to run it on your cloud production environment, it breaks. You do some debugging and discover that you built your application with Java 8, but this cloud production environment has only Java 11 installed. Although this issue is generally easy to fix, you don't want your application to be missing dozens of version-specific dependencies. You can develop your application in this cloud environment, but that requires you to rebuild and repackage your application every time you update your code and wish to test it.
-
-To avoid this kind of problem, you can instead choose to develop your application in a container locally, bundled together with the entire environment that it needs to run. By doing this, you know that at any point in your iterative development process, the application can run inside that container. This helps avoid any unpleasant surprises when you go to test or deploy your application down the road. Containers run quickly and do not have a major impact on the speed of your iterative development.
+The application you will build in this guide is a dynamic web application that displays system load data on demand. Using Jakarta Faces for the UI, you'll create a table to show the system CPU load and heap memory usage. You'll also learn how to use CDI to provide the system load data from a managed bean, and to use Jakarta Expression Language to bind this data to the UI components.
 
 ::page{title="Getting started"}
 
@@ -55,11 +36,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-docker.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-jakarta-faces.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-docker.git
-cd guide-docker
+git clone https://github.com/openliberty/guide-jakarta-faces.git
+cd guide-jakarta-faces
 ```
 
 
@@ -67,102 +48,52 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-In this IBM Cloud environment, you need to change the user home to ***/home/project*** by running the following command:
+### Try what you'll build
+
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed. 
+
+To try out the application, first go to the ***finish*** directory and run Maven with the ***liberty:run*** goal to build the application and deploy it to Open Liberty:
+
+
 ```bash
-sudo usermod -d /home/project theia
+cd finish
+./mvnw liberty:run
+```
+
+After you see the following message, your Liberty instance is ready.
+
+```
+The defaultServer server is ready to run a smarter planet.
 ```
 
 
-::page{title="Creating the Dockerfile"}
+Check out the web application by clicking the following button:
 
-The first step to running your application inside of a Docker container is creating a Dockerfile. A Dockerfile is a collection of instructions for building a Docker image that can then be run as a container. Every Dockerfile begins with a parent or base image on top of which various commands are run. For example, you can start your image from scratch and run commands that download and install Java, or you can start from an image that already contains a Java installation.
+::startApplication{port="9080" display="external" name="Launch application" route="/index.xhtml"}
+
+Click the <img src="https://raw.githubusercontent.com/OpenLiberty/guide-jakarta-faces/prod/assets/refresh.png" width="18" height="18" alt="refresh icon"> refresh button, located next to the table title, to update and display the latest system load data in the table.
+
+After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+
+```bash
+./mvnw liberty:stop
+```
+
+::page{title="Creating a static Jakarta Faces page"}
+
+Start by creating a page that displays an empty table by using Jakarta Faces to extend standard HTML. The table will display the system load data and serves as the starting point for your application.
 
 Navigate to the ***start*** directory to begin.
-```bash
-cd /home/project/guide-docker/start
-```
-
-Create the ***Dockerfile*** in the ***start*** directory.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-docker/start/Dockerfile
-```
-
-
-> Then, to open the Dockerfile file in your IDE, select
-> ***File*** > ***Open*** > guide-docker/start/Dockerfile, or click the following button
-
-::openFile{path="/home/project/guide-docker/start/Dockerfile"}
-
-
-
-```
-FROM icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi
-
-ARG VERSION=1.0
-ARG REVISION=SNAPSHOT
-
-LABEL \
-  org.opencontainers.image.authors="Your Name" \
-  org.opencontainers.image.vendor="IBM" \
-  org.opencontainers.image.url="local" \
-  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-docker" \
-  org.opencontainers.image.version="$VERSION" \
-  org.opencontainers.image.revision="$REVISION" \
-  vendor="Open Liberty" \
-  name="system" \
-  version="$VERSION-$REVISION" \
-  summary="The system microservice from the Docker Guide" \
-  description="This image contains the system microservice running with the Open Liberty runtime."
-
-USER root
-
-COPY --chown=1001:0 src/main/liberty/config/server.xml /config/
-RUN features.sh
-COPY --chown=1001:0 target/*.war /config/apps/
-RUN configure.sh
-USER 1001
-```
-
-
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
-
-
-The ***FROM*** instruction initializes a new build stage and indicates the parent image from which your image is built. If you don't need a parent image, then use ***FROM scratch***, which makes your image a base image. In this case, you’re using the ***icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi*** image as your parent image, which comes with the latest Open Liberty runtime.
-
-The ***COPY*** instructions are structured as ***COPY*** ***[--chown=\<user\>:\<group\>]*** ***\<source\>*** ***\<destination\>***. They copy local files into the specified destination within your Docker image. In this case, the Liberty configuration file that is located at ***src/main/liberty/config/server.xml*** is copied to the ***/config/*** destination directory.
-
-The ***RUN*** instructions execute commands in a new layer on top of the current image and commit the results. In this case, they run the ***features.sh*** and ***configure.sh*** scripts to install the required features and finalize the server configuration for your Open Liberty application.
-
-The ***features.sh*** script adds the requested XML snippets to enable Liberty features by using [featureUtility](https://openliberty.io/docs/latest/reference/command/featureUtility-commands.html). Because you're starting with the ***kernel-slim*** image, which provides only the bare minimum server, the script reads your ***server.xml*** file to identify the required features and installs them into your Docker image.
-
-The ***configure.sh*** script adds the requested server configurations, applies any interim fixes, and populates caches to optimize the runtime.
-
-### Writing a .dockerignore file
-
-
-When Docker runs a build, it sends all of the files and directories that are located in the same directory as the Dockerfile to its build context, making them available for use in instructions like ***ADD*** and ***COPY***. If there are files or directories you wish to exclude from the build context, you can add them to a ***.dockerignore*** file. By adding files that aren't nessecary for building your image to the ***.dockerignore*** file, you can decrease the image's size and speed up the building process. You may also want to exclude files that contain sensitive information, such as a ***.git*** folder or private keys, from the build context. 
-
-A ***.dockerignore*** file is available to you in the ***start*** directory. This file includes the ***pom.xml*** file and some system files.
-
-
-::page{title="Launching Open Liberty in dev mode"}
-
-The Open Liberty Maven plug-in includes a ***devc*** goal that builds a Docker image, mounts the required directories, binds the required ports, and then runs the application inside of a container. This [dev mode](https://openliberty.io/docs/latest/development-mode.html), also listens for any changes in the application source code or configuration and rebuilds the image and restarts the container as necessary.
-
-In this IBM Cloud environment, you need to pre-create the ***logs*** directory by running the following commands:
 
 ```bash
-mkdir -p /home/project/guide-docker/start/target/liberty/wlp/usr/servers/defaultServer/logs
-chmod 777 /home/project/guide-docker/start/target/liberty/wlp/usr/servers/defaultServer/logs
+cd /home/project/guide-jakarta-faces/start
 ```
 
-
-Build and run the container by running the ***devc*** goal from the ***start*** directory:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
-./mvnw liberty:devc
+cd start
+./mvnw liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
@@ -172,204 +103,458 @@ After you see the following message, your Liberty instance is ready in dev mode:
 *    Liberty is running in dev mode.
 ```
 
-Open another command-line session and run the following command to make sure that your container is running and didn’t crash:
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-```bash
-docker ps 
-```
-
-You should see something similar to the following output:
-
-```
-CONTAINER ID        IMAGE                   COMMAND                  CREATED             STATUS              PORTS                                                                    NAMES
-ee2daf0b33e1        guide-docker-dev-mode   "/opt/ol/helpers/run…"   2 minutes ago       Up 2 minutes        0.0.0.0:7777->7777/tcp, 0.0.0.0:9080->9080/tcp, 0.0.0.0:9443->9443/tcp   liberty-dev
-```
-
-
-To view a full list of all available containers, you can run the ***docker ps -a*** command.
-
-
-If your container runs without problems, run the following ***curl*** command to get a JSON response that contains the system properties of the JVM in your container.
-
-```bash
-curl -s http://localhost:9080/system/properties | jq
-```
-
-
-::page{title="Updating the application while the container is running"}
-
-With your container running, make the following update to the source code:
-
-Update the ***PropertiesResource*** class.
-
-> To open the PropertiesResource.java file in your IDE, select
-> ***File*** > ***Open*** > guide-docker/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java, or click the following button
-
-::openFile{path="/home/project/guide-docker/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java"}
-
-
-
-```java
-package io.openliberty.guides.rest;
-
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Produces;
-
-import jakarta.json.JsonObject;
-import jakarta.json.JsonObjectBuilder;
-import jakarta.json.Json;
-
-@Path("properties-new")
-public class PropertiesResource {
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public JsonObject getProperties() {
-
-        JsonObjectBuilder builder = Json.createObjectBuilder();
-
-        System.getProperties()
-              .entrySet()
-              .stream()
-              .forEach(entry -> builder.add((String) entry.getKey(),
-                                            (String) entry.getValue()));
-
-       return builder.build();
-    }
-}
-```
-
-
-
-Change the endpoint of your application from ***properties*** to ***properties-new*** by changing the ***@Path*** annotation to ***"properties-new"***.
-
-
-After you make the file changes, Open Liberty automatically updates the application. To see the changes reflected in the application, run the following command in a terminal:
-
-```bash
-curl -s http://localhost:9080/system/properties-new | jq
-```
-
-
-::page{title="Testing the container"}
-
-
-You can test this service manually by starting a Liberty instance and going to the ***http://localhost:9080/system/properties-new*** URL.
-However, automated tests are a much better approach because they trigger a failure if a change introduces a bug. JUnit and the JAX-RS Client API provide a simple environment to test the application. You can write tests for the individual units of code outside of a running Liberty instance, or you can write them to call the instance directly. In this example, you will create a test that calls the instance directly.
-
-Create the ***EndpointIT*** test class.
+Create the index.xhtml file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-docker/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+touch /home/project/guide-jakarta-faces/start/src/main/webapp/index.xhtml
 ```
 
 
-> Then, to open the EndpointIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-docker/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java, or click the following button
+> Then, to open the index.xhtml file in your IDE, select
+> ***File*** > ***Open*** > guide-jakarta-faces/start/src/main/webapp/index.xhtml, or click the following button
 
-::openFile{path="/home/project/guide-docker/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java"}
+::openFile{path="/home/project/guide-jakarta-faces/start/src/main/webapp/index.xhtml"}
+
+
+
+```
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+
+  <h:head>
+    <meta charset="UTF-8" />
+    <title>Open Liberty - Jakarta Faces Example</title>
+    <h:outputStylesheet library="css" name="styles.css" />
+    <link href="favicon.ico" rel="icon" />
+    <link href="favicon.ico" rel="shortcut icon" />
+  </h:head>
+  <h:body>
+    <section id="appIntro">
+      <div id="titleSection">
+        <h1 id="appTitle">Jakarta Faces Example</h1>
+        <div class="line"></div>
+        <div class="headerImage"></div>
+      </div>
+
+      <div class="msSection" id="systemLoads">
+        <div class="headerRow">
+          <div class="headerIcon">
+            <img src="#{resource['img/sysProps.svg']}" />
+          </div>
+          <div class="headerTitleWithButton" id="sysPropTitle">
+            <h2>System Loads</h2>
+          </div>
+        </div>
+        <div class="sectionContent">
+          <h:dataTable id="systemLoadsTable">
+            <h:column>
+              <f:facet name="header">Time</f:facet>
+            </h:column>
+            <h:column>
+              <f:facet name="header">CPU Load (%)</f:facet>
+            </h:column>
+            <h:column>
+              <f:facet name="header">Heap Memory Usage (%)</f:facet>
+            </h:column>
+          </h:dataTable>
+        </div>
+      </div>
+    </section>
+    <ui:include src="/WEB-INF/includes/footer.xhtml" />
+  </h:body>
+</html>
+```
+
+
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
+
+
+In the ***index.xhtml*** file, the ***xmlns*** attributes define the XML namespaces for various Jakarta Faces tag libraries. These namespaces allow the page to use Jakarta Faces tags for templating, creating UI components, and enabling core functionality, such as form submissions and data binding. For more information on the various tag libraries and their roles in Jakarta Faces, refer to the [Jakarta Faces Tag Libraries](https://jakarta.ee/learn/docs/jakartaee-tutorial/current/web/faces-facelets/faces-facelets.html#_tag_libraries_supported_by_facelets) and the [VDL Documentation Generator](https://jakarta.ee/specifications/faces/4.0/vdldoc) documentation.
+
+The ***index.xhtml*** file combines standard HTML elements with Jakarta Faces components, providing both static layout and dynamic functionality. Standard HTML elements, like ***div*** and ***section***, structure the page's layout. Jakarta Faces tags offer additional features beyond standard HTML, such as managing UI components, including resources, and binding data. For example, the ***h:outputStylesheet*** tag loads a CSS file for styling, and the ***ui:include*** tag incorporates reusable components, such as the provided ***footer.xhtml*** file, to streamline maintenance and reuse across multiple pages. The ***h:dataTable*** tag is used to display a table.
+
+At this point, the page defines a table that has no data entries. We'll add dynamic content in the following steps.
+
+::page{title="Configuring the Faces Servlet"}
+
+Before you can access the Jakarta Faces page, you need to configure a Faces servlet in your application. This servlet handles all requests for ***.xhtml*** pages and processes them using Jakarta Faces.
+
+Create the web.xml file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-jakarta-faces/start/src/main/webapp/WEB-INF/web.xml
+```
+
+
+> Then, to open the web.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-jakarta-faces/start/src/main/webapp/WEB-INF/web.xml, or click the following button
+
+::openFile{path="/home/project/guide-jakarta-faces/start/src/main/webapp/WEB-INF/web.xml"}
+
+
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+         version="6.0">
+
+    <context-param>
+        <param-name>jakarta.faces.PROJECT_STAGE</param-name>
+        <param-value>Development</param-value>
+    </context-param>
+
+    <!-- Faces Servlet Configuration -->
+    <servlet>
+        <servlet-name>Faces Servlet</servlet-name>
+        <servlet-class>jakarta.faces.webapp.FacesServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <!-- Servlet Mapping -->
+    <servlet-mapping>
+        <servlet-name>Faces Servlet</servlet-name>
+        <url-pattern>*.xhtml</url-pattern>
+    </servlet-mapping>
+
+</web-app>
+```
+
+
+
+The ***servlet*** element defines the Faces servlet that is responsible for processing requests for Jakarta Faces pages. The ***load-on-startup*** element with a value of ***1*** specifies that the servlet is loaded and initialized first when the application starts.
+
+The ***servlet-mapping*** element specifies which URL patterns are routed to the Faces servlet. In this case, all URLs ending with ***.xhtml*** are mapped to be processed by Jakarta Faces. This ensures that any request for an ***.xhtml*** page is handled by the Faces servlet, which manages the lifecycle of Jakarta Faces components, processes the page, and renders the output. 
+
+By configuring both the servlet and the servlet mapping, you're ensuring that Jakarta Faces pages are properly processed and delivered in response to user requests.
+
+The ***jakarta.faces.PROJECT_STAGE*** context parameter determines the current stage of the application in its development lifecycle. Because it is currently set to ***Development***, you will see additional debugging information, including developer-friendly warning messages such as ***WARNING: Apache MyFaces Core is running in DEVELOPMENT mode.*** For more information about valid values and how to set the ***PROJECT_STAGE*** parameter, see the official [Jakarta Faces ProjectStage documentation](https://jakarta.ee/specifications/faces/4.1/apidocs/jakarta.faces/jakarta/faces/application/projectstage).
+
+In your dev mode console, type ***r*** and press the ***enter/return*** key to restart the Liberty instance so that Liberty reads the configuration changes. When you see the following message, your Liberty instance is ready in dev mode:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+
+Check out the web application that you created by clicking the following button:
+
+::startApplication{port="9080" display="external" name="Launch application" route="/index.xhtml"}
+
+You should see the static page with the system loads table displaying only the headers and no data.
+
+::page{title="Implementing backend logic with dependency injection"}
+
+To provide system load data to your web application, you'll create a CDI-managed bean that retrieves information about the system CPU load and memory usage. This bean is accessible from the Jakarta Faces page and supplies the data that is displayed.
+
+Create the SystemLoadBean class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-jakarta-faces/start/src/main/java/io/openliberty/guides/bean/SystemLoadBean.java
+```
+
+
+> Then, to open the SystemLoadBean.java file in your IDE, select
+> ***File*** > ***Open*** > guide-jakarta-faces/start/src/main/java/io/openliberty/guides/bean/SystemLoadBean.java, or click the following button
+
+::openFile{path="/home/project/guide-jakarta-faces/start/src/main/java/io/openliberty/guides/bean/SystemLoadBean.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.rest;
+package io.openliberty.guides.bean;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.io.Serializable;
 
-import org.junit.jupiter.api.Test;
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Named;
 
-import jakarta.json.JsonObject;
+import com.sun.management.OperatingSystemMXBean;
 
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.Response;
+import io.openliberty.guides.bean.model.SystemLoadData;
 
+@Named("systemLoadBean")
+@ApplicationScoped
+public class SystemLoadBean implements Serializable {
+    private static final long serialVersionUID = 1L;
 
-public class EndpointIT {
+    private List<SystemLoadData> systemLoads;
 
-    @Test
-    public void testGetProperties() {
-        String port = System.getProperty("liberty.test.port");
-        String url = "http://localhost:" + port + "/";
+    private static final OperatingSystemMXBean OS =
+        (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
 
-        Client client = ClientBuilder.newClient();
+    private static final MemoryMXBean MEM =
+        ManagementFactory.getMemoryMXBean();
 
-        WebTarget target = client.target(url + "system/properties-new");
-        Response response = target.request().get();
-        JsonObject obj = response.readEntity(JsonObject.class);
+    @PostConstruct
+    public void init() {
+        systemLoads = new ArrayList<>();
+        fetchSystemLoad();
+    }
 
-        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+    public void fetchSystemLoad() {
+        String time = Calendar.getInstance().getTime().toString();
 
-        assertEquals("/opt/ol/wlp/output/defaultServer/",
-                     obj.getString("server.output.dir"),
-                     "The system property for the server output directory should match "
-                     + "the Open Liberty container image.");
+        double cpuLoad = OS.getCpuLoad() * 100;
 
-        response.close();
+        long heapMax = MEM.getHeapMemoryUsage().getMax();
+        long heapUsed = MEM.getHeapMemoryUsage().getUsed();
+        double memoryUsage = heapUsed * 100.0 / heapMax;
+
+        SystemLoadData data = new SystemLoadData(time, cpuLoad, memoryUsage);
+
+        systemLoads.add(data);
+    }
+
+    public List<SystemLoadData> getSystemLoads() {
+        return systemLoads;
     }
 }
 ```
 
 
 
-This test makes a request to the ***/system/properties-new*** endpoint and checks to make sure that the response has a valid status code, and that the information in the response is correct. 
+Annotate the ***SystemLoadBean*** class with a ***@Named*** annotation to make it accessible in the Jakarta Faces pages under the ***systemLoadBean*** name. Because the ***SystemLoadBean*** bean is a CDI-managed bean, a scope is necessary. Annotating it with the ***@ApplicationScoped*** annotation indicates that it is initialized once and is shared between all requests while the application runs. To learn more about CDI, see the [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html) guide.
+
+The ***@PostConstruct*** annotation ensures the ***init()*** method runs after the ***SystemLoadBean*** is initialized and dependencies are injected. The ***init()*** method sets up any required resources for the bean's lifecyccle.
+
+The ***fetchSystemLoad()*** method retrieves the current system load and memory usage, then updates the list of system load data.
+
+The ***getSystemLoads()*** method is a getter method for accessing the list of system load data from the Jakarta Faces page.
+
+::page{title="Binding data to the UI with expression language"}
+
+Now that you have implemented the backend logic with CDI, you'll update the Jakarta Faces page to display the dynamic system load data. You'll do this by using Jakarta Expression Language to bind the UI components to the backend data.
+
+Replace the index.xhtml file.
+
+> To open the index.xhtml file in your IDE, select
+> ***File*** > ***Open*** > guide-jakarta-faces/start/src/main/webapp/index.xhtml, or click the following button
+
+::openFile{path="/home/project/guide-jakarta-faces/start/src/main/webapp/index.xhtml"}
+
+
+
+```
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+  <h:head>
+    <meta charset="UTF-8" />
+    <title>Open Liberty - Jakarta Faces Example</title>
+    <h:outputStylesheet library="css" name="styles.css" />
+    <link href="favicon.ico" rel="icon" />
+    <link href="favicon.ico" rel="shortcut icon" />
+  </h:head>
+  <h:body>
+    <section id="appIntro">
+      <div id="titleSection">
+        <h1 id="appTitle">Jakarta Faces Example</h1>
+        <div class="line"></div>
+        <div class="headerImage"></div>
+      </div>
+
+      <div class="msSection" id="systemLoads">
+        <h:form id="systemLoadForm">
+          <div class="headerRow">
+            <div class="headerIcon">
+              <img src="#{resource['img/sysProps.svg']}" />
+            </div>
+            <div class="headerTitleWithButton" id="sysPropTitle">
+              <h2>System Loads</h2>
+              <h:commandButton id="refreshButton" styleClass="refreshButton" value=""
+                               title="Refresh system load data"
+                               action="#{systemLoadBean.fetchSystemLoad}" >
+                <f:ajax render="systemLoadForm" />
+              </h:commandButton>
+            </div>
+          </div>
+          <div class="sectionContent">
+            <h:dataTable id="systemLoadsTable"
+                         value="#{systemLoadBean.systemLoads}"
+                         var="systemLoadData"
+                         styleClass = "systemLoadsTable"
+                         headerClass = "systemLoadsTableHeader"
+                         rowClasses = "systemLoadsTableOddRow,systemLoadsTableEvenRow">
+              <h:column>
+                <f:facet name="header">Time</f:facet>
+                <h:outputText value="#{systemLoadData.time}" />
+              </h:column>
+
+              <h:column>
+                <f:facet name="header">CPU Load (%)</f:facet>
+                <h:outputText
+                  value="#{systemLoadData.cpuLoad == null ? '-' : systemLoadData.cpuLoad}">
+                  <f:convertNumber pattern="#0.0000000" />
+                </h:outputText>
+              </h:column>
+
+              <h:column>
+                <f:facet name="header">Heap Memory Usage (%)</f:facet>
+                <h:outputText
+                  value="#{systemLoadData.memoryUsage == null ? '-' : systemLoadData.memoryUsage}">
+                  <f:convertNumber pattern="#0.00" />
+                </h:outputText>
+              </h:column>
+            </h:dataTable>
+          </div>
+        </h:form>
+      </div>
+    </section>
+    <ui:include src="/WEB-INF/includes/footer.xhtml" />
+  </h:body>
+</html>
+```
+
+
+
+
+
+The ***index.xhtml*** uses an ***h:commandButton*** tag to create the refresh button. When the button is clicked, the ***#{systemLoadBean.fetchSystemLoad}*** action invokes the ***fetchSystemLoad()*** method using Jakarta Expression Language. This expression references the ***systemLoadBean*** managed bean, triggering the method to update the system load data. The ***f:ajax*** tag ensures that the ***systemLoadForm*** component is re-rendered without requiring a full page reload.
+
+The ***systemLoadsTable*** is populated using the ***h:dataTable*** tag, which iterates over the list of system load data provided by the ***systemLoadBean***. The ***#{systemLoadBean.systemLoads}*** expression calls the ***getSystemLoads()*** method from the managed bean, binding the data to the UI components. If the ***systemLoadBean*** isn't created yet, it is automatically initialized at this point. For each entry, the ***time***, ***cpuLoad***, and ***memoryUsage*** fields are displayed by using the ***h:outputText*** tag. The ***f:convertNumber*** tag formats ***cpuLoad*** to seven decimal places and ***memoryUsage*** to two decimal places.
+
+To format the table, set the ***styleClass***, ***headerClass***, and ***rowClasses*** attributes in the ***h:dataTable*** tag. The style elements are defined in the ***src/main/webapp/resources/css/styles.css*** file.
+
+::page{title="Running the application"}
+
+
+The required ***faces***, ***expressionLanguage***, and ***cdi*** features are enabled for you in the Liberty ***server.xml*** configuration file.
+
+Because you started the Open Liberty in dev mode at the beginning of the guide, all the changes were automatically picked up.
+
+
+Now, you can check out the web application that you created by clicking the following button:
+
+::startApplication{port="9080" display="external" name="Launch application" route="/index.xhtml"}
+
+Click on the <img src="https://raw.githubusercontent.com/OpenLiberty/guide-jakarta-faces/prod/assets/refresh.png" width="18" height="18" alt="refresh icon"> refresh button to trigger an update on the system loads table.
+
+::page{title="Testing the application"}
+
+While you can manually verify the web application by visiting ***http\://localhost:9080/index.xhtml,*** automated tests are a much better approach because they are more reliable and trigger a failure if a breaking change is introduced. You can write unit tests for your CDI bean to ensure that the basic operations you implemented function correctly.
+
+Create the SystemLoadBeanTest class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-jakarta-faces/start/src/test/java/io/openliberty/guides/bean/SystemLoadBeanTest.java
+```
+
+
+> Then, to open the SystemLoadBeanTest.java file in your IDE, select
+> ***File*** > ***Open*** > guide-jakarta-faces/start/src/test/java/io/openliberty/guides/bean/SystemLoadBeanTest.java, or click the following button
+
+::openFile{path="/home/project/guide-jakarta-faces/start/src/test/java/io/openliberty/guides/bean/SystemLoadBeanTest.java"}
+
+
+
+```java
+package io.openliberty.guides.bean;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import io.openliberty.guides.bean.model.SystemLoadData;
+
+public class SystemLoadBeanTest {
+
+    private SystemLoadBean systemLoadBean;
+
+    @BeforeEach
+    public void setUp() {
+        systemLoadBean = new SystemLoadBean();
+        systemLoadBean.init();
+    }
+
+    @Test
+    public void testInitMethod() {
+        assertNotNull(systemLoadBean.getSystemLoads(),
+                      "System loads should not be null after initialization");
+        assertFalse(systemLoadBean.getSystemLoads().isEmpty(),
+                    "System loads should not be empty after initialization");
+    }
+
+    @Test
+    public void testFetchSystemLoad() {
+        int initialSize = systemLoadBean.getSystemLoads().size();
+        systemLoadBean.fetchSystemLoad();
+        int newSize = systemLoadBean.getSystemLoads().size();
+        assertEquals(initialSize + 1, newSize,
+                     "System loads size should increase by 1 after fetching new data");
+    }
+
+    @Test
+    public void testDataIntegrity() {
+        systemLoadBean.fetchSystemLoad();
+        SystemLoadData data = systemLoadBean.getSystemLoads().get(0);
+        assertNotNull(data.getTime(), "Time should not be null");
+        assertNotNull(data.getCpuLoad(), "Recent load should not be null");
+        assertNotNull(data.getMemoryUsage(), "Memory usage should not be null");
+    }
+}
+```
+
+
+
+The ***setUp()*** method is annotated with the ***@BeforeEach*** annotation, indicating that it is run before each test case to ensure a clean state for each test execution. In this case, it creates a new instance of ***SystemLoadBean*** and manually calls the ***init()*** method to initialize the list of system load data before each test.
+
+The ***testInitMethod()*** test case verifies that after initializing ***SystemLoadBean***, the list of system load data is not null and contains at least one entry.
+
+The ***testFetchSystemLoad()*** test case verifies that after calling the ***fetchSystemLoad()*** method, the size of the list of system load data increases by one.
+
+The ***testDataIntegrity()*** test case verifies that each ***SystemLoadData*** entry in the list of system load data contains valid values for ***time***, ***cpuLoad***, and ***memoryUsage***.
 
 ### Running the tests
 
 Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
 
-You will see the following output:
+You see the following output:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.rest.EndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.884 sec - in it.io.openliberty.guides.rest.EndpointIT
+Running io.openliberty.guides.bean.SystemLoadBeanTest
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.037 s -- in io.openliberty.guides.bean.SystemLoadBeanTest
 
-Results :
+Results:
 
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-When you are finished, press `Ctrl+C` in the session that the dev mode was
-started from to stop and remove the container.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
 
-
-::page{title="Starting dev mode with run options"}
-
-Another useful feature of dev mode with a container is the ability to pass additional options to the ***docker run*** command. You can do this by adding the ***dockerRunOpts*** tag to the ***pom.xml*** file under the ***configuration*** tag of the Liberty Maven Plugin. Here is an example of an environment variable being passed in:
-
-```
-<groupId>io.openliberty.tools</groupId>
-<artifactId>liberty-maven-plugin</artifactId>
-<version>3.11.2</version>
-<configuration>
-    <dockerRunOpts>-e ENV_VAR=exampleValue</dockerRunOpts>
-</configuration>
-```
-
-If the Dockerfile isn't located in the directory that the ***devc*** goal is being run from, you can add the ***dockerfile*** tag to specify the location. Using this parameter sets the context for building the Docker image to the directory that contains this file.
-
-Additionally, both of these options can be passed from the command line when running the ***devc*** goal by adding ***-D*** as such:
-
-```bash
-./mvnw liberty:devc \
--DdockerRunOpts="-e ENV_VAR=exampleValue" \
--Ddockerfile="./path/to/file"
-```
-
-To learn more about dev mode with a container and its different features, check out the [Documentation](http://github.com/OpenLiberty/ci.maven/blob/main/docs/dev.md#devc-container-mode).
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just iteratively developed a simple REST application in a container with Open Liberty and Docker.
+You just built a dynamic web application on Open Liberty by using Jakarta Faces for the user interface, CDI for managing beans, and Jakarta Expression Language for binding and handling data.
+
 
 
 
@@ -378,31 +563,30 @@ You just iteratively developed a simple REST application in a container with Ope
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-docker*** project by running the following commands:
+Delete the ***guide-jakarta-faces*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-docker
+rm -fr guide-jakarta-faces
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Using%20Docker%20containers%20to%20develop%20microservices&guide-id=cloud-hosted-guide-docker)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Building%20a%20dynamic%20web%20application%20with%20integrated%20user%20interface%20and%20backend%20logic&guide-id=cloud-hosted-guide-jakarta-faces)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-docker/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-docker/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-jakarta-faces/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-jakarta-faces/pulls)
 
 
 
 ### Where to next?
 
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Containerizing microservices](https://openliberty.io/guides/containerize.html)
+* [Streaming messages between client and server services using gRPC](https://openliberty.io/guides/grpc-intro.html)
 
 
 ### Log out of the session
