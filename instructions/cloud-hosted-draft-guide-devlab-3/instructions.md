@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Consuming a RESTful web service with ReactJS guide!"}
+::page{title="Welcome to the Configuring microservices running in Kubernetes guide!"}
 
-Explore how to access a simple RESTful web service and consume its resources with ReactJS in Open Liberty.
+Explore how to externalize configuration using MicroProfile Config and configure your microservices using Kubernetes ConfigMaps and Secrets.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -15,18 +15,14 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 ::page{title="What you'll learn"}
+You will learn how and why to externalize your microservice's configuration. Externalized configuration is useful because configuration usually changes depending on your environment. You will also learn how to configure the environment by providing required values to your application using Kubernetes.
 
-You will learn how to access a REST service and deserialize the returned JSON that contains a list of artists and their albums by using an HTTP client with the ReactJS library. You will then present this data by using a ReactJS paginated table component.
+MicroProfile Config provides useful annotations that you can use to inject configured values into your code. These values can come from any configuration source, such as environment variables. Using environment variables allows for easier deployment to different environments. To learn more about MicroProfile Config, read the [Configuring microservices](https://openliberty.io/guides/microprofile-config.html) guide.
 
-[ReactJS](https://reactjs.org/) is a JavaScript library that is used to build user interfaces. Its main purpose is to incorporate a component-based approach to create reusable UI elements. With ReactJS, you can also interface with other libraries and frameworks. Note that the names ReactJS and React are used interchangeably.
+Furthermore, you'll learn how to set these environment variables with ConfigMaps and Secrets. These resources are provided by Kubernetes and act as a data source for your environment variables. You can use a ConfigMap or Secret to set environment variables for any number of containers.
 
-The React application in this guide is provided and configured for you in the ***src/main/frontend*** directory. The application uses [Next.js](https://nextjs.org/), a [React-powered framework](https://react.dev/learn/start-a-new-react-project), to set up the modern React application. The ***Next.js*** framework provides a powerful environment for learning and building React applications, with features like server-side rendering, static site generation, and easy API routes. It is the best way to start building a highly performant React application.
-
-
-The REST service that provides the resources was written for you in advance in the back end of the application, and it responds with the ***artists.json*** file  in the ***src/resources*** directory. You will implement a ReactJS client as the front end of your application, which consumes this JSON file and displays its contents on a single web page. 
-
-To learn more about REST services and how you can write them, see the [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) guide.
 
 ::page{title="Getting started"}
 
@@ -39,11 +35,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-client-reactjs.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-microprofile-config.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-rest-client-reactjs.git
-cd guide-rest-client-reactjs
+git clone https://github.com/openliberty/guide-kubernetes-microprofile-config.git
+cd guide-kubernetes-microprofile-config
 ```
 
 
@@ -52,786 +48,619 @@ The ***start*** directory contains the starting project that you will build upon
 The ***finish*** directory contains the finished project that you will build.
 
 
-### Try what you'll build
+::page{title="Deploying the microservices"}
 
-The ***finish*** directory in the root of this guide contains the finished application. The React front end is already pre-built for you and the static files from the production build can be found in the ***src/main/webapp/_next/static*** directory.
+The two microservices you will deploy are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of the running container. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This demonstrates how communication can be established between pods inside a cluster. To build these applications, navigate to the ***start*** directory and run the following command.
 
-
-In this IBM cloud environment, you need to update the URL to access the ***artists.json***. Run the following commands to go to the ***finish*** directory and update the files where the URL has been specified:
-```bash
-cd finish
-./mvnw process-resources
-sed -i 's=http://localhost:9080/artists='"https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-reactjs/finish/src/main/webapp/_next/static/chunks/app/page-*.js
-sed -i 's=http://localhost:9080/artists='"https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-reactjs/finish/src/main/frontend/src/app/ArtistTable.jsx
-```
-
-To try out the application, run the following Maven goal to build the application and deploy it to Open Liberty:
-```bash
-./mvnw liberty:run
-```
-
-After you see the following message, your application Liberty instance is ready:
-
-```
-The defaultServer server is ready to run a smarter planet.
-```
-
-
-When the Liberty instance is running, click the following button to check out the application:
-
-::startApplication{port="9080" display="external" name="Visit application" route="/"}
-
-See the following output:
-
-![React Paginated Table](https://raw.githubusercontent.com/OpenLiberty/guide-rest-client-reactjs/prod/assets/react-table.png)
-
-
-After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
-./mvnw liberty:stop
+cd start
+./mvnw clean package
 ```
 
 
-::page{title="Starting the service"}
 
-Before you begin the implementation, start the provided REST service so that the artist JSON is available to you.
-
-Navigate to the ***start*** directory to begin.
+Next, run the ***docker build*** commands to build container images for your application:
 ```bash
-cd /home/project/guide-rest-client-reactjs/start
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
 ```
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
 
-```bash
-./mvnw liberty:dev
-```
-
-After you see the following message, your Liberty instance is ready in dev mode:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
-
-
-After the Liberty instance is started, run the following curl command to view your artist JSON.
-```bash
-curl -s http://localhost:9080/artists | jq
-```
-
-All the dependencies for the React front end are listed in the  ***src/main/frontend/src/package.json*** file and are installed before the build process by the ***frontend-maven-plugin***. Also, ***CSS*** stylesheets files are available in the ***src/main/frontend/src/styles*** directory.
-
-
-::page{title="Project configuration"}
-
-The front end of your application uses Node.js to build your React code. The Maven project is configured for you to install Node.js and produce the production files, which are copied to the web content of your application.
-
-Node.js is a server-side JavaScript runtime that is used for developing networking applications. Its convenient package manager, [npm](https://www.npmjs.com/), is used to run the React build scripts that are found in the ***package.json*** file. To learn more about Node.js, see the official [Node.js documentation](https://nodejs.org/en/docs/).
-
-
-Take a look at the **pom.xml** file.
-> From the menu of the IDE, select ***File*** > ***Open*** > guide-rest-client-reactjs/start/pom.xml, or click the following button:
-
-::openFile{path="/home/project/guide-rest-client-reactjs/start/pom.xml"}
-
-The ***frontend-maven-plugin*** is used to ***install*** the dependencies that are listed in your ***package.json*** file from the npm registry into a folder called ***node_modules***. The ***node_modules*** folder can be found in your ***working*** directory. Then, the configuration ***produces*** the production files to the ***src/main/frontend/build*** directory. 
-
-The ***maven-resources-plugin*** copies the ***static*** content from the ***build*** directory to the ***web content*** of the application.
-
-
-::page{title="Creating the default page"}
-
-Create the entry point of your React application. The latest version of ***Next.js*** recommends you use the [App Router](https://nextjs.org/docs/app), which centralizes routing logic under the ***app*** directory.
-
-To construct the home page of the web application, create a ***page.jsx*** file.
-
-Create the ***page.jsx*** file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/page.jsx
-```
-
-
-> Then, to open the page.jsx file in your IDE, select
-> ***File*** > ***Open*** > guide-rest-client-reactjs/start/src/main/frontend/src/app/page.jsx, or click the following button
-
-::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/page.jsx"}
-
-
-
-```
-import "../../styles/index.css";
-import ArtistTable from "./ArtistTable";
-import React from 'react';
-
-export default function Home() {
-  return (
-    <ArtistTable></ArtistTable>
-  );
-}
-```
-
-
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
-
-
-The ***page.jsx*** file is a container for all other components. When the ***Home*** React component  is rendered, the ***ArtistTable*** components content are displayed.
-
-To render the pages correctly, add a ***layout.jsx*** file that defines the ***RootLayout*** containing the UI that are shared across all routes.
-
-Create the ***layout.jsx*** file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/layout.jsx
-```
-
-
-> Then, to open the layout.jsx file in your IDE, select
-> ***File*** > ***Open*** > guide-rest-client-reactjs/start/src/main/frontend/src/app/layout.jsx, or click the following button
-
-::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/layout.jsx"}
-
-
-
-```
-export const metadata = {
-  title: 'Next.js',
-  description: 'Generated by Next.js',
-}
-
-export default function RootLayout({ children }) {
-  return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
-  )
-}
-```
-
-
-
-For more detailed information, see the ***Next.js*** documentation on the [Layouts and Pages](https://nextjs.org/docs/app/getting-started/layouts-and-pages).
-
-
-::page{title="Creating the React component"}
-
-A React web application is a collection of components, and each component has a specific function. You will create a component that the application uses to acquire and display data from the REST API. 
-
-Create the ***ArtistTable*** function that fetches data from your back-end and renders it in a table. 
-
-Create the ***ArtistTable.jsx*** file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx
-```
-
-
-> Then, to open the ArtistTable.jsx file in your IDE, select
-> ***File*** > ***Open*** > guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx, or click the following button
-
-::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx"}
-
-
-
-```
-"use client";
-import React, { useEffect, useMemo, useState } from 'react';
-import { useReactTable, getCoreRowModel, getPaginationRowModel, getSortedRowModel, flexRender} from '@tanstack/react-table'; 
-import '../../styles/table.css'
-
-function ArtistTable() {
-
-  const [posts, setPosts] = useState([]);
-  const [sorting, setSorting] = useState([]);
-  const [pagination, setPagination] = useState({pageIndex: 0, pageSize: 4});
-
-
-  const data = useMemo(() => [...posts], [posts]);
-
-  const columns = useMemo(() => [{
-    header: 'Artist Info',
-    columns: [
-      {
-        accessorKey: 'id',
-        header: 'Artist ID'
-      },
-      {
-        accessorKey: 'name',
-        header: 'Artist Name'
-      },
-      {
-        accessorKey: 'genres',
-        header: 'Genres'
-      }
-    ]
-  },
-  {
-    header: 'Albums',
-    columns: [
-      {
-        accessorKey: 'ntracks',
-        header: 'Number of Tracks'
-      },
-      {
-        accessorKey: 'title',
-        header: 'Title'
-      }
-    ]
-  }
-  ], []
-  );
-
-  const tableInstance = useReactTable({ 
-          columns, 
-          data,
-          getCoreRowModel: getCoreRowModel(), 
-          getPaginationRowModel: getPaginationRowModel(), 
-          getSortedRowModel: getSortedRowModel(), 
-          state:{
-            sorting: sorting,
-            pagination: pagination,
-          },
-          onSortingChange: setSorting,
-          onPaginationChange: setPagination,
-          }); 
-
-  const {
-    getHeaderGroups, 
-    getRowModel,
-    getState,
-    setPageIndex,
-    setPageSize,
-    getCanPreviousPage,
-    getCanNextPage,
-    previousPage,
-    nextPage,
-    getPageCount,
-  } = tableInstance;
-
-  const {pageIndex, pageSize} = getState().pagination;
-
-
-  return (
-    <>
-      <h2>Artist Web Service</h2>
-      {/* tag::table[] */}
-      <table>
-        <thead>
-          {getHeaderGroups().map(headerGroup => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map(header => (
-                <th key={header.id} colSpan={header.colSpan} onClick={header.column.getToggleSortingHandler()}>
-                  {header.isPlaceholder ? null :(
-                    <div>
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                      {
-                        {
-                          asc: " 🔼",
-                          desc: " 🔽",
-                        }[header.column.getIsSorted() ?? null]
-                      }
-                    </div>
-                  )}
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {getRowModel().rows.map(row => (
-            <tr key={row.id}>
-              {row.getVisibleCells().map(cell => (
-                <td key={cell.id}>
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {/* end::table[] */}
-      <div className="pagination">
-        <button onClick={() => previousPage()} disabled={!getCanPreviousPage()}>
-          {'Previous'}
-        </button>{' '}
-        <div className="page-info">
-          <span>
-            Page{' '}
-            <strong>
-              {pageIndex + 1} of {getPageCount()}
-            </strong>{' '}
-          </span>
-          <span>
-            | Go to page:{' '}
-            <input
-              type="number"
-              defaultValue={pageIndex + 1}
-              onChange={e => {
-                const page = e.target.value ? Number(e.target.value) - 1 : 0
-                setPageIndex(page);
-              }}
-              style={{ width: '100px' }}
-            />
-          </span>{' '}
-          <select
-            value={pageSize}
-            onChange={e => {
-              setPageSize(Number(e.target.value))
-            }}
-          >
-            {[4, 5, 6, 9].map(pageSize => (
-              <option key={pageSize} value={pageSize}>
-                Show {pageSize}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button onClick={() => nextPage()} disabled={!getCanNextPage()}>
-          {'Next'}
-        </button>{' '}
-      </div>
-    </>
-  );
-}
-
-export default ArtistTable
-```
-
-
-
-At the beginning of the file, the ***use client*** directive indicates the ***ArtistTable*** component is rendered on the client side.
-
-The ***React*** library imports the ***react*** package for you to create the ***ArtistTable*** function. This function must have the ***export*** declaration because it is being exported to the ***page.jsx*** module. The ***posts*** object is initialized using a React Hook that lets you add a state to represent the state of the posts that appear on the paginated table.
-
-To display the returned data, you will use pagination. Pagination is the process of separating content into discrete pages, and you can use it for handling data sets in React. In your application, you'll render the columns in the paginated table. The ***columns*** constant defines the table that is present on the web page.
-
-The ***useReactTable*** hook creates a table instance. The hook takes in the ***columns*** and  ***posts*** as parameters. The ***getCoreRowModel*** function is included for the generation of the core row model of the table, which serves as the foundational row model upon pagination and sorting build. The ***getPaginationRowModel*** function applies pagination to the core row model, returning a row model that includes only the rows that should be displayed on the current page based on the pagination state. In addition, the ***getSortedRowModel*** function sorts the paginated table by the column headers then applies the changes to the row model. The paginated table instance is assigned to the ***table*** constant, which renders the paginated table on the web page.
-
-
-### Importing the HTTP client
-
-Your application needs a way to communicate with and retrieve resources from RESTful web services to output the resources onto the paginated table. The [Axios](https://github.com/axios/axios) library will provide you with an HTTP client. This client is used to make HTTP requests to external resources. Axios is a promise-based HTTP client that can send asynchronous requests to REST endpoints. To learn more about the Axios library and its HTTP client, see the [Axios documentation](https://www.npmjs.com/package/axios).
-
-The ***GetArtistsInfo()*** function uses the Axios API to fetch data from your back end. This function is called when the ***ArtistTable*** is rendered to the page using the ***useEffect()*** React lifecycle method.
-
-Update the ***ArtistTable.jsx*** file.
-
-> To open the ArtistTable.jsx file in your IDE, select
-> ***File*** > ***Open*** > guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx, or click the following button
-
-::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx"}
-
-
-
-```
-"use client";
-import React, { useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
-import { useReactTable, getCoreRowModel, getPaginationRowModel, getSortedRowModel, flexRender} from '@tanstack/react-table'; 
-import '../../styles/table.css'
-
-function ArtistTable() {
-
-  const [posts, setPosts] = useState([]);
-  const [sorting, setSorting] = useState([]);
-  const [pagination, setPagination] = useState({pageIndex: 0, pageSize: 4});
-
-  const GetArtistsInfo = async () => {
-    try {
-      const response = await axios.get('http://localhost:9080/artists');
-      const artists = response.data;
-      const processedData = [];
-      for (const artist of artists) {
-        const { albums, ...rest } = artist;
-        for (const album of albums) {
-          processedData.push({ ...rest, ...album });
-        }
-      };
-      setPosts(processedData);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const data = useMemo(() => [...posts], [posts]);
-
-  const columns = useMemo(() => [{
-    header: 'Artist Info',
-    columns: [
-      {
-        accessorKey: 'id',
-        header: 'Artist ID'
-      },
-      {
-        accessorKey: 'name',
-        header: 'Artist Name'
-      },
-      {
-        accessorKey: 'genres',
-        header: 'Genres'
-      }
-    ]
-  },
-  {
-    header: 'Albums',
-    columns: [
-      {
-        accessorKey: 'ntracks',
-        header: 'Number of Tracks'
-      },
-      {
-        accessorKey: 'title',
-        header: 'Title'
-      }
-    ]
-  }
-  ], []
-  );
-
-  const tableInstance = useReactTable({ 
-          columns, 
-          data,
-          getCoreRowModel: getCoreRowModel(), 
-          getPaginationRowModel: getPaginationRowModel(), 
-          getSortedRowModel: getSortedRowModel(), 
-          state:{
-            sorting: sorting,
-            pagination: pagination,
-          },
-          onSortingChange: setSorting,
-          onPaginationChange: setPagination,
-          }); 
-
-  const {
-    getHeaderGroups, 
-    getRowModel,
-    getState,
-    setPageIndex,
-    setPageSize,
-    getCanPreviousPage,
-    getCanNextPage,
-    previousPage,
-    nextPage,
-    getPageCount,
-  } = tableInstance;
-
-  const {pageIndex, pageSize} = getState().pagination;
-
-  useEffect(() => {
-    GetArtistsInfo();
-  }, []);
-
-  return (
-    <>
-      <h2>Artist Web Service</h2>
-      {/* tag::table[] */}
-      <table>
-        <thead>
-          {getHeaderGroups().map(headerGroup => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map(header => (
-                <th key={header.id} colSpan={header.colSpan} onClick={header.column.getToggleSortingHandler()}>
-                  {header.isPlaceholder ? null :(
-                    <div>
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                      {
-                        {
-                          asc: " 🔼",
-                          desc: " 🔽",
-                        }[header.column.getIsSorted() ?? null]
-                      }
-                    </div>
-                  )}
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {getRowModel().rows.map(row => (
-            <tr key={row.id}>
-              {row.getVisibleCells().map(cell => (
-                <td key={cell.id}>
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {/* end::table[] */}
-      <div className="pagination">
-        <button onClick={() => previousPage()} disabled={!getCanPreviousPage()}>
-          {'Previous'}
-        </button>{' '}
-        <div className="page-info">
-          <span>
-            Page{' '}
-            <strong>
-              {pageIndex + 1} of {getPageCount()}
-            </strong>{' '}
-          </span>
-          <span>
-            | Go to page:{' '}
-            <input
-              type="number"
-              defaultValue={pageIndex + 1}
-              onChange={e => {
-                const page = e.target.value ? Number(e.target.value) - 1 : 0
-                setPageIndex(page);
-              }}
-              style={{ width: '100px' }}
-            />
-          </span>{' '}
-          <select
-            value={pageSize}
-            onChange={e => {
-              setPageSize(Number(e.target.value))
-            }}
-          >
-            {[4, 5, 6, 9].map(pageSize => (
-              <option key={pageSize} value={pageSize}>
-                Show {pageSize}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button onClick={() => nextPage()} disabled={!getCanNextPage()}>
-          {'Next'}
-        </button>{' '}
-      </div>
-    </>
-  );
-}
-
-export default ArtistTable
-```
-
-
-
-Add the ***axios*** library and the ***GetArtistsInfo()*** function.
-
-The ***axios*** HTTP call is used to read the artist JSON that contains the data from the sample JSON file in the ***resources*** directory. When a response is successful, the state of the system changes by assigning ***response.data*** to ***posts***. The ***artists*** and their ***albums*** JSON data are manipulated to allow them to be accessed by the ***ReactTable***. The ***...rest*** or ***...album*** object spread syntax is designed for simplicity. To learn more about it, see [Spread in object literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax#Spread_in_object_literals).
-
-Finally, run the following command to update the URL to access the ***artists.json*** in the ***ArtistTable.jsx*** file:
-```bash
-sed -i 's=http://localhost:9080/artists='"https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx
-```
-
-
-::page{title="Building and packaging the front-end"}
-
-After you successfully build your components, you need to build the front end and package your application. The Maven ***process-resources*** goal generates the Node.js resources, creates the front-end production build, and copies and processes the resources into the destination directory. 
-
-In a new command-line session, build the front end by running the following command in the ***start*** directory:
+Push your images to the container registry on IBM Cloud with the following commands:
 
 ```bash
-cd /home/project/guide-rest-client-reactjs/start
-./mvnw process-resources
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
 ```
 
-The build may take a few minutes to complete. You can rebuild the front end at any time with the Maven ***process-resources*** goal. Any local changes to your JavaScript and HTML are picked up when you build the front-end.
+Update the image names and set the image pull policy to **Always** so that the images in your IBM Cloud container registry are used, and remove the **nodePort** fields so that the ports can be automatically generated:
+
+```bash
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=nodePort: 31000==g' kubernetes.yaml
+sed -i 's=nodePort: 32000==g' kubernetes.yaml
+```
+
+Run the following command to deploy the necessary Kubernetes resources to serve the applications.
+```bash
+kubectl apply -f kubernetes.yaml
+```
+
+When this command finishes, wait for the pods to be in the Ready state. Run the following command to view the status of the pods.
+```bash
+kubectl get pods
+```
+
+When the pods are ready, the output shows ***1/1*** for READY and ***Running*** for STATUS.
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-6bd97d9bf6-6d2cj     1/1       Running   0          34s
+inventory-deployment-645767664f-7gnxf  1/1       Running   0          34s
+```
+
+After the pods are ready, you will make requests to your services.
 
 
-Click the following button to view the front end of your application:
+In this IBM cloud environment, you need to set up port forwarding to access the services. Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following commands to set up port forwarding to access the **system** service.
+```bash
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9090
+```
 
-::startApplication{port="9080" display="external" name="Visit application" route="/"}
+Then, open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following commands to set up port forwarding to access the **inventory** service.
+```bash
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9090
+```
 
+Then use the following commands to access your **system** microservice. The ***-u*** option is used to pass in the username ***bob*** and the password ***bobpwd***.
+```bash
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+curl -s http://localhost:$SYSTEM_NODEPORT/system/properties -u bob:bobpwd | jq
+```
 
-::page{title="Testing the React client"}
+Use the following commands to access your ***inventory*** microservice.
+```bash
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+curl -s http://localhost:$INVENTORY_NODEPORT/inventory/systems/system-service | jq
+```
 
-**Next.js*** supports various testing tools. This guide uses ***Vitest*** for unit testing the React components, with the test file ***App.test.jsx*** located in ***src/main/frontend/__tests__/*** directory. The ***App.test.jsx*** file is a simple JavaScript file that tests against the ***page.jsx*** component. No explicit test cases are written for this application. To learn more about ***Vitest***, see [Setting up Vitest with Next.js](https://nextjs.org/docs/app/building-your-application/testing/vitest).
+When you're done trying out the microservices, press **CTRL+C** in the command line sessions where you ran the ***kubectl port-forward*** commands to stop the port forwarding.
 
+::page{title="Modifying system microservice"}
 
-Update the ***pom.xml*** file.
+The ***system*** service is hardcoded to use a single forward slash as the context root. The context root is set in the ***webApplication***
+element, where the ***contextRoot*** attribute is specified as ***"/"***. You'll make the value of the ***contextRoot*** attribute configurable by implementing it as a variable.
 
-> To open the pom.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-rest-client-reactjs/start/pom.xml, or click the following button
+Replace the ***server.xml*** file.
 
-::openFile{path="/home/project/guide-rest-client-reactjs/start/pom.xml"}
+> To open the server.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-kubernetes-microprofile-config/start/system/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-kubernetes-microprofile-config/start/system/src/main/liberty/config/server.xml"}
 
 
 
 ```xml
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<server description="Sample Liberty server">
 
-    <modelVersion>4.0.0</modelVersion>
+  <featureManager>
+    <platform>jakartaee-10.0</platform>
+    <platform>microprofile-7.0</platform>
+    <feature>restfulWS</feature>
+    <feature>jsonb</feature>
+    <feature>cdi</feature>
+    <feature>jsonp</feature>
+    <feature>mpConfig</feature>
+    <feature>mpHealth</feature>
+    <feature>appSecurity</feature>
+  </featureManager>
 
-    <groupId>com.microprofile.demo</groupId>
-    <artifactId>guide-rest-client-reactjs</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>war</packaging>
+  <variable name="http.port" defaultValue="9090"/>
+  <variable name="https.port" defaultValue="9453"/>
+  <variable name="system.app.username" defaultValue="bob"/>
+  <variable name="system.app.password" defaultValue="bobpwd"/>
+  <variable name="context.root" defaultValue="/"/>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <!-- Liberty configuration -->
-        <liberty.var.http.port>9080</liberty.var.http.port>
-        <liberty.var.https.port>9443</liberty.var.https.port>
-    </properties>
+  <httpEndpoint host="*" httpPort="${http.port}" 
+    httpsPort="${https.port}" id="defaultHttpEndpoint" />
 
-    <dependencies>
-        <!-- Provided dependencies -->
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>10.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>7.0</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
+  <webApplication location="guide-kubernetes-microprofile-config-system.war" contextRoot="${context.root}"/>
 
-        <!-- For tests -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.12.2</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+  <basicRegistry id="basic" realm="BasicRegistry">
+    <user name="${system.app.username}" password="${system.app.password}" />
+  </basicRegistry>
 
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.4.0</version>
-            </plugin>
-            <!-- Enable liberty-maven plugin -->
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.11.3</version>            
-            </plugin>
-            <!-- Frontend resources -->
-            <plugin>
-                <groupId>com.github.eirslett</groupId>
-                <artifactId>frontend-maven-plugin</artifactId>
-                <version>1.15.1</version>
-                <configuration>
-                    <workingDirectory>src/main/frontend</workingDirectory>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>install node and npm</id>
-                        <goals>
-                            <goal>install-node-and-npm</goal>
-                        </goals>
-                        <configuration>
-                            <nodeVersion>v20.14.0</nodeVersion>
-                            <npmVersion>10.7.0</npmVersion>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>npm install</id>
-                        <goals>
-                            <goal>npm</goal>
-                        </goals>
-                        <configuration>
-                            <arguments>install</arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>npm run build</id>
-                        <goals>
-                            <goal>npm</goal>
-                        </goals>
-                        <configuration>
-                            <arguments>run build</arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>run tests</id>
-                        <goals>
-                            <goal>npm</goal>
-                        </goals>
-                        <configuration>
-                            <arguments>test a</arguments>
-                            <environmentVariables>
-                                <CI>true</CI>
-                            </environmentVariables>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- Copy frontend static files to target directory -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>3.3.1</version>
-                <executions>
-                    <execution>
-                        <id>Copy frontend build to target</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>
-                                ${basedir}/src/main/webapp
-                            </outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>
-                                        ${basedir}/src/main/frontend/out
-                                    </directory>
-                                    <filtering>true</filtering>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-</project>
+</server>
+```
+
+
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+
+
+The ***contextRoot*** attribute in the ***webApplication*** element now gets its value from the ***context.root*** variable. To find a value for the ***context.root*** variable, Open Liberty looks for the following environment variables, in order:
+
+
+* `context.root`
+* `context_root`
+* `CONTEXT_ROOT`
+
+::page{title="Modifying inventory microservice"}
+
+The ***inventory*** service is hardcoded to use ***bob*** and ***bobpwd*** as the credentials to authenticate against the ***system*** service. You'll make these credentials configurable. 
+
+Replace the ***SystemClient*** class.
+
+> To open the SystemClient.java file in your IDE, select
+> ***File*** > ***Open*** > guide-kubernetes-microprofile-config/start/inventory/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java, or click the following button
+
+::openFile{path="/home/project/guide-kubernetes-microprofile-config/start/inventory/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java"}
+
+
+
+```java
+package io.openliberty.guides.inventory.client;
+
+import java.net.URI;
+import java.util.Base64;
+import java.util.Properties;
+
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.Invocation.Builder;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
+@RequestScoped
+public class SystemClient {
+
+  private final String SYSTEM_PROPERTIES = "/system/properties";
+  private final String PROTOCOL = "http";
+
+  @Inject
+  @ConfigProperty(name = "CONTEXT_ROOT", defaultValue = "")
+  String CONTEXT_ROOT;
+
+  @Inject
+  @ConfigProperty(name = "http.port")
+  String HTTP_PORT;
+
+  @Inject
+  @ConfigProperty(name = "SYSTEM_APP_USERNAME")
+  private String username;
+
+  @Inject
+  @ConfigProperty(name = "SYSTEM_APP_PASSWORD")
+  private String password;
+
+  public Properties getProperties(String hostname) {
+    Properties properties = null;
+    Client client = ClientBuilder.newClient();
+    try {
+        Builder builder = getBuilder(hostname, client);
+        properties = getPropertiesHelper(builder);
+    } catch (Exception e) {
+        System.err.println(
+        "Exception thrown while getting properties: " + e.getMessage());
+    } finally {
+        client.close();
+    }
+    return properties;
+  }
+
+  private Builder getBuilder(String hostname, Client client) throws Exception {
+    URI uri = new URI(
+                  PROTOCOL, null, hostname, Integer.valueOf(HTTP_PORT),
+                  CONTEXT_ROOT + SYSTEM_PROPERTIES, null, null);
+    String urlString = uri.toString();
+    Builder builder = client.target(urlString).request();
+    builder.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+           .header(HttpHeaders.AUTHORIZATION, getAuthHeader());
+    return builder;
+  }
+
+  private Properties getPropertiesHelper(Builder builder) throws Exception {
+    Response response = builder.get();
+    if (response.getStatus() == Status.OK.getStatusCode()) {
+        return response.readEntity(Properties.class);
+    } else {
+        System.err.println("Response Status is not OK.");
+        return null;
+    }
+  }
+
+  private String getAuthHeader() {
+    String usernamePassword = username + ":" + password;
+    String encoded = Base64.getEncoder().encodeToString(usernamePassword.getBytes());
+    return "Basic " + encoded;
+  }
+}
 ```
 
 
 
-To run the default test, you can add the ***testing*** configuration to the ***frontend-maven-plugin***. Rerun the Maven ***process-resources*** goal to rebuild the front end and run the tests.
+The changes introduced here use MicroProfile Config and CDI to inject the value of the environment variables ***CONTEXT_ROOT***, ***SYSTEM_APP_USERNAME*** and ***SYSTEM_APP_PASSWORD*** into the ***SystemClient*** class.
+
+
+::page{title="Creating a ConfigMap and Secret"}
+
+Several options exist to configure an environment variable in a Docker container. You can set it directly in the ***Dockerfile*** with the ***ENV*** command. You can also set it in your ***kubernetes.yaml*** file by specifying a name and a value for the environment variable that you want to set for a specific container. With these options in mind, you're going to use a ConfigMap and Secret to set these values. These are resources provided by Kubernetes as a way to provide configuration values to your containers. A benefit is that they can be reused across many different containers, even if they all require different environment variables to be set with the same value.
+
+Create a ConfigMap to configure the app name with the following ***kubectl*** command.
+```bash
+kubectl create configmap sys-app-root --from-literal contextRoot=/dev
+```
+
+This command deploys a ConfigMap named ***sys-app-root*** to your cluster. It has a key called ***contextRoot*** with a value of ***/dev***. The ***--from-literal*** flag allows you to specify individual key-value pairs to store in this ConfigMap. Other available options, such as ***--from-file*** and ***--from-env-file***, provide more versatility as to what you want to configure. Details about these options can be found in the [Kubernetes CLI documentation](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#-em-configmap-em-).
+
+Run the following command to display details of the ConfigMap.
+```bash
+kubectl describe configmaps sys-app-root
+```
+
+Create a Secret to configure the new credentials that ***inventory*** uses to authenticate against ***system*** with the following ***kubectl*** command.
+```bash
+kubectl create secret generic sys-app-credentials --from-literal username=alice --from-literal password=wonderland
+```
+ 
+This command looks similar to the command to create a ConfigMap, but one difference is the word ***generic***. This word creates a Secret that doesn't store information in any specialized way. Different types of secrets are available, such as secrets to store Docker credentials and secrets to store public and private key pairs.
+
+Run the following command to display details of the Secret.
+```bash
+kubectl describe secrets/sys-app-credentials
+```
+
+A Secret is similar to a ConfigMap. A key difference is that a Secret is used for confidential information such as credentials. One of the main differences is that you must explicitly tell ***kubectl*** to show you the contents of a Secret. Additionally, when it does show you the information, it only shows you a Base64 encoded version so that a casual onlooker doesn't accidentally see any sensitive data. Secrets don't provide any encryption by default, that is something you'll either need to do yourself or find an alternate option to configure. Encryption is not required for the application to run.
+
+
+
+::page{title="Updating Kubernetes resources"}
+
+Next, you will update your Kubernetes deployments to set the environment variables in your containers based on the values that are configured in the ConfigMap and Secret that you created previously. 
+
+Replace the kubernetes file.
+
+> To open the kubernetes.yaml file in your IDE, select
+> ***File*** > ***Open*** > guide-kubernetes-microprofile-config/start/kubernetes.yaml, or click the following button
+
+::openFile{path="/home/project/guide-kubernetes-microprofile-config/start/kubernetes.yaml"}
+
+
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: system-deployment
+  labels:
+    app: system
+spec:
+  selector:
+    matchLabels:
+      app: system
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: system
+    spec:
+      containers:
+      - name: system-container
+        image: system:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9090
+        # system probes
+        startupProbe:
+          httpGet:
+            path: /health/started
+            port: 9090
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 9090
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+        readinessProbe:
+           httpGet:
+            path: /health/ready
+            port: 9090
+           initialDelaySeconds: 30
+           periodSeconds: 10
+           timeoutSeconds: 3
+           failureThreshold: 1
+        # Set the environment variables
+        env:
+        - name: CONTEXT_ROOT
+          valueFrom:
+            configMapKeyRef:
+              name: sys-app-root
+              key: contextRoot
+        - name: SYSTEM_APP_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: sys-app-credentials
+              key: username
+        - name: SYSTEM_APP_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sys-app-credentials
+              key: password
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-deployment
+  labels:
+    app: inventory
+spec:
+  selector:
+    matchLabels:
+      app: inventory
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: inventory
+    spec:
+      containers:
+      - name: inventory-container
+        image: inventory:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9090
+        # inventory probes
+        startupProbe:
+          httpGet:
+            path: /health/started
+            port: 9090
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 9090
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+        # Set the environment variables
+        env:
+        - name: SYS_APP_HOSTNAME
+          value: system-service
+        - name: CONTEXT_ROOT
+          valueFrom:
+            configMapKeyRef:
+              name: sys-app-root
+              key: contextRoot
+        - name: SYSTEM_APP_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: sys-app-credentials
+              key: username
+        - name: SYSTEM_APP_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sys-app-credentials
+              key: password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: system-service
+spec:
+  type: NodePort
+  selector:
+    app: system
+  ports:
+  - protocol: TCP
+    port: 9090
+    targetPort: 9090
+    nodePort: 31000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service
+spec:
+  type: NodePort
+  selector:
+    app: inventory
+  ports:
+  - protocol: TCP
+    port: 9090
+    targetPort: 9090
+    nodePort: 32000
+```
+
+
+
+The ***CONTEXT_ROOT***, ***SYSTEM_APP_USERNAME***, and ***SYSTEM_APP_PASSWORD*** environment variables are set in the ***env*** sections of ***system-container*** and ***inventory-container***.
+
+Using the ***valueFrom*** field, you can specify the value of an environment variable from various sources. These sources include a ConfigMap, a Secret, and information about the cluster. In this example ***configMapKeyRef*** gets the value ***contextRoot*** from the ***sys-app-root*** ConfigMap. Similarly, ***secretKeyRef*** gets the values ***username*** and ***password*** from the ***sys-app-credentials*** Secret.
+
+
+::page{title="Deploying your changes"}
+
+
+Rebuild the application using Maven ***clean package***.
+```bash
+cd /home/project/guide-kubernetes-microprofile-config/start
+./mvnw clean package
+```
+
+Run the ***docker build*** commands to rebuild container images for your application:
+```bash
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+```
+
+
+Push your updated images to the container registry on IBM Cloud with the following commands:
 
 ```bash
-cd /home/project/guide-rest-client-reactjs/start
-./mvnw process-resources
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
 ```
 
-If the test passes, you see a similar output to the following example:
+Update the image names and set the image pull policy to **Always** so that the images in your IBM Cloud container registry are used, and remove the **nodePort** fields so that the ports can be automatically generated:
 
-```
-[INFO]  ✓ __tests__/App.test.jsx  (1 test) 96ms
-[INFO] 
-[INFO]  Test Files  1 passed (1)
-[INFO]       Tests  1 passed (1)
-[INFO]    Start at  10:43:25
-[INFO]    Duration  3.73s (transform 264ms, setup 0ms, collect 343ms, tests 96ms, environment 408ms, prepare 1.16s)
+```bash
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=nodePort: 31000==g' kubernetes.yaml
+sed -i 's=nodePort: 32000==g' kubernetes.yaml
 ```
 
-Although the React application in this guide is simple, when you build more complex React applications, testing becomes a crucial part of your development lifecycle. If you need to write application-oriented test cases, follow the official [React testing documentation](https://reactjs.org/docs/testing.html).
+Run the following command to deploy your changes to the Kubernetes cluster.
+```bash
+kubectl replace --force -f kubernetes.yaml
+```
 
-When you are done checking the application root, exit dev mode by pressing `Ctrl+C` in the shell session where you ran the Liberty.
+When this command finishes, wait for the pods to be in the Ready state. Run the following command to view the status of the pods.
+```bash
+kubectl get pods
+```
+
+When the pods are ready, the output shows ***1/1*** for READY and ***Running*** for STATUS.
+
+
+Set up port forwarding to the new services.
+
+Run the following commands to set up port forwarding to access the ***system*** service.
+
+```bash
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9090
+```
+
+Then, run the following commands to set up port forwarding to access the **inventory** service.
+
+```bash
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9090
+```
+
+You now need to use the new username, ***alice***, and the new password, ***wonderland***, to log in. Access your application with the following commands:
+
+```bash
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+curl -s http://localhost:$SYSTEM_NODEPORT/dev/system/properties -u alice:wonderland | jq
+```
+
+Notice that the URL you are using to reach the application now has ***/dev*** as the context root. 
+
+
+Verify the inventory service is working as intended by using the following commands:
+
+```bash
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+curl -s http://localhost:$INVENTORY_NODEPORT/inventory/systems/system-service | jq
+```
+
+If it is not working, then check the configuration of the credentials.
+
+::page{title="Testing the microservices"}
+
+
+
+Update the ***pom.xml*** files so that the ***system.service.root*** and ***inventory.service.root*** properties have the correct ports to access the **system** and **inventory** services.
+
+```bash
+cd /home/project/guide-kubernetes-microprofile-config/start
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+sed -i 's=localhost:31000='"localhost:$SYSTEM_NODEPORT"'=g' inventory/pom.xml
+sed -i 's=localhost:32000='"localhost:$INVENTORY_NODEPORT"'=g' inventory/pom.xml
+sed -i 's=localhost:31000='"localhost:$SYSTEM_NODEPORT"'=g' system/pom.xml
+```
+
+Run the integration tests by using the following command:
+
+```bash
+./mvnw failsafe:integration-test \
+    -Dsystem.service.root=localhost:$SYSTEM_NODEPORT \
+    -Dsystem.context.root=/dev \
+    -Dinventory.service.root=localhost:$INVENTORY_NODEPORT
+```
+
+The tests for ***inventory*** verify that the service can communicate with ***system*** using the configured credentials. If the credentials are misconfigured, then the ***inventory*** test fails, so the ***inventory*** test indirectly verifies that the credentials are correctly configured.
+
+After the tests succeed, you should see output similar to the following in your console.
+
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.706 s - in it.io.openliberty.guides.system.SystemEndpointIT
+
+Results:
+
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+```
+
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.696 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+
+Results:
+
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+```
+
+::page{title="Tearing down the environment"}
+
+Press **CTRL+C** in the command-line sessions where you ran ***kubectl port-forward*** to stop the port forwarding. 
+
+Run the following commands to delete all the resources that you created.
+
+```bash
+kubectl delete -f kubernetes.yaml
+kubectl delete configmap sys-app-root
+kubectl delete secret sys-app-credentials
+```
+
+
+
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-Nice work! You just accessed a simple RESTful web service and consumed its resources by using ReactJS in Open Liberty.
+You have used MicroProfile Config to externalize the configuration of two microservices, and then you configured them by creating a ConfigMap and Secret in your Kubernetes cluster.
+
 
 
 
@@ -840,31 +669,33 @@ Nice work! You just accessed a simple RESTful web service and consumed its resou
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-rest-client-reactjs*** project by running the following commands:
+Delete the ***guide-kubernetes-microprofile-config*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-rest-client-reactjs
+rm -fr guide-kubernetes-microprofile-config
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20a%20RESTful%20web%20service%20with%20ReactJS&guide-id=cloud-hosted-guide-rest-client-reactjs)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Configuring%20microservices%20running%20in%20Kubernetes&guide-id=cloud-hosted-guide-kubernetes-microprofile-config)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-client-reactjs/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-client-reactjs/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-config/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-config/pulls)
 
 
 
 ### Where to next?
 
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
+* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
 
 
 ### Log out of the session
