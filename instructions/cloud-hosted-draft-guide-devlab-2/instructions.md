@@ -561,7 +561,7 @@ Click the following button to check out your service by visiting the ***/openapi
 ::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
 Expand the ***/beanvalidation/validatespacecraft POST request to validate your spacecraft bean*** section and click ***Try it out***. Copy the following example input into the text box:
 
-```bash
+```
 {
   "astronaut": {
     "name": "Libby",
