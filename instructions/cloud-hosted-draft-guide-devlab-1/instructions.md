@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Securing microservices with JSON Web Tokens guide!"}
+::page{title="Welcome to the Creating reactive Java microservices guide!"}
 
-You'll explore how to control user and role access to microservices with MicroProfile JSON Web Token (MicroProfile JWT).
+Learn how to write reactive Java microservices using MicroProfile Reactive Messaging.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,27 +14,22 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 ::page{title="What you'll learn"}
 
-You will add token-based authentication mechanisms to authenticate, authorize, and verify users by implementing MicroProfile JWT in the ***system*** microservice.
+You will learn how to build reactive microservices that can send requests to other microservices, and asynchronously receive and process the responses. You will use an external messaging system to handle the asynchronous messages that are sent and received between the microservices as streams of events. MicroProfile Reactive Messaging makes it easy to write and configure your application to send, receive, and process the events efficiently.
 
-A JSON Web Token (JWT) is a self-contained token that is designed to securely transmit information as a JSON object. The information in this JSON object is digitally signed and can be trusted and verified by the recipient.
+*Asynchronous messaging between microservices*
 
-For microservices, a token-based authentication mechanism offers a lightweight way for security controls and security tokens to propagate user identities across different services. JSON Web Token is becoming the most common token format because it follows well-defined and known standards.
+Asynchronous communication between microservices can be used to build reactive and responsive applications. By decoupling the requests sent by a microservice from the responses that it receives, the microservice is not blocked from performing other tasks while waiting for the requested data to become available. Imagine asynchronous communication as a restaurant. A waiter might come to your table and take your order. While you are waiting for your food to be prepared, that waiter serves other tables and takes their orders too. When your food is ready, the waiter brings your food to the table and then continues to serve the other tables. If the waiter were to operate synchronously, they must take your order and then wait until they deliver your food before serving any other tables. In microservices, a request call from a REST client to another microservice can be time-consuming because the network might be slow, or the other service might be overwhelmed with requests and can’t respond quickly. But in an asynchronous system, the microservice sends a request to another microservice and continues to send other calls and to receive and process other responses until it receives a response to the original request.
 
-MicroProfile JWT standards define the required format of JWT for authentication and authorization. The standards also map JWT claims to various Jakarta EE container APIs and make the set of claims available through getter methods.
+*What is MicroProfile Reactive Messaging?*
 
-In this guide, the application uses JWTs to authenticate a user, allowing them to make authorized requests to a secure backend service.
+MicroProfile Reactive Messaging provides an easy way to asynchronously send, receive, and process messages that are received as continuous streams of events. You simply annotate application beans' methods and Open Liberty converts the annotated methods to reactive streams-compatible publishers, subscribers, and processors and connects them up to each other. MicroProfile Reactive Messaging provides a Connector API so that your methods can be connected to external messaging systems that produce and consume the streams of events, such as [Apache Kafka](https://kafka.apache.org/).
 
-You will be working with two services, a ***frontend*** service and a secure ***system*** backend service. The ***frontend*** service logs a user in, builds a JWT, and makes authorized requests to the secure ***system*** service for JVM system properties. The following diagram depicts the application that is used in this guide:
+The application in this guide consists of two microservices, ***system*** and ***inventory***. Every 15 seconds, the ***system*** microservice calculates and publishes an event that contains its current average system load. The ***inventory*** microservice subscribes to that information so that it can keep an updated list of all the systems and their current system loads. The current inventory of systems can be accessed via the ***/systems*** REST endpoint. You'll create the ***system*** and ***inventory*** microservices using MicroProfile Reactive Messaging.
 
-![JWT frontend and system services](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-jwt/prod/assets/JWT_Diagram.png)
+![Reactive system inventory](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/prod/assets/reactive-messaging-system-inventory.png)
 
-
-The user signs in to the ***frontend*** service with a username and a password, at which point a JWT is created. The ***frontend*** service then makes requests, with the JWT included, to the ***system*** backend service. The secure ***system*** service verifies the JWT to ensure that the request came from the authorized ***frontend*** service. After the JWT is validated, the information in the claims, such as the user's role, can be trusted and used to determine which system properties the user has access to.
-
-To learn more about JSON Web Tokens, check out the [jwt.io website](https://jwt.io/introduction/). If you want to learn more about how JWTs can be used for user authentication and authorization, check out the Open Liberty [Single Sign-on documentation](https://openliberty.io/docs/latest/single-sign-on.html).
 
 ::page{title="Getting started"}
 
@@ -47,11 +42,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-jwt.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-reactive-messaging.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-microprofile-jwt.git
-cd guide-microprofile-jwt
+git clone https://github.com/openliberty/guide-microprofile-reactive-messaging.git
+cd guide-microprofile-reactive-messaging
 ```
 
 
@@ -59,162 +54,72 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-### Try what you'll build
+::page{title="Creating the producer in the system microservice"}
 
-The ***finish*** directory contains the finished JWT security implementation for the services in the application. Try the finished application before you build your own.
-
-To try out the application, run the following commands to navigate to the ***finish*** directory and deploy the ***frontend*** service to Open Liberty:
-
-
+Navigate to the ***start*** directory to begin. 
 ```bash
-cd finish
-./mvnw -pl frontend liberty:run
+cd /home/project/guide-microprofile-reactive-messaging/start
 ```
 
-Open another command-line session and run the following commands to navigate to the ***finish*** directory and deploy the ***system*** service to Open Liberty:
+The ***system*** microservice is the producer of the messages that are published to the Kafka messaging system as a stream of events. Every 15 seconds, the ***system*** microservice publishes an event that contains its calculation of the average system load (its CPU usage) for the last minute.
 
-
-```bash
-cd finish
-./mvnw -pl system liberty:run
-```
-
-After you see the following message in both command-line sessions, both of your services are ready:
-
-```
-The defaultServer server is ready to run a smarter planet.
-```
-
-
-To launch the front-end web application, click the following button. From here, you can log in to the application with the form-based login.
-::startApplication{port="9090" display="external" name="Launch Application" route="/login.jsf"}
-
-Log in with one of the following usernames and its corresponding password:
-
-| *Username* | *Password* | *Role*
-| --- | --- | ---
-| bob | bobpwd | admin, user
-| alice | alicepwd | user
-| carl | carlpwd | user
-
-You're redirected to a page that displays information that the front end requested from the ***system*** service, such as the system username. If you log in as an ***admin***, you can also see the current OS. Click ***Log Out*** and log in as a ***user***. You'll see the message ***You are not authorized to access this system property*** because the ***user*** role doesn't have sufficient privileges to view current OS information. 
-
-Additionally, the ***groups*** claim of the JWT is read by the ***system*** service and requested by the front end to be displayed.
-
-
-You can try accessing these services without a JWT by going to the ***system*** endpoint. Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following curl command from the terminal in the IDE:
-```bash
-curl -k https://localhost:8443/system/properties/os
-```
-
-The response is empty because you don't have access. Access is granted if a valid JWT is sent with the request. The following error also appears in the command-line session of the ***system*** service:
-
-```
-[ERROR] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
-```
-
-When you are done with the application, stop both the ***frontend*** and ***system*** services by pressing `Ctrl+C` in the command-line sessions where you ran them. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
-
-
-```bash
-./mvnw -pl system liberty:stop
-./mvnw -pl frontend liberty:stop
-```
-
-
-::page{title="Creating the secure system service"}
-
-
-To begin, run the following command to navigate to the ***start*** directory:
-```bash
-cd /home/project/guide-microprofile-jwt/start
-```
-
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following commands to start the ***frontend*** service in dev mode:
-
-
-```bash
-./mvnw -pl frontend liberty:dev
-```
-
-Open another command-line session and run the following commands to navigate to the ***system*** directory and start the ***system*** service in dev mode:
-
-
-```bash
-./mvnw -pl system liberty:dev
-```
-
-After you see the following message, your Liberty instance is ready in dev mode:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-The ***system*** service provides endpoints for the ***frontend*** service to use to request system properties. This service is secure and requires a valid JWT to be included in requests that are made to it. The claims in the JWT are used to determine what properties the user has access to.
-
-Create the secure ***system*** service.
-
-Create the ***SystemResource*** class.
+Create the ***SystemService*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java
+touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
 ```
 
 
-> Then, to open the SystemResource.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java, or click the following button
+> Then, to open the SystemService.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java"}
+::openFile{path="/home/project/guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
 
 
 
 ```java
 package io.openliberty.guides.system;
 
-import jakarta.json.JsonArray;
-import jakarta.enterprise.context.RequestScoped;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.annotation.security.RolesAllowed;
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.concurrent.TimeUnit;
 
-import org.eclipse.microprofile.jwt.Claim;
+import jakarta.enterprise.context.ApplicationScoped;
 
-@RequestScoped
-@Path("/properties")
-public class SystemResource {
+import org.eclipse.microprofile.reactive.messaging.Outgoing;
+import org.reactivestreams.Publisher;
 
-    @Inject
-    @Claim("groups")
-    private JsonArray roles;
+import io.openliberty.guides.models.SystemLoad;
+import io.reactivex.rxjava3.core.Flowable;
 
-    @GET
-    @Path("/username")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "admin", "user" })
-    public String getUsername() {
-        return System.getProperties().getProperty("user.name");
+@ApplicationScoped
+public class SystemService {
+
+    private static final OperatingSystemMXBean OS_MEAN =
+            ManagementFactory.getOperatingSystemMXBean();
+    private static String hostname = null;
+
+    private static String getHostname() {
+        if (hostname == null) {
+            try {
+                return InetAddress.getLocalHost().getHostName();
+            } catch (UnknownHostException e) {
+                return System.getenv("HOSTNAME");
+            }
+        }
+        return hostname;
     }
 
-    @GET
-    @Path("/os")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "admin" })
-    public String getOS() {
-        return System.getProperties().getProperty("os.name");
+    @Outgoing("systemLoad")
+    public Publisher<SystemLoad> sendSystemLoad() {
+        return Flowable.interval(15, TimeUnit.SECONDS)
+                .map((interval -> new SystemLoad(getHostname(),
+                Double.valueOf(OS_MEAN.getSystemLoadAverage()))));
     }
 
-    @GET
-    @Path("/jwtroles")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "admin", "user" })
-    public String getRoles() {
-        return roles.toString();
-    }
 }
 ```
 
@@ -222,460 +127,522 @@ public class SystemResource {
 Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-This class has role-based access control. The role names that are used in the ***@RolesAllowed*** annotations are mapped to group names in the ***groups*** claim of the JWT, which results in an authorization decision wherever the security constraint is applied.
 
-The ***/username*** endpoint returns the system's username and is annotated with the ***@RolesAllowed({"admin, "user"})*** annotation. Only authenticated users with the role of ***admin*** or ***user*** can access this endpoint.
+The ***SystemService*** class contains a ***Publisher*** method that is called ***sendSystemLoad()***, which calculates and returns the average system load. The ***@Outgoing*** annotation on the ***sendSystemLoad()*** method indicates that the method publishes its calculation as a message on a topic in the Kafka messaging system. The ***Flowable.interval()*** method from ***rxJava*** is used to set the frequency of how often the system service publishes the calculation to the event stream.
 
-The ***/os*** endpoint returns the system's current OS. Here, the ***@RolesAllowed*** annotation is limited to ***admin***, meaning that only authenticated users with the role of ***admin*** are able to access the endpoint.
+The messages are transported between the service and the Kafka messaging system through a channel called ***systemLoad***. The name of the channel to use is set in the ***@Outgoing("systemLoad")*** annotation. Later in the guide, you will configure the service so that any messages sent by the ***system*** service through the ***systemLoad*** channel are published on a topic called ***system.load***, as shown in the following diagram:
 
-While the ***@RolesAllowed*** annotation automatically reads from the ***groups*** claim of the JWT to make an authorization decision, you can also manually access the claims of the JWT by using the ***@Claim*** annotation. In this case, the ***groups*** claim is injected into the ***roles*** JSON array. The roles that are parsed from the ***groups*** claim of the JWT are then exposed back to the front end at the ***/jwtroles*** endpoint. To read more about different claims and ways to access them, check out the [MicroProfile JWT documentation](https://github.com/eclipse/microprofile-jwt-auth/blob/master/spec/src/main/asciidoc/interoperability.asciidoc).
+![Reactive system publisher](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/prod/assets/reactive-messaging-system-inventory-publisher.png)
 
 
-::page{title="Creating a client to access the secure system service"}
+::page{title="Creating the consumer in the inventory microservice"}
 
-Create a RESTful client interface for the ***frontend*** service.
+The ***inventory*** microservice records in its inventory the average system load information that it received from potentially multiple instances of the ***system*** service.
 
-Create the ***SystemClient*** class.
+Create the ***InventoryResource*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java
+touch /home/project/guide-microprofile-reactive-messaging/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 ```
 
 
-> Then, to open the SystemClient.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java, or click the following button
+> Then, to open the InventoryResource.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-reactive-messaging/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java"}
+::openFile{path="/home/project/guide-microprofile-reactive-messaging/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java"}
 
 
 
 ```java
-package io.openliberty.guides.frontend.client;
+package io.openliberty.guides.inventory;
 
-import jakarta.enterprise.context.RequestScoped;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.HeaderParam;
-
-import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-
-@RegisterRestClient(baseUri = "https://localhost:8443/system")
-@Path("/properties")
-@RequestScoped
-public interface SystemClient extends AutoCloseable {
-
-    @GET
-    @Path("/os")
-    @Produces(MediaType.APPLICATION_JSON)
-    String getOS(@HeaderParam("Authorization") String authHeader);
-
-    @GET
-    @Path("/username")
-    @Produces(MediaType.APPLICATION_JSON)
-    String getUsername(@HeaderParam("Authorization") String authHeader);
-
-    @GET
-    @Path("/jwtroles")
-    @Produces(MediaType.APPLICATION_JSON)
-    String getJwtRoles(@HeaderParam("Authorization") String authHeader);
-}
-```
-
-
-
-This interface declares methods for accessing each of the endpoints that were
-previously set up in the ***system*** service.
-
-The MicroProfile Rest Client feature automatically builds and generates a client implementation based on what is defined in the ***SystemClient*** interface. You don't need to set up the client and connect with the remote service.
-
-As discussed, the ***system*** service is secured and requests made to it must include a valid JWT in the ***Authorization*** header. The ***@HeaderParam*** annotations include the JWT by specifying that the value of the ***String authHeader*** parameter, which contains the JWT, be used as the value for the ***Authorization*** header. This header is included in all of the requests that are made to the ***system*** service through this client.
-
-Create the application bean that the front-end UI uses to request data.
-
-Create the ***ApplicationBean*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java
-```
-
-
-> Then, to open the ApplicationBean.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java"}
-
-
-
-```java
-package io.openliberty.guides.frontend;
+import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
-import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
 
-import io.openliberty.guides.frontend.client.SystemClient;
-import io.openliberty.guides.frontend.util.SessionUtils;
-
+import io.openliberty.guides.models.SystemLoad;
 
 @ApplicationScoped
-@Named
-public class ApplicationBean {
+@Path("/inventory")
+public class InventoryResource {
+
+    private static Logger logger = Logger.getLogger(InventoryResource.class.getName());
 
     @Inject
-    @RestClient
-    private SystemClient defaultRestClient;
+    private InventoryManager manager;
 
-    public String getJwt() {
-        String jwtTokenString = SessionUtils.getJwtToken();
-        String authHeader = "Bearer " + jwtTokenString;
-        return authHeader;
+    @GET
+    @Path("/systems")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getSystems() {
+        List<Properties> systems = manager.getSystems()
+                .values()
+                .stream()
+                .collect(Collectors.toList());
+        return Response
+                .status(Response.Status.OK)
+                .entity(systems)
+                .build();
     }
 
-    public String getOs() {
-        String authHeader = getJwt();
-        String os;
-        try {
-            os = defaultRestClient.getOS(authHeader);
-        } catch (Exception e) {
-            return "You are not authorized to access this system property";
+    @GET
+    @Path("/systems/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getSystem(@PathParam("hostname") String hostname) {
+        Optional<Properties> system = manager.getSystem(hostname);
+        if (system.isPresent()) {
+            return Response
+                    .status(Response.Status.OK)
+                    .entity(system)
+                    .build();
         }
-        return os;
+        return Response
+                .status(Response.Status.NOT_FOUND)
+                .entity("hostname does not exist.")
+                .build();
     }
 
-    public String getUsername() {
-        String authHeader = getJwt();
-        return defaultRestClient.getUsername(authHeader);
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response resetSystems() {
+        manager.resetSystems();
+        return Response
+                .status(Response.Status.OK)
+                .build();
     }
 
-    public String getJwtRoles() {
-        String authHeader = getJwt();
-        return defaultRestClient.getJwtRoles(authHeader);
+    @Incoming("systemLoad")
+    public void updateStatus(SystemLoad sl)  {
+        String hostname = sl.hostname;
+        if (manager.getSystem(hostname).isPresent()) {
+            manager.updateCpuStatus(hostname, sl.loadAverage);
+            logger.info("Host " + hostname + " was updated: " + sl);
+        } else {
+            manager.addSystem(hostname, sl.loadAverage);
+            logger.info("Host " + hostname + " was added: " + sl);
+        }
     }
-
 }
 ```
 
 
 
-The application bean is used to populate the table in the front end by making requests for data through the ***defaultRestClient***, which is an injected instance of the ***SystemClient*** class that you created. The ***getOs()***, ***getUsername()***, and ***getJwtRoles()*** methods call their associated methods of the ***SystemClient*** class with the ***authHeader*** passed in as a parameter. The ***authHeader*** is a string that consists of the JWT with ***Bearer*** prefixed to it. The ***authHeader*** is included in the ***Authorization*** header of the subsequent requests that are made by the ***defaultRestClient*** instance.
+
+The ***inventory*** microservice receives the message from the ***system*** microservice over the ***@Incoming("systemLoad")*** channel. The properties of this channel are defined in the ***microprofile-config.properties*** file. The ***inventory*** microservice is also a RESTful service that is served at the ***/inventory*** endpoint.
+
+The ***InventoryResource*** class contains a method called ***updateStatus()***, which receives the message that contains the average system load and updates its existing inventory of systems and their average system load. The ***@Incoming("systemLoad")*** annotation on the ***updateStatus()*** method indicates that the method retrieves the average system load information by connecting to the channel called ***systemLoad***. Later in the guide, you will configure the service so that any messages sent by the ***system*** service through the ***systemLoad*** channel are retrieved from a topic called ***system.load***, as shown in the following diagram:
+
+![Reactive system inventory detail](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/prod/assets/reactive-messaging-system-inventory-detail.png)
 
 
-The JWT for these requests is retrieved from the session attributes with the ***getJwt()*** method. The JWT is stored in the session attributes by the provided ***LoginBean*** class. When the user logs in to the front end, the ***doLogin()*** method is called and builds the JWT. Then, the ***setAttribute()*** method stores it as an ***HttpSession*** attribute. The JWT is built by using the ***JwtBuilder*** APIs in the ***buildJwt()*** method. You can see that the ***claim()*** method is being used to set the ***groups*** and the ***aud*** claims of the token. The ***groups*** claim is used to provide the role-based access that you implemented. The ***aud*** claim is used to specify the audience that the JWT is intended for.
+::page{title="Configuring the MicroProfile Reactive Messaging connectors for Kafka"}
 
-::page{title="Configuring MicroProfile JWT"}
+The ***system*** and ***inventory*** services exchange messages with the external messaging system through a channel. The MicroProfile Reactive Messaging Connector API makes it easy to connect each service to the channel. You just need to add configuration keys in a properties file for each of the services. These configuration keys define properties such as the name of the channel and the topic in the Kafka messaging system. Open Liberty includes the ***liberty-kafka*** connector for sending and receiving messages from Apache Kafka.
 
-Configure the ***mpJwt*** feature in the ***microprofile-config.properties*** file for the ***system*** service.
+The system and inventory microservices each have a MicroProfile Config properties file to define the properties of their outgoing and incoming streams.
 
-Create the microprofile-config.properties file.
+Create the system/microprofile-config.properties file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-microprofile-jwt/start/system/src/main/resources/META-INF/microprofile-config.properties
+touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/resources/META-INF/microprofile-config.properties
 ```
 
 
 > Then, to open the microprofile-config.properties file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-jwt/start/system/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+> ***File*** > ***Open*** > guide-microprofile-reactive-messaging/start/system/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/main/resources/META-INF/microprofile-config.properties"}
+::openFile{path="/home/project/guide-microprofile-reactive-messaging/start/system/src/main/resources/META-INF/microprofile-config.properties"}
 
 
 
 ```
-mp.jwt.verify.issuer=http://openliberty.io
-mp.jwt.token.header=Authorization
-mp.jwt.token.cookie=Bearer
-mp.jwt.verify.audiences=systemService, adminServices
-mp.jwt.verify.publickey.algorithm=RS256
+mp.messaging.connector.liberty-kafka.bootstrap.servers=kafka:9092
+
+mp.messaging.outgoing.systemLoad.connector=liberty-kafka
+mp.messaging.outgoing.systemLoad.topic=system.load
+mp.messaging.outgoing.systemLoad.key.serializer=org.apache.kafka.common.serialization.StringSerializer
+mp.messaging.outgoing.systemLoad.value.serializer=io.openliberty.guides.models.SystemLoad$SystemLoadSerializer
 ```
 
 
 
-The following table breaks down some of the properties:
+The ***mp.messaging.connector.liberty-kafka.bootstrap.servers*** property configures the hostname and port for connecting to the Kafka server. The ***system*** microservice uses an outgoing connector to send messages through the ***systemLoad*** channel to the ***system.load*** topic in the Kafka message broker so that the ***inventory*** microservices can consume the messages. The ***key.serializer*** and ***value.serializer*** properties characterize how to serialize the messages. The ***SystemLoadSerializer*** class implements the logic for turning a ***SystemLoad*** object into JSON and is configured as the ***value.serializer***.
 
-| *Property* |   *Description*
-| ---| ---
-| ***mp.jwt.verify.issuer*** | Specifies the expected value of the issuer claim on an incoming JWT. Incoming JWTs with an issuer claim that's different from this expected value aren't considered valid.
-| ***mp.jwt.token.header***  | With this property, you can control the HTTP request header, which is expected to contain a JWT. You can either specify Authorization, by default, or the Cookie values.
-| ***mp.jwt.token.cookie*** | Specifies the name of the cookie, which is expected to contain a JWT token. The default value is Bearer.
-| ***mp.jwt.verify.audiences*** |  With this property, you can create a list of allowable audience (aud) values. At least one of these values must be found in the claim. Previously, this configuration was included in the ***server.xml*** file.
-| ***mp.jwt.decrypt.key.location*** | With this property, you can specify the location of the Key Management key. It is a Private key that is used to decrypt the Content Encryption key, which is then used to decrypt the JWE ciphertext. This private key must correspond to the public key that is used to encrypt the Content Encryption key.
-| ***mp.jwt.verify.publickey.algorithm*** | With this property, you can control the Public Key Signature Algorithm that is supported by the MicroProfile JWT endpoint. The default value is RS256. Previously, this configuration was included in the ***server.xml*** file.
+The ***inventory*** microservice uses a similar ***microprofile-config.properties*** configuration to define its required incoming stream.
 
-For more information about these and other JWT properties, see the [MicroProfile Config properties for MicroProfile JSON Web Token documentation](https://openliberty.io/docs/latest/reference/microprofile-config-properties.html#jwt).
+Create the inventory/microprofile-config.properties file.
 
-Next, add the MicroProfile JSON Web Token feature to the Liberty ***server.xml*** configuration file for the ***system*** service.
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties
+```
 
-Replace the system ***server.xml*** configuration file.
 
-> To open the server.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-jwt/start/system/src/main/liberty/config/server.xml, or click the following button
+> Then, to open the microprofile-config.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/main/liberty/config/server.xml"}
+::openFile{path="/home/project/guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties"}
+
+
+
+```
+mp.messaging.connector.liberty-kafka.bootstrap.servers=kafka:9092
+
+mp.messaging.incoming.systemLoad.connector=liberty-kafka
+mp.messaging.incoming.systemLoad.topic=system.load
+mp.messaging.incoming.systemLoad.key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
+mp.messaging.incoming.systemLoad.value.deserializer=io.openliberty.guides.models.SystemLoad$SystemLoadDeserializer
+mp.messaging.incoming.systemLoad.group.id=system-load-status
+```
+
+
+
+The ***inventory*** microservice uses an incoming connector to receive messages through the ***systemLoad*** channel. The messages were published by the ***system*** microservice to the ***system.load*** topic in the Kafka message broker. The ***key.deserializer*** and ***value.deserializer*** properties define how to deserialize the messages. The ***SystemLoadDeserializer*** class implements the logic for turning JSON into a ***SystemLoad*** object and is configured as the ***value.deserializer***. The ***group.id*** property defines a unique name for the consumer group. A consumer group is a collection of consumers who share a common identifier for the group. You can also view a consumer group as the various machines that ingest from the Kafka topics. All of these properties are required by the [Apache Kafka Producer Configs](https://kafka.apache.org/documentation/#producerconfigs) and [Apache Kafka Consumer Configs](https://kafka.apache.org/documentation/#consumerconfigs).
+
+::page{title="Configuring Liberty"}
+
+To run the services, the Open Liberty on which each service runs needs to be correctly configured. Relevant features, including the [MicroProfile Reactive Messaging feature](https://openliberty.io/docs/ref/feature/#mpReactiveMessaging-3.0.html), must be enabled for the ***system*** and ***inventory*** services.
+
+Create the system/server.xml configuration file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/liberty/config/server.xml
+```
+
+
+> Then, to open the server.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-reactive-messaging/start/system/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-reactive-messaging/start/system/src/main/liberty/config/server.xml"}
 
 
 
 ```xml
-<server description="Sample Liberty server">
+<server description="System Service">
 
   <featureManager>
     <platform>jakartaee-10.0</platform>
     <platform>microprofile-7.0</platform>
-    <feature>restfulWS</feature>
-    <feature>jsonb</feature>
-    <feature>jsonp</feature>
     <feature>cdi</feature>
+    <feature>concurrent</feature>
+    <feature>jsonb</feature>
+    <feature>mpHealth</feature>
     <feature>mpConfig</feature>
-    <feature>mpRestClient</feature>
-    <feature>appSecurity</feature>
-    <feature>servlet</feature>
-    <feature>mpJwt</feature>
+    <feature>mpReactiveMessaging</feature>
   </featureManager>
 
-  <variable name="http.port" defaultValue="8080"/>
-  <variable name="https.port" defaultValue="8443"/>
+  <variable name="http.port" defaultValue="9083"/>
+  <variable name="https.port" defaultValue="9446"/>
 
-  <keyStore id="defaultKeyStore" password="secret"/>
+  <httpEndpoint host="*" httpPort="${http.port}"
+      httpsPort="${https.port}" id="defaultHttpEndpoint"/>
 
-  <httpEndpoint host="*" httpPort="${http.port}" httpsPort="${https.port}"
-                id="defaultHttpEndpoint"/>
-                 
+  <logging consoleLogLevel="INFO"/>
   <webApplication location="system.war" contextRoot="/"/>
-
 </server>
 ```
 
 
 
-The ***mpJwt*** feature adds the libraries that are required for MicroProfile JWT implementation.
 
+The ***server.xml*** file is already configured for the ***inventory*** microservice.
 
 ::page{title="Building and running the application"}
 
-Because you are running the ***frontend*** and ***system*** services in dev mode, the changes that you made were automatically picked up. You're now ready to check out your application in your browser.
+Build the ***system*** and ***inventory*** microservices using Maven and then run them in Docker containers.
 
-
-To launch the front-end web application, click the following button:
-::startApplication{port="9090" display="external" name="Launch Application" route="/login.jsf"}
-
-Log in with one of the following usernames and its corresponding password:
-
-| *Username* | *Password* | *Role*
-| --- | --- | ---
-| bob | bobpwd | admin, user
-| alice | alicepwd | user
-| carl | carlpwd | user
-
-After you log in as an ***admin***, you can see the information that's retrieved from the ***system*** service. Click ***Log Out*** and log in as a ***user***. With successfully implemented role-based access in the application, if you log in as a ***user*** role, you don't have access to the OS property.
-
-You can also see the value of the ***groups*** claim in the row with the ***Roles:*** label. These roles are read from the JWT and sent back to the front end to be displayed.
-
-
-You can check that the ***system*** service is secured against unauthenticated requests by going to the **system** endpoint. Run the following curl command from the terminal in the IDE:
-```bash
-curl -k https://localhost:8443/system/properties/os
-```
-
-You'll see an empty response because you didn't authenticate with a valid JWT. 
-
-In the front end, you see your JWT displayed in the row with the ***JSON Web Token*** label.
-
-To see the specific information that this JWT holds, you can enter it into the token reader on the [JWT.io website](https://JWT.io). The token reader shows you the header, which contains information about the JWT, as shown in the following example:
-
-```
-{
-  "kid": "NPzyG3ZMzljUwQgbzi44",
-  "typ": "JWT",
-  "alg": "RS256"
-}
-```
-
-The token reader also shows you the payload, which contains the claims information:
-
-```
-{
-  "token_type": "Bearer",
-  "sub": "bob",
-  "upn": "bob",
-  "groups": [ "admin", "user" ],
-  "iss": "http://openliberty.io",
-  "exp": 1596723489,
-  "iat": 1596637089
-}
-```
-
-You can learn more about these claims in the [MicroProfile JWT documentation](https://github.com/eclipse/microprofile-jwt-auth/blob/master/spec/src/main/asciidoc/interoperability.asciidoc).
-
-
-::page{title="Testing the application"}
-
-You can manually check that the ***system*** service is secure by making requests to each of the endpoints with and without valid JWTs. However, automated tests are a much better approach because they are more reliable and trigger a failure if a breaking change is introduced.
-
-Create the ***SystemEndpointIT*** class.
+Create the Maven configuration file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
+touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
 ```
 
 
-> Then, to open the SystemEndpointIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java, or click the following button
+> Then, to open the pom.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-reactive-messaging/start/system/pom.xml, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java"}
+::openFile{path="/home/project/guide-microprofile-reactive-messaging/start/system/pom.xml"}
 
 
 
-```java
-package it.io.openliberty.guides.system;
+```xml
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.Invocation.Builder;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.MediaType;
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>system</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- Liberty configuration -->
+        <liberty.var.http.port>9083</liberty.var.http.port>
+        <liberty.var.https.port>9446</liberty.var.https.port>
+    </properties>
 
-import it.io.openliberty.guides.system.util.JwtBuilder;
+    <dependencies>
+        <!-- Provided dependencies -->
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>10.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>7.0</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile.reactive.messaging</groupId>
+            <artifactId>microprofile-reactive-messaging-api</artifactId>
+            <version>3.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- Required dependencies -->
+        <dependency>
+            <groupId>io.openliberty.guides</groupId>
+            <artifactId>models</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-clients</artifactId>
+            <version>3.9.0</version>
+        </dependency>
+        <dependency>
+            <groupId>io.reactivex.rxjava3</groupId>
+            <artifactId>rxjava</artifactId>
+            <version>3.1.10</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.17</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.17</version>
+        </dependency>
+        <!-- For tests -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>kafka</artifactId>
+            <version>1.21.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.12.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>1.21.0</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
-public class SystemEndpointIT {
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.4.0</version>
+                <configuration>
+                    <packagingExcludes>pom.xml</packagingExcludes>
+                </configuration>
+            </plugin>
 
-    static String authHeaderAdmin;
-    static String authHeaderUser;
-    static String urlOS;
-    static String urlUsername;
-    static String urlRoles;
+            <!-- Liberty plugin -->
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.11.3</version>
+                <configuration>
+                    <!-- devc config -->
+                    <containerRunOpts>
+                        -p 9085:9085
+                        --network=reactive-app
+                    </containerRunOpts>
+                </configuration>
+            </plugin>
 
-    @BeforeAll
-    public static void setup() throws Exception {
-        String urlBase = "http://" + System.getProperty("hostname")
-                 + ":" + System.getProperty("http.port")
-                 + "/system/properties";
-        urlOS = urlBase + "/os";
-        urlUsername = urlBase + "/username";
-        urlRoles = urlBase + "/jwtroles";
+            <!-- Plugin to run unit tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.3</version>
+            </plugin>
 
-        authHeaderAdmin = "Bearer " + new JwtBuilder().createAdminJwt("testUser");
-        authHeaderUser = "Bearer " + new JwtBuilder().createUserJwt("testUser");
-    }
+            <!-- Plugin to run integration tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.5.3</version>
+                <executions>
+                    <execution>
+                        <id>integration-test</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                        </goals>
+                        <configuration>
+                            <trimStackTrace>false</trimStackTrace>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>verify</id>
+                        <goals>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
 
-    @Test
-    public void testOSEndpoint() {
-        Response response = makeRequest(urlOS, authHeaderAdmin);
-        assertEquals(200, response.getStatus(),
-                    "Incorrect response code from " + urlOS);
-        assertEquals(System.getProperty("os.name"), response.readEntity(String.class),
-                "The system property for the local and remote JVM should match");
 
-        response = makeRequest(urlOS, authHeaderUser);
-        assertEquals(403, response.getStatus(),
-                    "Incorrect response code from " + urlOS);
 
-        response = makeRequest(urlOS, null);
-        assertEquals(401, response.getStatus(),
-                    "Incorrect response code from " + urlOS);
+The ***pom.xml*** file lists the ***microprofile-reactive-messaging-api***, ***kafka-clients***, and ***rxjava*** dependencies.
 
-        response.close();
-    }
+The ***microprofile-reactive-messaging-api*** dependency is needed to enable the use of MicroProfile Reactive Messaging API. The ***kafka-clients*** dependency is added because the application needs a Kafka client to connect to the Kafka broker. The ***rxjava*** dependency is used for creating events at regular intervals.
 
-    @Test
-    public void testUsernameEndpoint() {
-        Response response = makeRequest(urlUsername, authHeaderAdmin);
-        assertEquals(200, response.getStatus(),
-                "Incorrect response code from " + urlUsername);
+Start your Docker environment. Dockerfiles are provided for you to use.
 
-        response = makeRequest(urlUsername, authHeaderUser);
-        assertEquals(200, response.getStatus(),
-                "Incorrect response code from " + urlUsername);
+To build the application, run the Maven ***install*** and ***package*** goals from the command line in the ***start*** directory:
 
-        response = makeRequest(urlUsername, null);
-        assertEquals(401, response.getStatus(),
-                "Incorrect response code from " + urlUsername);
 
-        response.close();
-    }
+```bash
+./mvnw -pl models install
+./mvnw package
+```
 
-    @Test
-    public void testRolesEndpoint() {
-        Response response = makeRequest(urlRoles, authHeaderAdmin);
-        assertEquals(200, response.getStatus(),
-                "Incorrect response code from " + urlRoles);
-        assertEquals("[\"admin\",\"user\"]", response.readEntity(String.class),
-                "Incorrect groups claim in token " + urlRoles);
 
-        response = makeRequest(urlRoles, authHeaderUser);
-        assertEquals(200, response.getStatus(),
-                "Incorrect response code from " + urlRoles);
-        assertEquals("[\"user\"]", response.readEntity(String.class),
-                "Incorrect groups claim in token " + urlRoles);
 
-        response = makeRequest(urlRoles, null);
-        assertEquals(401, response.getStatus(),
-                "Incorrect response code from " + urlRoles);
+Run the following commands to containerize the microservices:
 
-        response.close();
-    }
+```bash
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+```
 
-    private Response makeRequest(String url, String authHeader) {
-        try (Client client = ClientBuilder.newClient()) {
-            Builder builder = client.target(url).request();
-            builder.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-            if (authHeader != null) {
-            builder.header(HttpHeaders.AUTHORIZATION, authHeader);
-            }
-            Response response = builder.get();
-            return response;
-        }
-    }
+Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It also creates containers for Kafka and the microservices in the project. For simplicity, the script starts one instance of the system service.
 
+
+```bash
+./scripts/startContainers.sh
+```
+
+::page{title="Testing the application"}
+
+The application might take some time to become available. After the application is up and running, you can access it by making a GET request to the ***/systems*** endpoint of the ***inventory*** service. 
+
+
+
+Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
+
+
+Visit the ***http\://localhost:9085/health*** URL to confirm that the ***inventory*** microservice is up and running.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl -s http://localhost:9085/health | jq
+```
+
+
+
+
+When both the liveness and readiness health checks are up, go to the ***http\://localhost:9085/inventory/systems*** URL to access the ***inventory*** microservice.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl -s http://localhost:9085/inventory/systems | jq
+```
+
+
+You see the CPU ***systemLoad*** property for all the systems:
+
+```
+{
+   "hostname":"30bec2b63a96",
+   "systemLoad":2.25927734375
 }
 ```
 
 
+You can revisit the ***http\://localhost:9085/inventory/systems*** URL after a while, and you will notice the CPU ***systemLoad*** property for the systems changed.
 
-The ***testOSEndpoint()***, ***testUsernameEndpoint()***, and ***testRolesEndpoint()*** tests test the ***/os***, ***/username***, and ***/roles*** endpoints.
 
-Each test makes three requests to its associated endpoint. The first ***makeRequest()*** call has a JWT with the ***admin*** role. The second ***makeRequest()*** call has a JWT with the ***user*** role. The third ***makeRequest()*** call has no JWT at all. The responses to these requests are checked based on the role-based access rules for the endpoints. The ***admin*** requests should be successful on all endpoints. The ***user*** requests should be denied by the ***/os*** endpoint but successfully access the ***/username*** and ***/jwtroles*** endpoints. The requests that don't include a JWT should be denied access to all endpoints.
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
-### Running the tests
-
-Because you started Open Liberty in dev mode, press the ***enter/return*** key from the command-line session of the ***system*** service to run the tests. You see the following output:
-
-```
--------------------------------------------------------
-  T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.system.SystemEndpointIT
-[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
-[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
-[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.648 s - in it.io.openliberty.guides.system.SystemEndpointIT
-
-Results:
-
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+```bash
+curl -s http://localhost:9085/inventory/systems | jq
 ```
 
-The three errors in the output are expected and result from the ***system*** service successfully rejecting the requests that didn't include a JWT.
 
-When you are finished testing the application, stop both the ***frontend*** and ***system*** services by pressing `Ctrl+C` in the command-line sessions where you ran them. 
 
+You can use the ***http://localhost:9085/inventory/systems/{hostname}*** URL to see the CPU ***systemLoad*** property for one particular system.
+
+In the following example, the ***30bec2b63a96*** value is the ***hostname***. If you go to the ***http://localhost:9085/inventory/systems/30bec2b63a96*** URL, you can see the CPU ***systemLoad*** property only for the ***30bec2b63a96*** ***hostname***:
+
+```
+{
+   "hostname":"30bec2b63a96",
+   "systemLoad":2.25927734375
+}
+```
+
+::page{title="Tearing down the environment"}
+
+Run the following script to stop the application:
+
+
+```bash
+./scripts/stopContainers.sh
+```
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You learned how to use MicroProfile JWT to validate JWTs, authenticate and authorize users to secure your microservices in Open Liberty.
+You just developed a reactive Java application using MicroProfile Reactive Messaging, Open Liberty, and Kafka.
 
 
 
@@ -684,32 +651,30 @@ You learned how to use MicroProfile JWT to validate JWTs, authenticate and autho
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-microprofile-jwt*** project by running the following commands:
+Delete the ***guide-microprofile-reactive-messaging*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-microprofile-jwt
+rm -fr guide-microprofile-reactive-messaging
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Securing%20microservices%20with%20JSON%20Web%20Tokens&guide-id=cloud-hosted-guide-microprofile-jwt)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20reactive%20Java%20microservices&guide-id=cloud-hosted-guide-microprofile-reactive-messaging)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-jwt/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-jwt/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging/pulls)
 
 
 
 ### Where to next?
 
-* [Authenticating users through social media providers](https://openliberty.io/guides/social-media-login.html)
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
 
 
 ### Log out of the session
