@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Building a web application with Maven guide!"}
+::page{title="Welcome to the Managing microservice traffic using Istio guide!"}
 
-Learn how to build and test a simple web application using Maven and Open Liberty.
+Explore how to manage microservice traffic using Istio.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -15,37 +15,57 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 ::page{title="What you'll learn"}
 
-You will learn how to configure a simple web servlet application using [Maven](https://maven.apache.org/what-is-maven.html) and the [Liberty Maven plugin](https://github.com/OpenLiberty/ci.maven/blob/main/README.md). When you compile and build the application code, Maven downloads and installs Open Liberty. If you run the application, Maven creates an Open Liberty instance and runs the application on it. The application displays a simple web page with a link that, when clicked, calls the servlet to return a simple response of ***Hello! How are you today?***.
+You will learn how to deploy an application to a Kubernetes cluster and enable {istio} on it. You will also learn how to configure
+{istio} to shift traffic to implement blue-green deployments for microservices.
 
-One benefit of using a build tool like Maven is that you can define the details of the project and any dependencies it has, and Maven automatically downloads and installs the dependencies. Another benefit of using Maven is that it can run repeatable, automated tests on the application. You can, of course, test your application manually by starting a Liberty instance and pointing a web browser at the application URL. However, automated tests are a much better approach because you can easily rerun the same tests each time the application is built. If the tests don't pass after you change the application, the build fails, and you know that you introduced a regression that requires a fix to your code. 
+### What is {istio}?
 
-Choosing a build tool often comes down to personal or organizational preference, but you might choose to use Maven for several reasons. Maven defines its builds by using XML, which is probably familiar to you already. As a mature, commonly used build tool, Maven probably integrates with whichever IDE you prefer to use. Maven also has an extensive plug-in library that offers various ways to quickly customize your build. Maven can be a good choice if your team is already familiar with it. 
+[istio](https://istio.io/) is a service mesh, meaning that it's a platform for managing
+how microservices interact with each other and the outside world.
+{istio} consists of a control plane and sidecars that are injected into application pods. The sidecars contain
+the [Envoy](https://www.envoyproxy.io/) proxy. You can think of Envoy as a sidecar that intercepts
+and controls all the HTTP and TCP traffic to and from your container.
 
-You will create a Maven build definition file that's called a ***pom.xml*** file, which stands for Project Object Model, and use it to build your web application. You will then create a simple, automated test and configure Maven to automatically run the test.
+While {istio} runs on top of Kubernetes and that will be the focus of this guide, you can also use {istio} with
+other environments such as [Docker Compose](https://docs.docker.com/compose/overview/). istio has many features such as
+traffic shifting, request routing, access control, and distributed tracing, but the focus of this guide will be on traffic shifting.
+
+### Why {istio}?
+
+{istio} provides a collection of features that allows you to manage several aspects of your services.
+One example is {istio}'s routing features. You can route HTTP requests based on several factors such as HTTP headers or cookies.
+Another use case for {istio} is telemetry, which you can use to enable distributed tracing. Distributed tracing allows you
+to visualize how HTTP requests travel between different services in your cluster by using a tool such as [Jaeger](https://www.jaegertracing.io/).
+Additionally, as part of its collection of security features, {istio} allows you to enable mutual TLS between pods in your cluster.
+Enabling TLS between pods secures communication between microservices internally.
+
+https://openliberty.io/guides/istio-intro.html#what-are-blue-green-deployments[Blue-green deployments] are a method of deploying your applications such that you have two nearly identical environments where one acts
+as a sort of staging environment and the other is a production environment. This allows you to switch traffic from staging to production
+once a new version of your application has been verified to work.
+You'll use {istio} to implement blue-green deployments. The traffic shifting feature allows you to allocate a percentage of
+traffic to certain versions of services. You can use this feature to shift 100 percent of live traffic to blue deployments and 100 percent
+of test traffic to green deployments. Then, you can shift the traffic to point to the opposite deployments as necessary to
+perform blue-green deployments.
+
+The microservice you'll deploy is called ***system***.
+It responds with your current system's JVM properties and it returns the app version in the response header.
+You will increment the version number when you update the application.
+With this number, you can determine which version of the microservice is running in your production or test environments.
+
+### What are blue-green deployments?
+
+Blue-green deployments are a way of deploying your applications such that you have two environments where your application runs.
+In this scenario, you will have a production environment and a test environment.
+At any point in time, the blue deployment can accept production traffic and the green deployment can accept test traffic, or vice versa.
+When you want to deploy a new version of your application, you deploy to the color that is acting as your test environment.
+After the new version is verified on the test environment, the traffic is shifted over.
+Thus, your live traffic is now being handled by what used to be the test site.
 
 
-::page{title="Installing Maven"}
 
-
-Run the following command to test that Maven Wrapper is installed:
-
-
-```bash
-cd finish
-./mvnw --version
-```
-
-If Maven Wrapper is installed properly, you see information about the Maven installation similar to the following example:
-
-```
-Apache Maven 3.9.6 (05c21c65bdfed0f71a2f2ada8b84da59348c4c5d)
-Maven home: /Applications/Maven/apache-maven-3.9.6
-Java version: 11.0.12, vendor: International Business Machines Corporation, runtime: /Library/Java/JavaVirtualMachines/ibm-semeru-open-11.jdk/Contents/Home
-Default locale: en_US, platform encoding: UTF-8
-OS name: "mac os x", version: "11.6", arch: "x86_64", family: "mac"
-```
 
 ::page{title="Getting started"}
 
@@ -58,11 +78,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-maven-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-istio-intro.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-maven-intro.git
-cd guide-maven-intro
+git clone https://github.com/openliberty/guide-istio-intro.git
+cd guide-istio-intro
 ```
 
 
@@ -71,356 +91,502 @@ The ***start*** directory contains the starting project that you will build upon
 The ***finish*** directory contains the finished project that you will build.
 
 
-### Try what you'll build
-
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-
-To try out the application, first go to the ***finish*** directory and run Maven with the ***liberty:run*** goal to build the application and deploy it to Open Liberty:
-
-```bash
-cd finish
-./mvnw liberty:run
-```
-
-After you see the following message, your Liberty instance is ready.
-
-```
-The guideServer server is ready to run a smarter planet.
-```
 
 
-Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session. Run the following curl command to view the output of the application: 
-```bash
-curl -s http://localhost:9080/ServletSample/servlet
-```
 
-The servlet returns a simple response of ***Hello! How are you today?***.
 
-After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+::page{title="Deploying Istio"}
+
+Install istio by following the instructions in the official [istio Getting started documentation](https://istio.io/latest/docs/setup/getting-started).
+
+Run the following command to verify that the ***istioctl*** path was set successfully:
 
 ```bash
-./mvnw liberty:stop
+istioctl version
 ```
 
-
-::page{title="Creating a simple application"}
-
-The simple web application that you will build using Maven and Open Liberty is provided for you in the ***start*** directory so that you can focus on learning about Maven. This application uses a standard Maven directory structure, eliminating the need to customize the ***pom.xml*** file so that Maven understands your project layout.
-
-All the application source code, including the Open Liberty ***server.xml*** configuration file, is in the ***src/main/liberty/config*** directory:
-
+The output will be similar to the following example:
 ```
-    └── src
-        └── main
-           └── java
-           └── resources
-           └── webapp
-           └── liberty
-                  └── config
+no running Istio pods in "istio-system"
+1.24.2
 ```
 
-
-::page{title="Creating the project POM file"}
-Navigate to the ***start*** directory to begin.
+Run the following command to configure the {istio} profile on Kubernetes:
 ```bash
-cd /home/project/guide-maven-intro/start
+istioctl install --set profile=demo
 ```
 
-Before you can build the project, define the Maven Project Object Model (POM) file, the ***pom.xml***. 
-
-Create the pom.xml file in the ***start*** directory.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-maven-intro/start/pom.xml
+The following output appears when the installation is complete:
+```
+✔ Istio core installed
+✔ Istiod installed
+✔ Egress gateways installed
+✔ Ingress gateways installed
+✔ Installation complete
 ```
 
-
-> Then, to open the pom.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-maven-intro/start/pom.xml, or click the following button
-
-::openFile{path="/home/project/guide-maven-intro/start/pom.xml"}
-
-
-
-```xml
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>ServletSample</artifactId>
-    <packaging>war</packaging>
-    <version>1.0-SNAPSHOT</version>
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <!-- Liberty configuration -->
-        <liberty.var.http.port>9080</liberty.var.http.port>
-        <liberty.var.https.port>9443</liberty.var.https.port>
-        <liberty.var.app.context.root>${project.artifactId}</liberty.var.app.context.root>
-    </properties>
-
-    <dependencies>
-        <!-- Provided dependencies -->
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>10.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>7.0</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-        <!-- For testing -->
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.14</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.12.2</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.4.0</version>
-            </plugin>
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.11.3</version>
-                <configuration>
-                    <serverName>guideServer</serverName>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.3</version>
-                <configuration>
-                    <systemPropertyVariables>
-                        <http.port>${liberty.var.http.port}</http.port>
-                        <war.name>${liberty.var.app.context.root}</war.name>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-</project>
-```
-
-
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
-
-
-The ***pom.xml*** file starts with a root ***project*** element and a ***modelversion*** element, which is always set to ***4.0.0***. 
-
-A typical POM for a Liberty application contains the following sections:
-
-* **Project coordinates**: The identifiers for this application.
-* **Properties** (***properties***): Any properties for the project go here, including compilation details and any values that are referenced during compilation of the Java source code and generating the application.
-* **Dependencies** (***dependencies***): Any Java dependencies that are required for compiling, testing, and running the application are listed here.
-* **Build plugins** (***build***): Maven is modular and each of its capabilities is provided by a separate plugin. This is where you specify which Maven plugins should be used to build this project and any configuration information needed by those plugins.
-
-The project coordinates describe the name and version of the application. The ***artifactId*** gives a name to the web application project, which is used to name the output files that are generated by the build (e.g. the WAR file) and the Open Liberty instance that is created. You'll notice that other fields in the ***pom.xml*** file use variables that are resolved by the ***artifactId*** field. This is so that you can update the name of the sample application, including files generated by Maven, in a single place in the ***pom.xml*** file. The value of the ***packaging*** field is ***war*** so that the project output artifact is a WAR file.
-
-The first four properties in the properties section of the project, just define the encoding (***UTF-8***) and version of Java (***Java 11***) that Maven uses to compile the application source code.
-
-Open Liberty configuration properties provide you with a single place to specify values that are used in multiple places throughout the application. For example, the ***http.port*** value is used in both the Liberty ***server.xml*** configuration file and will be used in the test class that you will add (***EndpointIT.java***) to the application. Because the ***http.port*** value is specified in the ***pom.xml*** file, you can easily change the port number that the Liberty instance runs on without updating the application code in multiple places.
-
-
-The ***HelloServlet.java*** class depends on ***jakarta.jakartaee-api*** to compile. Maven will download this dependency from the Maven Central repository using the ***groupId***, ***artifactId***, and ***version*** details that you provide here. The dependency is set to ***provided***, which means that the API is in the Liberty runtime and doesn't need to be packaged by the application.
-
-The ***build*** section gives details of the two plugins that Maven uses to build this project.
-
-* The Maven plugin for generating a WAR file as one of the output files.
-* The Liberty Maven plug-in, which allows you to install applications into Open Liberty and manage the associated Liberty instances.
-
-In the ***liberty-maven-plugin*** plug-in section, you can add a ***configuration*** element to specify Open Liberty configuration details. For example, the ***serverName*** field defines the name of the Open Liberty instance that Maven creates. You specified ***guideServer*** as the value for ***serverName***. If the ***serverName*** field is not included, the default value is ***defaultServer***.
-
-
-
-::page{title="Running the application"}
-
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+Verify that Istio was successfully deployed by running the following command:
 
 ```bash
-./mvnw liberty:dev
+kubectl get deployments -n istio-system
 ```
 
-After you see the following message, your Liberty instance is ready in dev mode:
+All the values in the ***AVAILABLE*** column will have a value of ***1*** after
+the deployment is complete.
 
 ```
-**************************************************************
-*    Liberty is running in dev mode.
+NAME                     READY   UP-TO-DATE   AVAILABLE   AGE
+istio-egressgateway      1/1     1            1           2m48s
+istio-ingressgateway     1/1     1            1           2m48s
+istiod                   1/1     1            1           2m48s
 ```
+ 
+Ensure that the {istio} deployments are all available before you continue. The deployments might take a few minutes to become available. If the deployments aren't available after a few minutes, then increase the amount of memory available to your Kubernetes cluster. On Docker Desktop, you can increase the memory from your {docker} preferences. On {minikube}, you can increase the memory by using the ***--memory*** flag.
 
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+Finally, create the ***istio-injection*** label and set its value to ***enabled***:
 
-
-Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session. Run the following curl command to view the output of the application: 
 ```bash
-curl -s http://localhost:9080/ServletSample/servlet
+kubectl label namespace default istio-injection=enabled
 ```
 
-The servlet returns a simple response of ***Hello! How are you today?***.
+Adding this label enables automatic {istio} sidecar injection. Automatic injection means that sidecars are automatically injected into your pods when you deploy your application.
 
-::page{title="Testing the web application"}
+::page{title="Deploying version 1 of the system microservice"}
 
-One of the benefits of building an application with Maven is that Maven can be configured to run a set of tests. You can write tests for the individual units of code outside of a running Liberty instance (unit tests), or you can write them to call the Liberty instance directly (integration tests). In this example you will create a simple integration test that checks that the web page opens and that the correct response is returned when the link is clicked.
+Navigate to the ***guide-{projectid}/start*** directory and run the following command to build the application locally.
 
-Create the ***EndpointIT*** class.
-
-> Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java  
+./mvnw clean package
 ```
 
 
-> Then, to open the EndpointIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java, or click the following button
 
-::openFile{path="/home/project/guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java"}
+Next, run the ***docker build*** commands to build the container image for your application:
+```bash
+docker build -t system:1.0-SNAPSHOT .
+```
+
+The command builds a {docker} image for the ***system*** microservice.
+The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format.
+The tag for an image describes the specific image version.
+If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
+You can verify that this image was created by running the following command: 
+
+```bash
+docker images
+```
+
+You'll see an image called ***system:1.0-SNAPSHOT*** listed in a table similar to the output.
+
+```
+REPOSITORY                     TAG                              IMAGE ID        CREATED          SIZE
+system                         1.0-SNAPSHOT                     8856039f4c42    9 minutes ago    745MB
+istio/proxyv2                  1.24.2                           7a3aaffcf645    3 weeks ago      347MB
+istio/pilot                    1.24.2                           4974b5b22dcc    3 weeks ago      261MB
+icr.io/appcafe/open-liberty    kernel-slim-java11-openj9-ubi    d6ef646493e1    8 days ago       729MB
+```
+
+To deploy the ***system*** microservice to the Kubernetes cluster, use the following command to deploy the microservice.
+
+```bash
+kubectl apply -f system.yaml
+```
+
+You can see that your resources are created:
+
+```
+gateway.networking.istio.io/sys-app-gateway created
+service/system-service created
+deployment.apps/system-deployment-blue created
+deployment.apps/system-deployment-green created
+destinationrule.networking.istio.io/system-destination-rule created
+```
+
+system.yaml
+```
+```
+
+View the ***system.yaml*** file. It contains two ***deployments***, a ***service***, a ***gateway***, and a ***destination rule***. One of the deployments is labeled ***blue*** and the second deployment is labeled ***green***. The service points to both of these deployments. The {istio} gateway is the entry point for HTTP requests to the cluster. A destination rule is used to apply policies post-routing, in this situation it is used to define service subsets that can be specifically routed to.
+
+traffic.yaml
+```
+```
+
+View the ***traffic.yaml*** file. It contains two virtual services. A virtual service defines how requests are routed to your applications. In the virtual services, you can configure the weight, which controls the amount of traffic going to each deployment. In this case, the weights should be 100 or 0, which corresponds to which deployment is live.
+
+Deploy the resources defined in the ***traffic.yaml*** file.
+
+```bash
+kubectl apply -f traffic.yaml
+```
+
+You can see that the virtual services have been created.
+
+```
+virtualservice.networking.istio.io/system-virtual-service created
+virtualservice.networking.istio.io/system-test-virtual-service created
+```
+
+You can check that all of the deployments are available by running the following command.
+
+```bash
+kubectl get deployments
+```
+
+The command produces a list of deployments for your microservices that is similar to the following output.
+
+```
+NAME                     DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+system-deployment-blue    1         1         1            1           1m
+system-deployment-green   1         1         1            1           1m
+```
+
+After all the deployments are available, you will make a request to version 1 of the deployed application. As defined in the ***system.yaml***, file the ***gateway*** is expecting the host to be ***example.com***. However, requests to ***example.com*** won't be routed to the appropriate IP address. To ensure that the gateway routes your requests appropriately, ensure that the Host header is set to ***example.com***. For instance, you can set the ***Host*** header with the ***-H*** option of the ***curl*** command.
+
+
+Make a request to the service by running the following ***curl*** command.
+
+
+```bash
+export INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
+curl -H "Host:example.com" -I http://***minikube ip***:$INGRESS_PORT/system/properties
+```
+
+
+You'll see a header called ***x-app-version*** along with the corresponding version.
+
+```
+x-app-version: 1.0-SNAPSHOT
+```
+
+
+::page{title="Deploying version 2 of the system microservice"}
+
+Replace the ***SystemResource*** class.
+
+> To open the SystemResource.java file in your IDE, select
+> ***File*** > ***Open*** > guide-istio-intro/start/src/main/java/io/openliberty/guides/system/SystemResource.java, or click the following button
+
+::openFile{path="/home/project/guide-istio-intro/start/src/main/java/io/openliberty/guides/system/SystemResource.java"}
 
 
 
 ```java
-package io.openliberty.guides.hello.it;
+package io.openliberty.guides.system;
+
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+@RequestScoped
+@Path("/properties")
+public class SystemResource {
+
+  public static String appVersion = "2.0-SNAPSHOT";
+
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response getProperties() {
+    return Response.ok(System.getProperties())
+      .header("X-Pod-Name", System.getenv("HOSTNAME"))
+      .header("X-App-Version", appVersion)
+      .build();
+  }
+}
+```
+
+
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+
+
+The ***system*** microservice is set up to respond with the version that is set in the ***SystemResource.java*** file.
+The tag for the {docker} image is also dependent on the version that is specified in the ***SystemResource.java*** file.
+Manually update the ***APP_VERSION*** field of the microservice to ***2.0-SNAPSHOT***.
+
+Use Maven to repackage your microservice:
+
+```bash
+./mvnw clean package
+```
+
+Next, build the new version of the container image as ***2.0-SNAPSHOT***:
+```bash
+docker build -t system:2.0-SNAPSHOT .
+```
+
+Deploy the new image to the green deployment.
+
+```bash
+kubectl set image deployment/system-deployment-green system-container=system:2.0-SNAPSHOT
+```
+
+You will work with two environments.
+One of the environments is a test site that is located at ***test.example.com***.
+The other environment is your production environment that is located at ***example.com***.
+To begin with, the production environment is tied to the blue deployment and the test environment is tied to the green deployment.
+
+Test the updated microservice by making requests to the test site.
+The ***x-app-version*** header now has a value of ***2.0-SNAPSHOT*** on the test site and is still ***1.0-SNAPSHOT*** on the live site.
+
+Make a request to the service by running the following ***curl*** command.
+
+
+```bash
+curl -H "Host:test.example.com" -I http://***minikube ip***:$INGRESS_PORT/system/properties
+```
+
+You'll see the new version in the ***x-app-version*** response header.
+
+```
+x-app-version: 2.0-SNAPSHOT
+```
+
+Update the ***traffic.yaml*** file in the ***start*** directory.
+
+> To open the traffic.yaml file in your IDE, select
+> ***File*** > ***Open*** > guide-istio-intro/start/traffic.yaml, or click the following button
+
+::openFile{path="/home/project/guide-istio-intro/start/traffic.yaml"}
+
+
+
+After you see that the microservice is working on the test site, modify the ***weights*** in the ***traffic.yaml*** file to shift 100 percent of the ***example.com*** traffic to the green deployment, and 100 percent of the ***test.example.com*** traffic to the blue deployment.
+
+
+Deploy the updated ***traffic.yaml*** file.
+
+```bash
+kubectl apply -f traffic.yaml
+```
+
+Ensure that the live traffic is now being routed to version 2 of the microservice.
+
+
+Make a request to the service by running the following ***curl*** command.
+
+
+```bash
+curl -H "Host:example.com" -I http://***minikube ip***:$INGRESS_PORT/system/properties
+```
+
+
+You'll see the new version in the ***x-app-version*** response header.
+
+```
+x-app-version: 2.0-SNAPSHOT
+```
+
+::page{title="Testing microservices that are running on Kubernetes"}
+
+Next, you will create a test to verify that the correct version of your microservice is running.
+
+Create the ***SystemEndpointIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-istio-intro/start/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
+```
+
+
+> Then, to open the SystemEndpointIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-istio-intro/start/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java, or click the following button
+
+::openFile{path="/home/project/guide-istio-intro/start/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.Response;
 
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.junit.jupiter.api.BeforeAll;
+import io.openliberty.guides.system.SystemResource;
+
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.AfterEach;
 
-public class EndpointIT {
-    private static String siteURL;
+@TestMethodOrder(OrderAnnotation.class)
+public class SystemEndpointIT {
+
+    private static String clusterUrl;
+
+    private Client client;
+    private Response response;
 
     @BeforeAll
-    public static void init() {
-        String port = System.getProperty("http.port");
-        String war = System.getProperty("war.name");
-        siteURL = "http://localhost:" + port + "/" + war + "/" + "servlet";
+    public static void oneTimeSetup() {
+        System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
+
+        String clusterIp = System.getProperty("cluster.ip");
+        String nodePort = System.getProperty("port");
+
+        clusterUrl = "http://" + clusterIp + ":" + nodePort + "/system/properties/";
+    }
+
+    @BeforeEach
+    public void setup() {
+        response = null;
+        client = ClientBuilder.newBuilder()
+                    .hostnameVerifier(new HostnameVerifier() {
+                        public boolean verify(String hostname, SSLSession session) {
+                            return true;
+                        }
+                    })
+                    .build();
+    }
+
+    @AfterEach
+    public void teardown() {
+        client.close();
     }
 
     @Test
-    public void testServlet() throws Exception {
+    @Order(1)
+    public void testPodNameNotNull() {
+        response = this.getResponse(clusterUrl);
+        this.assertResponse(clusterUrl, response);
+        String greeting = response.getHeaderString("X-Pod-Name");
 
-        CloseableHttpClient client = HttpClientBuilder.create().build();
-        HttpGet httpGet = new HttpGet(siteURL);
-        CloseableHttpResponse response = null;
+        String message = "Container name should not be null but it was. "
+            + "The service is probably not running inside a container";
 
-        try {
-            response = client.execute(httpGet);
-
-            int statusCode = response.getStatusLine().getStatusCode();
-            assertEquals(HttpStatus.SC_OK, statusCode, "HTTP GET failed");
-
-            BufferedReader reader = new BufferedReader(new InputStreamReader(
-                                        response.getEntity().getContent()));
-            String line;
-            StringBuffer buffer = new StringBuffer();
-            while ((line = reader.readLine()) != null) {
-                buffer.append(line);
-            }
-            reader.close();
-            assertTrue(buffer.toString().contains("Hello! How are you today?"),
-                "Unexpected response body: " + buffer.toString());
-        } finally {
-            response.close();
-            httpGet.releaseConnection();
-        }
+        assertNotNull(greeting, message);
     }
+
+    @Test
+    @Order(2)
+    public void testAppVersion() {
+        response = this.getResponse(clusterUrl);
+
+        String expectedVersion = SystemResource.appVersion;
+        String actualVersion = response.getHeaderString("X-App-Version");
+
+        assertEquals(expectedVersion, actualVersion);
+    }
+
+    @Test
+    @Order(3)
+    public void testGetProperties() {
+        Client client = ClientBuilder.newClient();
+
+        WebTarget target = client.target(clusterUrl);
+        Response response = target
+            .request()
+            .header("Host", System.getProperty("host-header"))
+            .get();
+
+        assertEquals(200, response.getStatus(),
+            "Incorrect response code from " + clusterUrl);
+
+        response.close();
+    }
+
+    private Response getResponse(String url) {
+        return client
+            .target(url)
+            .request()
+            .header("Host", System.getProperty("host-header"))
+            .get();
+    }
+
+    private void assertResponse(String url, Response response) {
+        assertEquals(200, response.getStatus(),
+            "Incorrect response code from " + url);
+    }
+
 }
 ```
 
 
 
-The test class name ends in ***IT*** to indicate that it contains an integration test. 
+The ***testAppVersion()*** test case verifies that the correct version number is returned in the response headers.
 
-Maven is configured to run the integration test using the ***maven-failsafe-plugin***. The ***systemPropertyVariables*** section defines some variables that the test class uses. The test code needs to know where to find the application that it is testing. While the port number and context root information can be hardcoded in the test class, it is better to specify it in a single place like the Maven ***pom.xml*** file because this information is also used by other files in the project. The ***systemPropertyVariables*** section passes these details to the Java test program as a series of system properties, resolving the ***http.port*** and ***war.name*** variables.
+Run the following commands to compile and start the tests:
 
 
-The following lines in the ***EndpointIT*** test class uses these system variables to build up the URL of the application.
-
-In the test class, after defining how to build the application URL, the ***@Test*** annotation indicates the start of the test method.
-
-In the ***try block*** of the test method, an HTTP ***GET*** request to the URL of the application returns a status code. If the response to the request includes the string ***Hello! How are you today?***, the test passes. If that string is not in the response, the test fails.  The HTTP client then disconnects from the application.
-
-In the ***import*** statements of this test class, you'll notice that the test has some new dependencies. Before the test can be compiled by Maven, you need to update the ***pom.xml*** to include these dependencies.
-
-The Apache ***httpclient*** and ***junit-jupiter-engine*** dependencies are needed to compile and run the integration test ***EndpointIT*** class. The scope for each of the dependencies is set to ***test*** because the libraries are needed only during the Maven build and do not needed to be packaged with the application.
-
-Now, the created WAR file contains the web application, and dev mode can run any integration test classes that it finds. Integration test classes are classes with names that end in ***IT***.
-
-The directory structure of the project should now look like this:
-
+```bash
+./mvnw test-compile
+./mvnw failsafe:integration-test -Dcluster.ip=***minikube ip*** -Dport=$INGRESS_PORT
 ```
-    └── src
-        ├── main
-        │  └── java
-        │  └── resources
-        │  └── webapp
-        │  └── liberty
-        │         └── config
-        └── test
-            └── java
-```
+The ***cluster.ip*** and ***port*** parameters refer to the IP address and port for the {istio} gateway.
 
-
-### Running the tests
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
-
-You see the following output:
+If the tests pass, then you should see output similar to the following example:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running io.openliberty.guides.hello.it.EndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.255 sec - in io.openliberty.guides.hello.it.EndpointIT
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.503 s - in it.io.openliberty.guides.system.SystemEndpointIT
 
-Results :
+Results:
 
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-To see whether the test detects a failure, change the ***response string*** in the servlet ***src/main/java/io/openliberty/guides/hello/HelloServlet.java*** so that it doesn't match the string that the test is looking for. Then re-run the tests and check that the test fails.
+::page{title="Tearing down your environment"}
+
+You might want to teardown all the deployed resources as a cleanup step.
+
+Delete your resources from the cluster:
+
+```bash
+kubectl delete -f system.yaml
+kubectl delete -f traffic.yaml
+```
+
+Delete the ***istio-injection*** label from the default namespace. The hyphen immediately
+after the label name indicates that the label should be deleted.
+
+```bash
+kubectl label namespace default istio-injection-
+```
+
+Delete all {istio} resources from the cluster:
+
+```bash
+istioctl uninstall --purge
+```
 
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
+Perform the following steps to return your environment to a clean state.
+
+. Point the Docker daemon back to your local machine:
++
+```bash
+eval $(minikube docker-env -u)
+```
+
+. Stop and delete your Minikube cluster:
++
+```bash
+minikube stop
+minikube delete
+```
+
+
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You built and tested a web application project with an Open Liberty instance using Maven.
+You have deployed a microservice that runs on Open Liberty to a Kubernetes cluster and used {istio} to implement a blue-green deployment scheme.
 
 
 
@@ -429,31 +595,33 @@ You built and tested a web application project with an Open Liberty instance usi
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-maven-intro*** project by running the following commands:
+Delete the ***guide-istio-intro*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-maven-intro
+rm -fr guide-istio-intro
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Building%20a%20web%20application%20with%20Maven&guide-id=cloud-hosted-guide-maven-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Managing%20microservice%20traffic%20using%20Istio&guide-id=cloud-hosted-guide-istio-intro)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-maven-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-maven-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-istio-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-istio-intro/pulls)
 
 
 
 ### Where to next?
 
-* [Creating a multi-module application](https://openliberty.io/guides/maven-multimodules.html)
-* [Building a web application with Gradle](https://openliberty.io/guides/gradle-intro.html)
+* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
+* [Configuring microservices running in Kubernetes](https://openliberty.io/guides/kubernetes-microprofile-config.html)
+* [Checking the health of microservices on Kubernetes](https://openliberty.io/guides/kubernetes-microprofile-health.html)
 
 
 ### Log out of the session
