@@ -78,7 +78,6 @@ To deploy your EAR application on Open Liberty, run the Maven ***liberty:run*** 
 
 
 ```bash
-cd start
 ./mvnw -pl ear liberty:run
 ```
 
@@ -96,7 +95,6 @@ After you are finished checking out the application, stop the Open Liberty insta
 
 
 ```bash
-cd start
 ./mvnw -pl ear liberty:stop
 ```
 
