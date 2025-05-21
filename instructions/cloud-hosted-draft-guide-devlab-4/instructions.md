@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Providing metrics from a microservice guide!"}
+::page{title="Welcome to the Testing reactive Java microservices guide!"}
 
-You'll explore how to provide system and application metrics from a microservice with MicroProfile Metrics.
+Learn how to test reactive Java microservices in true-to-production environments using Testcontainers.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -17,13 +17,15 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You will learn how to use MicroProfile Metrics to provide metrics from a microservice. You can monitor metrics to determine the performance and health of a service. You can also use them to pinpoint issues, collect data for capacity planning, or to decide when to scale a service to run with more or fewer resources.
+You will learn how to write integration tests for reactive Java microservices and to run the tests in true-to-production environments by using containers with [Testcontainers](https://java.testcontainers.org/) and JUnit. Testcontainers tests your containerized application from outside the container so that you are testing the exact same image that runs in production. The reactive application in this guide sends and receives messages between services by using an external message broker, [Apache Kafka](https://kafka.apache.org/). Using an external message broker enables asynchronous communications between services so that requests are non-blocking and decoupled from responses. You can learn more about reactive Java services that use an external message broker to manage communications in the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
-The application that you will work with is an ***inventory*** service that stores information about various systems. The ***inventory*** service communicates with the ***system*** service on a particular host to retrieve its system properties when necessary.
+![Reactive system inventory application](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-service-testing/prod/assets/reactive-messaging-system-inventory.png)
 
-You will use annotations provided by MicroProfile Metrics to instrument the ***inventory*** service to provide application-level metrics data. You will add counter, gauge, and timer metrics to the service.
 
-You will also check well-known REST endpoints that are defined by MicroProfile Metrics to review the metrics data collected. Monitoring agents can access these endpoints to collect metrics.
+*True-to-production integration testing with Testcontainers*
+
+Tests sometimes pass during the development and testing stages of an application's lifecycle but then fail in production because of differences between your development and production environments. While you can create mock objects and custom setups to minimize differences between environments, it is difficult to mimic a production system for an application that uses an external messaging system. Testcontainers addresses this problem by enabling the testing of applications in the same Docker containers that you’ll use in production. As a result, your environment remains the same throughout the application’s lifecycle – from development, through testing, and into production. You can learn more about Testcontainers in the [Building true-to-production integration tests with Testcontainers](https://openliberty.io/guides/testcontainers.html) guide.
+
 
 ::page{title="Getting started"}
 
@@ -36,11 +38,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-metrics.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-reactive-service-testing.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-microprofile-metrics.git
-cd guide-microprofile-metrics
+git clone https://github.com/openliberty/guide-reactive-service-testing.git
+cd guide-reactive-service-testing
 ```
 
 
@@ -48,639 +50,694 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
+In this IBM Cloud environment, you need to change the user home to ***/home/project*** by running the following command:
+```bash
+sudo usermod -d /home/project theia
+```
+
 
 ### Try what you'll build
 
 The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
+To try out the tests, go to the ***finish*** directory and run the following Maven goal to install the ***models*** artifact to the local Maven repository:
+
 
 ```bash
-cd finish
-./mvnw liberty:run
+./mvnw -pl models install
 ```
 
-After you see the following message, your Liberty instance is ready:
+Next, navigate to the ***finish/system*** directory and run the following Maven goal to build the ***system*** microservice and run the integration tests on an Open Liberty server in a container:
 
-```
-The defaultServer server is ready to run a smarter planet.
-```
-
-
-Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
-
-Run the following curl command to access the **inventory** service. Because you just started the application, the inventory is empty. 
-```bash
-curl -s http://localhost:9080/inventory/systems | jq
-```
-
-Run the following curl command to add the ***localhost*** into the inventory.
-```bash
-curl -s http://localhost:9080/inventory/systems/localhost | jq
-```
-
-Access the ***inventory*** service at the ***http://localhost:9080/inventory/systems*** URL at least once so that application metrics are collected. Otherwise, the metrics do not appear.
-
-Next, run the following curl command to visit the MicroProfile Metrics endpoint by the ***admin*** user with ***adminpwd*** as the password.  You can see both the system and application metrics in a text format.
-```bash
-curl -k --user admin:adminpwd https://localhost:9443/metrics
-```
-
-To see only the application metrics, run the following curl command:
-```bash
-curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=application
-```
-
-See the following sample outputs for the ***@Timed***, ***@Gauge***, and ***@Counted*** metrics:
-
-```
-# TYPE inventoryProcessingTime_seconds_max gauge
-inventoryProcessingTime_seconds_max{method="list",mp_scope="application",} 3.0375E-5
-inventoryProcessingTime_seconds_max{method="get",mp_scope="application",} 0.1997325
-# HELP inventoryProcessingTime_seconds Time needed to process the inventory
-# TYPE inventoryProcessingTime_seconds summary
-inventoryProcessingTime_seconds{method="list",mp_scope="application",quantile="0.5",} 0.0
-inventoryProcessingTime_seconds{method="list",mp_scope="application",quantile="0.75",} 0.0
-...
-inventoryProcessingTime_seconds_count{method="list",mp_scope="application",} 2.0
-inventoryProcessingTime_seconds_sum{method="list",mp_scope="application",} 3.6792E-5
-inventoryProcessingTime_seconds{method="get",mp_scope="application",quantile="0.5",} 0.0
-inventoryProcessingTime_seconds{method="get",mp_scope="application",quantile="0.75",} 0.0
-...
-inventoryProcessingTime_seconds_count{method="get",mp_scope="application",} 1.0
-inventoryProcessingTime_seconds_sum{method="get",mp_scope="application",} 0.1997325
-...
-# HELP inventoryAddingTime_seconds_max Time needed to add system properties to the inventory
-# TYPE inventoryAddingTime_seconds_max gauge
-inventoryAddingTime_seconds_max{mp_scope="application",} 3.1E-5
-# HELP inventoryAddingTime_seconds Time needed to add system properties to the inventory
-# TYPE inventoryAddingTime_seconds summary
-inventoryAddingTime_seconds{mp_scope="application",quantile="0.5",} 0.0
-inventoryAddingTime_seconds{mp_scope="application",quantile="0.75",} 0.0
-...
-inventoryAddingTime_seconds_count{mp_scope="application",} 1.0
-inventoryAddingTime_seconds_sum{mp_scope="application",} 3.1E-5
-...
-```
-
-```
-# HELP inventorySizeGauge Number of systems in the inventory
-# TYPE inventorySizeGauge gauge
-inventorySizeGauge{mp_scope="application",} 1.0
-```
-
-```
-# HELP inventoryAccessCount_total Number of times the list of systems method is requested
-# TYPE inventoryAccessCount_total counter
-inventoryAccessCount_total{mp_scope="application",} 2.0
-```
-
-
-To see only the system metrics, run the following curl command:
-```bash
-curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=base
-```
-
-See the following sample output:
-
-```
-# HELP jvm_uptime_seconds Displays the time from the start of the Java virtual machine in seconds.
-# TYPE jvm_uptime_seconds gauge
-jvm_uptime_seconds{mp_scope="base",} 730.705
-```
-```
-# HELP classloader_loadedClasses_count Displays the number of classes that are currently loaded in the Java virtual machine.
-# TYPE classloader_loadedClasses_count gauge
-classloader_loadedClasses_count{mp_scope="base",} 13033.0
-```
-
-
-To see only the vendor metrics, run the following curl command:
-```bash
-curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=vendor
-```
-
-See the following sample output:
-
-```
-# HELP threadpool_size The size of the thread pool.
-# TYPE threadpool_size gauge
-threadpool_size{mp_scope="vendor",pool="Default_Executor",} 24.0
-```
-```
-# HELP servlet_request_total The number of visits to this servlet ... the start of the server.
-# TYPE servlet_request_total counter
-servlet_request_total{mp_scope="vendor",servlet="guide_microprofile_metrics_io_openliberty_guides_system_SystemApplication",} 1.0
-servlet_request_total{mp_scope="vendor",servlet="guide_microprofile_metrics_io_openliberty_guides_inventory_InventoryApplication",} 3.0
-servlet_request_total{mp_scope="vendor",servlet="io_openliberty_microprofile_metrics_5_0_private_internal_PrivateMetricsRESTProxyServlet",} 3.0
-```
-
-After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
-./mvnw liberty:stop
+export TESTCONTAINERS_RYUK_DISABLED=true
+cd system
+./mvnw verify
 ```
 
+You will see the following output:
 
-::page{title="Adding MicroProfile Metrics to the inventory service"}
+```
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 52.46 s - in it.io.openliberty.guides.system.SystemServiceIT
+
+ Results:
+
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+
+
+ --- failsafe:3.2.5:verify (verify) @ system ---
+ ------------------------------------------------------------------------
+ BUILD SUCCESS
+ ------------------------------------------------------------------------
+ Total time:  57.710 s
+ Finished at: 2024-02-01T08:48:15-08:00
+ ------------------------------------------------------------------------
+```
+
+This command might take some time to run the first time because the dependencies and the Docker image for Open Liberty must download. If you run the same command again, it will be faster.
+
+You can also try out the ***inventory*** integration tests by repeating the same commands in the ***finish/inventory*** directory.
+
+
+::page{title="Testing with the Kafka consumer client"}
 
 
 
-To begin, run the following command to navigate to the **start** directory:
+
+
+
+Navigate to the ***start*** directory to begin.
 ```bash
-cd /home/project/guide-microprofile-metrics/start
+cd /home/project/guide-reactive-service-testing/start
 ```
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+The example reactive application consists of the ***system*** and ***inventory*** microservices. The ***system*** microservice produces messages to the Kafka message broker, and the ***inventory*** microservice consumes messages from the Kafka message broker. You will write integration tests to see how you can use the Kafka consumer and producer client APIs to test each service. Kafka test containers, Testcontainers, and JUnit are already included as required test dependencies in your Maven ***pom.xml*** files for the ***system*** and ***inventory*** microservices.
+
+The ***start*** directory contains three directories: the ***system*** microservice directory, the ***inventory*** microservice directory, and the ***models*** directory. The ***models*** directory contains the model class that defines the structure of the system load data that is used in the application. Run the following Maven goal to install the packaged ***models*** artifact to the local Maven repository so it can be used later by the ***system*** and ***inventory*** microservices:
+
 
 ```bash
-./mvnw liberty:dev
+./mvnw -pl models install
 ```
+
+### Launching the system microservice in dev mode with container support
+
+Start the microservices in dev mode by running the following command to launch a Kafka instance that replicates the production environment. The ***startKafka*** script launches a local Kafka container. It also establishes a ***reactive-app*** network that allows the ***system*** and ***inventory*** microservices to connect to the Kafka message broker.
+
+
+```bash
+./scripts/startKafka.sh
+```
+
+Navigate to the ***start/system*** directory.
+
+```bash
+cd /home/project/guide-reactive-service-testing/start/system
+```
+
+In this IBM Cloud environment, you must first create the ***logs*** directory by running the following commands:
+```bash
+mkdir -p /home/project/guide-reactive-service-testing/start/system/target/liberty/wlp/usr/servers/defaultServer/logs
+chmod 777 /home/project/guide-reactive-service-testing/start/system/target/liberty/wlp/usr/servers/defaultServer/logs
+```
+
+To launch the ***system*** microservice in dev mode with container support, configure the container by specifying the options within the ***\<containerRunOpts\>*** element to connect to the ***reactive-app*** network and expose the container port.
+
+Run the following goal to start the ***system*** microservice in dev mode with container support:
+
+
+```bash
+export TESTCONTAINERS_RYUK_DISABLED=true
+./mvnw liberty:devc
+```
+
+For more information about disabling Ryuk, see the [Testcontainers custom configuration](https://java.testcontainers.org/features/configuration/#disabling-ryuk) document.
 
 After you see the following message, your Liberty instance is ready in dev mode:
+
 
 ```
 **************************************************************
 *    Liberty is running in dev mode.
+*    ...    
+*    Liberty container port information:
+*        Internal container HTTP port [ 9083 ] is mapped to container host port [ 9083 ] <
+*   ...     
 ```
 
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+[Dev mode](https://openliberty.io/docs/latest/development-mode.html) holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-The MicroProfile Metrics API is included in the MicroProfile dependency specified by your ***pom.xml*** file. Look for the dependency with the ***microprofile*** artifact ID. This dependency provides a library that allows you to use the MicroProfile Metrics API in your code to provide metrics from your microservices.
+The ***system*** microservice actively seeks a Kafka topic for message push operations. After the Kafka service starts, the ***system*** microservice connects to the Kafka message broker by using the ***mp.messaging.connector.liberty-kafka.bootstrap.servers*** property. When you run your application in dev mode with container support, the running ***system*** container exposes its service on the ***9083*** port for testing purposes.
 
-Replace the Liberty ***server.xml*** configuration file.
+### Testing the system microservice
 
-> To open the server.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-metrics/start/src/main/liberty/config/server.xml, or click the following button
+Now you can start writing the test by using Testcontainers.
 
-::openFile{path="/home/project/guide-microprofile-metrics/start/src/main/liberty/config/server.xml"}
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-
-
-```xml
-<server description="Sample Liberty server">
-
-  <featureManager>
-    <platform>jakartaee-10.0</platform>
-    <platform>microprofile-7.0</platform>
-    <feature>restfulWS</feature>
-    <feature>jsonp</feature>
-    <feature>jsonb</feature>
-    <feature>cdi</feature>
-    <feature>mpConfig</feature>
-   <feature>mpMetrics</feature>
-   <feature>mpRestClient</feature>
- </featureManager>
-
-  <variable name="http.port" defaultValue="9080"/>
-  <variable name="https.port" defaultValue="9443"/>
-
-  <applicationManager autoExpand="true" />
-  <quickStartSecurity userName="admin" userPassword="adminpwd"/>
-  <httpEndpoint host="*" httpPort="${http.port}"
-      httpsPort="${https.port}" id="defaultHttpEndpoint"/>
-  <webApplication location="guide-microprofile-metrics.war" contextRoot="/"/>
-</server>
-```
-
-
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
-
-
-The ***mpMetrics*** feature enables MicroProfile Metrics support in Open Liberty. Note that this feature requires SSL and the configuration has been provided for you.
-
-The ***quickStartSecurity*** configuration element provides basic security to secure the Liberty. When you visit the ***/metrics*** endpoint, use the credentials defined in the Liberty's configuration to log in and view the data.
-
-
-### Adding the annotations
-
-Replace the ***InventoryManager*** class.
-
-> To open the InventoryManager.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-metrics/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-metrics/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
-
-
-
-```java
-package io.openliberty.guides.inventory;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
-
-import jakarta.enterprise.context.ApplicationScoped;
-
-import org.eclipse.microprofile.metrics.MetricUnits;
-import org.eclipse.microprofile.metrics.annotation.Counted;
-import org.eclipse.microprofile.metrics.annotation.Gauge;
-import org.eclipse.microprofile.metrics.annotation.Timed;
-
-import io.openliberty.guides.inventory.model.InventoryList;
-import io.openliberty.guides.inventory.model.SystemData;
-
-@ApplicationScoped
-public class InventoryManager {
-
-  private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
-  private InventoryUtils invUtils = new InventoryUtils();
-
-  @Timed(name = "inventoryProcessingTime",
-         tags = {"method=get"},
-         absolute = true,
-         description = "Time needed to process the inventory")
-  public Properties get(String hostname) {
-    return invUtils.getProperties(hostname);
-  }
-
-  @Timed(name = "inventoryAddingTime",
-    absolute = true,
-    description = "Time needed to add system properties to the inventory")
-  public void add(String hostname, Properties systemProps) {
-    Properties props = new Properties();
-    props.setProperty("os.name", systemProps.getProperty("os.name"));
-    props.setProperty("user.name", systemProps.getProperty("user.name"));
-
-    SystemData host = new SystemData(hostname, props);
-    if (!systems.contains(host)) {
-      systems.add(host);
-    }
-  }
-
-  @Timed(name = "inventoryProcessingTime",
-         tags = {"method=list"},
-         absolute = true,
-         description = "Time needed to process the inventory")
-  @Counted(name = "inventoryAccessCount",
-           absolute = true,
-           description = "Number of times the list of systems method is requested")
-  public InventoryList list() {
-    return new InventoryList(systems);
-  }
-
-  @Gauge(unit = MetricUnits.NONE,
-         name = "inventorySizeGauge",
-         absolute = true,
-         description = "Number of systems in the inventory")
-  public int getTotal() {
-    return systems.size();
-  }
-}
-```
-
-
-
-Apply the ***@Timed*** annotation to the ***get()*** method,
-and apply the ***@Timed*** annotation to the ***list()*** method.
-
-This annotation has these metadata fields:
-
-|***name*** | Optional. Use this field to name the metric.
-| ---| ---
-|***tags*** | Optional. Use this field to add tags to the metric with the same ***name***.
-|***absolute*** | Optional. Use this field to determine whether the metric name is the exact name that is specified in the ***name*** field or that is specified with the package prefix.
-|***description*** | Optional. Use this field to describe the purpose of the metric.
-
-The ***@Timed*** annotation tracks how frequently the method is invoked and how long it takes for each invocation of the method to complete. Both the ***get()*** and ***list()*** methods are annotated with the ***@Timed*** metric and have the same ***inventoryProcessingTime*** name. The ***method=get*** and ***method=list*** tags add a dimension that uniquely identifies the collected metric data from the inventory processing time in getting the system properties.
-
-* The ***method=get*** tag identifies the ***inventoryProcessingTime*** metric that measures the elapsed time to get the system properties when you call the ***system*** service.
-* The ***method=list*** tag identifies the ***inventoryProcessingTime*** metric that measures the elapsed time for the ***inventory*** service to list all of the system properties in the inventory.
-
-The tags allow you to query the metrics together or separately based on the functionality of the monitoring tool of your choice. The ***inventoryProcessingTime*** metrics for example could be queried to display an aggregate time of both tagged metrics or individual times.
-
-Apply the ***@Timed*** annotation to the ***add()*** method to track how frequently the method is invoked and how long it takes for each invocation of the method to complete.
-
-Apply the ***@Counted*** annotation to the ***list()*** method to count how many times the ***http://localhost:9080/inventory/systems*** URL is accessed monotonically, which is counting up sequentially.
-
-Apply the ***@Gauge*** annotation to the ***getTotal()*** method to track the number of systems that are stored in the inventory. When the value of the gauge is retrieved, the underlying ***getTotal()*** method is called to return the size of the inventory. Note the additional metadata field:
-
-| ***unit*** | Set the unit of the metric. If it is ***MetricUnits.NONE***, the metric name is used without appending the unit name, no scaling is applied.
-| ---| ---
-
-Additional information about these annotations, relevant metadata fields, and more are available at
-the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/latest/reference/javadoc/microprofile-6.1-javadoc.html?class=org/eclipse/microprofile/metrics/annotation/package-summary.html&package=allclasses-frame.html&path=microprofile-6.1-javadoc/org/eclipse/microprofile/metrics/annotation/package-summary.html).
-
-
-::page{title="Enabling vendor metrics for the microservices"}
-
-
-MicroProfile Metrics API implementers can provide vendor metrics in the same forms as the base and application metrics do. Open Liberty as a vendor supplies server component metrics when the ***mpMetrics*** feature is enabled in the ***server.xml*** configuration file.
-
-You can see the vendor-only metrics in the ***metrics?scope=vendor*** endpoint. You see metrics from the runtime components, such as Web Application, ThreadPool and Session Management. Note that these metrics are specific to the Liberty instance. Different vendors may provide other metrics. Visit the [Metrics reference list](https://openliberty.io/docs/ref/general/#metrics-list.html) for more information.
-
-
-::page{title="Building and running the application"}
-
-The Open Liberty instance was started in dev mode at the beginning of the guide and all the changes were automatically picked up.
-
-
-Run the following curl command to review all the metrics that are enabled through MicroProfile Metrics. You see only the system and vendor metrics because the Liberty instance just started, and the ***inventory*** service has not been accessed.
-```bash
-curl -k --user admin:adminpwd https://localhost:9443/metrics
-```
-
-Next, run the following curl command to access the **inventory** service:
-```bash
-curl -s http://localhost:9080/inventory/systems | jq
-```
-
-Rerun the following curl command to access the all metrics:
-```bash
-curl -k --user admin:adminpwd https://localhost:9443/metrics
-```
-
-or access only the application metrics by running following curl command:
-```bash
-curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=application
-```
-
-You can see the system metrics by running following curl command:
-```bash
-curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=base
-```
-
-as well as see the vendor metrics by running following curl command:
-```bash
-curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=vendor
-```
-
-
-
-::page{title="Testing the metrics"}
-
-You can test your application manually, but automated tests ensure code quality because they trigger a failure whenever a code change introduces a defect. JUnit and the Jakarta Restful Web Services Client API provide a simple environment for you to write tests.
-
-Create the ***MetricsIT*** class.
+Create the ***SystemServiceIT*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-microprofile-metrics/start/src/test/java/it/io/openliberty/guides/metrics/MetricsIT.java
+touch /home/project/guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java
 ```
 
 
-> Then, to open the MetricsIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-metrics/start/src/test/java/it/io/openliberty/guides/metrics/MetricsIT.java, or click the following button
+> Then, to open the SystemServiceIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-metrics/start/src/test/java/it/io/openliberty/guides/metrics/MetricsIT.java"}
+::openFile{path="/home/project/guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.metrics;
+package it.io.openliberty.guides.system;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.security.KeyStore;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.net.Socket;
+import java.time.Duration;
+import java.util.Collections;
 import java.util.Properties;
+import java.nio.file.Paths;
 
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Order;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.containers.Network;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.images.builder.ImageFromDockerfile;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.utility.DockerImageName;
+
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.serialization.StringDeserializer;
+
+import io.openliberty.guides.models.SystemLoad;
+import io.openliberty.guides.models.SystemLoad.SystemLoadDeserializer;
+
+@Testcontainers
+public class SystemServiceIT {
+
+    private static Logger logger = LoggerFactory.getLogger(SystemServiceIT.class);
+    private static Network network = Network.newNetwork();
+
+    public static KafkaConsumer<String, SystemLoad> consumer;
+
+    private static ImageFromDockerfile systemImage =
+        new ImageFromDockerfile("system:1.0-SNAPSHOT")
+            .withDockerfile(Paths.get("./Dockerfile"));
+
+    private static KafkaContainer kafkaContainer = new KafkaContainer(
+        DockerImageName.parse("confluentinc/cp-kafka:latest"))
+            .withListener(() -> "kafka:19092")
+            .withNetwork(network);
+
+    private static GenericContainer<?> systemContainer =
+        new GenericContainer(systemImage)
+            .withNetwork(network)
+            .withExposedPorts(9083)
+            .waitingFor(Wait.forHttp("/health/ready").forPort(9083))
+            .withStartupTimeout(Duration.ofMinutes(3))
+            .withLogConsumer(new Slf4jLogConsumer(logger))
+            .dependsOn(kafkaContainer);
+
+    private static boolean isServiceRunning(String host, int port) {
+        try {
+            Socket socket = new Socket(host, port);
+            socket.close();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @BeforeAll
+    public static void startContainers() {
+        if (isServiceRunning("localhost", 9083)) {
+            System.out.println("Testing with mvn liberty:devc");
+        } else {
+            kafkaContainer.start();
+            systemContainer.withEnv(
+                "mp.messaging.connector.liberty-kafka.bootstrap.servers",
+                "kafka:19092");
+            systemContainer.start();
+            System.out.println("Testing with mvn verify");
+        }
+    }
+
+    @BeforeEach
+    public void createKafkaConsumer() {
+        Properties consumerProps = new Properties();
+        if (isServiceRunning("localhost", 9083)) {
+            consumerProps.put(
+                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                "localhost:9094");
+        } else {
+            consumerProps.put(
+                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                kafkaContainer.getBootstrapServers());
+        }
+        consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "system-load-status");
+        consumerProps.put(
+            ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
+            StringDeserializer.class.getName());
+        consumerProps.put(
+            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+            SystemLoadDeserializer.class.getName());
+        consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        consumer = new KafkaConsumer<String, SystemLoad>(consumerProps);
+        consumer.subscribe(Collections.singletonList("system.load"));
+    }
+
+    @AfterAll
+    public static void stopContainers() {
+        systemContainer.stop();
+        kafkaContainer.stop();
+        if (network != null) {
+            network.close();
+        }
+    }
+
+    @AfterEach
+    public void closeKafkaConsumer() {
+        consumer.close();
+    }
+
+    @Test
+    public void testCpuStatus() {
+        ConsumerRecords<String, SystemLoad> records =
+            consumer.poll(Duration.ofMillis(30 * 1000));
+        System.out.println("Polled " + records.count() + " records from Kafka:");
+
+        for (ConsumerRecord<String, SystemLoad> record : records) {
+            SystemLoad sl = record.value();
+            System.out.println(sl);
+            assertNotNull(sl.hostname);
+            assertNotNull(sl.loadAverage);
+        }
+        consumer.commitAsync();
+    }
+}
+```
+
+
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
+
+
+
+
+Construct the ***systemImage*** by using the ***ImageFromDockerfile*** class, which allows Testcontainers to build the Docker image from a Dockerfile during the test run time. For instance, the provided Dockerfile at the specified ***./Dockerfile*** paths is used to generate the ***system:1.0-SNAPSHOT*** image.
+
+Use the ***kafkaContainer*** class to instantiate the ***kafkaContainer*** test container, initiating the ***confluentinc/cp-kafka:latest*** Docker image. Similarly, use the ***GenericContainer*** class to create the ***systemContainer*** test container, starting the ***system:1.0-SNAPSHOT*** Docker image.
+ 
+The ***withListener()*** is configured to ***kafka:19092***, as the containerized ***system*** microservice functions as an additional producer. Therefore, the Kafka container needs to set up a listener to accommodate this requirement. For more information about using an additional consumer or producer with a Kafka container, see the [Testcontainers Kafka documentation](https://java.testcontainers.org/modules/kafka/)
+
+Because containers are isolated by default, facilitating communication between the ***kafkaContainer*** and the ***systemContainer*** requires placing them on the same ***network***. The ***dependsOn()*** method is used to indicate that the ***system*** microservice container starts only after ensuring the readiness of the Kafka container. 
+
+Before you start the ***systemContainer***, you must override the ***mp.messaging.connector.liberty-kafka.bootstrap.servers*** property with ***kafka:19092*** by using the ***withEnv()*** method. This step creates a listener in the Kafka container that is configured to handle an additional producer.
+
+The test uses the ***KafkaConsumer*** client API, configuring the consumer to use the ***BOOTSTRAP_SERVERS_CONFIG*** property with the Kafka broker address if a local ***system*** microservice container is present. In the absence of a local service container, it uses the ***getBootstrapServers()*** method to obtain the broker address from the Kafka test container. Then, the consumer is set up to consume messages from the ***system.load*** topic within the ***Kafka*** container.
+
+To consume messages from a stream, the messages need to be deserialized from bytes. Kafka has its own default deserializer, but a custom deserializer is provided for you. The deserializer is configured by the ***VALUE_DESERIALIZER_CLASS_CONFIG*** property and is implemented in the ***SystemLoad*** class. To learn more about Kafka APIs and their usage, see the [official Kafka Documentation](https://kafka.apache.org/documentation/#api).
+
+The running ***system*** microservice container produces messages to the ***systemLoad*** Kafka topic, as denoted by the ***@Outgoing*** annotation. The ***testCpuStatus()*** test method uses the ***consumer.poll()*** method from the ***KafkaConsumer*** client API to retrieve a record from Kafka every 3 seconds within a specified timeout limit. This record is produced by the system service. Then, the method uses ***Assertions*** to verify that the polled record aligns with the expected record.
+
+### Running the tests
+
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+
+You will see the following output:
+
+```
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 25.674 s - in it.io.openliberty.guides.system.SystemServiceIT
+
+ Results:
+
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+
+ Integration tests finished.
+```
+
+After you are finished running tests, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server.
+
+
+If you aren't running in dev mode, you can run the tests by running the following command:
+
+
+```bash
+./mvnw clean verify
+```
+
+You will see the following output:
+
+```
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 50.63 s - in it.io.openliberty.guides.system.SystemServiceIT
+
+ Results:
+
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+
+
+ --- failsafe:3.2.5:verify (verify) @ system ---
+ ------------------------------------------------------------------------
+ BUILD SUCCESS
+ ------------------------------------------------------------------------
+ Total time:  55.636 s
+ Finished at: 2024-01-31T11:33:40-08:00
+ ------------------------------------------------------------------------
+```
+
+
+::page{title="Testing with the Kafka producer client"}
+
+The ***inventory*** microservice is tested in the same way as the ***system*** microservice. The only difference is that the ***inventory*** microservice consumes messages, which means that tests are written to use the Kafka producer client.
+
+### Launching the inventory microservice in dev mode with container
+
+Navigate to the ***start/inventory*** directory.
+
+```bash
+cd /home/project/guide-reactive-service-testing/start/inventory
+```
+
+First, create the ***logs*** directory by running the following commands:
+```bash
+mkdir -p /home/project/guide-reactive-service-testing/start/inventory/target/liberty/wlp/usr/servers/defaultServer/logs
+chmod 777 /home/project/guide-reactive-service-testing/start/inventory/target/liberty/wlp/usr/servers/defaultServer/logs
+```
+
+Run the following goal to start the ***inventory*** microservice in dev mode with container support:
+
+
+```bash
+./mvnw liberty:devc
+```
+
+### Building a test REST client
+
+Create a REST client interface to access the ***inventory*** microservice.
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+
+Create the ***InventoryResourceClient*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java
+```
+
+
+> Then, to open the InventoryResourceClient.java file in your IDE, select
+> ***File*** > ***Open*** > guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java, or click the following button
+
+::openFile{path="/home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java"}
+
+
+
+```java
+package it.io.openliberty.guides.inventory;
+
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+@Path("/inventory")
+public interface InventoryResourceClient {
+
+    @GET
+    @Path("/systems")
+    @Produces(MediaType.APPLICATION_JSON)
+    Response getSystems();
+
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    Response resetSystems();
+
+}
+```
+
+
+
+The ***InventoryResourceClient*** interface declares the ***getSystems()*** and ***resetSystems()*** methods for accessing the corresponding endpoints within the ***inventory*** microservice.
+
+
+### Testing the inventory microservice
+
+Now you can start writing the test by using Testcontainers.
+
+Create the ***InventoryServiceIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java
+```
+
+
+> Then, to open the InventoryServiceIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java, or click the following button
+
+::openFile{path="/home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.inventory;
+
+import java.util.List;
+import java.net.Socket;
+import java.time.Duration;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.math.BigDecimal;
+import java.nio.file.Paths;
+import java.util.Properties;
+
+import jakarta.ws.rs.core.GenericType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.client.ClientBuilder;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Assertions;
+import org.testcontainers.containers.Network;
+import org.testcontainers.utility.DockerImageName;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.images.builder.ImageFromDockerfile;
+import org.apache.kafka.common.serialization.StringSerializer;
+import org.jboss.resteasy.client.jaxrs.ResteasyClient;
+import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
 
-@TestMethodOrder(OrderAnnotation.class)
-public class MetricsIT {
+import io.openliberty.guides.models.SystemLoad;
+import io.openliberty.guides.models.SystemLoad.SystemLoadSerializer;
 
-  private static final String KEYSTORE_PATH = System.getProperty("user.dir")
-                              + "/target/liberty/wlp/usr/servers/"
-                              + "defaultServer/resources/security/key.p12";
-  private static final String SYSTEM_ENV_PATH =  System.getProperty("user.dir")
-                              + "/target/liberty/wlp/usr/servers/"
-                              + "defaultServer/server.env";
 
-  private static String httpPort;
-  private static String httpsPort;
-  private static String baseHttpUrl;
-  private static String baseHttpsUrl;
-  private static KeyStore keystore;
+@Testcontainers
+public class InventoryServiceIT {
 
-  private List<String> metrics;
-  private Client client;
+    private static Logger logger = LoggerFactory.getLogger(InventoryServiceIT.class);
 
-  private final String INVENTORY_HOSTS = "inventory/systems";
-  private final String INVENTORY_HOSTNAME = "inventory/systems/localhost";
-  private final String METRICS_APPLICATION = "metrics?scope=application";
+    public static InventoryResourceClient client;
 
-  @BeforeAll
-  public static void oneTimeSetup() throws Exception {
-    httpPort = System.getProperty("http.port");
-    httpsPort = System.getProperty("https.port");
-    baseHttpUrl = "http://localhost:" + httpPort + "/";
-    baseHttpsUrl = "https://localhost:" + httpsPort + "/";
-    loadKeystore();
-  }
+    private static Network network = Network.newNetwork();
+    public static KafkaProducer<String, SystemLoad> producer;
+    private static ImageFromDockerfile inventoryImage =
+        new ImageFromDockerfile("inventory:1.0-SNAPSHOT")
+            .withDockerfile(Paths.get("./Dockerfile"));
 
-  private static void loadKeystore() throws Exception {
-    Properties sysEnv = new Properties();
-    sysEnv.load(new FileInputStream(SYSTEM_ENV_PATH));
-    char[] password = sysEnv.getProperty("keystore_password").toCharArray();
-    keystore = KeyStore.getInstance("PKCS12");
-    keystore.load(new FileInputStream(KEYSTORE_PATH), password);
-  }
+    private static KafkaContainer kafkaContainer = new KafkaContainer(
+        DockerImageName.parse("confluentinc/cp-kafka:latest"))
+            .withListener(() -> "kafka:19092")
+            .withNetwork(network);
 
-  @BeforeEach
-  public void setup() {
-    client = ClientBuilder.newBuilder().trustStore(keystore).build();
-  }
+    private static GenericContainer<?> inventoryContainer =
+        new GenericContainer(inventoryImage)
+            .withNetwork(network)
+            .withExposedPorts(9085)
+            .waitingFor(Wait.forHttp("/health/ready").forPort(9085))
+            .withStartupTimeout(Duration.ofMinutes(3))
+            .withLogConsumer(new Slf4jLogConsumer(logger))
+            .dependsOn(kafkaContainer);
 
-  @AfterEach
-  public void teardown() {
-    client.close();
-  }
-
-  @Test
-  @Order(1)
-  public void testPropertiesRequestTimeMetric() {
-    connectToEndpoint(baseHttpUrl + INVENTORY_HOSTNAME);
-    metrics = getMetrics();
-    for (String metric : metrics) {
-      if (metric.startsWith(
-          "application_inventoryProcessingTime_rate_per_second")) {
-        float seconds = Float.parseFloat(metric.split(" ")[1]);
-        assertTrue(4 > seconds);
-      }
-    }
-  }
-
-  @Test
-  @Order(2)
-  public void testInventoryAccessCountMetric() {
-    metrics = getMetrics();
-    Map<String, Integer> accessCountsBefore = getIntMetrics(metrics,
-            "application_inventoryAccessCount_total");
-    connectToEndpoint(baseHttpUrl + INVENTORY_HOSTS);
-    metrics = getMetrics();
-    Map<String, Integer> accessCountsAfter = getIntMetrics(metrics,
-            "application_inventoryAccessCount_total");
-    for (String key : accessCountsBefore.keySet()) {
-      Integer accessCountBefore = accessCountsBefore.get(key);
-      Integer accessCountAfter = accessCountsAfter.get(key);
-      assertTrue(accessCountAfter > accessCountBefore);
-    }
-  }
-
-  @Test
-  @Order(3)
-  public void testInventorySizeGaugeMetric() {
-    metrics = getMetrics();
-    Map<String, Integer> inventorySizeGauges = getIntMetrics(metrics,
-            "application_inventorySizeGauge");
-    for (Integer value : inventorySizeGauges.values()) {
-      assertTrue(1 <= value);
-    }
-  }
-
-  @Test
-  @Order(4)
-  public void testPropertiesAddTimeMetric() {
-    connectToEndpoint(baseHttpUrl + INVENTORY_HOSTNAME);
-    metrics = getMetrics();
-    boolean checkMetric = false;
-    for (String metric : metrics) {
-      if (metric.startsWith(
-          "inventoryAddingTime_seconds_count")) {
-            checkMetric = true;
-      }
-    }
-    assertTrue(checkMetric);
-  }
-
-  public void connectToEndpoint(String url) {
-    Response response = this.getResponse(url);
-    this.assertResponse(url, response);
-    response.close();
-  }
-
-  private List<String> getMetrics() {
-    String usernameAndPassword = "admin" + ":" + "adminpwd";
-    String authorizationHeaderValue = "Basic "
-        + java.util.Base64.getEncoder()
-                          .encodeToString(usernameAndPassword.getBytes());
-    Response metricsResponse = client.target(baseHttpsUrl + METRICS_APPLICATION)
-                                     .request(MediaType.TEXT_PLAIN)
-                                     .header("Authorization",
-                                         authorizationHeaderValue)
-                                     .get();
-
-    BufferedReader br = new BufferedReader(new InputStreamReader((InputStream)
-    metricsResponse.getEntity()));
-    List<String> result = new ArrayList<String>();
-    try {
-      String input;
-      while ((input = br.readLine()) != null) {
-        result.add(input);
-      }
-      br.close();
-    } catch (IOException e) {
-      e.printStackTrace();
-      fail();
+    private static InventoryResourceClient createRestClient(String urlPath) {
+        ClientBuilder builder = ResteasyClientBuilder.newBuilder();
+        ResteasyClient client = (ResteasyClient) builder.build();
+        ResteasyWebTarget target = client.target(UriBuilder.fromPath(urlPath));
+        return target.proxy(InventoryResourceClient.class);
     }
 
-    metricsResponse.close();
-    return result;
-  }
-
-  private Response getResponse(String url) {
-    return client.target(url).request().get();
-  }
-
-  private void assertResponse(String url, Response response) {
-    assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
-  }
-
-  private Map<String, Integer> getIntMetrics(List<String> metrics, String metricName) {
-    Map<String, Integer> output = new HashMap<String, Integer>();
-    for (String metric : metrics) {
-      if (metric.startsWith(metricName)) {
-        String[] mSplit = metric.split(" ");
-        String key = mSplit[0];
-        Integer value = Integer.parseInt(mSplit[mSplit.length - 1]);
-        output.put(key, value);
-      }
+    private static boolean isServiceRunning(String host, int port) {
+        try {
+            Socket socket = new Socket(host, port);
+            socket.close();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
-    return output;
-  }
+
+    @BeforeAll
+    public static void startContainers() {
+
+        String urlPath;
+        if (isServiceRunning("localhost", 9085)) {
+            System.out.println("Testing with mvn liberty:devc");
+            urlPath = "http://localhost:9085";
+        } else {
+            System.out.println("Testing with mvn verify");
+            kafkaContainer.start();
+            inventoryContainer.withEnv(
+                "mp.messaging.connector.liberty-kafka.bootstrap.servers",
+                "kafka:19092");
+            inventoryContainer.start();
+            urlPath = "http://"
+                + inventoryContainer.getHost()
+                + ":" + inventoryContainer.getFirstMappedPort();
+        }
+
+        System.out.println("Creating REST client with: " + urlPath);
+        client = createRestClient(urlPath);
+    }
+
+    @BeforeEach
+    public void createKafkaProducer() {
+        Properties producerProps = new Properties();
+        if (isServiceRunning("localhost", 9085)) {
+            producerProps.put(
+                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                "localhost:9094");
+        } else {
+            producerProps.put(
+                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                kafkaContainer.getBootstrapServers());
+        }
+
+        producerProps.put(
+            ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+            StringSerializer.class.getName());
+        producerProps.put(
+            ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+            SystemLoadSerializer.class.getName());
+
+        producer = new KafkaProducer<String, SystemLoad>(producerProps);
+    }
+
+    @AfterAll
+    public static void stopContainers() {
+        client.resetSystems();
+        inventoryContainer.stop();
+        kafkaContainer.stop();
+        if (network != null) {
+            network.close();
+        }
+    }
+
+    @AfterEach
+    public void closeKafkaProducer() {
+        producer.close();
+    }
+
+    @Test
+    public void testCpuUsage() throws InterruptedException {
+        SystemLoad sl = new SystemLoad("localhost", 1.1);
+        producer.send(new ProducerRecord<String, SystemLoad>("system.load", sl));
+        Thread.sleep(5000);
+        Response response = client.getSystems();
+        Assertions.assertEquals(200, response.getStatus(), "Response should be 200");
+        List<Properties> systems =
+            response.readEntity(new GenericType<List<Properties>>() { });
+        assertEquals(systems.size(), 1);
+        for (Properties system : systems) {
+            assertEquals(sl.hostname, system.get("hostname"),
+                "Hostname doesn't match!");
+            BigDecimal systemLoad = (BigDecimal) system.get("systemLoad");
+            assertEquals(sl.loadAverage, systemLoad.doubleValue(),
+                "CPU load doesn't match!");
+        }
+    }
 }
 ```
 
 
 
 
-* The ***testPropertiesRequestTimeMetric()*** test case validates the ***@Timed*** metric. The test case sends a request to the ***http://localhost:9080/inventory/systems/localhost*** URL to access the ***inventory*** service, which adds the ***localhost*** host to the inventory. Next, the test case makes a connection to the ***https://localhost:9443/metrics?scope=application*** URL to retrieve application metrics as plain text. Then, it asserts whether the time that is needed to retrieve the system properties for localhost is less than 4 seconds.
 
-* The ***testInventoryAccessCountMetric()*** test case validates the ***@Counted*** metric. The test case obtains metric data before and after a request to the ***http://localhost:9080/inventory/systems*** URL. It then asserts that the metric was increased after the URL was accessed.
+The ***InventoryServiceIT*** class uses the ***KafkaProducer*** client API to generate messages in the test environment, which are then consumed by the ***inventory*** microservice container.
 
-* The ***testInventorySizeGaugeMetric()*** test case validates the ***@Gauge*** metric. The test case first ensures that the localhost is in the inventory, then looks for the ***@Gauge*** metric and asserts that the inventory size is greater or equal to 1.
+Similar to ***system*** microservice testing, the configuration of the producer ***BOOTSTRAP_SERVERS_CONFIG*** property depends on whether a local ***inventory*** microservice container is detected. In addition, the producer is configured with a custom serializer provided in the ***SystemLoad*** class.
 
-* The ***testPropertiesAddTimeMetric()*** test case validates the ***@Timed*** metric. The test case sends a request to the ***http://localhost:9080/inventory/systems/localhost*** URL to access the ***inventory*** service, which adds the ***localhost*** host to the inventory. Next, the test case makes a connection to the ***https://localhost:9443/metrics?scope=application*** URL to retrieve application metrics as plain text. Then, it looks for the ***@Timed*** metric and asserts true if the metric exists.
-
-The ***oneTimeSetup()*** method retrieves the port number for the Liberty and builds a base URL string to set up the tests. Apply the ***@BeforeAll*** annotation to this method to run it before any of the test cases.
-
-The ***setup()*** method creates a JAX-RS client that makes HTTP requests to the ***inventory*** service. The ***teardown()*** method destroys this client instance. Apply the ***@BeforeEach*** annotation so that a method runs before a test case and apply the ***@AfterEach*** annotation so that a method runs after a test case. Apply these annotations to methods that are generally used to perform any setup and teardown tasks before and after a test.
-
-To force these test cases to run in a particular order, annotate your ***MetricsIT*** test class with the ***@TestMethodOrder(OrderAnnotation.class)*** annotation. ***OrderAnnotation.class*** runs test methods in numerical order, according to the values specified in the ***@Order*** annotation. You can also create a custom ***MethodOrderer*** class or use built-in ***MethodOrderer*** implementations, such as ***OrderAnnotation.class***, ***Alphanumeric.class***, or ***Random.class***. Label your test cases with the ***@Test*** annotation so that they automatically run when your test class runs.
-
-In addition, the endpoint tests ***src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java*** and ***src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java*** are provided for you to test the basic functionality of the ***inventory*** and ***system*** services. If a test failure occurs, then you might have introduced a bug into the code.
-
+The ***testCpuUsage*** test method uses the ***producer.send()*** method, using the ***KafkaProducer*** client API, to generate the ***Systemload*** message. Then, it uses ***Assertions*** to verify that the response from the ***inventory*** microservice aligns with the expected outcome.
 
 ### Running the tests
 
-Because you started Open Liberty in dev mode at the start of the guide, press the ***enter/return*** key to run the tests and see the following output:
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+
+You will see the following output:
 
 ```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.4 sec - in it.io.openliberty.guides.system.SystemEndpointIT
-Running it.io.openliberty.guides.metrics.MetricsIT
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.476 sec - in it.io.openliberty.guides.metrics.MetricsIT
-Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-[WARNING ] Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
-Could not send Message.
-[err] The specified host is unknown.
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.264 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 32.564 s - in it.io.openliberty.guides.inventory.InventoryServiceIT
 
-Results :
+ Results:
 
-Tests run: 8, Failures: 0, Errors: 0, Skipped: 0
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+
+ Integration tests finished.
 ```
 
-The warning and error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the ***testUnknownHost()*** test from the ***InventoryEndpointIT*** integration test.
+After you are finished running tests, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server.
 
-To determine whether the tests detect a failure, go to the ***MetricsIT.java*** file and change any of the assertions in the test methods. Then re-run the tests to see a test failure occur.
+If you aren't running in dev mode, you can run the tests by running the following command:
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
+
+```bash
+./mvnw clean verify
+```
+
+You will see the following output:
+
+```
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 53.22 s - in it.io.openliberty.guides.inventory.InventoryServiceIT
+
+ Results:
+
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+
+
+ --- failsafe:3.2.5:verify (verify) @ inventory ---
+ ------------------------------------------------------------------------
+ BUILD SUCCESS
+ ------------------------------------------------------------------------
+ Total time:  58.789 s
+ Finished at: 2024-01-31T11:40:43-08:00
+ ------------------------------------------------------------------------
+```
+
+
+When you're finished trying out the microservice, you can stop the local Kafka container by running the following command from the ***start*** directory:
+
+
+```bash
+cd /home/project/guide-reactive-service-testing/start
+./scripts/stopKafka.sh
+```
 
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You learned how to enable system, application and vendor metrics for microservices by using MicroProfile Metrics
+You just tested two reactive Java microservices using Testcontainers.
 
-and wrote tests to validate them in Open Liberty.
 
 
 ### Clean up your environment
@@ -688,32 +745,34 @@ and wrote tests to validate them in Open Liberty.
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-microprofile-metrics*** project by running the following commands:
+Delete the ***guide-reactive-service-testing*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-microprofile-metrics
+rm -fr guide-reactive-service-testing
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Providing%20metrics%20from%20a%20microservice&guide-id=cloud-hosted-guide-microprofile-metrics)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Testing%20reactive%20Java%20microservices&guide-id=cloud-hosted-guide-reactive-service-testing)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-metrics/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-metrics/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-reactive-service-testing/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-reactive-service-testing/pulls)
 
 
 
 ### Where to next?
 
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
+* [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html)
+
+**Learn more about Testcontainers**
+* [Visit the official Testcontainers website](https://testcontainers.com/)
 
 
 ### Log out of the session
