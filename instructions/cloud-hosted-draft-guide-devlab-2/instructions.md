@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Enabling Cross-Origin Resource Sharing (CORS) guide!"}
+::page{title="Welcome to the Producing and consuming messages in Java microservices guide!"}
 
-Learn how to enable Cross-Origin Resource Sharing (CORS) in Open Liberty without writing Java code.
+Learn how to produce and consume messages to communicate between Java microservices in a standard way by using the Jakarta Messaging API with the embedded Liberty Messaging Server or an external messaging server, IBM MQ.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,41 +14,22 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 ::page{title="What you'll learn"}
 
-You will learn how to add two Liberty configurations to enable CORS. Next, you will write and run tests to validate that the CORS configurations work. These tests send two different CORS requests to a REST service that has two different endpoints.
+You’ll learn how to communicate between Java web services when one service is producing a continuous stream of asynchronous messages or events to be consumed by other services, rather than just sending and receiving individual requests for data. You will also learn how to use a messaging server and client to manage the production and consumption of the messages by the services.
 
-### CORS and its purpose
+In this guide, you will first use the embedded Liberty Messaging Server to manage messages, then you will optionally switch to using an external messaging server to manage the messages, in this case, [IBM MQ](https://www.ibm.com/products/mq). You might use an external messaging server if it is critical that none of the messages is lost if there is a system overload or outage; for example during a bank transfer in a banking application.
 
-Cross-Origin Resource Sharing (CORS) is a W3C specification and mechanism that you can use to request restricted resources from a domain outside the current domain. In other words, CORS is a technique for consuming an API served from an origin different than yours.
+You will learn how to write your Java application using the Jakarta Messaging API which provides a standard way to produce and consume messages in Java application, regardless of which messaging server your application will ultimately use.
 
-CORS is useful for requesting different kinds of data from websites that aren't your own. These types of data might include images, videos, scripts, stylesheets, iFrames, or web fonts.
+The application in this guide consists of two microservices, ***system*** and ***inventory***. Every 15 seconds, the ***system*** microservice computes and publishes a message that contains the system’s current CPU and memory load usage. The ***inventory*** microservice subscribes to that information at the ***/systems*** REST endpoint so that it can keep an updated list of all the systems and their current system loads.
 
-However, you cannot request resources from another website domain without proper permission. In JavaScript, cross-origin requests with an ***XMLHttpRequest*** API and Ajax cannot happen unless CORS is enabled on the server that receives the request. Otherwise, same-origin security policy prevents the requests. For example, a web page that is served from the ***http://aboutcors.com*** server sends a request to get data to the ***http://openliberty.io*** server. Because of security concerns, browsers block the server response unless the server adds HTTP response headers to allow the web page to consume the data.
+You’ll create the ***system*** and ***inventory*** microservices using the Jakarta Messaging API to produce and consume the messages using the embedded Liberty Messaging Server.
 
-Different ports and different protocols also trigger CORS. For example, the ***http://abc.xyz:1234*** domain is considered to be different from the ***https://abc.xyz:4321*** domain.
+![Application architecture where system and inventory services use the Jakarta Messaging to communicate.](https://raw.githubusercontent.com/OpenLiberty/guide-jms-intro/prod/assets/architecture.png)
 
-Open Liberty has built-in support for CORS that gives you an easy and powerful way to configure the runtime to handle CORS requests without the need to write Java code.
 
-### Types of CORS requests
-
-Familiarize yourself with two kinds of CORS requests to understand the attributes that you will add in the two CORS configurations.
-
-#### Simple CORS request
-
-According to the CORS specification, an HTTP request is a simple CORS request if the request method is ***GET***, ***HEAD***, or ***POST***. The header fields are any one of the ***Accept***, ***Accept-Language***, ***Content-Language***, or ***Content-Type*** headers. The ***Content-Type*** header has a value of ***application/x-www-form-urlencoded***, ***multipart/form-data***, or ***text/plain***.
-
-When clients, such as browsers, send simple CORS requests to servers on different domains, the clients include an ***Origin*** header with the original (referring)  host name as the value. If the server allows the origin, the server includes an ***Access-Control-Allow-Origin*** header with a list of allowed origins or an asterisk (*) in the response back to the client. The asterisk indicates that all origins are allowed to access the endpoint on the server.
-
-#### Preflight CORS request
-
-A CORS request is not a simple CORS request if a client first sends a preflight CORS request before it sends the actual request. For example, the client sends a preflight request before it sends a ***DELETE*** HTTP request. To determine whether the request is safe to send, the client sends a preflight request, which is an ***OPTIONS*** HTTP request, to gather more information about the server. This preflight request has the ***Origin*** header and other headers to indicate the HTTP method and headers of the actual request to be sent after the preflight request.
-
-Once the server receives the preflight request, if the origin is allowed, the server responds with headers that indicate the HTTP methods and headers that are allowed in the actual requests. The response might include more CORS-related headers.
-
-Next, the client sends the actual request, and the server responds.
-
+You will then, optionally, reconfigure the application, without changing the application's Java code, to use an external IBM MQ messaging server instead.
 
 ::page{title="Getting started"}
 
@@ -61,11 +42,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-cors.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-jms-intro.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-cors.git
-cd guide-cors
+git clone https://github.com/openliberty/guide-jms-intro.git
+cd guide-jms-intro
 ```
 
 
@@ -73,390 +54,532 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
+### Try what you'll build
 
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-::page{title="Enabling CORS"}
-Navigate to the ***start*** directory to begin.
-```bash
-cd /home/project/guide-cors/start
-```
+To try out the application, first go to the ***finish*** directory and run the following Maven goal to build and install the ***models*** module. The ***models*** module contains the ***SystemLoad*** data class for both the ***system*** and ***inventory*** microservices to use.
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
-./mvnw liberty:dev
+cd /home/project/guide-jms-intro/finish
+./mvnw -pl models clean install
 ```
 
-After you see the following message, your Liberty instance is ready in dev mode:
 
+Start the ***inventory*** microservice by running the following command:
+
+
+Start IBM MQ by running the following command on the command-line session:
+
+```bash
+docker pull icr.io/ibm-messaging/mq:9.4.0.0-r3
+
+docker volume create qm1data
+
+docker run \
+--env LICENSE=accept \
+--env MQ_QMGR_NAME=QM1 \
+--volume qm1data:/mnt/mqm \
+--publish 1414:1414 --publish 9443:9443 \
+--detach \
+--env MQ_APP_PASSWORD=passw0rd \
+--env MQ_ADMIN_PASSWORD=passw0rd \
+--rm \
+--platform linux/amd64 \
+--name QM1 \
+icr.io/ibm-messaging/mq:9.4.0.0-r3
 ```
-**************************************************************
-*    Liberty is running in dev mode.
+
+
+Run the following command to make sure that the IBM MQ container is running:
+```bash
+docker ps
 ```
 
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+Replace the ***pom.xml*** file of the inventory service.
 
-You will use a REST service that is already provided for you to test your CORS configurations. You can find this service in the ***src/main/java/io/openliberty/guides/cors/*** directory.
+> To open the pom.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-jms-intro/start/inventory/pom.xml, or click the following button
 
-You will send a simple request to the ***/configurations/simple*** endpoint and the preflight request to the ***/configurations/preflight*** endpoint.
-
-
-### Enabling a simple CORS configuration
-Configure the Liberty to allow the ***/configurations/simple*** endpoint to accept a ***simple*** CORS request. Add a simple CORS configuration to the Liberty ***server.xml*** configuration file:
-
-Replace the Liberty ***server.xml*** configuration file.
-
-> To open the server.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-cors/start/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-cors/start/src/main/liberty/config/server.xml"}
+::openFile{path="/home/project/guide-jms-intro/start/inventory/pom.xml"}
 
 
 
 ```xml
-<server description="Sample Liberty server">
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-    <featureManager>
-        <platform>jakartaee-10.0</platform>
-        <feature>restfulWS</feature>
-        <feature>jsonb</feature>
-    </featureManager>
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>guide-jms-intro-inventory</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
 
-    <variable name="http.port" defaultValue="9080"/>
-    <variable name="https.port" defaultValue="9443"/>
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- Liberty configuration -->
+        <liberty.var.http.port>9081</liberty.var.http.port>
+        <liberty.var.https.port>9444</liberty.var.https.port>
+        <!-- IBM MQ -->
+        <liberty.var.ibmmq-hostname>localhost</liberty.var.ibmmq-hostname>
+        <liberty.var.ibmmq-port>1414</liberty.var.ibmmq-port>
+        <liberty.var.ibmmq-channel>DEV.APP.SVRCONN</liberty.var.ibmmq-channel>
+        <liberty.var.ibmmq-queue-manager>QM1</liberty.var.ibmmq-queue-manager>
+        <liberty.var.ibmmq-username>app</liberty.var.ibmmq-username>
+        <liberty.var.ibmmq-password>passw0rd</liberty.var.ibmmq-password>
+        <liberty.var.ibmmq-inventory-queue-name>DEV.QUEUE.1</liberty.var.ibmmq-inventory-queue-name>
+    </properties>
+    
+    <dependencies>
+        <!-- Provided dependencies -->
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>10.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>7.0</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        
+        <!--  Required dependencies -->
+        <dependency>
+           <groupId>io.openliberty.guides</groupId>
+           <artifactId>guide-jms-intro-models</artifactId>
+           <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <!-- For tests -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.12.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>6.2.12.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-json-binding-provider</artifactId>
+            <version>6.2.12.Final</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
-    <httpEndpoint id="defaultHttpEndpoint"
-        host="*" httpPort="${http.port}" httpsPort="${https.port}"/>
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.4.0</version>
+                <configuration>
+                    <packagingExcludes>pom.xml</packagingExcludes>
+                </configuration>
+            </plugin>
 
-    <webApplication location="guide-cors.war" contextRoot="/"/>
+            <!-- Liberty plugin -->
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.11.3</version>
+            </plugin>
 
-    <cors domain="/configurations/simple"
-        allowedOrigins="http://openliberty.io"
-        allowedMethods="GET"
-        allowCredentials="true"
-        exposeHeaders="MyHeader"/>
+            <!-- Plugin to run unit tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.3</version>
+            </plugin>
 
-
-</server>
+            <!-- Plugin to run integration tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.5.3</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <http.port>${liberty.var.http.port}</http.port>
+                        <https.port>${liberty.var.https.port}</https.port>
+                    </systemPropertyVariables>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
 ```
 
 
 Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
-The CORS configuration contains the following attributes:
 
-| *Configuration Attribute* | *Value*
-| ---| ---
-|***domain*** | The endpoint to be configured for CORS requests. The value is set to ***/configurations/simple***.
-|***allowedOrigins*** | Origins that are allowed to access the endpoint. The value is set to ***http://openliberty.io***.
-|***allowedMethods*** | HTTP methods that a client is allowed to use when it makes requests to the endpoint. The value is set to ***GET***.
-|***allowCredentials*** | A boolean that indicates whether the user credentials can be included in the request. The value is set to ***true***.
-|***exposeHeaders*** | Headers that are safe to expose to clients. The value is set to ***MyHeader***.
-
-For more information about these and other CORS attributes, see the [cors element documentation](https://www.openliberty.io/docs/latest/reference/config/cors.html).
-
-Save the changes to the ***server.xml*** configuration file. The ***/configurations/simple*** endpoint is now ready to be tested with a simple CORS request.
-
-The Open Liberty instance was started in dev mode at the beginning of the guide and all the changes were automatically picked up.
-
-Now, test the simple CORS configuration that you added. Add the ***testSimpleCorsRequest*** method to the ***CorsIT*** class.
-
-Replace the ***CorsIT*** class.
-
-> To open the CorsIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-cors/start/src/test/java/it/io/openliberty/guides/cors/CorsIT.java, or click the following button
-
-::openFile{path="/home/project/guide-cors/start/src/test/java/it/io/openliberty/guides/cors/CorsIT.java"}
+Add the ***liberty.var.ibmmq-**** properties for the IBM MQ container. You can change to different values when you deploy the application on a production environment without modifying the Liberty ***server.xml*** configuration file.
 
 
-
-```java
-package it.io.openliberty.guides.cors;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-public class CorsIT {
-
-    String port = System.getProperty("http.port");
-    String pathToHost = "http://localhost:" + port + "/";
-
-    @BeforeEach
-    public void setUp() {
-        System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
-    }
-
-    @Test
-    public void testSimpleCorsRequest() throws IOException {
-        HttpURLConnection connection = HttpUtils.sendRequest(
-                        pathToHost + "configurations/simple", "GET",
-                        TestData.simpleRequestHeaders);
-        checkCorsResponse(connection, TestData.simpleResponseHeaders);
-
-        printResponseHeaders(connection, "Simple CORS Request");
-    }
-
-
-    public void checkCorsResponse(HttpURLConnection connection,
-                    Map<String, String> expectedHeaders) throws IOException {
-        assertEquals(200, connection.getResponseCode(), "Invalid HTTP response code");
-        expectedHeaders.forEach((responseHeader, value) -> {
-            assertEquals(value, connection.getHeaderField(responseHeader),
-                            "Unexpected value for " + responseHeader + " header");
-        });
-    }
-
-    public static void printResponseHeaders(HttpURLConnection connection,
-                    String label) {
-        System.out.println("--- " + label + " ---");
-        Map<String, java.util.List<String>> map = connection.getHeaderFields();
-        for (Entry<String, java.util.List<String>> entry : map.entrySet()) {
-            System.out.println("Header " + entry.getKey() + " = " + entry.getValue());
-        }
-        System.out.println();
-    }
-
-}
-```
-
-
-
-The ***testSimpleCorsRequest*** test simulates a client. It first sends a simple CORS request to the ***/configurations/simple*** endpoint, and then it checks for a valid response and expected headers. Lastly, it prints the response headers for you to inspect.
-
-The request is a ***GET*** HTTP request with the following header:
-
-| *Request Header* | *Request Value*
-| ---| ---
-| Origin | The value is set to ***http://openliberty.io***. Indicates that the request originates from ***http://openliberty.io***.
-
-Expect the following response headers and values if the simple CORS request is successful, and the Liberty instance is correctly configured:
-
-| *Response Header* | *Response Value*
-| ---| ---
-| Access-Control-Allow-Origin | The expected value is ***http://openliberty.io***. Indicates whether a resource can be shared based on the returning value of the Origin request header ***http://openliberty.io***.
-| Access-Control-Allow-Credentials | The expected value is ***true***. Indicates that the user credentials can be included in the request.
-| Access-Control-Expose-Headers |  The expected value is ***MyHeader***. Indicates that the header ***MyHeader*** is safe to expose.
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
-
-If the ***testSimpleCorsRequest*** test passes, the response headers with their values from the endpoint are printed. The ***/configurations/simple*** endpoint now accepts simple CORS requests.
-
-Response headers with their values from the endpoint:
-```
---- Simple CORS Request ---
-Header null = [HTTP/1.1 200 OK]
-Header Access-Control-Expose-Headers = [MyHeader]
-Header Access-Control-Allow-Origin = [http://openliberty.io]
-Header Access-Control-Allow-Credentials = [true]
-Header Content-Length = [22]
-Header Content-Language = [en-CA]
-Header Date = [Thu, 21 Mar 2019 17:50:09 GMT]
-Header Content-Type = [text/plain]
-Header X-Powered-By = [Servlet/4.0]
-```
-
-### Enabling a preflight CORS configuration
-
-Configure the Liberty to allow the ***/configurations/preflight*** endpoint to accept a ***preflight*** CORS request. Add another CORS configuration in the Liberty ***server.xml*** configuration file:
-
-Replace the Liberty ***server.xml*** configuration file.
+Replace the ***server.xml*** file of the inventory service.
 
 > To open the server.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-cors/start/src/main/liberty/config/server.xml, or click the following button
+> ***File*** > ***Open*** > guide-jms-intro/start/inventory/src/main/liberty/config/server.xml, or click the following button
 
-::openFile{path="/home/project/guide-cors/start/src/main/liberty/config/server.xml"}
+::openFile{path="/home/project/guide-jms-intro/start/inventory/src/main/liberty/config/server.xml"}
 
 
 
 ```xml
-<server description="Sample Liberty server">
+<server description="Inventory Service">
 
-    <featureManager>
-        <platform>jakartaee-10.0</platform>
-        <feature>restfulWS</feature>
-        <feature>jsonb</feature>
-    </featureManager>
+  <featureManager>
+    <platform>jakartaee-10.0</platform>
+    <platform>microprofile-7.0</platform>
+    <feature>restfulWS</feature>
+    <feature>cdi</feature>
+    <feature>jsonb</feature>
+    <feature>mpHealth</feature>
+    <feature>mpConfig</feature>
+    <feature>messaging</feature>
+    <feature>messagingClient</feature>
+    <feature>messagingServer</feature>
+    <feature>enterpriseBeansLite</feature>
+    <feature>mdb</feature>
+  </featureManager>
 
-    <variable name="http.port" defaultValue="9080"/>
-    <variable name="https.port" defaultValue="9443"/>
+  <variable name="http.port" defaultValue="9081"/>
+  <variable name="https.port" defaultValue="9444"/>
 
-    <httpEndpoint id="defaultHttpEndpoint"
-        host="*" httpPort="${http.port}" httpsPort="${https.port}"/>
+  <httpEndpoint id="defaultHttpEndpoint" host="*"
+                httpPort="${http.port}" httpsPort="${https.port}"/>
 
-    <webApplication location="guide-cors.war" contextRoot="/"/>
+  <wasJmsEndpoint id="InboundJmsCommsEndpoint"
+                  host="*"
+                  wasJmsPort="7277"
+                  wasJmsSSLPort="9101"/>
 
-    <cors domain="/configurations/simple"
-        allowedOrigins="http://openliberty.io"
-        allowedMethods="GET"
-        allowCredentials="true"
-        exposeHeaders="MyHeader"/>
+  <jmsQueue id="InventoryQueue" jndiName="jms/InventoryQueue">
+    <properties.wmqjmsra baseQueueName="${ibmmq-inventory-queue-name}"/>
+  </jmsQueue>
 
-    <cors domain="/configurations/preflight"
-        allowedOrigins="*"
-        allowedMethods="OPTIONS, DELETE"
-        allowCredentials="true"
-        allowedHeaders="MyOwnHeader1, MyOwnHeader2"
-        maxAge="10"/>
+  <jmsActivationSpec id="guide-jms-intro-inventory/InventoryQueueListener">
+    <properties.wmqjmsra
+      hostName="${ibmmq-hostname}"
+      port="${ibmmq-port}"
+      channel="${ibmmq-channel}"
+      queueManager="${ibmmq-queue-manager}"
+      userName="${ibmmq-username}"
+      password="${ibmmq-password}"
+      transportType="CLIENT"/>
+  </jmsActivationSpec>
+
+  <resourceAdapter id="wmqjmsra"
+    location="https://repo.maven.apache.org/maven2/com/ibm/mq/wmq.jakarta.jmsra/9.4.0.0/wmq.jakarta.jmsra-9.4.0.0.rar"/>
+    
+  <logging consoleLogLevel="INFO"/>
+
+  <webApplication location="guide-jms-intro-inventory.war" contextRoot="/"/>
 
 </server>
 ```
 
 
 
-The preflight CORS configuration has different values than the simple CORS configuration.
 
-| *Configuration Attribute* | *Value*
-| ---| ---
-| ***domain***|The value is set to ***/configurations/preflight*** because the ***domain*** is a different endpoint.
-| ***allowedOrigins***| Origins that are allowed to access the endpoint. The value is set to an asterisk (*) to allow requests from all origins.
-| ***allowedMethods***| HTTP methods that a client is allowed to use when it makes requests to the endpoint. The value is set to ***OPTIONS, DELETE***.
-| ***allowCredentials***| A boolean that indicates whether the user credentials can be included in the request. The value is set to ***true***.
+Refine the ***jmsQueue*** and ***jmsActivationSpec*** configurations with the variables for IBM MQ settings. Add the ***resourceAdapter*** element to define the RAR file that provides the IBM MQ classes for Java and JMS. Note that the ***messagingEngine*** and ***jmsConnectionFactory*** configurations are removed from the configuration because they are no longer required.
 
-The following attributes were added:
+Replace the ***pom.xml*** file of the system service.
 
-* ***allowedHeaders***: Headers that a client can use in requests. Set the value to ***MyOwnHeader1, MyOwnHeader2***.
-* ***maxAge***: The number of seconds that a client can cache a response to a preflight request. Set the value to ***10***.
+> To open the pom.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-jms-intro/start/system/pom.xml, or click the following button
 
-Save the changes to the ***server.xml*** configuration file. The ***/configurations/preflight*** endpoint is now ready to be tested with a preflight CORS request.
-
-Add another test to the ***CorsIT.java*** file to test the preflight CORS configuration that you just added:
-
-Replace the ***CorsIT*** class.
-
-> To open the CorsIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-cors/start/src/test/java/it/io/openliberty/guides/cors/CorsIT.java, or click the following button
-
-::openFile{path="/home/project/guide-cors/start/src/test/java/it/io/openliberty/guides/cors/CorsIT.java"}
+::openFile{path="/home/project/guide-jms-intro/start/system/pom.xml"}
 
 
 
-```java
-package it.io.openliberty.guides.cors;
+```xml
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>guide-jms-intro-system</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.util.Map;
-import java.util.Map.Entry;
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- Liberty configuration -->
+        <liberty.var.http.port>9082</liberty.var.http.port>
+        <liberty.var.https.port>9445</liberty.var.https.port>
+        <liberty.var.inventory.jms.host>localhost</liberty.var.inventory.jms.host>
+        <liberty.var.inventory.jms.port>7277</liberty.var.inventory.jms.port>
+        <!-- IBM MQ -->
+        <liberty.var.ibmmq-hostname>localhost</liberty.var.ibmmq-hostname>
+        <liberty.var.ibmmq-port>1414</liberty.var.ibmmq-port>
+        <liberty.var.ibmmq-channel>DEV.APP.SVRCONN</liberty.var.ibmmq-channel>
+        <liberty.var.ibmmq-queue-manager>QM1</liberty.var.ibmmq-queue-manager>
+        <liberty.var.ibmmq-username>app</liberty.var.ibmmq-username>
+        <liberty.var.ibmmq-password>passw0rd</liberty.var.ibmmq-password>
+        <liberty.var.ibmmq-inventory-queue-name>DEV.QUEUE.1</liberty.var.ibmmq-inventory-queue-name>
+    </properties>
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+    <dependencies>
+        <!-- Provided dependencies -->
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>10.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>7.0</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <!-- Required dependencies -->
+        <dependency>
+            <groupId>io.openliberty.guides</groupId>
+            <artifactId>guide-jms-intro-models</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.17</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.17</version>
+        </dependency>
+        <!-- For tests -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.12.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
-public class CorsIT {
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.4.0</version>
+                <configuration>
+                    <packagingExcludes>pom.xml</packagingExcludes>
+                </configuration>
+            </plugin>
 
-    String port = System.getProperty("http.port");
-    String pathToHost = "http://localhost:" + port + "/";
+            <!-- Liberty plugin -->
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.11.3</version>
+            </plugin>
 
-    @BeforeEach
-    public void setUp() {
-        System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
-    }
+            <!-- Plugin to run unit tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.3</version>
+            </plugin>
 
-    @Test
-    public void testSimpleCorsRequest() throws IOException {
-        HttpURLConnection connection = HttpUtils.sendRequest(
-                        pathToHost + "configurations/simple", "GET",
-                        TestData.simpleRequestHeaders);
-        checkCorsResponse(connection, TestData.simpleResponseHeaders);
-
-        printResponseHeaders(connection, "Simple CORS Request");
-    }
-
-    @Test
-    public void testPreflightCorsRequest() throws IOException {
-        HttpURLConnection connection = HttpUtils.sendRequest(
-                        pathToHost + "configurations/preflight", "OPTIONS",
-                        TestData.preflightRequestHeaders);
-        checkCorsResponse(connection, TestData.preflightResponseHeaders);
-
-        printResponseHeaders(connection, "Preflight CORS Request");
-    }
-
-    public void checkCorsResponse(HttpURLConnection connection,
-                    Map<String, String> expectedHeaders) throws IOException {
-        assertEquals(200, connection.getResponseCode(), "Invalid HTTP response code");
-        expectedHeaders.forEach((responseHeader, value) -> {
-            assertEquals(value, connection.getHeaderField(responseHeader),
-                            "Unexpected value for " + responseHeader + " header");
-        });
-    }
-
-    public static void printResponseHeaders(HttpURLConnection connection,
-                    String label) {
-        System.out.println("--- " + label + " ---");
-        Map<String, java.util.List<String>> map = connection.getHeaderFields();
-        for (Entry<String, java.util.List<String>> entry : map.entrySet()) {
-            System.out.println("Header " + entry.getKey() + " = " + entry.getValue());
-        }
-        System.out.println();
-    }
-
-}
+            <!-- Plugin to run integration tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.5.3</version>
+                <executions>
+                    <execution>
+                        <id>integration-test</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                        </goals>
+                        <configuration>
+                            <trimStackTrace>false</trimStackTrace>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>verify</id>
+                        <goals>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
 ```
 
 
 
-The ***testPreflightCorsRequest*** test simulates a client sending a preflight CORS request. It first sends the request to the ***/configurations/preflight*** endpoint, and then it checks for a valid response and expected headers. Lastly, it prints the response headers for you to inspect.
 
-The request is an ***OPTIONS*** HTTP request with the following headers:
+Add the ***liberty.var.ibmmq-**** properties for the IBM MQ container as you did for the ***inventory*** microservice previously.
 
-| *Request Header* | *Request Value*
-| ---| ---
-| Origin | The value is set to ***anywebsiteyoulike.com***. Indicates that the request originates from ***anywebsiteyoulike.com***.
-| Access-Control-Request-Method | The value is set to ***DELETE***. Indicates that the HTTP DELETE method will be used in the actual request.
-| Access-Control-Request-Headers | The value is set to ***MyOwnHeader2***. Indicates the header ***MyOwnHeader2*** will be used in the actual request.
 
-Expect the following response headers and values if the preflight CORS request is successful, and the Liberty instance is correctly configured:
+Replace the ***server.xml*** file of the system service.
 
-| *Response Header* | *Response Value*
-| ---| ---
-| Access-Control-Max-Age | The expected value is ***10***. Indicates that the preflight request can be cached within ***10*** seconds.
-| Access-Control-Allow-Origin | The expected value is ***anywebsiteyoulike.com***. Indicates whether a resource can be shared based on the returning value of the Origin request header ***anywebsiteyoulike.com***.
-| Access-Control-Allow-Methods | The expected value is ***OPTIONS, DELETE***. Indicates that HTTP OPTIONS and DELETE methods can be used in the actual request.
-| Access-Control-Allow-Credentials | The expected value is ***true***. Indicates that the user credentials can be included in the request.
-| Access-Control-Allow-Headers | The expected value is ***MyOwnHeader1, MyOwnHeader2***. Indicates that the header ***MyOwnHeader1*** and ***MyOwnHeader2*** are safe to expose.
+> To open the server.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-jms-intro/start/system/src/main/liberty/config/server.xml, or click the following button
 
-The ***Access-Control-Allow-Origin*** header has a value of ***anywebsiteyoulike.com*** because the Liberty is configured to allow all origins, and the request came with an origin of ***anywebsiteyoulike.com***.
+::openFile{path="/home/project/guide-jms-intro/start/system/src/main/liberty/config/server.xml"}
 
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
 
-If the ***testPreflightCorsRequest*** test passes, the response headers with their values from the endpoint are printed. The ***/configurations/preflight*** endpoint now allows preflight CORS requests.
 
-Response headers with their values from the endpoint:
+```xml
+<server description="System Service">
+
+  <featureManager>
+    <platform>jakartaee-10.0</platform>
+    <platform>microprofile-7.0</platform>
+    <feature>cdi</feature>
+    <feature>jsonb</feature>
+    <feature>mpHealth</feature>
+    <feature>mpConfig</feature>
+    <feature>messaging</feature>
+    <feature>messagingClient</feature>
+    <feature>enterpriseBeansLite</feature>
+    <feature>mdb</feature>
+  </featureManager>
+
+  <variable name="http.port" defaultValue="9082"/>
+  <variable name="https.port" defaultValue="9445"/>
+  <variable name="inventory.jms.host" defaultValue="localhost"/>
+  <variable name="inventory.jms.port" defaultValue="7277"/>
+
+  <httpEndpoint id="defaultHttpEndpoint" host="*"
+                httpPort="${http.port}" httpsPort="${https.port}" />
+
+  <connectionManager id="InventoryCM" maxPoolSize="400" minPoolSize="1"/>
+
+  <jmsConnectionFactory
+    connectionManagerRef="InventoryCM"
+    jndiName="InventoryConnectionFactory">
+    <properties.wmqjmsra
+      hostName="${ibmmq-hostname}"
+      port="${ibmmq-port}"
+      channel="${ibmmq-channel}"
+      queueManager="${ibmmq-queue-manager}"
+      userName="${ibmmq-username}"
+      password="${ibmmq-password}"
+      transportType="CLIENT" />
+  </jmsConnectionFactory>
+
+  <jmsQueue id="InventoryQueue" jndiName="jms/InventoryQueue">
+    <properties.wmqjmsra baseQueueName="${ibmmq-inventory-queue-name}"/>
+  </jmsQueue>
+
+  <resourceAdapter id="wmqjmsra"
+    location="https://repo.maven.apache.org/maven2/com/ibm/mq/wmq.jakarta.jmsra/9.4.0.0/wmq.jakarta.jmsra-9.4.0.0.rar"/>
+
+  <logging consoleLogLevel="INFO"/>
+
+  <webApplication location="guide-jms-intro-system.war" contextRoot="/"/>
+
+</server>
 ```
---- Preflight CORS Request ---
-Header null = [HTTP/1.1 200 OK]
-Header Access-Control-Allow-Origin = [anywebsiteyoulike.com]
-Header Access-Control-Allow-Methods = [OPTIONS, DELETE]
-Header Access-Control-Allow-Credentials = [true]
-Header Content-Length = [0]
-Header Access-Control-Max-Age = [10]
-Header Date = [Thu, 21 Mar 2019 18:21:13 GMT]
-Header Content-Language = [en-CA]
-Header Access-Control-Allow-Headers = [MyOwnHeader1, MyOwnHeader2]
-Header X-Powered-By = [Servlet/4.0]
+
+
+
+
+Replace the ***properties.wasJms*** configuration by the ***properties.wmqjmsra*** configuration. All property values are defined in the ***pom.xml*** file that you replaced. Also, modify the ***jmsQueue*** property to set the ***baseQueueName*** value with the ***${ibmmq-inventory-queue-name}*** variable. Add the ***resourceAdapter*** element like you did for the ***inventory*** microservice.
+
+
+Start the ***inventory*** microservice by running the following command in dev mode:
+
+
+```bash
+cd /home/project/guide-jms-intro/start
+./mvnw -pl inventory liberty:dev
 ```
 
-You can modify the Liberty configuration and the test code to experiment with the various CORS configuration attributes.
+Next, open another command-line session, navigate to the ***start*** directory, and start the ***system*** microservice by using the following command:
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
 
+```bash
+cd /home/project/guide-jms-intro/start
+./mvnw -pl system liberty:dev
+```
+
+When you see the following message, your Liberty instances are ready in dev mode:
+
+```
+The defaultServer server is ready to run a smarter planet.
+```
+
+
+
+Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
+
+
+You can access the ***inventory*** microservice by the ***http\://localhost:9081/inventory/systems*** URL.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl -s http://localhost:9081/inventory/systems | jq
+```
+
+
+
+In the command shell where ***inventory*** dev mode is running, press ***enter/return*** to run the tests. If the tests pass, you'll see output that is similar to the following example:
+
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.325 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+
+Results :
+
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+```
+
+After you are finished checking out the application, stop the Liberty instances by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***inventory*** microservices.
+
+Run the following commands to stop the running IBM MQ container and clean up the ***qm1data*** volume:
+
+```bash
+docker stop QM1
+docker rm QM1
+docker volume remove qm1data
+```
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You enabled CORS support in Open Liberty. You added two different CORS configurations to allow two kinds of CORS requests in the Liberty **server.xml** configuration file.
-
+You just developed a Java cloud-native application that uses Jakarta Messaging to produce and consume messages in Open Liberty.
 
 
 
@@ -465,31 +588,30 @@ You enabled CORS support in Open Liberty. You added two different CORS configura
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-cors*** project by running the following commands:
+Delete the ***guide-jms-intro*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-cors
+rm -fr guide-jms-intro
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Enabling%20Cross-Origin%20Resource%20Sharing%20(CORS)&guide-id=cloud-hosted-guide-cors)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Producing%20and%20consuming%20messages%20in%20Java%20microservices&guide-id=cloud-hosted-guide-jms-intro)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-cors/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-cors/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-jms-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-jms-intro/pulls)
 
 
 
 ### Where to next?
 
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
+* [Bidirectional communication between services using Jakarta WebSocket](https://openliberty.io/guides/jakarta-websocket.html)
 
 
 ### Log out of the session
