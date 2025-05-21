@@ -198,7 +198,6 @@ To compile the ***.proto*** file, the ***pom.xml*** Maven configuration file nee
 Run the following command to generate the gRPC classes.
 
 ```bash
-cd finish
 ./mvnw -pl systemproto install
 ```
 
@@ -222,7 +221,7 @@ Open another command-line session, navigate to the ***start*** directory, and ru
 
 
 ```bash
-./mvnw -pl query liberty:run
+./mvnw -pl query liberty:dev
 ```
 
 After you see the following message, your Liberty instances are ready in dev mode:
