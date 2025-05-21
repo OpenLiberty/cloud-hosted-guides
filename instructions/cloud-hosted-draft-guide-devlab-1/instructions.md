@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Testing microservices with the Arquillian managed container guide!"}
+::page{title="Welcome to the Testing microservices with consumer-driven contracts guide!"}
 
-Learn how to develop tests for your microservices with the Arquillian managed container and run the tests on Open Liberty.
+Learn how to test Java microservices with consumer-driven contracts in Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -16,11 +16,23 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You will learn how to develop tests for your microservices by using the [Arquillian Liberty Managed container](https://github.com/OpenLiberty/liberty-arquillian/tree/master/liberty-managed) and JUnit with Maven on Open Liberty. [Arquillian](http://arquillian.org/) is a testing framework to develop automated functional, integration and acceptance tests for your Java applications. Arquillian sets up the test environment and handles the application server lifecycle for you so you can focus on writing tests.
+With a microservices-based architecture, you need robust testing to ensure that microservices that depend on one another are able to communicate effectively.  Typically, to prevent multiple points of failure at different integration points, a combination of unit, integration, and end-to-end tests are used. While unit tests are fast, they are less trustworthy because they run in isolation and usually rely on mock data.
 
-You will develop Arquillian tests that use JUnit as the runner and build your tests with Maven using the Liberty Maven plug-in. This technique simplifies the process of managing Arquillian dependencies and the setup of your Arquillian managed container.
+Integration tests address this issue by testing against real running services. However, they tend to be slow as the tests depend on other microservices and are less reliable because they are prone to external changes.
 
-You will work with an ***inventory*** microservice, which stores information about various systems. The ***inventory*** service communicates with the ***system*** service on a particular host to retrieve its system properties and store them. You will develop functional and integration tests for the microservices. You will also learn about the Maven and Liberty configurations so that you can run your tests on Open Liberty with the Arquillian Liberty Managed container.
+Usually, end-to-end tests are more trustworthy because they verify functionality from the perspective of a user. However, a graphical user interface (GUI) component is often required to perform end-to-end tests, and GUI components rely on third-party software, such as Selenium, which requires heavy computation time and resources.
+
+*What is contract testing?*
+
+Contract testing bridges the gaps among the shortcomings of these different testing methodologies. Contract testing is a technique for testing an integration point by isolating each microservice and checking whether the HTTP requests and responses that the microservice transmits conform to a shared understanding that is documented in a contract. This way, contract testing ensures that microservices can communicate with each other.
+
+[Pact](https://docs.pact.io/) is an open source contract testing tool for testing HTTP requests, responses, and message integrations by using contract tests.
+
+The [Pact Broker](https://docs.pact.io/pact_broker/docker_images) is an application for sharing Pact contracts and verification results. The Pact Broker is also an important piece for integrating Pact into continuous integration and continuous delivery (CI/CD) pipelines.
+
+The two microservices you will interact with are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of its host. The ***inventory*** microservice retrieves specific properties from the ***system*** microservice.
+
+You will learn how to use the Pact framework to write contract tests for the ***inventory*** microservice that will then be verified by the ***system*** microservice.
 
 ::page{title="Getting started"}
 
@@ -33,11 +45,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-arquillian-managed.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-contract-testing.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-arquillian-managed.git
-cd guide-arquillian-managed
+git clone https://github.com/openliberty/guide-contract-testing.git
+cd guide-contract-testing
 ```
 
 
@@ -45,57 +57,48 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-### Try what you'll build
+### Starting the Pact Broker
 
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-
-Run the following commands to navigate to the ***finish*** directory and run the tests:
-
-
+Run the following command to start the Pact Broker:
 ```bash
-cd finish
-./mvnw clean package
-./mvnw liberty:create liberty:install-feature
-./mvnw liberty:configure-arquillian
-./mvnw failsafe:integration-test
+docker-compose -f "pact-broker/docker-compose.yml" up -d --build
 ```
 
-Look for the following output:
-
+When the Pact Broker is running, you'll see the following output:
 ```
-[INFO] -------------------------------------------------------
-[INFO]  T E S T S
-[INFO] -------------------------------------------------------
-[INFO] Running it.io.openliberty.guides.system.SystemArquillianIT
 ...
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.133 s - in it.io.openliberty.guides.system.SystemArquillianIT
-[INFO] Running it.io.openliberty.guides.inventory.InventoryArquillianIT
-...
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.297 s - in it.io.openliberty.guides.
-...
-[INFO] Results:
-[INFO]
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-...
-[INFO] ------------------------------------------------------------------------
-[INFO] BUILD SUCCESS
-[INFO] ------------------------------------------------------------------------
-...
+Container pact-broker-postgres-1      Started
+Container pact-broker-pact-broker-1   Started
 ```
 
-::page{title="Developing Arquillian tests"}
+
+Click the following button to visit the Pact Broker to confirm that it is working. The Pact Broker can be found at the `https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai` URL, where ***accountname*** is your account name.
+
+::startApplication{port="9292" display="external" name="Visit Pact Broker" route="/"}
+
+Confirm that you can access the user interface of the Pact Broker. The Pact Broker interface is similar to the following image:
+
+![Pact Broker webpage](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/prod/assets/pact-broker-webpage.png)
+
+
+
+
+
+You can refer to the [official Pact Broker documentation](https://docs.pact.io/pact_broker/docker_images/pactfoundation) for more information about the components of the Docker Compose file.
+
+::page{title="Implementing pact testing in the inventory service"}
 
 Navigate to the ***start*** directory to begin.
-```bash
-cd /home/project/guide-arquillian-managed/start
-```
 
-You'll develop tests that use Arquillian and JUnit to verify the ***inventory*** microservice as an endpoint and the functions of the ***InventoryResource*** class. The code for the microservices is in the ***src/main/java/io/openliberty/guides*** directory.
+```bash
+cd /home/project/guide-contract-testing/start
+```
 
 When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
+
 ```bash
-./mvnw liberty:dev
+./mvnw -f inventory/pom.xml liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
@@ -107,115 +110,143 @@ After you see the following message, your Liberty instance is ready in dev mode:
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-Create the ***InventoryArquillianIT*** test class.
+Create the InventoryPactIT class file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-arquillian-managed/start/src/test/java/it/io/openliberty/guides/inventory/InventoryArquillianIT.java
+touch /home/project/guide-contract-testing/start/inventory/src/test/java/io/openliberty/guides/inventory/InventoryPactIT.java
 ```
 
 
-> Then, to open the InventoryArquillianIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-arquillian-managed/start/src/test/java/it/io/openliberty/guides/inventory/InventoryArquillianIT.java, or click the following button
+> Then, to open the InventoryPactIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-contract-testing/start/inventory/src/test/java/io/openliberty/guides/inventory/InventoryPactIT.java, or click the following button
 
-::openFile{path="/home/project/guide-arquillian-managed/start/src/test/java/it/io/openliberty/guides/inventory/InventoryArquillianIT.java"}
+::openFile{path="/home/project/guide-contract-testing/start/inventory/src/test/java/io/openliberty/guides/inventory/InventoryPactIT.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.inventory;
 
-import java.net.URL;
-import java.util.List;
+package io.openliberty.guides.inventory;
 
-import jakarta.inject.Inject;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.Response;
+import au.com.dius.pact.consumer.dsl.PactDslJsonArray;
+import au.com.dius.pact.consumer.dsl.PactDslJsonBody;
+import au.com.dius.pact.consumer.dsl.PactDslWithProvider;
+import au.com.dius.pact.consumer.junit.PactProviderRule;
+import au.com.dius.pact.consumer.junit.PactVerification;
+import au.com.dius.pact.core.model.RequestResponsePact;
+import au.com.dius.pact.core.model.annotations.Pact;
 
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.container.test.api.RunAsClient;
-import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.arquillian.junit.InSequence;
-import org.jboss.arquillian.test.api.ArquillianResource;
-import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
-import io.openliberty.guides.inventory.InventoryResource;
-import io.openliberty.guides.inventory.model.InventoryList;
-import io.openliberty.guides.inventory.model.SystemData;
+import static org.junit.Assert.assertEquals;
 
-@RunWith(Arquillian.class)
-public class InventoryArquillianIT {
+import java.util.HashMap;
+import java.util.Map;
 
-    private static final String WARNAME = System.getProperty("arquillian.war.name");
-    private final String INVENTORY_SYSTEMS = "inventory/systems";
-    private Client client = ClientBuilder.newClient();
+public class InventoryPactIT {
+  @Rule
+  public PactProviderRule mockProvider = new PactProviderRule("System", this);
 
-    @Deployment(testable = true)
-    public static WebArchive createDeployment() {
-        WebArchive archive = ShrinkWrap.create(WebArchive.class, WARNAME)
-                                       .addPackages(true, "io.openliberty.guides");
-        return archive;
-    }
+  @Pact(consumer = "Inventory")
+  public RequestResponsePact createPactServer(PactDslWithProvider builder) {
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put("Content-Type", "application/json");
 
-    @ArquillianResource
-    private URL baseURL;
+    return builder
+      .given("wlp.server.name is defaultServer")
+      .uponReceiving("a request for server name")
+      .path("/system/properties/key/wlp.server.name")
+      .method("GET")
+      .willRespondWith()
+      .headers(headers)
+      .status(200)
+      .body(new PactDslJsonArray().object()
+        .stringValue("wlp.server.name", "defaultServer"))
+      .toPact();
+  }
 
-    @Inject
-    InventoryResource invSrv;
+  @Pact(consumer = "Inventory")
+  public RequestResponsePact createPactEdition(PactDslWithProvider builder) {
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put("Content-Type", "application/json");
 
-    @Test
-    @RunAsClient
-    @InSequence(1)
-    public void testInventoryEndpoints() throws Exception {
-        String localhosturl = baseURL + INVENTORY_SYSTEMS + "/localhost";
+    return builder
+      .given("Default directory is true")
+      .uponReceiving("a request to check for the default directory")
+      .path("/system/properties/key/wlp.user.dir.isDefault")
+      .method("GET")
+      .willRespondWith()
+      .headers(headers)
+      .status(200)
+      .body(new PactDslJsonArray().object()
+        .stringValue("wlp.user.dir.isDefault", "true"))
+      .toPact();
+  }
 
-        WebTarget localhosttarget = client.target(localhosturl);
-        Response localhostresponse = localhosttarget.request().get();
+  @Pact(consumer = "Inventory")
+  public RequestResponsePact createPactVersion(PactDslWithProvider builder) {
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put("Content-Type", "application/json");
 
-        Assert.assertEquals("Incorrect response code from " + localhosturl, 200,
-                            localhostresponse.getStatus());
+    return builder
+      .given("version is 1.1")
+      .uponReceiving("a request for the version")
+      .path("/system/properties/version")
+      .method("GET")
+      .willRespondWith()
+      .headers(headers)
+      .status(200)
+      .body(new PactDslJsonBody()
+        .decimalType("system.properties.version", 1.1))
+      .toPact();
+  }
 
-        JsonObject localhostobj = localhostresponse.readEntity(JsonObject.class);
-        Assert.assertEquals("The system property for the local and remote JVM "
-                        + "should match", System.getProperty("os.name"),
-                            localhostobj.getString("os.name"));
+  @Pact(consumer = "Inventory")
+  public RequestResponsePact createPactInvalid(PactDslWithProvider builder) {
 
-        String invsystemsurl = baseURL + INVENTORY_SYSTEMS;
+    return builder
+      .given("invalid property")
+      .uponReceiving("a request with an invalid property")
+      .path("/system/properties/invalidProperty")
+      .method("GET")
+      .willRespondWith()
+      .status(404)
+      .toPact();
+  }
 
-        WebTarget invsystemstarget = client.target(invsystemsurl);
-        Response invsystemsresponse = invsystemstarget.request().get();
+  @Test
+  @PactVerification(value = "System", fragment = "createPactServer")
+  public void runServerTest() {
+    String serverName = new Inventory(mockProvider.getUrl()).getServerName();
+    assertEquals("Expected server name does not match",
+      "[{\"wlp.server.name\":\"defaultServer\"}]", serverName);
+  }
 
-        Assert.assertEquals("Incorrect response code from " + localhosturl, 200,
-                            invsystemsresponse.getStatus());
+  @Test
+  @PactVerification(value = "System", fragment = "createPactEdition")
+  public void runEditionTest() {
+    String edition = new Inventory(mockProvider.getUrl()).getEdition();
+    assertEquals("Expected edition does not match",
+      "[{\"wlp.user.dir.isDefault\":\"true\"}]", edition);
+  }
 
-        JsonObject invsystemsobj = invsystemsresponse.readEntity(JsonObject.class);
+  @Test
+  @PactVerification(value = "System", fragment = "createPactVersion")
+  public void runVersionTest() {
+    String version = new Inventory(mockProvider.getUrl()).getVersion();
+    assertEquals("Expected version does not match",
+      "{\"system.properties.version\":1.1}", version);
+  }
 
-        int expected = 1;
-        int actual = invsystemsobj.getInt("total");
-        Assert.assertEquals("The inventory should have one entry for localhost",
-                            expected, actual);
-        localhostresponse.close();
-    }
-
-    @Test
-    @InSequence(2)
-    public void testInventoryResourceFunctions() {
-        InventoryList invList = invSrv.listContents();
-        Assert.assertEquals(1, invList.getTotal());
-
-        List<SystemData> systemDataList = invList.getSystems();
-        Assert.assertTrue(systemDataList.get(0).getHostname().equals("localhost"));
-
-        Assert.assertTrue(systemDataList.get(0).getProperties().get("os.name")
-                                        .equals(System.getProperty("os.name")));
-    }
+  @Test
+  @PactVerification(value = "System", fragment = "createPactInvalid")
+  public void runInvalidTest() {
+    String invalid = new Inventory(mockProvider.getUrl()).getInvalidProperty();
+    assertEquals("Expected invalid property response does not match",
+      "", invalid);
+  }
 }
 ```
 
@@ -223,190 +254,600 @@ public class InventoryArquillianIT {
 Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-Notice that the JUnit Arquillian runner runs the tests instead of the standard JUnit runner. The ***@RunWith*** annotation preceding the class tells JUnit to run the tests by using Arquillian.
+The ***InventoryPactIT*** class contains a ***PactProviderRule*** mock provider that mimics the HTTP responses from the ***system*** microservice. The ***@Pact*** annotation takes the name of the microservice as a parameter, which makes it easier to differentiate microservices from each other when you have multiple applications.
 
-The method annotated by ***@Deployment*** defines the content of the web archive, which is going to be deployed onto the Open Liberty. The tests are either run on or against the Liberty instance. The ***testable = true*** attribute enables the deployment to run the tests "in container", that is the tests are run on the Liberty instance.
+The ***createPactServer()*** method defines the minimal expected responses for a specific endpoint, which is known as an interaction. For each interaction, the expected request and the response are registered with the mock service by using the ***@PactVerification*** annotation.
 
+The test sends a real request with the ***getUrl()*** method of the mock provider. The mock provider compares the actual request with the expected request and confirms whether the comparison is successful. Finally, the ***assertEquals()*** method confirms that the response is correct.
 
-The ***WARNAME*** variable is used to name the web archive and is defined in the ***pom.xml*** file. This name is necessary if you don't want a randomly generated web archive name.
+Replace the inventory Maven project file.
 
-The ShrinkWrap API is used to create the web archive. All of the packages in the ***inventory*** service must be added to the web archive; otherwise, the code compiles successfully but fails at runtime when the injection of the ***InventoryResource*** class takes place. You can learn about the ShrinkWrap archive configuration in this [Arquillian guide](http://arquillian.org/guides/shrinkwrap_introduction/).
+> To open the pom.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-contract-testing/start/inventory/pom.xml, or click the following button
 
-The ***@ArquillianResource*** annotation is used to retrieve the ***http://localhost:9080/arquillian-managed/*** base URL for this web service. The annotation provides the host name, port number and web archive information for this service, so you don't need to hardcode these values in the test case. The ***arquillian-managed*** path in the URL comes from the WAR name you specified when you created the web archive in the ***@Deployment*** annotated method. It's needed when the ***inventory*** service communicates with the ***system*** service to get the system properties.
-
-The ***testInventoryEndpoints*** method is an integration test to test the ***inventory*** service endpoints. The ***@RunAsClient*** annotation added in this test case indicates that this test case is to be run on the client side. By running the tests on the client side, the tests are run against the managed container. The endpoint test case first calls the ***http://localhost:9080/{WARNAME}/inventory/systems/{hostname}*** endpoint with the ***localhost*** host name to add its system properties to the inventory. The test verifies that the system property for the local and service JVM match. Then, the test method calls the ***http://localhost:9080/{WARNAME}/inventory/systems*** endpoint. The test checks that the inventory has one host and that the host is ***localhost***. The test also verifies that the system property stored in the inventory for the local and service JVM match.
-
-Contexts and Dependency Injection (CDI) is used to inject an instance of the ***InventoryResource*** class into this test class. You can learn more about CDI in the [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html) guide.
-
-The injected ***InventoryResource*** instance is then tested by the ***testInventoryResourceFunctions*** method. This test case calls the ***listContents()*** method to get all systems that are stored in this inventory and verifies that ***localhost*** is the only system being found. Notice the functional test case doesn't store any system in the inventory, the ***localhost*** system is from the endpoint test case that ran before this test case. The ***@InSequence*** Arquillian annotation guarantees the test sequence. The sequence is important for the two tests, as the results in the first test impact the second one.
-
-The test cases are ready to run. You will configure the Maven build and the Liberty configuration to run them.
-
-::page{title="Configuring Arquillian with Liberty"}
-
-Configure your build to use the Arquillian Liberty Managed container and set up your Open Liberty to run your test cases by configuring the ***server.xml*** file.
-
-### Configuring your test build
-
-First, configure your test build with Maven. All of the Maven configuration takes place in the ***pom.xml*** file, which is provided for you.
+::openFile{path="/home/project/guide-contract-testing/start/inventory/pom.xml"}
 
 
-> From the menu of the IDE, select ***File*** > ***Open*** > guide-arquillian-managed/start/pom.xml, or click the following button
 
-::openFile{path="/home/project/guide-arquillian-managed/start/pom.xml"}
+```xml
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-Let's look into each of the required elements for this configuration.
+    <modelVersion>4.0.0</modelVersion>
 
-You need the ***arquillian-bom*** Bill of Materials. It's a Maven artifact that defines the versions of Arquillian dependencies to make dependency management easier.
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>guide-contract-testing-inventory</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
 
-The ***arquillian-liberty-managed-junit*** dependency bundle, which includes all the core dependencies, is required to run the Arquillian tests on a managed Liberty container that uses JUnit. You can learn more about the [Arquillian Liberty dependency bundles](https://github.com/OpenLiberty/arquillian-liberty-dependencies).
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <!-- Liberty configuration -->
+        <liberty.var.http.port>9091</liberty.var.http.port>
+        <liberty.var.https.port>9454</liberty.var.https.port>
+    </properties>
 
-The ***maven-failsafe-plugin*** artifact runs your Arquillian integration tests by using JUnit.
+    <dependencies>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>7.0</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>10.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- For tests -->
+        <dependency>
+            <groupId>au.com.dius</groupId>
+            <artifactId>pact-jvm-consumer-junit</artifactId>
+            <version>4.0.10</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.17</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>6.2.12.Final</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
-Lastly, specify the ***liberty-maven-plugin*** configuration that defines your Open Liberty runtime configuration. When the application runs in an Arquillian Liberty managed container, the name of the ***.war*** file is used as the context root of the application. You can pass context root information to the application and customize the container by using the ***arquillianProperties*** configuration. To allow connections to Liberty running in dev mode, set ***allowConnectingToRunningServer*** to ***true***.
-
-
-To learn more about the ***arquillianProperties*** configuration, see the [Arquillian Liberty Managed documentation](https://github.com/OpenLiberty/liberty-arquillian/blob/main/liberty-managed/README.md#configuration).
-
-
-### Configuring Liberty's ***server.xml*** configuration file
-
-Now that you're done configuring your Maven build, set up your Open Liberty to run your test cases by configuring the ***server.xml*** configuration file.
-
-Take a look at the ***server.xml*** file.
-
-
-> From the menu of the IDE, select ***File*** > ***Open*** > guide-arquillian-managed/start/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-arquillian-managed/start/src/main/liberty/config/server.xml"}
-
-The ***localConnector*** feature is required by the Arquillian Liberty Managed container to connect to and communicate with the Open Liberty runtime. The ***servlet*** feature is required during the deployment of the Arquillian tests in which servlets are created to perform the in-container testing.
-
-Open another command-line session and run the ***configure-arquillian*** goal from the ***start*** directory to integrate Arquillian and the Arquillian Liberty managed and remote containers with your existing project.
-
-
-```bash
-cd /home/project/guide-arquillian-managed/start
-./mvnw liberty:configure-arquillian
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>au.com.dius.pact.provider</groupId>
+                <artifactId>maven</artifactId>
+                <version>4.6.17</version>
+                <configuration>
+                    <serviceProviders>
+                        <serviceProvider>
+                            <name>System</name>
+                            <protocol>http</protocol>
+                            <host>localhost</host>
+                            <port>9090</port>
+                            <path>/</path>
+                            <pactFileDirectory>target/pacts</pactFileDirectory>
+                        </serviceProvider>
+                    </serviceProviders>
+                    <projectVersion>${project.version}</projectVersion>
+                    <skipPactPublish>false</skipPactPublish>
+                    <pactBrokerUrl>http://localhost:9292</pactBrokerUrl>
+                    <tags>
+                        <tag>open-liberty-pact</tag>
+                    </tags>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.4.0</version>
+            </plugin>
+            <!-- Plugin to run functional tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.5.3</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <http.port>${liberty.var.http.port}</http.port>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+            <!-- Enable liberty-maven plugin -->
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.11.3</version>
+            </plugin>
+        </plugins>
+    </build>
+</project>
 ```
 
-Because you started Open Liberty in dev mode, all the changes were automatically picked up. You can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode. Look for the following output:
 
+
+The Pact framework provides a ***Maven*** plugin that can be added to the build section of the ***pom.xml*** file. The ***serviceProvider*** element defines the endpoint URL for the ***system*** microservice and the ***pactFileDirectory*** directory where you want to store the pact file. The ***pact-jvm-consumer-junit*** dependency provides the base test class that you can use with JUnit to build unit tests.
+
+After you create the ***InventoryPactIT.java*** class and replace the ***pom.xml*** file, Open Liberty automatically reloads its configuration.
+
+The contract between the ***inventory*** and ***system*** microservices is known as a pact. Each pact is a collection of interactions. In this guide, those interactions are defined in the ***InventoryPactIT*** class.
+
+Press the ***enter/return*** key to run the tests and generate the pact file from the command-line session where you started the ***inventory*** microservice.
+
+When completed, you'll see a similar output to the following example:
 ```
 [INFO] -------------------------------------------------------
 [INFO]  T E S T S
 [INFO] -------------------------------------------------------
-[INFO] Running it.io.openliberty.guides.system.SystemArquillianIT
-...
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.133 s - in it.io.openliberty.guides.system.SystemArquillianIT
-[INFO] Running it.io.openliberty.guides.inventory.InventoryArquillianIT
-...
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.297 s - in it.io.openliberty.guides.
-...
-[INFO] Results:
-[INFO]
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-...
-```
-
-
-::page{title="Running the tests"}
-
-It's now time to build and run your Arquillian tests outside of dev mode. Exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty in the previous section.
-
-Run the Maven command to package the application. Then, run the Liberty Maven Plugin goals to create the Liberty instance, install the features, and deploy the application to the instance. The ***configure-arquillian*** goal configures your Arquillian container. You can learn more about this goal in the [configure-arquillian goal documentation](https://github.com/OpenLiberty/ci.maven/blob/main/docs/configure-arquillian.md).
-
-```bash
-cd /home/project/guide-arquillian-managed/start
-./mvnw clean package
-./mvnw liberty:create liberty:install-feature
-./mvnw liberty:configure-arquillian
-```
-
-Now, you can run your Arquillian tests with the Maven ***integration-test*** goal:
-
-
-```bash
-./mvnw failsafe:integration-test
-```
-
-In the test output, you can see that the Liberty instance launched, and that the web archive, ***arquillian-managed***, started as an application in the instance. You can also see that the tests are running and that the results are reported.
-
-After the tests stop running, the test application is automatically undeployed and the instance shuts down. You should then get a message indicating that the build and tests are successful.
-
-```
-[INFO] -------------------------------------------------------
-[INFO]  T E S T S
-[INFO] -------------------------------------------------------
-[INFO] Running it.io.openliberty.guides.system.SystemArquillianIT
-...
-[AUDIT   ] CWWKE0001I: The server defaultServer has been launched.
-[AUDIT   ] CWWKG0093A: Processing configuration drop-ins resource: guide-arquillian-managed/finish/target/liberty/wlp/usr/servers/defaultServer/configDropins/overrides/liberty-plugin-variable-config.xml
-[INFO    ] CWWKE0002I: The kernel started after 0.854 seconds
-[INFO    ] CWWKF0007I: Feature update started.
-[AUDIT   ] CWWKZ0058I: Monitoring dropins for applications.
-[INFO    ] Aries Blueprint packages not available. So namespaces will not be registered
-[INFO    ] CWWKZ0018I: Starting application guide-arquillian-managed.
-...
-[INFO    ] SRVE0169I: Loading Web Module: guide-arquillian-managed.
-[INFO    ] SRVE0250I: Web Module guide-arquillian-managed has been bound to default_host.
-[AUDIT   ] CWWKT0016I: Web application available (default_host): http://localhost:9080/
-[INFO    ] SESN0176I: A new session context will be created for application key default_host/
-[INFO    ] SESN0172I: The session manager is using the Java default SecureRandom implementation for session ID generation.
-[AUDIT   ] CWWKZ0001I: Application guide-arquillian-managed started in 1.126 seconds.
-[INFO    ] CWWKO0219I: TCP Channel defaultHttpEndpoint has been started and is now listening for requests on host localhost  (IPv4: 127.0.0.1) port 9080.
-[AUDIT   ] CWWKF0012I: The server installed the following features: [cdi-2.0, jaxrs-2.1, jaxrsClient-2.1, jndi-1.0, jsonp-1.1, localConnector-1.0, mpConfig-1.3, servlet-4.0].
-[INFO    ] CWWKF0008I: Feature update completed in 2.321 seconds.
-[AUDIT   ] CWWKF0011I: The defaultServer server is ready to run a smarter planet. The defaultServer server started in 3.175 seconds.
-[INFO    ] CWWKZ0018I: Starting application arquillian-managed.
-...
-[INFO    ] SRVE0169I: Loading Web Module: arquillian-managed.
-[INFO    ] SRVE0250I: Web Module arquillian-managed has been bound to default_host.
-[AUDIT   ] CWWKT0016I: Web application available (default_host): http://localhost:9080/arquillian-managed/
-...
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.133 s - in it.io.openliberty.guides.system.SystemArquillianIT
-[INFO] Running it.io.openliberty.guides.inventory.InventoryArquillianIT
-[INFO    ] CWWKZ0018I: Starting application arquillian-managed.
-[INFO    ] CWWKZ0136I: The arquillian-managed application is using the archive file at the guide-arquillian-managed/finish/target/liberty/wlp/usr/servers/defaultServer/dropins/arquillian-managed.war location.
-[INFO    ] SRVE0169I: Loading Web Module: arquillian-managed.
-[INFO    ] SRVE0250I: Web Module arquillian-managed has been bound to default_host.
-...
-[INFO    ] Setting the server's publish address to be /inventory/
-[INFO    ] SRVE0242I: [arquillian-managed] [/arquillian-managed] [io.openliberty.guides.inventory.InventoryApplication]: Initialization successful.
-[INFO    ] Setting the server's publish address to be /system/
-[INFO    ] SRVE0242I: [arquillian-managed] [/arquillian-managed] [io.openliberty.guides.system.SystemApplication]: Initialization successful.
-[INFO    ] SRVE0242I: [arquillian-managed] [/arquillian-managed] [ArquillianServletRunner]: Initialization successful.
-[AUDIT   ] CWWKT0017I: Web application removed (default_host): http://localhost:9080/arquillian-managed/
-[INFO    ] SRVE0253I: [arquillian-managed] [/arquillian-managed] [ArquillianServletRunner]: Destroy successful.
-[INFO    ] SRVE0253I: [arquillian-managed] [/arquillian-managed] [io.openliberty.guides.inventory.InventoryApplication]: Destroy successful.
-[AUDIT   ] CWWKZ0009I: The application arquillian-managed has stopped successfully.
-[INFO    ] SRVE9103I: A configuration file for a web server plugin was automatically generated for this server at guide-arquillian-managed/finish/target/liberty/wlp/usr/servers/defaultServer/logs/state/plugin-cfg.xml.
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.297 s - in it.io.openliberty.guides.inventory.InventoryArquillianIT
-...
-Stopping server defaultServer.
-...
-Server defaultServer stopped.
+[INFO] Running io.openliberty.guides.inventory.InventoryPactIT
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.631 s - in io.openliberty.guides.inventory.InventoryPactIT
 [INFO]
 [INFO] Results:
 [INFO]
 [INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-[INFO]
-[INFO] ------------------------------------------------------------------------
-[INFO] BUILD SUCCESS
-[INFO] ------------------------------------------------------------------------
-[INFO] Total time:  12.018 s
-[INFO] Finished at: 2020-06-23T12:40:32-04:00
-[INFO] ------------------------------------------------------------------------
+```
+
+When you integrate the Pact framework in a CI/CD build pipeline, you can use the Maven ***failsafe:integration-test*** goal to generate the pact file. The Maven failsafe plug-in provides a lifecycle phase for running integration tests that run after unit tests. By default, it looks for classes that are suffixed with ***IT***, which stands for Integration Test. You can refer to the [Maven failsafe plug-in documentation](https://maven.apache.org/surefire/maven-failsafe-plugin/) for more information.
+
+The generated pact file is named ***Inventory-System.json*** and is located in the ***inventory/target/pacts*** directory. The pact file contains the defined interactions in JSON format:
+
+```
+{
+...
+"interactions": [
+{
+      "description": "a request for server name",
+      "request": {
+        "method": "GET",
+        "path": "/system/properties/key/wlp.server.name"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": [
+          {
+            "wlp.server.name": "defaultServer"
+          }
+        ]
+      },
+      "providerStates": [
+        {
+          "name": "wlp.server.name is defaultServer"
+        }
+      ]
+    }
+...
+  ]
+}
+```
+
+
+Open a new command-line session and navigate to the `start` directory.
+
+```bash
+cd /home/project/guide-contract-testing/start
+```
+
+Publish the generated pact file to the Pact Broker by running the following command:
+
+
+```bash
+./mvnw -f inventory/pom.xml pact:publish
+```
+
+After the file is published, you'll see a similar output to the following example:
+```
+--- maven:4.1.21:publish (default-cli) @ inventory ---
+Publishing 'Inventory-System.json' with tags 'open-liberty-pact' ... OK
+```
+
+::page{title="Verifying the pact in the Pact Broker"}
+
+
+Refresh the Pact Broker at the `https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai` URL, where ***accountname*** is your account name.
+
+::startApplication{port="9292" display="external" name="Visit Pact Broker" route="/"}
+
+The last verified column doesn't show a timestamp because the ***system*** microservice hasn't verified the pact yet.
+
+![Pact Broker webpage for new entry](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/prod/assets/pact-broker-webpage-refresh.png)
+
+
+
+
+
+
+You can see detailed insights about each interaction by clicking the following button or going to the `https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai/pacts/provider/System/consumer/Inventory/latest` URL, where ***accountname*** is your account name.
+
+::startApplication{port="9292" display="external" name="Visit Pact Broker" route="/pacts/provider/System/consumer/Inventory/latest"}
+
+The insights look similar to the following image:
+
+![Pact Broker webpage for Interactions](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/prod/assets/pact-broker-interactions.png)
+
+
+::page{title="Implementing pact testing in the system service"}
+
+
+Open another command-line session and navigate to the ***start*** directory.
+
+```bash
+cd /home/project/guide-contract-testing/start
+```
+
+Start Open Liberty in dev mode for the ***system*** microservice:
+
+
+```bash
+./mvnw -f system/pom.xml liberty:dev
+```
+
+After you see the following message, your Liberty instance is ready in dev mode:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+
+
+
+Open a new command-line session.
+
+Create the SystemBrokerIT class file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-contract-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemBrokerIT.java
+```
+
+
+> Then, to open the SystemBrokerIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-contract-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemBrokerIT.java, or click the following button
+
+::openFile{path="/home/project/guide-contract-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemBrokerIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.system;
+
+import au.com.dius.pact.provider.junit5.HttpTestTarget;
+import au.com.dius.pact.provider.junit5.PactVerificationContext;
+import au.com.dius.pact.provider.junit5.PactVerificationInvocationContextProvider;
+import au.com.dius.pact.provider.junitsupport.Consumer;
+import au.com.dius.pact.provider.junitsupport.Provider;
+import au.com.dius.pact.provider.junitsupport.State;
+import au.com.dius.pact.provider.junitsupport.loader.PactBroker;
+import au.com.dius.pact.provider.junitsupport.loader.VersionSelector;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestTemplate;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+@Provider("System")
+@Consumer("Inventory")
+@PactBroker(
+  host = "localhost",
+  port = "9292",
+  consumerVersionSelectors = {
+    @VersionSelector(tag = "open-liberty-pact")
+  })
+public class SystemBrokerIT {
+  @TestTemplate
+  @ExtendWith(PactVerificationInvocationContextProvider.class)
+  void pactVerificationTestTemplate(PactVerificationContext context) {
+    context.verifyInteraction();
+  }
+
+  @BeforeAll
+  static void enablePublishingPact() {
+    System.setProperty("pact.verifier.publishResults", "true");
+  }
+
+  @BeforeEach
+  void before(PactVerificationContext context) {
+    int port = Integer.parseInt(System.getProperty("http.port"));
+    context.setTarget(new HttpTestTarget("localhost", port));
+  }
+
+  @State("wlp.server.name is defaultServer")
+  public void validServerName() {
+  }
+
+  @State("Default directory is true")
+  public void validEdition() {
+  }
+
+  @State("version is 1.1")
+  public void validVersion() {
+  }
+
+  @State("invalid property")
+  public void invalidProperty() {
+  }
+}
+```
+
+
+
+
+The connection information for the Pact Broker is provided with the ***@PactBroker*** annotation. The dependency also provides a JUnit5 Invocation Context Provider with the ***pactVerificationTestTemplate()*** method to generate a test for each of the interactions.
+
+The ***pact.verifier.publishResults*** property is set to ***true*** so that the results are sent to the Pact Broker after the tests are completed.
+
+The test target is defined in the ***PactVerificationContext*** context to point to the running endpoint of the ***system*** microservice.
+
+The ***@State*** annotation must match the ***given()*** parameter that was provided in the ***inventory*** test class so that Pact can identify which test case to run against which endpoint.
+
+Replace the system Maven project file.
+
+> To open the pom.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-contract-testing/start/system/pom.xml, or click the following button
+
+::openFile{path="/home/project/guide-contract-testing/start/system/pom.xml"}
+
+
+
+```xml
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>guide-contract-testing-system</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- Liberty configuration -->
+        <liberty.var.http.port>9090</liberty.var.http.port>
+        <liberty.var.https.port>9453</liberty.var.https.port>
+        <debugPort>8787</debugPort>
+    </properties>
+
+    <dependencies>
+        <!-- Provided dependencies -->
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>7.0</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>10.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>au.com.dius.pact.provider</groupId>
+            <artifactId>junit5</artifactId>
+            <version>4.6.17</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.17</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>6.2.12.Final</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <!-- Enable liberty-maven plugin -->
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.11.3</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.4.0</version>
+            </plugin>
+            <!-- Plugin to run functional tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.5.3</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <http.port>${liberty.var.http.port}</http.port>
+                        <pact.provider.version>${project.version}</pact.provider.version>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+
+
+The ***system*** microservice uses the ***junit5*** pact provider dependency to connect to the Pact Broker and verify the pact file. Ideally, in a CI/CD build pipeline, the ***pact.provider.version*** element is dynamically set to the build number so that you can identify where a breaking change is introduced.
+
+After you create the ***SystemBrokerIT.java*** class and replace the ***pom.xml*** file, Open Liberty automatically reloads its configuration.
+
+::page{title="Verifying the contract"}
+
+In the command-line session where you started the ***system*** microservice, press the ***enter/return*** key to run the tests to verify the pact file. When you integrate the Pact framework into a CI/CD build pipeline, you can use the Maven ***failsafe:integration-test*** goal to verify the pact file from the Pact Broker.
+
+The tests fail with the following errors:
+```
+[ERROR] Failures: 
+[ERROR]   SystemBrokerIT.pactVerificationTestTemplate:28 Pact between Inventory (1.0-SNAPSHOT) and System - Upon a request for the version 
+Failures:
+
+1) Verifying a pact between Inventory and System - a request for the version has a matching body
+
+    1.1) body: $.system.properties.version Expected "1.x" (String) to be a decimal number
+
+
+[INFO] 
+[ERROR] Tests run: 4, Failures: 1, Errors: 0, Skipped: 0
+```
+
+The test from the ***system*** microservice fails because the ***inventory*** microservice was expecting a decimal, ***1.1***, for the value of the ***system.properties.version*** property, but it received a string, ***"1.1"***.
+
+Correct the value of the ***system.properties.version*** property to a decimal.
+Replace the SystemResource class file.
+
+> To open the SystemResource.java file in your IDE, select
+> ***File*** > ***Open*** > guide-contract-testing/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java, or click the following button
+
+::openFile{path="/home/project/guide-contract-testing/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java"}
+
+
+
+```java
+package io.openliberty.guides.system;
+
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.core.Response;
+
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+
+import org.eclipse.microprofile.metrics.annotation.Counted;
+import org.eclipse.microprofile.metrics.annotation.Timed;
+
+@RequestScoped
+@Path("/properties")
+public class SystemResource {
+
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  @Timed(name = "getPropertiesTime",
+    description = "Time needed to get the JVM system properties")
+  @Counted(absolute = true,
+    description = "Number of times the JVM system properties are requested")
+
+  public Response getProperties() {
+    return Response.ok(System.getProperties()).build();
+  }
+
+  @GET
+  @Path("/key/{key}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response getPropertiesByKey(@PathParam("key") String key) {
+    try {
+      JsonArray response = Json.createArrayBuilder()
+        .add(Json.createObjectBuilder()
+          .add(key, System.getProperties().get(key).toString()))
+        .build();
+      return Response.ok(response, MediaType.APPLICATION_JSON).build();
+    } catch (java.lang.NullPointerException exception) {
+        return Response.status(Response.Status.NOT_FOUND).build();
+    }
+  }
+
+  @GET
+  @Path("/version")
+  @Produces(MediaType.APPLICATION_JSON)
+  public JsonObject getVersion() {
+    JsonObject response = Json.createObjectBuilder()
+                          .add("system.properties.version", 1.1)
+                          .build();
+    return response;
+  }
+}
+```
+
+
+
+Press the ***enter/return*** key to rerun the tests from the command-line session where you started the ***system*** microservice.
+
+If the tests are successful, you'll see a similar output to the following example:
+```
+...
+Verifying a pact between pact between Inventory (1.0-SNAPSHOT) and System
+
+  Notices:
+    1) The pact at http://localhost:9292/pacts/provider/System/consumer/Inventory/pact-version/XXX is being verified because it matches the following configured selection criterion: latest pact for a consumer version tagged 'open-liberty-pact'
+
+  [from Pact Broker http://localhost:9292/pacts/provider/System/consumer/Inventory/pact-version/XXX]
+  Given version is 1.1
+  a request for the version
+    returns a response which
+      has status code 200 (OK)
+      has a matching body (OK)
+[main] INFO au.com.dius.pact.provider.DefaultVerificationReporter - Published verification result of 'au.com.dius.pact.core.pactbroker.TestResult$Ok@4d84dfe7' for consumer 'Consumer(name=Inventory)'
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.835 s - in it.io.openliberty.guides.system.SystemBrokerIT
+...
+```
+
+
+After the tests are complete, refresh the Pact Broker at the `https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai` URL, where ***accountname*** is your account name.
+
+::startApplication{port="9292" display="external" name="Visit Pact Broker" route="/"}
+
+Confirm that the last verified column now shows a timestamp:
+
+![Pact Broker webpage for verified](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/prod/assets/pact-broker-webpage-verified.png)
+
+
+
+
+
+The pact file that's created by the ***inventory*** microservice was successfully verified by the ***system*** microservice through the Pact Broker. This ensures that responses from the ***system*** microservice meet the expectations of the ***inventory*** microservice.
+
+::page{title="Tearing down the environment"}
+
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the Liberty instances for the ***system*** and ***inventory*** microservices.
+
+Navigate back to the ***/guide-contract-testing*** directory and run the following commands to remove the Pact Broker:
+
+```bash
+cd /home/project/guide-contract-testing
+```
+
+```bash
+docker-compose -f "pact-broker/docker-compose.yml" down
+docker rmi postgres:17.2
+docker rmi pactfoundation/pact-broker:latest
+docker volume rm pact-broker_postgres-volume
 ```
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just built some functional and integration tests with the Arquillian managed container and ran the tests for your microservices on Open Liberty.
+You implemented contract testing in Java microservices by using Pact and verified the contract with the Pact Broker.
 
-
-Try one of the related guides to learn more about the technologies that you come across in this guide.
 
 
 ### Clean up your environment
@@ -414,31 +855,35 @@ Try one of the related guides to learn more about the technologies that you come
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-arquillian-managed*** project by running the following commands:
+Delete the ***guide-contract-testing*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-arquillian-managed
+rm -fr guide-contract-testing
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Testing%20microservices%20with%20the%20Arquillian%20managed%20container&guide-id=cloud-hosted-guide-arquillian-managed)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Testing%20microservices%20with%20consumer-driven%20contracts&guide-id=cloud-hosted-guide-contract-testing)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-arquillian-managed/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-arquillian-managed/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-contract-testing/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-contract-testing/pulls)
 
 
 
 ### Where to next?
 
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html)
+* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
+* [Testing microservices with the Arquillian managed container](https://openliberty.io/guides/arquillian-managed.html)
+
+**Learn more about the Pact framework**
+* [Go to the Pact website.](https://pact.io/)
 
 
 ### Log out of the session
