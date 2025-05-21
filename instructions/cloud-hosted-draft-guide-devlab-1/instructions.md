@@ -304,7 +304,7 @@ curl -s http://localhost:9080/query/systemLoad | jq
 When the service is ready, you see an output similar to the following example. This example was formatted for readability:
 
 ```
-
+{
     "highest": {
         "hostname": "30bec2b63a96",
         "systemLoad": 6.1
