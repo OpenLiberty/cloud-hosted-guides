@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Building true-to-production integration tests with Testcontainers guide!"}
+::page{title="Welcome to the Testing microservices with the Arquillian managed container guide!"}
 
-Learn how to test your microservices with multiple containers by using Testcontainers and JUnit.
+Learn how to develop tests for your microservices with the Arquillian managed container and run the tests on Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -16,18 +16,11 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You'll learn how to write true-to-production integration tests for Java microservices by using [Testcontainers](https://www.testcontainers.org/) and JUnit. You'll learn to set up and configure multiple containers, including the Open Liberty Docker container, to simulate a production-like environment for your tests.
+You will learn how to develop tests for your microservices by using the [Arquillian Liberty Managed container](https://github.com/OpenLiberty/liberty-arquillian/tree/master/liberty-managed) and JUnit with Maven on Open Liberty. [Arquillian](http://arquillian.org/) is a testing framework to develop automated functional, integration and acceptance tests for your Java applications. Arquillian sets up the test environment and handles the application server lifecycle for you so you can focus on writing tests.
 
-Sometimes tests might pass in development and testing environments, but fail in production because of the differences in how the application operates across these environments. Fortunately, you can minimize these differences by testing your application with the same Docker containers you use in production. This approach helps to ensure parity across the development, testing, and production environments, enhancing quality and test reliability.
+You will develop Arquillian tests that use JUnit as the runner and build your tests with Maven using the Liberty Maven plug-in. This technique simplifies the process of managing Arquillian dependencies and the setup of your Arquillian managed container.
 
-### What is Testcontainers?
-
-Testcontainers is an open source library that provides containers as a resource at test time, creating consistent and portable testing environments. This is especially useful for applications that have external resource dependencies such as databases, message queues, or web services. By encapsulating these dependencies in containers, Testcontainers simplifies the configuration process and ensures a uniform testing setup that closely mirrors production environments.
-
-The microservice that you'll be working with is called ***inventory***. The ***inventory*** microservice persists data into a PostgreSQL database and supports create, retrieve, update, and delete (CRUD) operations on the database records. You'll write integration tests for the application by using Testcontainers to run it in Docker containers.
-
-![Inventory microservice](https://raw.githubusercontent.com/OpenLiberty/guide-testcontainers/prod/assets/inventory.png)
-
+You will work with an ***inventory*** microservice, which stores information about various systems. The ***inventory*** service communicates with the ***system*** service on a particular host to retrieve its system properties and store them. You will develop functional and integration tests for the microservices. You will also learn about the Maven and Liberty configurations so that you can run your tests on Open Liberty with the Arquillian Liberty Managed container.
 
 ::page{title="Getting started"}
 
@@ -40,11 +33,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-testcontainers.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-arquillian-managed.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-testcontainers.git
-cd guide-testcontainers
+git clone https://github.com/openliberty/guide-arquillian-managed.git
+cd guide-arquillian-managed
 ```
 
 
@@ -52,824 +45,368 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-In this IBM Cloud environment, you need to change the user home to ***/home/project*** by running the following command:
-```bash
-sudo usermod -d /home/project theia
-```
-
 ### Try what you'll build
 
 The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To try out the test, first go to the ***finish*** directory and run the following Maven goal that builds the application, starts the containers, runs the tests, and then stops the containers:
+Run the following commands to navigate to the ***finish*** directory and run the tests:
 
 
 ```bash
-cd /home/project/guide-testcontainers/finish
-export TESTCONTAINERS_RYUK_DISABLED=true
-./mvnw verify
+cd finish
+./mvnw clean package
+./mvnw liberty:create liberty:install-feature
+./mvnw liberty:configure-arquillian
+./mvnw failsafe:integration-test
 ```
 
-You see the following output:
+Look for the following output:
 
 ```
- -------------------------------------------------------
-  T E S T S
- -------------------------------------------------------
- Running it.io.openliberty.guides.inventory.SystemResourceIT
- ...
- Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.118 s - in it.io.openliberty.guides.inventory.SystemResourceIT
-
- Results:
-
- Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running it.io.openliberty.guides.system.SystemArquillianIT
+...
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.133 s - in it.io.openliberty.guides.system.SystemArquillianIT
+[INFO] Running it.io.openliberty.guides.inventory.InventoryArquillianIT
+...
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.297 s - in it.io.openliberty.guides.
+...
+[INFO] Results:
+[INFO]
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+...
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+...
 ```
 
-::page{title="Writing integration tests using Testcontainers"}
+::page{title="Developing Arquillian tests"}
 
-Use Testcontainers to write integration tests that run in any environment with minimal setup using containers.
+Navigate to the ***start*** directory to begin.
+```bash
+cd /home/project/guide-arquillian-managed/start
+```
 
-Navigate to the ***postgres*** directory.
+You'll develop tests that use Arquillian and JUnit to verify the ***inventory*** microservice as an endpoint and the functions of the ***InventoryResource*** class. The code for the microservices is in the ***src/main/java/io/openliberty/guides*** directory.
+
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
-cd /home/project/guide-testcontainers/postgres
+./mvnw liberty:dev
 ```
 
-
-This guide uses Docker to run an instance of the PostgreSQL database for a fast installation and setup. A ***Dockerfile*** file is provided for you. Run the following command to use the Dockerfile to build the image:
-
-```bash
-docker build -t postgres-sample .
-```
-
-The PostgreSQL database is integral for the ***inventory*** microservice as it handles the persistence of data. Run the following command to start the PostgreSQL database, which runs the ***postgres-sample*** image in a Docker container and maps ***5432*** port from the container to your host machine:
-
-```bash
-docker run --name postgres-container --rm -e POSTGRES_PASSWORD=adminpwd -p 5432:5432 -d postgres-sample
-```
-
-Retrieve the PostgreSQL container IP address by running the following command:
-
-```bash
-docker inspect -f "{{.NetworkSettings.IPAddress }}" postgres-container
-```
-
-The command returns the PostgreSQL container IP address:
-
-```
-172.17.0.2
-```
-
-Now, navigate to the ***start*** directory to begin.
-
-```bash
-cd /home/project/guide-testcontainers/start
-```
-
-The Liberty Maven plug-in includes a ***devc*** goal that simplifies developing your application in a container by starting [dev mode](https://openliberty.io/docs/latest/development-mode.html#_container_support_for_dev_mode) with container support. This goal builds a Docker image, mounts the required directories, binds the required ports, and then runs the application inside of a container. Dev mode also listens for any changes in the application source code or configuration and rebuilds the image and restarts the container as necessary.
-
-In this IBM Cloud environment, you need to pre-create the ***logs*** directory by running the following commands:
-
-```bash
-mkdir -p /home/project/guide-testcontainers/start/target/liberty/wlp/usr/servers/defaultServer/logs
-chmod 777 /home/project/guide-testcontainers/start/target/liberty/wlp/usr/servers/defaultServer/logs
-```
-
-Build and run the container by running the ***devc*** goal with the PostgreSQL container IP address. If your PostgreSQL container IP address is not ***172.17.0.2***, replace the command with the right IP address.
-
-
-```bash
-./mvnw liberty:devc -DcontainerRunOpts="-e DB_HOSTNAME=172.17.0.2" -DserverStartTimeout=240
-```
-
-Wait a moment for dev mode to start. Some error messages are expected as a result of building the docker image. Although these messages are included on the standard error stream, in this case they are not errors, just logs of the docker build progress. After you see the following message, your Liberty instance is ready in dev mode:
+After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
 **************************************************************
 *    Liberty is running in dev mode.
-*    ...
-*    Container network information:
-*        Container name: [ liberty-dev ]
-*        IP address [ 172.17.0.2 ] on container network [ bridge ]
-*    ...
 ```
 
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-Dev mode holds your command-line session to listen for file changes.
-
-Click the following button to try out the ***inventory*** microservice manually by visiting the ***/openapi/ui*** endpoint. This interface provides a convenient visual way to interact with the APIs and test out their functionalities:
-
-::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
-
-Open another command-line session to continue.
-
-
-
-### Building a REST test client
-
-The REST test client is responsible for sending HTTP requests to an application and handling the responses. It enables accurate verification of the application's behavior by ensuring that it responds correctly to various scenarios and conditions. Using a REST client for testing ensures reliable interaction with the ***inventory*** microservice across various deployment environments: local processes, Docker containers, or containers through Testcontainers.
-
-Begin by creating a REST test client interface for the ***inventory*** microservice.
-
-Create the ***SystemResourceClient*** class.
+Create the ***InventoryArquillianIT*** test class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceClient.java
+touch /home/project/guide-arquillian-managed/start/src/test/java/it/io/openliberty/guides/inventory/InventoryArquillianIT.java
 ```
 
 
-> Then, to open the SystemResourceClient.java file in your IDE, select
-> ***File*** > ***Open*** > guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceClient.java, or click the following button
+> Then, to open the InventoryArquillianIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-arquillian-managed/start/src/test/java/it/io/openliberty/guides/inventory/InventoryArquillianIT.java, or click the following button
 
-::openFile{path="/home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceClient.java"}
+::openFile{path="/home/project/guide-arquillian-managed/start/src/test/java/it/io/openliberty/guides/inventory/InventoryArquillianIT.java"}
 
 
 
 ```java
 package it.io.openliberty.guides.inventory;
 
+import java.net.URL;
 import java.util.List;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.core.MediaType;
+import jakarta.inject.Inject;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.Response;
 
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.RunAsClient;
+import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.arquillian.junit.InSequence;
+import org.jboss.arquillian.test.api.ArquillianResource;
+import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-@ApplicationScoped
-@Path("/systems")
-public interface SystemResourceClient {
+import io.openliberty.guides.inventory.InventoryResource;
+import io.openliberty.guides.inventory.model.InventoryList;
+import io.openliberty.guides.inventory.model.SystemData;
 
-    @GET
-    @Path("/")
-    @Produces(MediaType.APPLICATION_JSON)
-    List<SystemData> listContents();
+@RunWith(Arquillian.class)
+public class InventoryArquillianIT {
 
-    @GET
-    @Path("/{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    SystemData getSystem(
-        @PathParam("hostname") String hostname);
+    private static final String WARNAME = System.getProperty("arquillian.war.name");
+    private final String INVENTORY_SYSTEMS = "inventory/systems";
+    private Client client = ClientBuilder.newClient();
 
-    @POST
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Produces(MediaType.APPLICATION_JSON)
-    Response addSystem(
-        @QueryParam("hostname") String hostname,
-        @QueryParam("osName") String osName,
-        @QueryParam("javaVersion") String javaVersion,
-        @QueryParam("heapSize") Long heapSize);
+    @Deployment(testable = true)
+    public static WebArchive createDeployment() {
+        WebArchive archive = ShrinkWrap.create(WebArchive.class, WARNAME)
+                                       .addPackages(true, "io.openliberty.guides");
+        return archive;
+    }
 
-    @PUT
-    @Path("/{hostname}")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Produces(MediaType.APPLICATION_JSON)
-    Response updateSystem(
-        @PathParam("hostname") String hostname,
-        @QueryParam("osName") String osName,
-        @QueryParam("javaVersion") String javaVersion,
-        @QueryParam("heapSize") Long heapSize);
+    @ArquillianResource
+    private URL baseURL;
 
-    @DELETE
-    @Path("/{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    Response removeSystem(
-        @PathParam("hostname") String hostname);
+    @Inject
+    InventoryResource invSrv;
+
+    @Test
+    @RunAsClient
+    @InSequence(1)
+    public void testInventoryEndpoints() throws Exception {
+        String localhosturl = baseURL + INVENTORY_SYSTEMS + "/localhost";
+
+        WebTarget localhosttarget = client.target(localhosturl);
+        Response localhostresponse = localhosttarget.request().get();
+
+        Assert.assertEquals("Incorrect response code from " + localhosturl, 200,
+                            localhostresponse.getStatus());
+
+        JsonObject localhostobj = localhostresponse.readEntity(JsonObject.class);
+        Assert.assertEquals("The system property for the local and remote JVM "
+                        + "should match", System.getProperty("os.name"),
+                            localhostobj.getString("os.name"));
+
+        String invsystemsurl = baseURL + INVENTORY_SYSTEMS;
+
+        WebTarget invsystemstarget = client.target(invsystemsurl);
+        Response invsystemsresponse = invsystemstarget.request().get();
+
+        Assert.assertEquals("Incorrect response code from " + localhosturl, 200,
+                            invsystemsresponse.getStatus());
+
+        JsonObject invsystemsobj = invsystemsresponse.readEntity(JsonObject.class);
+
+        int expected = 1;
+        int actual = invsystemsobj.getInt("total");
+        Assert.assertEquals("The inventory should have one entry for localhost",
+                            expected, actual);
+        localhostresponse.close();
+    }
+
+    @Test
+    @InSequence(2)
+    public void testInventoryResourceFunctions() {
+        InventoryList invList = invSrv.listContents();
+        Assert.assertEquals(1, invList.getTotal());
+
+        List<SystemData> systemDataList = invList.getSystems();
+        Assert.assertTrue(systemDataList.get(0).getHostname().equals("localhost"));
+
+        Assert.assertTrue(systemDataList.get(0).getProperties().get("os.name")
+                                        .equals(System.getProperty("os.name")));
+    }
 }
-
 ```
 
 
 Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-The ***SystemResourceClient*** interface declares the ***listContents()***, ***getSystem()***, ***addSystem()***, ***updateSystem()***, and ***removeSystem()*** methods for accessing the corresponding endpoints within the ***inventory*** microservice.
+Notice that the JUnit Arquillian runner runs the tests instead of the standard JUnit runner. The ***@RunWith*** annotation preceding the class tells JUnit to run the tests by using Arquillian.
 
-Next, create the ***SystemData*** data model for testing.
+The method annotated by ***@Deployment*** defines the content of the web archive, which is going to be deployed onto the Open Liberty. The tests are either run on or against the Liberty instance. The ***testable = true*** attribute enables the deployment to run the tests "in container", that is the tests are run on the Liberty instance.
 
-Create the ***SystemData*** class.
 
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemData.java
-```
+The ***WARNAME*** variable is used to name the web archive and is defined in the ***pom.xml*** file. This name is necessary if you don't want a randomly generated web archive name.
 
+The ShrinkWrap API is used to create the web archive. All of the packages in the ***inventory*** service must be added to the web archive; otherwise, the code compiles successfully but fails at runtime when the injection of the ***InventoryResource*** class takes place. You can learn about the ShrinkWrap archive configuration in this [Arquillian guide](http://arquillian.org/guides/shrinkwrap_introduction/).
 
-> Then, to open the SystemData.java file in your IDE, select
-> ***File*** > ***Open*** > guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemData.java, or click the following button
+The ***@ArquillianResource*** annotation is used to retrieve the ***http://localhost:9080/arquillian-managed/*** base URL for this web service. The annotation provides the host name, port number and web archive information for this service, so you don't need to hardcode these values in the test case. The ***arquillian-managed*** path in the URL comes from the WAR name you specified when you created the web archive in the ***@Deployment*** annotated method. It's needed when the ***inventory*** service communicates with the ***system*** service to get the system properties.
 
-::openFile{path="/home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemData.java"}
+The ***testInventoryEndpoints*** method is an integration test to test the ***inventory*** service endpoints. The ***@RunAsClient*** annotation added in this test case indicates that this test case is to be run on the client side. By running the tests on the client side, the tests are run against the managed container. The endpoint test case first calls the ***http://localhost:9080/{WARNAME}/inventory/systems/{hostname}*** endpoint with the ***localhost*** host name to add its system properties to the inventory. The test verifies that the system property for the local and service JVM match. Then, the test method calls the ***http://localhost:9080/{WARNAME}/inventory/systems*** endpoint. The test checks that the inventory has one host and that the host is ***localhost***. The test also verifies that the system property stored in the inventory for the local and service JVM match.
 
+Contexts and Dependency Injection (CDI) is used to inject an instance of the ***InventoryResource*** class into this test class. You can learn more about CDI in the [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html) guide.
 
+The injected ***InventoryResource*** instance is then tested by the ***testInventoryResourceFunctions*** method. This test case calls the ***listContents()*** method to get all systems that are stored in this inventory and verifies that ***localhost*** is the only system being found. Notice the functional test case doesn't store any system in the inventory, the ***localhost*** system is from the endpoint test case that ran before this test case. The ***@InSequence*** Arquillian annotation guarantees the test sequence. The sequence is important for the two tests, as the results in the first test impact the second one.
 
-```java
-package it.io.openliberty.guides.inventory;
+The test cases are ready to run. You will configure the Maven build and the Liberty configuration to run them.
 
-public class SystemData {
+::page{title="Configuring Arquillian with Liberty"}
 
-    private int id;
-    private String hostname;
-    private String osName;
-    private String javaVersion;
-    private Long heapSize;
+Configure your build to use the Arquillian Liberty Managed container and set up your Open Liberty to run your test cases by configuring the ***server.xml*** file.
 
-    public SystemData() {
-    }
+### Configuring your test build
 
-    public int getId() {
-        return id;
-    }
+First, configure your test build with Maven. All of the Maven configuration takes place in the ***pom.xml*** file, which is provided for you.
 
-    public String getHostname() {
-        return hostname;
-    }
 
-    public String getOsName() {
-        return osName;
-    }
+> From the menu of the IDE, select ***File*** > ***Open*** > guide-arquillian-managed/start/pom.xml, or click the following button
 
-    public String getJavaVersion() {
-        return javaVersion;
-    }
+::openFile{path="/home/project/guide-arquillian-managed/start/pom.xml"}
 
-    public Long getHeapSize() {
-        return heapSize;
-    }
+Let's look into each of the required elements for this configuration.
 
-    public void setId(int id) {
-        this.id = id;
-    }
+You need the ***arquillian-bom*** Bill of Materials. It's a Maven artifact that defines the versions of Arquillian dependencies to make dependency management easier.
 
-    public void setHostname(String hostname) {
-        this.hostname = hostname;
-    }
+The ***arquillian-liberty-managed-junit*** dependency bundle, which includes all the core dependencies, is required to run the Arquillian tests on a managed Liberty container that uses JUnit. You can learn more about the [Arquillian Liberty dependency bundles](https://github.com/OpenLiberty/arquillian-liberty-dependencies).
 
-    public void setOsName(String osName) {
-        this.osName = osName;
-    }
+The ***maven-failsafe-plugin*** artifact runs your Arquillian integration tests by using JUnit.
 
-    public void setJavaVersion(String javaVersion) {
-        this.javaVersion = javaVersion;
-    }
+Lastly, specify the ***liberty-maven-plugin*** configuration that defines your Open Liberty runtime configuration. When the application runs in an Arquillian Liberty managed container, the name of the ***.war*** file is used as the context root of the application. You can pass context root information to the application and customize the container by using the ***arquillianProperties*** configuration. To allow connections to Liberty running in dev mode, set ***allowConnectingToRunningServer*** to ***true***.
 
-    public void setHeapSize(Long heapSize) {
-        this.heapSize = heapSize;
-    }
-}
-```
 
+To learn more about the ***arquillianProperties*** configuration, see the [Arquillian Liberty Managed documentation](https://github.com/OpenLiberty/liberty-arquillian/blob/main/liberty-managed/README.md#configuration).
 
 
-The ***SystemData*** class contains the ID, hostname, operating system name, Java version, and heap size properties. The various ***get*** and ***set*** methods within this class enable you to view and edit the properties of each system in the inventory.
+### Configuring Liberty's ***server.xml*** configuration file
 
-### Building a test container for Open Liberty
+Now that you're done configuring your Maven build, set up your Open Liberty to run your test cases by configuring the ***server.xml*** configuration file.
 
-Next, create a custom class that extends Testcontainers' generic container to define specific configurations that suit your application's requirements.
+Take a look at the ***server.xml*** file.
 
-Define a custom ***LibertyContainer*** class, which provides a framework to start and access a containerized version of the Open Liberty application for testing.
 
-Create the ***LibertyContainer*** class.
+> From the menu of the IDE, select ***File*** > ***Open*** > guide-arquillian-managed/start/src/main/liberty/config/server.xml, or click the following button
 
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/LibertyContainer.java
-```
+::openFile{path="/home/project/guide-arquillian-managed/start/src/main/liberty/config/server.xml"}
 
+The ***localConnector*** feature is required by the Arquillian Liberty Managed container to connect to and communicate with the Open Liberty runtime. The ***servlet*** feature is required during the deployment of the Arquillian tests in which servlets are created to perform the in-container testing.
 
-> Then, to open the LibertyContainer.java file in your IDE, select
-> ***File*** > ***Open*** > guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/LibertyContainer.java, or click the following button
+Open another command-line session and run the ***configure-arquillian*** goal from the ***start*** directory to integrate Arquillian and the Arquillian Liberty managed and remote containers with your existing project.
 
-::openFile{path="/home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/LibertyContainer.java"}
-
-
-
-```java
-package it.io.openliberty.guides.inventory;
-
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.images.builder.ImageFromDockerfile;
-
-public class LibertyContainer extends GenericContainer<LibertyContainer> {
-
-    public LibertyContainer(ImageFromDockerfile image, int httpPort, int httpsPort) {
-
-        super(image);
-        addExposedPorts(httpPort, httpsPort);
-
-        waitingFor(Wait.forLogMessage("^.*CWWKF0011I.*$", 1));
-
-    }
-
-    public String getBaseURL() throws IllegalStateException {
-        return "http://" + getHost() + ":" + getFirstMappedPort();
-    }
-
-}
-```
-
-
-
-The ***LibertyContainer*** class extends the ***GenericContainer*** class from Testcontainers to create a custom container configuration specific to the Open Liberty application.
-
-The ***addExposedPorts()*** method exposes specified ports from the container's perspective, allowing test clients to communicate with services running inside the container. To avoid any port conflicts, Testcontainers assigns random host ports to these exposed container ports. 
-
-By default, the ***Wait.forLogMessage()*** method directs ***LibertyContainer*** to wait for the specific ***CWWKF0011I*** log message that indicates the Liberty instance has started successfully.
-
-The ***getBaseURL()*** method contructs the base URL to access the container.
-
-For more information about Testcontainers APIs and its functionality, refer to the [Testcontainers JavaDocs](https://javadoc.io/doc/org.testcontainers/testcontainers/latest/index.html).
-
-
-### Building test cases
-
-Next, write tests that use the ***SystemResourceClient*** REST client and Testcontainers integration. 
-
-Create the ***SystemResourceIT*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceIT.java
-```
-
-
-> Then, to open the SystemResourceIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceIT.java, or click the following button
-
-::openFile{path="/home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceIT.java"}
-
-
-
-```java
-package it.io.openliberty.guides.inventory;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.net.Socket;
-import java.util.List;
-import java.nio.file.Paths;
-
-import org.jboss.resteasy.client.jaxrs.ResteasyClient;
-import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
-import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.images.builder.ImageFromDockerfile;
-
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.UriBuilder;
-
-@TestMethodOrder(OrderAnnotation.class)
-public class SystemResourceIT {
-
-    private static Logger logger = LoggerFactory.getLogger(SystemResourceIT.class);
-
-    private static final String DB_HOST = "postgres";
-    private static final int DB_PORT = 5432;
-    private static final String POSTGRES_PASSWORD = "adminpwd";
-    private static ImageFromDockerfile postgresImage
-        = new ImageFromDockerfile("postgres-sample")
-              .withDockerfile(Paths.get("../postgres/Dockerfile"));
-
-    private static int httpPort = Integer.parseInt(System.getProperty("http.port"));
-    private static int httpsPort = Integer.parseInt(System.getProperty("https.port"));
-    private static String contextRoot = System.getProperty("context.root") + "/api";
-    private static ImageFromDockerfile invImage
-        = new ImageFromDockerfile("inventory:1.0-SNAPSHOT")
-              .withDockerfile(Paths.get("./Dockerfile"));
-
-    private static SystemResourceClient client;
-    private static Network network = Network.newNetwork();
-
-    private static GenericContainer<?> postgresContainer
-        = new GenericContainer<>(postgresImage)
-              .withEnv("POSTGRES_PASSWORD", POSTGRES_PASSWORD)
-              .withNetwork(network)
-              .withExposedPorts(DB_PORT)
-              .withNetworkAliases(DB_HOST)
-              .withLogConsumer(new Slf4jLogConsumer(logger));
-
-    private static LibertyContainer inventoryContainer
-        = new LibertyContainer(invImage, httpPort, httpsPort)
-              .withEnv("DB_HOSTNAME", DB_HOST)
-              .withNetwork(network)
-              .waitingFor(Wait.forHttp("/health/ready").forPort(httpPort))
-              .withLogConsumer(
-                new Slf4jLogConsumer(
-                    LoggerFactory.getLogger(LibertyContainer.class)));
-
-    private static boolean isServiceRunning(String host, int port) {
-        try {
-            Socket socket = new Socket(host, port);
-            socket.close();
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private static SystemResourceClient createRestClient(String urlPath) {
-        ClientBuilder builder = ResteasyClientBuilder.newBuilder();
-        ResteasyClient client = (ResteasyClient) builder.build();
-        ResteasyWebTarget target = client.target(UriBuilder.fromPath(urlPath));
-        return target.proxy(SystemResourceClient.class);
-    }
-
-    @BeforeAll
-    public static void setup() throws Exception {
-        String urlPath;
-        if (isServiceRunning("localhost", httpPort)) {
-            logger.info("Testing by dev mode or local Liberty...");
-            if (isServiceRunning("localhost", DB_PORT)) {
-                logger.info("The application is ready to test.");
-                urlPath = "http://localhost:" + httpPort;
-            } else {
-                throw new Exception("Postgres database is not running");
-            }
-        } else {
-            logger.info("Testing by using Testcontainers...");
-            if (isServiceRunning("localhost", DB_PORT)) {
-                throw new Exception(
-                      "Postgres database is running locally. Stop it and retry.");
-            } else {
-                postgresContainer.start();
-                inventoryContainer.start();
-                urlPath = inventoryContainer.getBaseURL();
-            }
-        }
-        urlPath += contextRoot;
-        logger.info("TEST: " + urlPath);
-        client = createRestClient(urlPath);
-    }
-
-    @AfterAll
-    public static void tearDown() {
-        inventoryContainer.stop();
-        postgresContainer.stop();
-        network.close();
-    }
-
-    private void showSystemData(SystemData system) {
-        logger.info("TEST: SystemData > "
-            + system.getId() + ", "
-            + system.getHostname() + ", "
-            + system.getOsName() + ", "
-            + system.getJavaVersion() + ", "
-            + system.getHeapSize());
-    }
-
-    @Test
-    @Order(1)
-    public void testAddSystem() {
-        logger.info("TEST: Testing add a system");
-        client.addSystem("localhost", "linux", "11", Long.valueOf(2048));
-        List<SystemData> systems = client.listContents();
-        assertEquals(1, systems.size());
-        showSystemData(systems.get(0));
-        assertEquals("11", systems.get(0).getJavaVersion());
-        assertEquals(Long.valueOf(2048), systems.get(0).getHeapSize());
-    }
-
-    @Test
-    @Order(2)
-    public void testUpdateSystem() {
-        logger.info("TEST: Testing update a system");
-        client.updateSystem("localhost", "linux", "8", Long.valueOf(1024));
-        SystemData system = client.getSystem("localhost");
-        showSystemData(system);
-        assertEquals("8", system.getJavaVersion());
-        assertEquals(Long.valueOf(1024), system.getHeapSize());
-    }
-
-    @Test
-    @Order(3)
-    public void testRemoveSystem() {
-        logger.info("TEST: Testing remove a system");
-        client.removeSystem("localhost");
-        List<SystemData> systems = client.listContents();
-        assertEquals(0, systems.size());
-    }
-}
-```
-
-
-
-
-
-
-Construct the ***postgresImage*** and ***invImage*** using the ***ImageFromDockerfile*** class, which allows Testcontainers to build Docker images from a Dockerfile during the test runtime. For these instances, the provided Dockerfiles at the specified paths ***../postgres/Dockerfile*** and ***./Dockerfile*** are used to generate the respective ***postgres-sample*** and ***inventory:1.0-SNAPSHOT*** images.
-
-Use ***GenericContainer*** class to create the ***postgresContainer*** test container to start up the ***postgres-sample*** Docker image, and use the ***LibertyContainer*** custom class to create the ***inventoryContainer*** test container to start up the ***inventory:1.0-SNAPSHOT*** Docker image. 
-
-As containers are isolated by default, placing both the ***LibertyContainer*** and the ***postgresContainer*** on the same ***network*** allows them to communicate by using the hostname ***localhost*** and the internal port ***5432***, bypassing the need for an externally mapped port.
-
-The ***waitingFor()*** method here overrides the ***waitingFor()*** method from ***LibertyContainer***. Given that the ***inventory*** service depends on a database service, ensuring that readiness involves more than just the microservice itself. To address this, the ***inventoryContainer*** readiness is determined by checking the ***/health/ready*** health readiness check API, which reflects both the application and database service states. For different container readiness check customizations, see to the [official Testcontainers documentation](https://www.testcontainers.org/features/startup_and_waits/).
-
-The ***LoggerFactory.getLogger()*** and ***withLogConsumer(new Slf4jLogConsumer(Logger))*** methods integrate container logs with the test logs by piping the container output to the specified logger.
-
-The ***createRestClient()*** method creates a REST client instance with the ***SystemResourceClient*** interface.
-
-The ***setup()*** method prepares the test environment. It checks whether the test is running in dev mode or there is a local running Liberty instance, by using the ***isServiceRunning()*** helper. In the case of no running Liberty instance, the test starts the ***postgresContainer*** and ***inventoryContainer*** test containers. Otherwise, it ensures that the Postgres database is running locally.
-
-The ***testAddSystem()*** verifies the ***addSystem*** and ***listContents*** endpoints.
-
-The ***testUpdateSystem()*** verifies the ***updateSystem*** and ***getSystem*** endpoints.
-
-The ***testRemoveSystem()*** verifies the ***removeSystem*** endpoint.
-
-After the tests are executed, the ***tearDown()*** method stops the containers and closes the network.
-
-
-### Setting up logs
-
-Having reliable logs is essential for efficient debugging, as they provide detailed insights into the test execution flow and help pinpoint issues during test failures. Testcontainers' built-in ***Slf4jLogConsumer*** enables integration of container output directly with the JUnit process, enhancing log analysis and simplifying test creation and debugging.
-
-Create the ***log4j.properties*** file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-testcontainers/start/src/test/resources/log4j.properties
-```
-
-
-> Then, to open the log4j.properties file in your IDE, select
-> ***File*** > ***Open*** > guide-testcontainers/start/src/test/resources/log4j.properties, or click the following button
-
-::openFile{path="/home/project/guide-testcontainers/start/src/test/resources/log4j.properties"}
-
-
-
-```
-log4j.rootLogger=INFO, stdout
-
-log4j.appender=org.apache.log4j.ConsoleAppender
-log4j.appender.layout=org.apache.log4j.PatternLayout
-
-log4j.appender.stdout=org.apache.log4j.ConsoleAppender
-log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
-log4j.appender.stdout.layout.ConversionPattern=%r %p %c %x - %m%n
-
-log4j.logger.it.io.openliberty.guides.inventory=DEBUG
-```
-
-
-
-The ***log4j.properties*** file configures the root logger, appenders, and layouts for console output. It sets the logging level to ***DEBUG*** for the ***it.io.openliberty.guides.inventory*** package. This level provides detailed logging information for the specified package, which can be helpful for debugging and understanding test behavior.
-
-
-### Configuring the Maven project
-
-Next, prepare your Maven project for test execution by adding the necessary dependencies for Testcontainers and logging, setting up Maven to copy the PostgreSQL JDBC driver during the build phase, and configuring the Liberty Maven Plugin to handle PostgreSQL dependency.
-
-Replace the ***pom.xml*** file.
-
-> To open the pom.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-testcontainers/start/pom.xml, or click the following button
-
-::openFile{path="/home/project/guide-testcontainers/start/pom.xml"}
-
-
-
-```xml
-<?xml version="1.0" encoding="UTF-8" ?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>guide-testcontainers</artifactId>
-    <packaging>war</packaging>
-    <version>1.0-SNAPSHOT</version>
-
-    <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <liberty.var.http.port>9080</liberty.var.http.port>
-        <liberty.var.https.port>9443</liberty.var.https.port>
-        <liberty.var.context.root>/inventory</liberty.var.context.root>
-    </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>10.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>7.0</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>42.7.5</version>
-            <scope>provided</scope>
-        </dependency>
-        
-        <!-- Test dependencies -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.12.2</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-client</artifactId>
-            <version>6.2.12.Final</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-json-binding-provider</artifactId>
-            <version>6.2.12.Final</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish</groupId>
-            <artifactId>jakarta.json</artifactId>
-            <version>2.0.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse</groupId>
-            <artifactId>yasson</artifactId>
-            <version>3.0.4</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>testcontainers</artifactId>
-            <version>1.21.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-reload4j</artifactId>
-            <version>2.0.17</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>2.0.17</version>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <finalName>inventory</finalName>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.4.0</version>
-            </plugin>
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <configuration>
-                    <copyDependencies>
-                        <dependencyGroup>
-                            <location>${project.build.directory}/liberty/wlp/usr/shared/resources</location>
-                            <dependency>
-                                <groupId>org.postgresql</groupId>
-                                <artifactId>postgresql</artifactId>
-                            </dependency>
-                        </dependencyGroup>
-                    </copyDependencies>
-                </configuration>
-                <version>3.11.3</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.3</version>
-                <configuration>
-                    <systemPropertyVariables>
-                        <http.port>${liberty.var.http.port}</http.port>
-                        <https.port>${liberty.var.https.port}</https.port>
-                        <context.root>${liberty.var.context.root}</context.root>
-                    </systemPropertyVariables>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-</project>
-```
-
-
-
-Add the required ***dependency*** for Testcontainers and Log4J libraries with ***test*** scope. The ***testcontainers*** dependency offers a general-purpose API for managing container-based test environments. The ***slf4j-reload4j*** and ***slf4j-api*** dependencies enable the Simple Logging Facade for Java (SLF4J) API for trace logging during test execution and facilitates debugging and test performance tracking. 
-
-Also, add and configure the ***maven-failsafe-plugin*** plugin, so that the integration test can be run by the Maven ***verify*** command.
-
-When you started Open Liberty in dev mode, all the changes were automatically picked up. You can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode. You see the following output:
-
-```
- -------------------------------------------------------
-  T E S T S
- -------------------------------------------------------
- Running it.io.openliberty.guides.inventory.SystemResourceIT
- it.io.openliberty.guides.inventory.SystemResourceIT  - Testing by dev mode or local Liberty...
- ...
- Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.873 s - in it.io.openliberty.guides.inventory.SystemResourceIT
-
- Results:
-
- Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
-```
-
-
-
-::page{title="Running tests in a CI/CD pipeline"}
-
-Running tests in dev mode is useful for local development, but there may be times when you want to test your application in other scenarios, such as in a CI/CD pipeline. For these cases, you can use Testcontainers to run tests against a running Open Liberty instance in a controlled, self-contained environment, ensuring that your tests run consistently regardless of the deployment context.
-
-To test outside of dev mode, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the Liberty.
-
-Also, run the following commands to stop the PostgreSQL container that was started in the previous section:
 
 ```bash
-docker stop postgres-container
+cd /home/project/guide-arquillian-managed/start
+./mvnw liberty:configure-arquillian
 ```
 
-Now, use the following Maven goal to run the tests from a cold start outside of dev mode:
-
-****WINDOWS****
-****MAC****
-****LINUX****
-```bash
-export TESTCONTAINERS_RYUK_DISABLED=true
-./mvnw clean verify
-```
-
-You see the following output:
+Because you started Open Liberty in dev mode, all the changes were automatically picked up. You can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode. Look for the following output:
 
 ```
- -------------------------------------------------------
-  T E S T S
- -------------------------------------------------------
- Running it.io.openliberty.guides.inventory.SystemResourceIT
- it.io.openliberty.guides.inventory.SystemResourceIT  - Testing by using Testcontainers...
- ...
- tc.postgres-sample:latest  - Creating container for image: postgres-sample:latest
- tc.postgres-sample:latest  - Container postgres-sample:latest is starting: 7cf2e2c6a505f41877014d08b7688399b3abb9725550e882f1d33db8fa4cff5a
- tc.postgres-sample:latest  - Container postgres-sample:latest started in PT2.925405S
- ...
- tc.inventory:1.0-SNAPSHOT  - Creating container for image: inventory:1.0-SNAPSHOT
- tc.inventory:1.0-SNAPSHOT  - Container inventory:1.0-SNAPSHOT is starting: 432ac739f377abe957793f358bbb85cc916439283ed2336014cacb585f9992b8
- tc.inventory:1.0-SNAPSHOT  - Container inventory:1.0-SNAPSHOT started in PT25.784899S
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running it.io.openliberty.guides.system.SystemArquillianIT
 ...
-
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 12.208 s - in it.io.openliberty.guides.inventory.SystemResourceIT
-
-Results:
-
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.133 s - in it.io.openliberty.guides.system.SystemArquillianIT
+[INFO] Running it.io.openliberty.guides.inventory.InventoryArquillianIT
+...
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.297 s - in it.io.openliberty.guides.
+...
+[INFO] Results:
+[INFO]
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+...
 ```
 
-Notice that the test initiates a new Docker container each for the PostgreSQL database and the ***inventory*** microservice, resulting in a longer test runtime. Despite this, cold start testing benefits from a clean instance per run and ensures consistent results. These tests also automatically hook into existing build pipelines that are set up to run the ***integration-test*** phase.
+
+::page{title="Running the tests"}
+
+It's now time to build and run your Arquillian tests outside of dev mode. Exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty in the previous section.
+
+Run the Maven command to package the application. Then, run the Liberty Maven Plugin goals to create the Liberty instance, install the features, and deploy the application to the instance. The ***configure-arquillian*** goal configures your Arquillian container. You can learn more about this goal in the [configure-arquillian goal documentation](https://github.com/OpenLiberty/ci.maven/blob/main/docs/configure-arquillian.md).
+
+```bash
+cd /home/project/guide-arquillian-managed/start
+./mvnw clean package
+./mvnw liberty:create liberty:install-feature
+./mvnw liberty:configure-arquillian
+```
+
+Now, you can run your Arquillian tests with the Maven ***integration-test*** goal:
+
+
+```bash
+./mvnw failsafe:integration-test
+```
+
+In the test output, you can see that the Liberty instance launched, and that the web archive, ***arquillian-managed***, started as an application in the instance. You can also see that the tests are running and that the results are reported.
+
+After the tests stop running, the test application is automatically undeployed and the instance shuts down. You should then get a message indicating that the build and tests are successful.
+
+```
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running it.io.openliberty.guides.system.SystemArquillianIT
+...
+[AUDIT   ] CWWKE0001I: The server defaultServer has been launched.
+[AUDIT   ] CWWKG0093A: Processing configuration drop-ins resource: guide-arquillian-managed/finish/target/liberty/wlp/usr/servers/defaultServer/configDropins/overrides/liberty-plugin-variable-config.xml
+[INFO    ] CWWKE0002I: The kernel started after 0.854 seconds
+[INFO    ] CWWKF0007I: Feature update started.
+[AUDIT   ] CWWKZ0058I: Monitoring dropins for applications.
+[INFO    ] Aries Blueprint packages not available. So namespaces will not be registered
+[INFO    ] CWWKZ0018I: Starting application guide-arquillian-managed.
+...
+[INFO    ] SRVE0169I: Loading Web Module: guide-arquillian-managed.
+[INFO    ] SRVE0250I: Web Module guide-arquillian-managed has been bound to default_host.
+[AUDIT   ] CWWKT0016I: Web application available (default_host): http://localhost:9080/
+[INFO    ] SESN0176I: A new session context will be created for application key default_host/
+[INFO    ] SESN0172I: The session manager is using the Java default SecureRandom implementation for session ID generation.
+[AUDIT   ] CWWKZ0001I: Application guide-arquillian-managed started in 1.126 seconds.
+[INFO    ] CWWKO0219I: TCP Channel defaultHttpEndpoint has been started and is now listening for requests on host localhost  (IPv4: 127.0.0.1) port 9080.
+[AUDIT   ] CWWKF0012I: The server installed the following features: [cdi-2.0, jaxrs-2.1, jaxrsClient-2.1, jndi-1.0, jsonp-1.1, localConnector-1.0, mpConfig-1.3, servlet-4.0].
+[INFO    ] CWWKF0008I: Feature update completed in 2.321 seconds.
+[AUDIT   ] CWWKF0011I: The defaultServer server is ready to run a smarter planet. The defaultServer server started in 3.175 seconds.
+[INFO    ] CWWKZ0018I: Starting application arquillian-managed.
+...
+[INFO    ] SRVE0169I: Loading Web Module: arquillian-managed.
+[INFO    ] SRVE0250I: Web Module arquillian-managed has been bound to default_host.
+[AUDIT   ] CWWKT0016I: Web application available (default_host): http://localhost:9080/arquillian-managed/
+...
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.133 s - in it.io.openliberty.guides.system.SystemArquillianIT
+[INFO] Running it.io.openliberty.guides.inventory.InventoryArquillianIT
+[INFO    ] CWWKZ0018I: Starting application arquillian-managed.
+[INFO    ] CWWKZ0136I: The arquillian-managed application is using the archive file at the guide-arquillian-managed/finish/target/liberty/wlp/usr/servers/defaultServer/dropins/arquillian-managed.war location.
+[INFO    ] SRVE0169I: Loading Web Module: arquillian-managed.
+[INFO    ] SRVE0250I: Web Module arquillian-managed has been bound to default_host.
+...
+[INFO    ] Setting the server's publish address to be /inventory/
+[INFO    ] SRVE0242I: [arquillian-managed] [/arquillian-managed] [io.openliberty.guides.inventory.InventoryApplication]: Initialization successful.
+[INFO    ] Setting the server's publish address to be /system/
+[INFO    ] SRVE0242I: [arquillian-managed] [/arquillian-managed] [io.openliberty.guides.system.SystemApplication]: Initialization successful.
+[INFO    ] SRVE0242I: [arquillian-managed] [/arquillian-managed] [ArquillianServletRunner]: Initialization successful.
+[AUDIT   ] CWWKT0017I: Web application removed (default_host): http://localhost:9080/arquillian-managed/
+[INFO    ] SRVE0253I: [arquillian-managed] [/arquillian-managed] [ArquillianServletRunner]: Destroy successful.
+[INFO    ] SRVE0253I: [arquillian-managed] [/arquillian-managed] [io.openliberty.guides.inventory.InventoryApplication]: Destroy successful.
+[AUDIT   ] CWWKZ0009I: The application arquillian-managed has stopped successfully.
+[INFO    ] SRVE9103I: A configuration file for a web server plugin was automatically generated for this server at guide-arquillian-managed/finish/target/liberty/wlp/usr/servers/defaultServer/logs/state/plugin-cfg.xml.
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.297 s - in it.io.openliberty.guides.inventory.InventoryArquillianIT
+...
+Stopping server defaultServer.
+...
+Server defaultServer stopped.
+[INFO]
+[INFO] Results:
+[INFO]
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  12.018 s
+[INFO] Finished at: 2020-06-23T12:40:32-04:00
+[INFO] ------------------------------------------------------------------------
+```
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just tested your microservices with multiple Docker containers using Testcontainers.
+You just built some functional and integration tests with the Arquillian managed container and ran the tests for your microservices on Open Liberty.
 
+
+Try one of the related guides to learn more about the technologies that you come across in this guide.
 
 
 ### Clean up your environment
@@ -877,31 +414,31 @@ You just tested your microservices with multiple Docker containers using Testcon
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-testcontainers*** project by running the following commands:
+Delete the ***guide-arquillian-managed*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-testcontainers
+rm -fr guide-arquillian-managed
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Building%20true-to-production%20integration%20tests%20with%20Testcontainers&guide-id=cloud-hosted-guide-testcontainers)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Testing%20microservices%20with%20the%20Arquillian%20managed%20container&guide-id=cloud-hosted-guide-arquillian-managed)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-testcontainers/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-testcontainers/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-arquillian-managed/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-arquillian-managed/pulls)
 
 
 
 ### Where to next?
 
-* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
-* [Testing microservices with the Arquillian managed container](https://openliberty.io/guides/arquillian-managed.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 
 
 ### Log out of the session
