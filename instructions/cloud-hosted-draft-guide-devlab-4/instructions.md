@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Testing reactive Java microservices guide!"}
+::page{title="Welcome to the Consuming a RESTful web service with Angular guide!"}
 
-Learn how to test reactive Java microservices in true-to-production environments using Testcontainers.
+Explore how to access a simple RESTful web service and consume its resources with Angular in OpenLiberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -17,14 +17,22 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You will learn how to write integration tests for reactive Java microservices and to run the tests in true-to-production environments by using containers with [Testcontainers](https://java.testcontainers.org/) and JUnit. Testcontainers tests your containerized application from outside the container so that you are testing the exact same image that runs in production. The reactive application in this guide sends and receives messages between services by using an external message broker, [Apache Kafka](https://kafka.apache.org/). Using an external message broker enables asynchronous communications between services so that requests are non-blocking and decoupled from responses. You can learn more about reactive Java services that use an external message broker to manage communications in the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
+[Angular](https://angular.io) is a framework for creating interactive web applications. Angular applications are written in HTML, CSS, and [TypeScript](https://www.typescriptlang.org), a variant of JavaScript. Angular helps you create responsive and intuitive applications that download once and run as a single web page. Consuming REST services with your Angular application allows you to request only the data and operations that you need, minimizing loading times.
 
-![Reactive system inventory application](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-service-testing/prod/assets/reactive-messaging-system-inventory.png)
+You will learn how to access a REST service and deserialize the returned JSON that contains a list of artists and their albums by using an Angular service and the Angular HTTP Client. You will then present this data using an Angular component.
+
+The REST service that provides the artists and albums resource was written for you in advance and responds with the ***artists.json***.
+
+The Angular application was created and configured for you in the ***frontend*** directory. It contains the default starter application. There are many files that make up an Angular application, but you only need to edit a few to consume the REST service and display its data.
+
+Angular applications must be compiled before they can be used. The Angular compilation step was configured as part of the Maven build. You can use the ***start*** folder of this guide as a template for getting started with your own applications built on Angular and Open Liberty.
 
 
-*True-to-production integration testing with Testcontainers*
 
-Tests sometimes pass during the development and testing stages of an application's lifecycle but then fail in production because of differences between your development and production environments. While you can create mock objects and custom setups to minimize differences between environments, it is difficult to mimic a production system for an application that uses an external messaging system. Testcontainers addresses this problem by enabling the testing of applications in the same Docker containers that you’ll use in production. As a result, your environment remains the same throughout the application’s lifecycle – from development, through testing, and into production. You can learn more about Testcontainers in the [Building true-to-production integration tests with Testcontainers](https://openliberty.io/guides/testcontainers.html) guide.
+You will implement an Angular client that consumes this JSON and displays its contents.
+
+To learn more about REST services and how you can write them, see
+[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html).
 
 
 ::page{title="Getting started"}
@@ -38,11 +46,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-reactive-service-testing.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-client-angular.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-reactive-service-testing.git
-cd guide-reactive-service-testing
+git clone https://github.com/openliberty/guide-rest-client-angular.git
+cd guide-rest-client-angular
 ```
 
 
@@ -50,693 +58,363 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-In this IBM Cloud environment, you need to change the user home to ***/home/project*** by running the following command:
-```bash
-sudo usermod -d /home/project theia
-```
-
-
 ### Try what you'll build
 
 The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To try out the tests, go to the ***finish*** directory and run the following Maven goal to install the ***models*** artifact to the local Maven repository:
-
-
-```bash
-./mvnw -pl models install
-```
-
-Next, navigate to the ***finish/system*** directory and run the following Maven goal to build the ***system*** microservice and run the integration tests on an Open Liberty server in a container:
-
+To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
 
 ```bash
-export TESTCONTAINERS_RYUK_DISABLED=true
-cd system
-./mvnw verify
+cd finish
+./mvnw liberty:run
 ```
 
-You will see the following output:
+After you see the following message, your Liberty instance is ready:
 
 ```
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 52.46 s - in it.io.openliberty.guides.system.SystemServiceIT
-
- Results:
-
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-
-
- --- failsafe:3.2.5:verify (verify) @ system ---
- ------------------------------------------------------------------------
- BUILD SUCCESS
- ------------------------------------------------------------------------
- Total time:  57.710 s
- Finished at: 2024-02-01T08:48:15-08:00
- ------------------------------------------------------------------------
+The defaultServer server is ready to run a smarter planet.
 ```
 
-This command might take some time to run the first time because the dependencies and the Docker image for Open Liberty must download. If you run the same command again, it will be faster.
 
-You can also try out the ***inventory*** integration tests by repeating the same commands in the ***finish/inventory*** directory.
+Click the following button to visit the web application ***/app*** root endpoint:
+::startApplication{port="9080" display="external" name="Visit application" route="/app"}
 
-
-::page{title="Testing with the Kafka consumer client"}
-
+ You will see the following output:
 
 
 
+```
+foo wrote 2 albums:
+    Album titled *album_one* by *foo* contains *12* tracks
+    Album tilted *album_two* by *foo* contains *15* tracks
+bar wrote 1 albums:
+    Album titled *foo walks into a bar* by *bar* contains *12* tracks
+dj wrote 0 albums:
+```
 
+After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+
+```bash
+./mvnw liberty:stop
+```
+
+
+::page{title="Starting the service"}
+
+Before you begin the implementation, start the provided REST service so that the artist JSON is available to you.
 
 Navigate to the ***start*** directory to begin.
-```bash
-cd /home/project/guide-reactive-service-testing/start
-```
-
-The example reactive application consists of the ***system*** and ***inventory*** microservices. The ***system*** microservice produces messages to the Kafka message broker, and the ***inventory*** microservice consumes messages from the Kafka message broker. You will write integration tests to see how you can use the Kafka consumer and producer client APIs to test each service. Kafka test containers, Testcontainers, and JUnit are already included as required test dependencies in your Maven ***pom.xml*** files for the ***system*** and ***inventory*** microservices.
-
-The ***start*** directory contains three directories: the ***system*** microservice directory, the ***inventory*** microservice directory, and the ***models*** directory. The ***models*** directory contains the model class that defines the structure of the system load data that is used in the application. Run the following Maven goal to install the packaged ***models*** artifact to the local Maven repository so it can be used later by the ***system*** and ***inventory*** microservices:
-
 
 ```bash
-./mvnw -pl models install
+cd /home/project/guide-rest-client-angular/start
 ```
 
-### Launching the system microservice in dev mode with container support
-
-Start the microservices in dev mode by running the following command to launch a Kafka instance that replicates the production environment. The ***startKafka*** script launches a local Kafka container. It also establishes a ***reactive-app*** network that allows the ***system*** and ***inventory*** microservices to connect to the Kafka message broker.
-
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
-./scripts/startKafka.sh
+./mvnw liberty:dev
 ```
-
-Navigate to the ***start/system*** directory.
-
-```bash
-cd /home/project/guide-reactive-service-testing/start/system
-```
-
-In this IBM Cloud environment, you must first create the ***logs*** directory by running the following commands:
-```bash
-mkdir -p /home/project/guide-reactive-service-testing/start/system/target/liberty/wlp/usr/servers/defaultServer/logs
-chmod 777 /home/project/guide-reactive-service-testing/start/system/target/liberty/wlp/usr/servers/defaultServer/logs
-```
-
-To launch the ***system*** microservice in dev mode with container support, configure the container by specifying the options within the ***\<containerRunOpts\>*** element to connect to the ***reactive-app*** network and expose the container port.
-
-Run the following goal to start the ***system*** microservice in dev mode with container support:
-
-
-```bash
-export TESTCONTAINERS_RYUK_DISABLED=true
-./mvnw liberty:devc
-```
-
-For more information about disabling Ryuk, see the [Testcontainers custom configuration](https://java.testcontainers.org/features/configuration/#disabling-ryuk) document.
 
 After you see the following message, your Liberty instance is ready in dev mode:
-
 
 ```
 **************************************************************
 *    Liberty is running in dev mode.
-*    ...    
-*    Liberty container port information:
-*        Internal container HTTP port [ 9083 ] is mapped to container host port [ 9083 ] <
-*   ...     
 ```
 
-[Dev mode](https://openliberty.io/docs/latest/development-mode.html) holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-The ***system*** microservice actively seeks a Kafka topic for message push operations. After the Kafka service starts, the ***system*** microservice connects to the Kafka message broker by using the ***mp.messaging.connector.liberty-kafka.bootstrap.servers*** property. When you run your application in dev mode with container support, the running ***system*** container exposes its service on the ***9083*** port for testing purposes.
 
-### Testing the system microservice
+You can find your artist JSON by running the following command at a terminal:
+```bash
+curl -s http://localhost:9080/artists | jq
+```
 
-Now you can start writing the test by using Testcontainers.
 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+::page{title="Project configuration"}
 
-Create the ***SystemServiceIT*** class.
+The front end of your application uses Node.js to execute your Angular code. The Maven project is configured for you to install Node.js and produce the production files, which are copied to the web content of your application.
+
+Node.js is server-side JavaScript runtime that is used for developing networking applications. Its convenient package manager, [npm](https://www.npmjs.com/), is used to execute the Angular scripts found in the ***package.json*** file. To learn more about Node.js, see the official [Node.js documentation](https://nodejs.org/en/docs/).
+
+The ***frontend-maven-plugin*** is used to ***install*** the dependencies listed in your ***package.json*** file from the npm registry into a folder called ***node_modules***. The ***node_modules*** folder is found in your ***working*** directory. Then, the configuration ***produces*** the production files to the ***src/main/frontend/src/app*** directory. 
+
+The ***src/main/frontend/src/angular.json*** file is defined so that the production build is copied into the web content of your application.
+
+
+
+::page{title="Creating the root Angular module"}
+
+Your application needs a way to communicate with and retrieve resources from RESTful web services. In this case, the provided Angular application needs to communicate with the artists service to retrieve the artists JSON. While there are various ways to perform this task, Angular contains a built-in ***HttpClientModule*** that you can use.
+
+Angular applications consist of modules, which are groups of classes that perform specific functions. The Angular framework provides its own modules for applications to use. One of these modules, the HTTP Client module, includes convenience classes that make it easier and quicker for you to consume a RESTful API from your application.
+
+You will create the module that organizes your application, which is called the root module. The root module includes the Angular HTTP Client module.
+
+Create the ***app.module.ts*** file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java
+touch /home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.module.ts
 ```
 
 
-> Then, to open the SystemServiceIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java, or click the following button
+> Then, to open the app.module.ts file in your IDE, select
+> ***File*** > ***Open*** > guide-rest-client-angular/start/src/main/frontend/src/app/app.module.ts, or click the following button
 
-::openFile{path="/home/project/guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java"}
+::openFile{path="/home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.module.ts"}
 
 
 
-```java
-package it.io.openliberty.guides.system;
+```
+import { BrowserModule } from '@angular/platform-browser';
+import { NgModule } from '@angular/core';
+import { HttpClientModule } from '@angular/common/http';
+import { AppComponent } from './app.component';
 
-import java.net.Socket;
-import java.time.Duration;
-import java.util.Collections;
-import java.util.Properties;
-import java.nio.file.Paths;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import org.testcontainers.containers.KafkaContainer;
-import org.testcontainers.containers.Network;
-import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.images.builder.ImageFromDockerfile;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.utility.DockerImageName;
-
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.serialization.StringDeserializer;
-
-import io.openliberty.guides.models.SystemLoad;
-import io.openliberty.guides.models.SystemLoad.SystemLoadDeserializer;
-
-@Testcontainers
-public class SystemServiceIT {
-
-    private static Logger logger = LoggerFactory.getLogger(SystemServiceIT.class);
-    private static Network network = Network.newNetwork();
-
-    public static KafkaConsumer<String, SystemLoad> consumer;
-
-    private static ImageFromDockerfile systemImage =
-        new ImageFromDockerfile("system:1.0-SNAPSHOT")
-            .withDockerfile(Paths.get("./Dockerfile"));
-
-    private static KafkaContainer kafkaContainer = new KafkaContainer(
-        DockerImageName.parse("confluentinc/cp-kafka:latest"))
-            .withListener(() -> "kafka:19092")
-            .withNetwork(network);
-
-    private static GenericContainer<?> systemContainer =
-        new GenericContainer(systemImage)
-            .withNetwork(network)
-            .withExposedPorts(9083)
-            .waitingFor(Wait.forHttp("/health/ready").forPort(9083))
-            .withStartupTimeout(Duration.ofMinutes(3))
-            .withLogConsumer(new Slf4jLogConsumer(logger))
-            .dependsOn(kafkaContainer);
-
-    private static boolean isServiceRunning(String host, int port) {
-        try {
-            Socket socket = new Socket(host, port);
-            socket.close();
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    @BeforeAll
-    public static void startContainers() {
-        if (isServiceRunning("localhost", 9083)) {
-            System.out.println("Testing with mvn liberty:devc");
-        } else {
-            kafkaContainer.start();
-            systemContainer.withEnv(
-                "mp.messaging.connector.liberty-kafka.bootstrap.servers",
-                "kafka:19092");
-            systemContainer.start();
-            System.out.println("Testing with mvn verify");
-        }
-    }
-
-    @BeforeEach
-    public void createKafkaConsumer() {
-        Properties consumerProps = new Properties();
-        if (isServiceRunning("localhost", 9083)) {
-            consumerProps.put(
-                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                "localhost:9094");
-        } else {
-            consumerProps.put(
-                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                kafkaContainer.getBootstrapServers());
-        }
-        consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "system-load-status");
-        consumerProps.put(
-            ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
-            StringDeserializer.class.getName());
-        consumerProps.put(
-            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
-            SystemLoadDeserializer.class.getName());
-        consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        consumer = new KafkaConsumer<String, SystemLoad>(consumerProps);
-        consumer.subscribe(Collections.singletonList("system.load"));
-    }
-
-    @AfterAll
-    public static void stopContainers() {
-        systemContainer.stop();
-        kafkaContainer.stop();
-        if (network != null) {
-            network.close();
-        }
-    }
-
-    @AfterEach
-    public void closeKafkaConsumer() {
-        consumer.close();
-    }
-
-    @Test
-    public void testCpuStatus() {
-        ConsumerRecords<String, SystemLoad> records =
-            consumer.poll(Duration.ofMillis(30 * 1000));
-        System.out.println("Polled " + records.count() + " records from Kafka:");
-
-        for (ConsumerRecord<String, SystemLoad> record : records) {
-            SystemLoad sl = record.value();
-            System.out.println(sl);
-            assertNotNull(sl.hostname);
-            assertNotNull(sl.loadAverage);
-        }
-        consumer.commitAsync();
-    }
-}
+@NgModule({
+  declarations: [
+    AppComponent
+  ],
+  imports: [
+    BrowserModule,
+    HttpClientModule,
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
 ```
 
 
 Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
+The ***HttpClientModule*** imports the class into the file. By using the ***@NgModule*** tag, you can declare a module and organize  your dependencies within the Angular framework. The ***imports*** array is a declaration array that imports the ***HttpClientModule*** so that you can use the HTTP Client module in your application.
 
 
+::page{title="Creating the Angular service to fetch data"}
 
-Construct the ***systemImage*** by using the ***ImageFromDockerfile*** class, which allows Testcontainers to build the Docker image from a Dockerfile during the test run time. For instance, the provided Dockerfile at the specified ***./Dockerfile*** paths is used to generate the ***system:1.0-SNAPSHOT*** image.
+You need to create the component that is used in the application to acquire and display data from the REST API. The component file contains two classes: the service, which handles data access, and the component itself, which handles the presentation of the data.
 
-Use the ***kafkaContainer*** class to instantiate the ***kafkaContainer*** test container, initiating the ***confluentinc/cp-kafka:latest*** Docker image. Similarly, use the ***GenericContainer*** class to create the ***systemContainer*** test container, starting the ***system:1.0-SNAPSHOT*** Docker image.
- 
-The ***withListener()*** is configured to ***kafka:19092***, as the containerized ***system*** microservice functions as an additional producer. Therefore, the Kafka container needs to set up a listener to accommodate this requirement. For more information about using an additional consumer or producer with a Kafka container, see the [Testcontainers Kafka documentation](https://java.testcontainers.org/modules/kafka/)
+Services are classes in Angular that are designed to share their functionality across entire applications. A good service performs only one function, and it performs this function well. In this case, the ***ArtistsService*** class requests artists data from the REST service.
 
-Because containers are isolated by default, facilitating communication between the ***kafkaContainer*** and the ***systemContainer*** requires placing them on the same ***network***. The ***dependsOn()*** method is used to indicate that the ***system*** microservice container starts only after ensuring the readiness of the Kafka container. 
-
-Before you start the ***systemContainer***, you must override the ***mp.messaging.connector.liberty-kafka.bootstrap.servers*** property with ***kafka:19092*** by using the ***withEnv()*** method. This step creates a listener in the Kafka container that is configured to handle an additional producer.
-
-The test uses the ***KafkaConsumer*** client API, configuring the consumer to use the ***BOOTSTRAP_SERVERS_CONFIG*** property with the Kafka broker address if a local ***system*** microservice container is present. In the absence of a local service container, it uses the ***getBootstrapServers()*** method to obtain the broker address from the Kafka test container. Then, the consumer is set up to consume messages from the ***system.load*** topic within the ***Kafka*** container.
-
-To consume messages from a stream, the messages need to be deserialized from bytes. Kafka has its own default deserializer, but a custom deserializer is provided for you. The deserializer is configured by the ***VALUE_DESERIALIZER_CLASS_CONFIG*** property and is implemented in the ***SystemLoad*** class. To learn more about Kafka APIs and their usage, see the [official Kafka Documentation](https://kafka.apache.org/documentation/#api).
-
-The running ***system*** microservice container produces messages to the ***systemLoad*** Kafka topic, as denoted by the ***@Outgoing*** annotation. The ***testCpuStatus()*** test method uses the ***consumer.poll()*** method from the ***KafkaConsumer*** client API to retrieve a record from Kafka every 3 seconds within a specified timeout limit. This record is produced by the system service. Then, the method uses ***Assertions*** to verify that the polled record aligns with the expected record.
-
-### Running the tests
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
-
-You will see the following output:
-
-```
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 25.674 s - in it.io.openliberty.guides.system.SystemServiceIT
-
- Results:
-
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-
- Integration tests finished.
-```
-
-After you are finished running tests, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server.
-
-
-If you aren't running in dev mode, you can run the tests by running the following command:
-
-
-```bash
-./mvnw clean verify
-```
-
-You will see the following output:
-
-```
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 50.63 s - in it.io.openliberty.guides.system.SystemServiceIT
-
- Results:
-
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-
-
- --- failsafe:3.2.5:verify (verify) @ system ---
- ------------------------------------------------------------------------
- BUILD SUCCESS
- ------------------------------------------------------------------------
- Total time:  55.636 s
- Finished at: 2024-01-31T11:33:40-08:00
- ------------------------------------------------------------------------
-```
-
-
-::page{title="Testing with the Kafka producer client"}
-
-The ***inventory*** microservice is tested in the same way as the ***system*** microservice. The only difference is that the ***inventory*** microservice consumes messages, which means that tests are written to use the Kafka producer client.
-
-### Launching the inventory microservice in dev mode with container
-
-Navigate to the ***start/inventory*** directory.
-
-```bash
-cd /home/project/guide-reactive-service-testing/start/inventory
-```
-
-First, create the ***logs*** directory by running the following commands:
-```bash
-mkdir -p /home/project/guide-reactive-service-testing/start/inventory/target/liberty/wlp/usr/servers/defaultServer/logs
-chmod 777 /home/project/guide-reactive-service-testing/start/inventory/target/liberty/wlp/usr/servers/defaultServer/logs
-```
-
-Run the following goal to start the ***inventory*** microservice in dev mode with container support:
-
-
-```bash
-./mvnw liberty:devc
-```
-
-### Building a test REST client
-
-Create a REST client interface to access the ***inventory*** microservice.
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-Create the ***InventoryResourceClient*** class.
+Create the ***app.component.ts*** file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java
+touch /home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts
 ```
 
 
-> Then, to open the InventoryResourceClient.java file in your IDE, select
-> ***File*** > ***Open*** > guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java, or click the following button
+> Then, to open the app.component.ts file in your IDE, select
+> ***File*** > ***Open*** > guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts, or click the following button
 
-::openFile{path="/home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java"}
+::openFile{path="/home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts"}
 
 
 
-```java
-package it.io.openliberty.guides.inventory;
+```
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
+@Injectable()
+export class ArtistsService {
+  constructor(private http: HttpClient) { }
 
-@Path("/inventory")
-public interface InventoryResourceClient {
+  private static ARTISTS_URL = '/artists';
 
-    @GET
-    @Path("/systems")
-    @Produces(MediaType.APPLICATION_JSON)
-    Response getSystems();
+  async fetchArtists() {
+    try {
+      const data: any = await this.http.get(ArtistsService.ARTISTS_URL).toPromise();
+      return data;
+    } catch (error) {
+      console.error('Error occurred: ' + error);
+    }
+  }
+}
 
-    @DELETE
-    @Produces(MediaType.APPLICATION_JSON)
-    Response resetSystems();
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css']
+})
+export class AppComponent implements OnInit {
+  artists: any[] = [];
 
+  constructor(private artistsService: ArtistsService) { }
+
+  ngOnInit() {
+    this.artistsService.fetchArtists().then(data => {
+      this.artists = data;
+    });
+  }
 }
 ```
 
 
 
-The ***InventoryResourceClient*** interface declares the ***getSystems()*** and ***resetSystems()*** methods for accessing the corresponding endpoints within the ***inventory*** microservice.
+The file imports the ***HttpClient*** class and the ***Injectable*** decorator.
+
+The ***ArtistsService*** class is defined. While it shares the file of the component class ***AppComponent***, it can also be defined in its own file. The class is annotated by ***@Injectable*** so instances of it can be provided to other classes anywhere in the application.
+
+The class injects an instance of the ***HttpClient*** class, which it uses to request data from the REST API. It contains the ***ARTISTS_URL*** constant, which points to the API endpoint it requests data from. The URL does not contain a host name because the artists API endpoint is accessible from the same host as the Angular application. You can send requests to external APIs by specifying the full URL. Finally, it implements a ***fetchArtists()*** method that makes the request and returns the result.
+
+To obtain the data for display on the page, the ***fetchArtists()*** method tries to use the injected ***http*** instance to perform a ***GET*** HTTP request to the ***ARTISTS_URL*** constant. If successful, it returns the result. If an error occurs, it prints the error message to the console.
+
+The ***fetchArtists()*** method uses a feature of JavaScript called ***async***, ***await*** to make requests and receive responses without preventing the application from working while it waits. For the result of the ***HttpClient.get()*** method to be compatible with this feature, it must be converted to a Promise by invoking its ***toPromise()*** method. APromise is how JavaScript represents the state of an asynchronous operation. If you want to learn more, check out [promisejs.org](https://promisejs.org) for an introduction.
 
 
-### Testing the inventory microservice
+::page{title="Defining the component to consume the service"}
 
-Now you can start writing the test by using Testcontainers.
+Components are the basic building blocks of Angular application user interfaces. Components are made up of a TypeScript class annotated with the ***@Component*** annotation and the HTML template file (specified by ***templateUrl***) and CSS style files (specified by ***styleUrls***.)
 
-Create the ***InventoryServiceIT*** class.
+Update the ***AppComponent*** class to use the artists service to fetch the artists data and save it so the component can display it.
 
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java
+Update the ***app.component.ts*** file.
+
+> To open the app.component.ts file in your IDE, select
+> ***File*** > ***Open*** > guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts, or click the following button
+
+::openFile{path="/home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts"}
+
+
+
 ```
+import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 
+@Injectable()
+export class ArtistsService {
+  constructor(private http: HttpClient) { }
 
-> Then, to open the InventoryServiceIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java, or click the following button
+  private static ARTISTS_URL = '/artists';
 
-::openFile{path="/home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java"}
-
-
-
-```java
-package it.io.openliberty.guides.inventory;
-
-import java.util.List;
-import java.net.Socket;
-import java.time.Duration;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.math.BigDecimal;
-import java.nio.file.Paths;
-import java.util.Properties;
-
-import jakarta.ws.rs.core.GenericType;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriBuilder;
-import jakarta.ws.rs.client.ClientBuilder;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Assertions;
-import org.testcontainers.containers.Network;
-import org.testcontainers.utility.DockerImageName;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.testcontainers.containers.KafkaContainer;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.images.builder.ImageFromDockerfile;
-import org.apache.kafka.common.serialization.StringSerializer;
-import org.jboss.resteasy.client.jaxrs.ResteasyClient;
-import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
-import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
-import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
-
-import io.openliberty.guides.models.SystemLoad;
-import io.openliberty.guides.models.SystemLoad.SystemLoadSerializer;
-
-
-@Testcontainers
-public class InventoryServiceIT {
-
-    private static Logger logger = LoggerFactory.getLogger(InventoryServiceIT.class);
-
-    public static InventoryResourceClient client;
-
-    private static Network network = Network.newNetwork();
-    public static KafkaProducer<String, SystemLoad> producer;
-    private static ImageFromDockerfile inventoryImage =
-        new ImageFromDockerfile("inventory:1.0-SNAPSHOT")
-            .withDockerfile(Paths.get("./Dockerfile"));
-
-    private static KafkaContainer kafkaContainer = new KafkaContainer(
-        DockerImageName.parse("confluentinc/cp-kafka:latest"))
-            .withListener(() -> "kafka:19092")
-            .withNetwork(network);
-
-    private static GenericContainer<?> inventoryContainer =
-        new GenericContainer(inventoryImage)
-            .withNetwork(network)
-            .withExposedPorts(9085)
-            .waitingFor(Wait.forHttp("/health/ready").forPort(9085))
-            .withStartupTimeout(Duration.ofMinutes(3))
-            .withLogConsumer(new Slf4jLogConsumer(logger))
-            .dependsOn(kafkaContainer);
-
-    private static InventoryResourceClient createRestClient(String urlPath) {
-        ClientBuilder builder = ResteasyClientBuilder.newBuilder();
-        ResteasyClient client = (ResteasyClient) builder.build();
-        ResteasyWebTarget target = client.target(UriBuilder.fromPath(urlPath));
-        return target.proxy(InventoryResourceClient.class);
+  async fetchArtists() {
+    try {
+      const data: any = await this.http.get(ArtistsService.ARTISTS_URL).toPromise();
+      return data;
+    } catch (error) {
+      console.error('Error occurred: ' + error);
     }
+  }
+}
 
-    private static boolean isServiceRunning(String host, int port) {
-        try {
-            Socket socket = new Socket(host, port);
-            socket.close();
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  providers: [ ArtistsService ],
+  styleUrls: ['./app.component.css']
+})
+export class AppComponent implements OnInit {
+  artists: any[] = [];
 
-    @BeforeAll
-    public static void startContainers() {
+  constructor(private artistsService: ArtistsService) { }
 
-        String urlPath;
-        if (isServiceRunning("localhost", 9085)) {
-            System.out.println("Testing with mvn liberty:devc");
-            urlPath = "http://localhost:9085";
-        } else {
-            System.out.println("Testing with mvn verify");
-            kafkaContainer.start();
-            inventoryContainer.withEnv(
-                "mp.messaging.connector.liberty-kafka.bootstrap.servers",
-                "kafka:19092");
-            inventoryContainer.start();
-            urlPath = "http://"
-                + inventoryContainer.getHost()
-                + ":" + inventoryContainer.getFirstMappedPort();
-        }
-
-        System.out.println("Creating REST client with: " + urlPath);
-        client = createRestClient(urlPath);
-    }
-
-    @BeforeEach
-    public void createKafkaProducer() {
-        Properties producerProps = new Properties();
-        if (isServiceRunning("localhost", 9085)) {
-            producerProps.put(
-                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                "localhost:9094");
-        } else {
-            producerProps.put(
-                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                kafkaContainer.getBootstrapServers());
-        }
-
-        producerProps.put(
-            ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
-            StringSerializer.class.getName());
-        producerProps.put(
-            ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
-            SystemLoadSerializer.class.getName());
-
-        producer = new KafkaProducer<String, SystemLoad>(producerProps);
-    }
-
-    @AfterAll
-    public static void stopContainers() {
-        client.resetSystems();
-        inventoryContainer.stop();
-        kafkaContainer.stop();
-        if (network != null) {
-            network.close();
-        }
-    }
-
-    @AfterEach
-    public void closeKafkaProducer() {
-        producer.close();
-    }
-
-    @Test
-    public void testCpuUsage() throws InterruptedException {
-        SystemLoad sl = new SystemLoad("localhost", 1.1);
-        producer.send(new ProducerRecord<String, SystemLoad>("system.load", sl));
-        Thread.sleep(5000);
-        Response response = client.getSystems();
-        Assertions.assertEquals(200, response.getStatus(), "Response should be 200");
-        List<Properties> systems =
-            response.readEntity(new GenericType<List<Properties>>() { });
-        assertEquals(systems.size(), 1);
-        for (Properties system : systems) {
-            assertEquals(sl.hostname, system.get("hostname"),
-                "Hostname doesn't match!");
-            BigDecimal systemLoad = (BigDecimal) system.get("systemLoad");
-            assertEquals(sl.loadAverage, systemLoad.doubleValue(),
-                "CPU load doesn't match!");
-        }
-    }
+  ngOnInit() {
+    this.artistsService.fetchArtists().then(data => {
+      this.artists = data;
+    });
+  }
 }
 ```
 
 
 
+Replace the entire ***AppComponent*** class along with the ***@Component*** annotation. Add ***OnInit*** to the list of imported classes at the top.
+
+The ***providers*** property on the ***@Component*** annotation indicates that this component provides the ***ArtistsService*** to other classes in the application.
+
+***AppComponent*** implements ***OnInit***, which is a special interface called a lifecycle hook. When Angular displays, updates, or removes a component, it calls a specific function, the lifecycle hook, on the component so the component can run code in response to this event. This component responds to the ***OnInit*** event via the ***ngOnInit*** method, which fetches and populates the component's template with data when it is initialized for display. The file imports the ***OnInit*** interface from the ***@angular/core*** package.
+
+***artists*** is a class member of type ***any[]*** that starts out as an empty array. It holds the artists retrieved from the service so the template can display them.
+
+An instance of the ***ArtistsService*** class is injected into the constructor and is accessible by any function that is defined in the class. The ***ngOnInit*** function uses the ***artistsService*** instance to request the artists data. The ***fetchArtists()*** method is an ***async*** function so it returns a Promise. To retrieve the data from the request, ***ngOnInit*** calls the ***then()*** method on the Promise which takes in the data and stores it to the ***artists*** class member.
 
 
-The ***InventoryServiceIT*** class uses the ***KafkaProducer*** client API to generate messages in the test environment, which are then consumed by the ***inventory*** microservice container.
+::page{title="Creating the Angular component template"}
 
-Similar to ***system*** microservice testing, the configuration of the producer ***BOOTSTRAP_SERVERS_CONFIG*** property depends on whether a local ***inventory*** microservice container is detected. In addition, the producer is configured with a custom serializer provided in the ***SystemLoad*** class.
+Now that you have a service to fetch the data and a component to store it in, you will create a template to specify how the data will be displayed on the page. When you visit the page in the browser, the component populates the template to display the artists data with formatting.
 
-The ***testCpuUsage*** test method uses the ***producer.send()*** method, using the ***KafkaProducer*** client API, to generate the ***Systemload*** message. Then, it uses ***Assertions*** to verify that the response from the ***inventory*** microservice aligns with the expected outcome.
+Create the ***app.component.html*** file.
 
-### Running the tests
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.component.html
+```
 
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+
+> Then, to open the app.component.html file in your IDE, select
+> ***File*** > ***Open*** > guide-rest-client-angular/start/src/main/frontend/src/app/app.component.html, or click the following button
+
+::openFile{path="/home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.component.html"}
+
+
+
+```html
+<div *ngFor="let artist of artists">
+  <p>{{ artist.name }} wrote {{ artist.albums.length }} albums: </p>
+  <div *ngFor="let album of artist.albums">
+    <p style="text-indent: 20px">
+      Album titled <b>{{ album.title }}</b> by
+                   <b>{{ album.artist }}</b> contains
+                   <b>{{ album.ntracks }}</b> tracks
+    </p>
+  </div>
+</div>
+```
+
+
+
+The template contains a ***div*** element that is enumerated by using the ***ngFor*** directive. The ***artist*** variable is bound to the ***artists*** member of the component. The ***div*** element itself and all elements contained within it are repeated for each artist, and the ***{{ artist.name }}*** and ***{{ artist.albums.length }}*** placeholders are populated with the information from each artist. The same strategy is used to display each ***album*** by each artist.
+
+
+::page{title="Building the front end"}
+
+The Open Liberty instance is already started, and the REST service is running. In a new command-line session, build the front end by running the following command in the ***start*** directory:
+
+```bash
+cd /home/project/guide-rest-client-angular/start
+./mvnw generate-resources
+```
+
+The build might take a few minutes to complete. You can rebuild the front end at any time with the ***generate-resources*** Maven goal. Any local changes to your TypeScript or HTML are picked up when you build the front end.
+
+
+Click the following button to visit the web application ***/app*** root endpoint:
+::startApplication{port="9080" display="external" name="Visit application" route="/app"}
 
 You will see the following output:
 
 ```
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 32.564 s - in it.io.openliberty.guides.inventory.InventoryServiceIT
-
- Results:
-
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-
- Integration tests finished.
+foo wrote 2 albums:
+    Album titled *album_one* by *foo* contains *12* tracks
+    Album tilted *album_two* by *foo* contains *15* tracks
+bar wrote 1 albums:
+    Album titled *foo walks into a bar* by *bar* contains *12* tracks
+dj wrote 0 albums:
 ```
 
-After you are finished running tests, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server.
-
-If you aren't running in dev mode, you can run the tests by running the following command:
+If you use the ***curl*** command to access the web application root URL, you see only the application root page in HTML. The Angular framework uses JavaScript to render the HTML to display the application data. A web browser runs JavaScript, and the ***curl*** command doesn't.
 
 
-```bash
-./mvnw clean verify
-```
+::page{title="Testing the Angular client"}
 
-You will see the following output:
-
-```
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 53.22 s - in it.io.openliberty.guides.inventory.InventoryServiceIT
-
- Results:
-
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+No explicit code directly uses the consumed artist JSON, so you don't need to write any test cases.
 
 
- --- failsafe:3.2.5:verify (verify) @ inventory ---
- ------------------------------------------------------------------------
- BUILD SUCCESS
- ------------------------------------------------------------------------
- Total time:  58.789 s
- Finished at: 2024-01-31T11:40:43-08:00
- ------------------------------------------------------------------------
-```
+Whenever you change and build your Angular implementation, the changes are automatically reflected at the URL for the launched application.
 
+When you are done checking the application root, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the Liberty.
 
-When you're finished trying out the microservice, you can stop the local Kafka container by running the following command from the ***start*** directory:
-
-
-```bash
-cd /home/project/guide-reactive-service-testing/start
-./scripts/stopKafka.sh
-```
-
+Although the Angular application that this guide shows you how to build is simple, when you build more complex Angular applications, testing becomes a crucial part of your development lifecycle. If you need to write test cases, follow the official unit testing and end-to-end testing documentation on the [official Angular page](https://angular.dev/guide/testing).
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just tested two reactive Java microservices using Testcontainers.
+You just accessed a simple RESTful web service and consumed its resources by using Angular in Open Liberty.
 
 
 
@@ -745,34 +423,32 @@ You just tested two reactive Java microservices using Testcontainers.
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-reactive-service-testing*** project by running the following commands:
+Delete the ***guide-rest-client-angular*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-reactive-service-testing
+rm -fr guide-rest-client-angular
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Testing%20reactive%20Java%20microservices&guide-id=cloud-hosted-guide-reactive-service-testing)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20a%20RESTful%20web%20service%20with%20Angular&guide-id=cloud-hosted-guide-rest-client-angular)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-reactive-service-testing/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-reactive-service-testing/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-client-angular/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-client-angular/pulls)
 
 
 
 ### Where to next?
 
-* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
-* [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html)
-
-**Learn more about Testcontainers**
-* [Visit the official Testcontainers website](https://testcontainers.com/)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
+* [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
 
 
 ### Log out of the session
