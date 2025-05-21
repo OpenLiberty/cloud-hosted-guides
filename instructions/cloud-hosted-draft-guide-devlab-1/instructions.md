@@ -306,12 +306,12 @@ When the service is ready, you see an output similar to the following example. T
 ```
 
     "highest": {
-        "hostname":"30bec2b63a96",       
-        ”systemLoad": 6.1
+        "hostname": "30bec2b63a96",
+        "systemLoad": 6.1
     },     
     "lowest": { 
-        "hostname":"55ec2b63a96",    
-        ”systemLoad": 0.1
+        "hostname": "55ec2b63a96",
+        "systemLoad": 0.1
     }
 }
 ```
@@ -1004,13 +1004,12 @@ The ***testSystemLoad()*** test case verifies that the ***query*** service can c
 
 ### Running the tests
 
-Navigate to the ***query*** directory, then verify that the tests pass by running the Maven ***verify*** goal:
+Verify that the tests pass by running the Maven ***verify*** goal on the ***query*** service:
 
 
 ```bash
 export TESTCONTAINERS_RYUK_DISABLED=true
-cd query
-./mvnw verify
+./mvnw -pl query verify
 ```
 
 For more information about disabling Ryuk, see the [Testcontainers custom configuration](https://java.testcontainers.org/features/configuration/#disabling-ryuk) document.
