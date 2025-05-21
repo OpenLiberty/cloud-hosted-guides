@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Containerizing microservices guide!"}
+::page{title="Welcome to the Creating a multi-module application guide!"}
 
-Learn how to containerize and run your microservices with Open Liberty using Docker.
+You will learn how to build an application with multiple modules with Maven and Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -17,12 +17,17 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
+A Jakarta Platform, Enterprise Edition (Jakarta EE) application consists of modules that work together as one entity. An enterprise archive (EAR) is a wrapper for a Jakarta EE application, which consists of web archive (WAR) and Java archive (JAR) files. To deploy or distribute the Jakarta EE application into new environments, all the modules and resources must first be packaged into an EAR file.
 
-From development to production, and across your DevOps environments, you can deploy your microservices in a lightweight and portable manner by using containers. You can run a container from a container image. Each container image is a package of what you need to run your microservice or application, from the code to its dependencies and configuration. If you're new to the development of applications in containers, you might want to start with the [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html) guide before you work through this guide.
+In this guide, you will learn how to:
 
-You'll learn how to build container images and run containers using [Docker](https://www.docker.com/) for your microservices. You'll learn about the [Open Liberty container images](https://github.com/OpenLiberty/ci.docker) and how to use them for your containerized applications. You'll construct ***Dockerfile*** files, create Docker images by using the ***docker build*** command, and run the image as Docker containers by using ***docker run*** command.
+* establish a dependency between a web module and a Java library module,
+* use Maven to package the WAR file and the JAR file into an EAR file so that you can run and test the application on Open Liberty, and
+ use Liberty Maven plug-in to develop a multi-module application in [dev mode](https://openliberty.io/docs/latest/development-mode.html#_run_multi_module_maven_projects_in_dev_mode) without having to prebuild the JAR and WAR files. In dev mode, your changes are automatically picked up by the running Liberty instance.
 
-The two microservices that you'll be working with are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of the running container. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This guide demonstrates how both microservices can run and communicate with each other in different Docker containers. 
+You will build a unit converter application that converts heights from centimeters into feet and inches. The application will request the user to enter a height value in centimeters. Then, the application processes the input by using functions that are found in the JAR file to return the height value in imperial units.
+
+
 
 ::page{title="Getting started"}
 
@@ -35,11 +40,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-containerize.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-maven-multimodules.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-containerize.git
-cd guide-containerize
+git clone https://github.com/openliberty/guide-maven-multimodules.git
+cd guide-maven-multimodules
 ```
 
 
@@ -47,566 +52,465 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
+Access partial implementation of the application from the ***start*** folder. This folder includes a web module in the ***war*** folder, a Java library in the ***jar*** folder, and template files in the ***ear*** folder. However, the Java library and the web module are independent projects, and you will need to complete the following steps to implement the application:
 
-::page{title="Packaging your microservices"}
+1. Add a dependency relationship between the two modules.
+
+2. Assemble the entire application into an EAR file.
+
+3. Aggregate the entire build.
+
+4. Test the multi-module application.
+
+### Try what you'll build
+
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+
+To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application:
 
 
-To begin, run the following command to navigate to the **start** directory:
+```bash
+cd finish
+./mvnw install
+```
+
+To deploy your EAR application on Open Liberty, run the Maven ***liberty:run*** goal from the finish directory using the ***-pl*** flag to specify the ***ear*** project. The ***-pl*** flag specifies the project where the Maven goal runs.
+
+
 ```bash
 cd start
-```
-
-You can find the starting Java project in the ***start*** directory. This project is a multi-module Maven project that is made up of the ***system*** and ***inventory*** microservices. Each microservice is located in its own corresponding directory, ***system*** and ***inventory***.
-
-To try out the microservices by using Maven, run the following Maven goal to build the ***system*** microservice and run it inside Open Liberty:
-
-```bash
-./mvnw -pl system liberty:run
+./mvnw -pl ear liberty:run
 ```
 
 
-Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session and run the following Maven goal to build the **inventory** microservice and run it inside Open Liberty:
-```bash
-cd /home/project/guide-containerize/start
-./mvnw -pl inventory liberty:run
-```
-
-After you see the following message in both command-line sessions, both of your services are ready:
+After you see the following message, your Liberty instance is ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
 ```
 
-Select **Terminal** > **New Terminal** from the menu of the IDE to open a new command-line session. To access the **inventory** service, which displays the current contents of the inventory, run the following curl command: 
-```bash
-curl -s http://localhost:9081/inventory/systems | jq
-```
+When the Liberty instance is running, click the following button to check out your service at the ***/converter*** endpoint.
+::startApplication{port="9080" display="external" name="Check out the application" route="/converter"}
 
-The **system** service shows the system properties of the running JVM and can be found by running the following curl command:
-```bash
-curl -s http://localhost:9080/system/properties | jq
-```
+After you are finished checking out the application, stop the Open Liberty instance by pressing `Ctrl+C` in the command-line session where you ran the Liberty. Alternatively, you can run the ***liberty:stop*** goal using the ***-pl ear*** flag from the ***finish*** directory in another command-line session:
 
-The system properties of your localhost can be added to the **inventory** service at **http://localhost:9081/inventory/systems/localhost**. Run the following curl command:
+
 ```bash
-curl -s http://localhost:9081/inventory/systems/localhost | jq
+cd start
+./mvnw -pl ear liberty:stop
 ```
 
 
-After you are finished checking out the microservices, stop the Liberty instances by pressing **CTRL+C** in the command-line sessions where you ran the **system** and **inventory** services. Alternatively, you can run the **liberty:stop** goal in another command-line session from the **start** directory:
+::page{title="Adding dependencies between WAR and JAR modules"}
+
+To use a Java library in your web module, you must add a dependency relationship between the two modules.
+
+As you might have noticed, each module has its own ***pom.xml*** file. Each module has its own ***pom.xml*** file because each module is treated as an independent project. You can rebuild, reuse, and reassemble every module on its own.
+
+Navigate to the ***start*** directory to begin.
 ```bash
-cd /home/project/guide-containerize/start
-./mvnw -pl system liberty:stop
-./mvnw -pl inventory liberty:stop
+cd /home/project/guide-maven-multimodules/start
 ```
 
-To package your microservices, run the Maven package goal to build the application ***.war*** files from the ***start*** directory so that the ***.war*** files are in the ***system/target*** and ***inventory/target*** directories.
+Replace the war/POM file.
 
-```bash
-./mvnw package
+> To open the pom.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-maven-multimodules/start/war/pom.xml, or click the following button
+
+::openFile{path="/home/project/guide-maven-multimodules/start/war/pom.xml"}
+
+
+
+```xml
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+    http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <parent>
+        <groupId>io.openliberty.guides</groupId>
+        <artifactId>guide-maven-multimodules</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>guide-maven-multimodules-war</artifactId>
+    <packaging>war</packaging>
+    <version>1.0-SNAPSHOT</version>
+    <name>guide-maven-multimodules-war</name>
+    <url>http://maven.apache.org</url>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+    </properties>
+
+    <dependencies>
+        <!-- Provided dependencies -->
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>10.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>7.0</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.openliberty.guides</groupId>
+            <artifactId>guide-maven-multimodules-jar</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+    </dependencies>
+
+</project>
 ```
 
-To learn more about RESTful web services and how to build them, see [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) for details about how to build the ***system*** service. The ***inventory*** service is built in a similar way.
+
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+
+The added ***dependency*** element is the Java library module that implements the functions that you need for the unit converter.
+
+Although the ***parent/child*** structure is not normally needed for multi-module applications, adding it helps us to better organize all of the projects. This structure allows all of the child projects to make use of the plug-ins that are defined in the parent ***pom.xml*** file, without having to define them again in the child ***pom.xml*** files.
 
 
-::page{title="Building your Docker images"}
+::page{title="Assembling multiple modules into an EAR file"}
 
-A Docker image is a binary file. It is made up of multiple layers and is used to run code in a Docker container. Images are built from instructions in Dockerfiles to create a containerized version of the application.
+To deploy the entire application on Open Liberty, first package the application. Use the EAR project to assemble multiple modules into an EAR file.
 
-A ***Dockerfile*** is a collection of instructions for building a Docker image that can then be run as a container. As each instruction is run in a ***Dockerfile***, a new Docker layer is created. These layers, which are known as intermediate images, are created when a change is made to your Docker image.
+Navigate to the ***ear*** folder and find a template ***pom.xml*** file.
+Replace the ear/POM file.
 
-Every ***Dockerfile*** begins with a parent or base image over which various commands are run. For example, you can start your image from scratch and run commands that download and install a Java runtime, or you can start from an image that already contains a Java installation.
+> To open the pom.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-maven-multimodules/start/ear/pom.xml, or click the following button
 
-Learn more about Docker on the [official Docker page](https://www.docker.com/what-docker).
+::openFile{path="/home/project/guide-maven-multimodules/start/ear/pom.xml"}
 
-### Creating your Dockerfiles
-You will be creating two Docker images to run the ***inventory*** service and ***system*** service. The first step is to create Dockerfiles for both services.
 
-In this guide, you're using an official image from the IBM Container Registry (ICR), ***icr.io/appcafe/open-liberty:full-java11-openj9-ubi***, as your parent image. This image is tagged with the word ***full***, meaning it includes all Liberty features. ***full*** images are recommended for development only because they significantly expand the image size with features that are not required by the application.
 
-To minimize your image footprint in production, you can use one of the ***kernel-slim*** images, such as ***icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi***.  This image installs the basic Liberty runtime. You can then add all the necessary features for your application with the usage pattern that is detailed in the Open Liberty [container image documentation](https://openliberty.io/docs/latest/container-images.html#build). To use the default image that comes with the Open Liberty runtime, define the ***FROM*** instruction as ***FROM icr.io/appcafe/open-liberty***. You can find all official images on the Open Liberty [container image repository](https://openliberty.io/docs/latest/container-images.html).
+```xml
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+    http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-Create the ***Dockerfile*** for the inventory service.
+    <parent>
+        <groupId>io.openliberty.guides</groupId>
+        <artifactId>guide-maven-multimodules</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>guide-maven-multimodules-ear</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>ear</packaging>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <!-- Liberty configuration -->
+        <liberty.var.http.port>9080</liberty.var.http.port>
+        <liberty.var.https.port>9443</liberty.var.https.port>
+    </properties>
+
+    <dependencies>
+        <!-- web and jar modules as dependencies -->
+        <dependency>
+            <groupId>io.openliberty.guides</groupId>
+            <artifactId>guide-maven-multimodules-jar</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <type>jar</type>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.openliberty.guides</groupId>
+            <artifactId>guide-maven-multimodules-war</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <type>war</type>
+        </dependency>
+
+        <!-- For tests -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.12.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-ear-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <modules>
+                        <webModule>
+                            <groupId>io.openliberty.guides</groupId>
+                            <artifactId>guide-maven-multimodules-war</artifactId>
+                            <uri>/guide-maven-multimodules-war-1.0-SNAPSHOT.war</uri>
+                            <!-- Set custom context root -->
+                            <contextRoot>/converter</contextRoot>
+                        </webModule>
+                    </modules>
+                </configuration>
+            </plugin>
+
+            <!-- Since the package type is ear,
+            need to run testCompile to compile the tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Plugin to run integration tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.5.3</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <http.port>
+                            ${liberty.var.http.port}
+                        </http.port>
+                        <https.port>
+                            ${liberty.var.https.port}
+                        </https.port>
+                        <cf.context.root>/converter</cf.context.root>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
+```
+
+
+
+Set the ***basic configuration*** for the project and set the ***packaging*** element to ***ear***.
+
+The ***Java library module*** and the ***web module*** were added as dependencies. Specify a type of ***war*** for the web module. If you don’t specify this type for the web module, Maven looks for a JAR file.
+
+The definition and configuration of the ***maven-ear-plugin*** plug-in were added to create an EAR file. Define the ***webModule*** module to be packaged into the EAR file. To customize the context root of the application, set the ***contextRoot*** element to ***/converter*** in the ***webModule***. Otherwise, Maven automatically uses the WAR file ***artifactId*** ID as the context root for the application while generating the ***application.xml*** file.
+
+To deploy and run an EAR application on an Open Liberty instance, you need to provide a Liberty's ***server.xml*** configuration file.
+
+Create the Liberty ***server.xml*** configuration file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-containerize/start/inventory/Dockerfile
+touch /home/project/guide-maven-multimodules/start/ear/src/main/liberty/config/server.xml
 ```
 
 
-> Then, to open the Dockerfile file in your IDE, select
-> ***File*** > ***Open*** > guide-containerize/start/inventory/Dockerfile, or click the following button
+> Then, to open the server.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-maven-multimodules/start/ear/src/main/liberty/config/server.xml, or click the following button
 
-::openFile{path="/home/project/guide-containerize/start/inventory/Dockerfile"}
+::openFile{path="/home/project/guide-maven-multimodules/start/ear/src/main/liberty/config/server.xml"}
 
 
 
-```
-FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
+```xml
+<server description="Sample Liberty server">
 
-ARG VERSION=1.0
-ARG REVISION=SNAPSHOT
+    <featureManager>
+        <platform>jakartaee-10.0</platform>
+        <feature>pages</feature>
+    </featureManager>
 
-LABEL \
-  org.opencontainers.image.authors="Your Name" \
-  org.opencontainers.image.vendor="Open Liberty" \
-  org.opencontainers.image.url="local" \
-  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize" \
-  org.opencontainers.image.version="$VERSION" \
-  org.opencontainers.image.revision="$REVISION" \
-  vendor="Open Liberty" \
-  name="inventory" \
-  version="$VERSION-$REVISION" \
-  summary="The inventory microservice from the Containerizing microservices guide" \
-  description="This image contains the inventory microservice running with the Open Liberty runtime."
+    <variable name="http.port" defaultValue="9080" />
+    <variable name="https.port" defaultValue="9443" />
 
-COPY --chown=1001:0 \
-    src/main/liberty/config \
-    /config/
+    <httpEndpoint host="*" httpPort="${http.port}"
+        httpsPort="${https.port}" id="defaultHttpEndpoint" />
 
-COPY --chown=1001:0 \
-    target/guide-containerize-inventory.war \
-    /config/apps
+    <enterpriseApplication id="guide-maven-multimodules-ear"
+        location="guide-maven-multimodules-ear.ear"
+        name="guide-maven-multimodules-ear" />
 
-RUN configure.sh
+</server>
 ```
 
 
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
+You must configure the ***server.xml*** configuration file with the ***enterpriseApplication*** element to specify the location of your EAR application.
 
 
-The ***FROM*** instruction initializes a new build stage, which indicates the parent image of the built image. If you don't need a parent image, then you can use ***FROM scratch***, which makes your image a base image. 
+::page{title="Aggregating the entire build"}
 
-It is also recommended to label your Docker images with the ***LABEL*** command, as the label information can help you manage your images. For more information, see [Best practices for writing Dockerfiles](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#label).
+Because you have multiple modules, aggregate the Maven projects to simplify the build process.
 
-The ***COPY*** instructions are structured as ***COPY*** ***[--chown=\<user\>:\<group\>]*** ***\<source\>*** ***\<destination\>***. They copy local files into the specified destination within your Docker image. In this case, the ***inventory*** Liberty configuration files that are located at ***src/main/liberty/config*** are copied to the ***/config/*** destination directory. The ***inventory*** application WAR file ***inventory.war***, which was created from running Maven ***package***, is copied to the ***/config/apps*** destination directory.
+Create a parent ***pom.xml*** file under the ***start*** directory to link all of the child modules together. A template is provided for you.
 
-The ***COPY*** instructions use the ***1001*** user ID  and ***0*** group because the ***icr.io/appcafe/open-liberty:full-java11-openj9-ubi*** image runs by default with the ***USER 1001*** (non-root) user for security purposes. Otherwise, the files and directories that are copied over are owned by the root user.
+Replace the start/POM file.
 
-Place the ***RUN configure.sh*** command at the end to get a pre-warmed Docker image. It improves the startup time of running your Docker container.
+> To open the pom.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-maven-multimodules/start/pom.xml, or click the following button
 
-The ***Dockerfile*** for the ***system*** service follows the same instructions as the ***inventory*** service, except that some ***labels*** are updated, and the ***system.war*** archive is copied into ***/config/apps***.
+::openFile{path="/home/project/guide-maven-multimodules/start/pom.xml"}
 
-Create the ***Dockerfile*** for the system service.
 
-> Run the following touch command in your terminal
+
+```xml
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+    http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>guide-maven-multimodules</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>jar</module>
+        <module>war</module>
+        <module>ear</module>
+    </modules>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-war-plugin</artifactId>
+                    <version>3.4.0</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.14.0</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <!-- Enable liberty-maven plugin -->
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.11.3</version>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+
+
+Set the ***basic configuration*** for the project. Set ***pom*** as the value for the ***packaging*** element of the parent ***pom.xml*** file.
+
+In the parent ***pom.xml*** file, list all of the ***modules*** that you want to aggregate for the application.
+
+Adding the ***maven-war-plugin***, ***maven-compiler-plugin***, and ***liberty-maven-plugin*** plug-ins allows each child module to inherit the plug-ins, so that you can use the these to develop the modules.
+
+
+::page{title="Developing the application"}
+
+You can now develop the application and the different modules together in dev mode by using the Liberty Maven plug-in. To learn more about how to use dev mode with multiple modules, check out the [Documentation](https://github.com/OpenLiberty/ci.maven/blob/main/docs/dev.md#multiple-modules).
+
+Navigate to the ***start*** directory to begin.
 ```bash
-touch /home/project/guide-containerize/start/system/Dockerfile
+cd /home/project/guide-maven-multimodules/start
 ```
 
-
-> Then, to open the Dockerfile file in your IDE, select
-> ***File*** > ***Open*** > guide-containerize/start/system/Dockerfile, or click the following button
-
-::openFile{path="/home/project/guide-containerize/start/system/Dockerfile"}
-
-
-
-```
-FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-
-ARG VERSION=1.0
-ARG REVISION=SNAPSHOT
-
-LABEL \
-  org.opencontainers.image.authors="Your Name" \
-  org.opencontainers.image.vendor="Open Liberty" \
-  org.opencontainers.image.url="local" \
-  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize" \
-  org.opencontainers.image.version="$VERSION" \
-  org.opencontainers.image.revision="$REVISION" \
-  vendor="Open Liberty" \
-  name="system" \
-  version="$VERSION-$REVISION" \
-  summary="The system microservice from the Containerizing microservices guide" \
-  description="This image contains the system microservice running with the Open Liberty runtime."
-
-COPY --chown=1001:0 src/main/liberty/config /config/
-
-COPY --chown=1001:0 target/guide-containerize-system.war /config/apps
-
-RUN configure.sh
-```
-
-
-
-
-### Building your Docker image
-
-Now that your microservices are packaged and you have written your Dockerfiles, you will build your Docker images by using the ***docker build*** command.
-
-
-
-Run the following commands to build container images for your application:
-
-```bash
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-```
-
-The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
-
-To verify that the images are built, run the ***docker images*** command to list all local Docker images:
-
-```bash
-docker images
-```
-
-Or, run the ***docker images*** command with ***--filter*** option to list your images:
-```bash
-docker images -f "label=org.opencontainers.image.authors=Your Name"
-```
-
-Your ***inventory*** and ***system*** images appear in the list of all Docker images:
-
-```
-REPOSITORY    TAG             IMAGE ID        CREATED          SIZE
-inventory     1.0-SNAPSHOT    08fef024e986    4 minutes ago    1GB
-system        1.0-SNAPSHOT    1dff6d0b4f31    5 minutes ago    977MB
-```
-
-
-::page{title="Running your microservices in Docker containers"}
-
-Now that your two images are built, you will run your microservices in Docker containers:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
-docker run -d --name system -p 9080:9080 system:1.0-SNAPSHOT
-docker run -d --name inventory -p 9081:9081 inventory:1.0-SNAPSHOT
+./mvnw liberty:dev
 ```
 
-The following table describes the flags in these commands:
-
-| *Flag* | *Description*
-| ---| ---
-| -d     | Runs the container in the background.
-| --name | Specifies a name for the container.
-| -p     | Maps the host ports to the container ports. For example: ***-p \<HOST_PORT\>:\<CONTAINER_PORT\>***
-
-Next, run the ***docker ps*** command to verify that your containers are started:
-
-```bash
-docker ps
-```
-
-Make sure that your containers are running and show ***Up*** as their status:
+After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
-CONTAINER ID    IMAGE                   COMMAND                  CREATED          STATUS          PORTS                                        NAMES
-2b584282e0f5    inventory:1.0-SNAPSHOT  "/opt/ol/helpers/run…"   2 seconds ago    Up 1 second     9080/tcp, 9443/tcp, 0.0.0.0:9081->9081/tcp   inventory
-99a98313705f    system:1.0-SNAPSHOT     "/opt/ol/helpers/run…"   3 seconds ago    Up 2 seconds    0.0.0.0:9080->9080/tcp, 9443/tcp             system
+**************************************************************
+*    Liberty is running in dev mode.
 ```
 
-If a problem occurs and your containers exit prematurely, the containers don't appear in the container list that the ***docker ps*** command displays. Instead, your containers appear with an ***Exited*** status when they run the ***docker ps -a*** command. Run the ***docker logs system*** and ***docker logs inventory*** commands to view the container logs for any potential problems. Run the ***docker stats system*** and ***docker stats inventory*** commands to display a live stream of usage statistics for your containers. You can also double-check that your Dockerfiles are correct. When you find the cause of the issues, remove the faulty containers with the ***docker rm system*** and ***docker rm inventory*** commands. Rebuild your images, and start the containers again.
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
+### Updating the Java classes in different modules
 
-To access the application, run the following curl command. An empty list is expected because no system properties are stored in the inventory yet:
-```bash
-curl -s http://localhost:9081/inventory/systems | jq
-```
+Update the ***HeightsBean*** class to use the Java library module that implements the functions that you need for the unit converter.
 
-Next, retrieve the ***system*** container's IP address by running the following:
+Navigate to the ***start*** directory.
 
-```bash
-docker inspect -f "{{.NetworkSettings.IPAddress }}" system
-```
+Replace the ***HeightsBean*** class in the ***war*** directory.
 
-The command returns the system container IP address:
+> To open the HeightsBean.java file in your IDE, select
+> ***File*** > ***Open*** > guide-maven-multimodules/start/war/src/main/java/io/openliberty/guides/multimodules/web/HeightsBean.java, or click the following button
 
-```
-172.17.0.2
-```
-
-In this case, the IP address for the ***system*** service is ***172.17.0.2***. Take note of this IP address to construct the URL to view the system properties. 
-
-
-Run the following commands to go to the **http://localhost:9081/inventory/systems/[system-ip-address]** by replacing **[system-ip-address]** URL with the IP address that you obtained earlier:
-```bash
-SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
-curl -s http://localhost:9081/inventory/systems/{$SYSTEM_IP} | jq
-```
-
-You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system properties are automatically stored in the inventory. Run the following curl command and you see a new entry for **[system-ip-address]**:
-```bash
-curl -s http://localhost:9081/inventory/systems | jq
-```
-
-::page{title="Externalizing Liberty's configuration"}
-
-
-As mentioned at the beginning of this guide, one of the advantages of using containers is that they are portable and can be moved and deployed efficiently across all of your DevOps environments. Configuration often changes across different environments, and by externalizing your Liberty's configuration, you can simplify the development process.
-
-Imagine a scenario where you are developing an Open Liberty application on port ***9081*** but to deploy it to production, it must be available on port ***9091***. To manage this scenario, you can keep two different versions of the ***server.xml*** file; one for production and one for development. However, trying to maintain two different versions of a file might lead to mistakes. A better solution would be to externalize the configuration of the port number and use the value of an environment variable that is stored in each environment. 
-
-In this example, you will use an environment variable to externally configure the HTTP port number of the ***inventory*** service. 
-
-In the ***inventory/server.xml*** file, the ***http.port*** variable is declared and is used in the ***httpEndpoint*** element to define the service endpoint. The default value of the ***http.port*** variable is ***9081***. However, this value is only used if no other value is specified. You can replace this value in the container by using the -e flag for the podman run command. 
-
-Run the following commands to stop and remove the ***inventory*** container and rerun it with the ***http.port*** environment variable set:
-
-```bash
-docker stop inventory
-docker rm inventory 
-docker run -d --name inventory -e http.port=9091 -p 9091:9091 inventory:1.0-SNAPSHOT
-```
-
-The ***-e*** flag can be used to create and set the values of environment variables in a Docker container. In this case, you are setting the ***http.port*** environment variable to ***9091*** for the ***inventory*** container.
-
-Now, when the service is starting up, Open Liberty finds the ***http.port*** environment variable and uses it to set the value of the ***http.port*** variable to be used in the HTTP endpoint.
-
-
-The **inventory** service is now available on the new port number that you specified. You can see the contents of the inventory at the **http://localhost:9091/inventory/systems** URL. Run the following curl command:
-```bash
-curl -s http://localhost:9091/inventory/systems | jq
-```
-
-You can add your local system properties at the **http://localhost:9091/inventory/systems/[system-ip-address]** URL by replacing **[system-ip-address]** with the IP address that you obtained in the previous section. Run the following commands:
-```bash
-SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
-curl -s http://localhost:9091/inventory/systems/{$SYSTEM_IP} | jq
-```
-
-The **system** service remains unchanged and is available at the **http://localhost:9080/system/properties** URL. Run the following curl command:
-```bash
-curl -s http://localhost:9080/system/properties | jq
-```
-
-You can externalize the configuration of more than just the port numbers. To learn more about Open Liberty configuration, check out the [Server Configuration Overview](https://openliberty.io/docs/latest/reference/config/server-configuration-overview.html) docs. 
-
-::page{title="Optimizing the image size"}
-
-As mentioned previously, the parent image that is used in each ***Dockerfile*** contains the ***full*** tag, which includes all of the Liberty features. This parent image with the ***full*** tag is recommended for development, but while deploying to production it is recommended to use a parent image with the ***kernel-slim*** tag. The ***kernel-slim*** tag provides a bare minimum Liberty runtime with the ability to add the features required by the application.
-
-Replace the ***Dockerfile*** for the inventory service.
-
-> To open the Dockerfile file in your IDE, select
-> ***File*** > ***Open*** > guide-containerize/start/inventory/Dockerfile, or click the following button
-
-::openFile{path="/home/project/guide-containerize/start/inventory/Dockerfile"}
-
-
-
-```
-FROM icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi
-
-ARG VERSION=1.0
-ARG REVISION=SNAPSHOT
-
-LABEL \
-  org.opencontainers.image.authors="Your Name" \
-  org.opencontainers.image.vendor="Open Liberty" \
-  org.opencontainers.image.url="local" \
-  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize" \
-  org.opencontainers.image.version="$VERSION" \
-  org.opencontainers.image.revision="$REVISION" \
-  vendor="Open Liberty" \
-  name="inventory" \
-  version="$VERSION-$REVISION" \
-  summary="The inventory microservice from the Containerizing microservices guide" \
-  description="This image contains the inventory microservice running with the Open Liberty runtime."
-
-COPY --chown=1001:0 \
-    src/main/liberty/config \
-    /config/
-
-RUN features.sh
-
-COPY --chown=1001:0 \
-    target/guide-containerize-inventory.war \
-    /config/apps
-
-RUN configure.sh
-```
-
-
-
-Replace the parent image with ***icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi*** at the top of your ***Dockerfile***. This image contains the ***kernel-slim*** tag that is recommended when deploying to production.
-
-Place ***RUN features.sh*** command after the ***COPY*** command that copies the local ***/config/*** directory into the ***Docker*** image. The ***features.sh*** script adds the Liberty features that your application is required to operate.
-
-Ensure that you repeat these instructions for the ***system*** service.
-
-Replace the ***Dockerfile*** for the system service.
-
-> To open the Dockerfile file in your IDE, select
-> ***File*** > ***Open*** > guide-containerize/start/system/Dockerfile, or click the following button
-
-::openFile{path="/home/project/guide-containerize/start/system/Dockerfile"}
-
-
-
-```
-FROM icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi
-
-ARG VERSION=1.0
-ARG REVISION=SNAPSHOT
-
-LABEL \
-  org.opencontainers.image.authors="Your Name" \
-  org.opencontainers.image.vendor="Open Liberty" \
-  org.opencontainers.image.url="local" \
-  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize" \
-  org.opencontainers.image.version="$VERSION" \
-  org.opencontainers.image.revision="$REVISION" \
-  vendor="Open Liberty" \
-  name="system" \
-  version="$VERSION-$REVISION" \
-  summary="The system microservice from the Containerizing microservices guide" \
-  description="This image contains the system microservice running with the Open Liberty runtime."
-
-COPY --chown=1001:0 src/main/liberty/config /config/
-
-RUN features.sh
-
-COPY --chown=1001:0 target/guide-containerize-system.war /config/apps
-
-RUN configure.sh
-```
-
-
-
-Continue by running the following commands to stop and remove your current ***Docker*** containers that are using the ***full*** parent image:
-
-```bash
-docker stop inventory system
-docker rm inventory system
-```
-
-Next, build your new ***Docker*** images with the ***kernel-slim*** parent image:
-
-```bash
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-```
-
-Verify that the images have been built by executing the following command to list all the local ***Docker*** images:
-
-```bash
-docker images
-```
-
-Notice that the images for the ***inventory*** and ***system*** services now have a reduced image size.
-```
-REPOSITORY      TAG             IMAGE ID        CREATED         SIZE
-inventory       1.0-SNAPSHOT	d5a3d1b2c20e    4 minutes ago	682MB
-system          1.0-SNAPSHOT	6346cf87eae0	5 minutes ago	694MB
-```
-
-After confirming that the images have been built, run the following commands to start the ***Docker*** containers:
-
-```bash
-docker run -d --name system -p 9080:9080 system:1.0-SNAPSHOT
-docker run -d --name inventory -p 9081:9081 inventory:1.0-SNAPSHOT
-```
-
-Once your ***Docker*** containers are running, run the following command to see the list of required features installed by ***features.sh***:
-
-```bash
-docker exec -it inventory /opt/ol/wlp/bin/productInfo featureInfo
-```
-
-Your list of Liberty features should be similar to the following:
-```
-jndi-1.0
-cdi-4.0
-jsonb-3.0
-jsonp-2.1
-mpConfig-3.1
-restfulWS-3.1
-restfulWSClient-3.1
-```
-
-
-The **system** service which shows the system properties of the running JVM is now available to be accessed at **http://localhost:9080/system/properties**. Run the following curl command:
-```bash
-curl -s http://localhost:9080/system/properties | jq
-```
-
-Next, you can add your local system properties at the **http://localhost:9081/inventory/systems/[system-ip-address]** URL by replacing **[system-ip-address]** with the IP address that you obtained in the previous section. Run the following commands:
-```bash
-SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
-curl -s http://localhost:9081/inventory/systems/{$SYSTEM_IP} | jq
-```
-
-Then, verify the addition of your localhost system properties to the **inventory** service at **http://localhost:9081/inventory/systems**. Run the following curl command:
-```bash
-curl -s http://localhost:9081/inventory/systems | jq
-```
-
-::page{title="Testing the microservices"}
-
-You can test your microservices manually by hitting the endpoints or with automated tests that check your running Docker containers.
-
-Create the ***SystemEndpointIT*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
-```
-
-
-> Then, to open the SystemEndpointIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java, or click the following button
-
-::openFile{path="/home/project/guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java"}
+::openFile{path="/home/project/guide-maven-multimodules/start/war/src/main/java/io/openliberty/guides/multimodules/web/HeightsBean.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.system;
+package io.openliberty.guides.multimodules.web;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+public class HeightsBean implements java.io.Serializable {
+    private String heightCm = null;
+    private String heightFeet = null;
+    private String heightInches = null;
+    private int cm = 0;
+    private int feet = 0;
+    private int inches = 0;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLSession;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.Response;
-
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-public class SystemEndpointIT {
-
-    private static String clusterUrl;
-
-    private Client client;
-
-    @BeforeAll
-    public static void oneTimeSetup() {
-        String nodePort = System.getProperty("system.http.port");
-        clusterUrl = "http://localhost:" + nodePort + "/system/properties/";
+    public HeightsBean() {
     }
 
-    @BeforeEach
-    public void setup() {
-        client = ClientBuilder.newBuilder()
-                    .hostnameVerifier(new HostnameVerifier() {
-                        public boolean verify(String hostname, SSLSession session) {
-                            return true;
-                        }
-                    })
-                    .build();
+    public String getHeightCm() {
+        return heightCm;
     }
 
-    @AfterEach
-    public void teardown() {
-        client.close();
+    public String getHeightFeet() {
+        return heightFeet;
     }
 
-    @Test
-    public void testGetProperties() {
-        Client client = ClientBuilder.newClient();
+    public String getHeightInches() {
+        return heightInches;
+    }
 
-        WebTarget target = client.target(clusterUrl);
-        Response response = target.request().get();
+    public void setHeightCm(String heightcm) {
+        this.heightCm = heightcm;
+    }
 
-        assertEquals(200, response.getStatus(),
-            "Incorrect response code from " + clusterUrl);
-        response.close();
+    public void setHeightFeet(String heightfeet) {
+        this.cm = Integer.valueOf(heightCm);
+        this.feet = io.openliberty.guides.multimodules.lib.Converter.getFeet(cm);
+        String result = String.valueOf(feet);
+        this.heightFeet = result;
+    }
+
+    public void setHeightInches(String heightinches) {
+        this.cm = Integer.valueOf(heightCm);
+        this.inches = io.openliberty.guides.multimodules.lib.Converter.getInches(cm);
+        String result = String.valueOf(inches);
+        this.heightInches = result;
     }
 
 }
@@ -614,249 +518,197 @@ public class SystemEndpointIT {
 
 
 
-The ***testGetProperties()*** method checks for a ***200*** response code from the ***system*** service endpoint.
+The ***getFeet(cm)*** invocation was added to the ***setHeightFeet*** method to convert a measurement into feet.
 
-Create the ***InventoryEndpointIT*** class.
+The ***getInches(cm)*** invocation was added to the ***setHeightInches*** method to convert a measurement into inches.
 
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
-```
+Click the following button to check out the running application at the ***/converter*** endpoint:
+::startApplication{port="9080" display="external" name="Check out the application" route="/converter"}
 
+Now try updating the converter so that it converts heights correctly, rather than returning 0.
 
-> Then, to open the InventoryEndpointIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java, or click the following button
+Replace the ***Converter*** class in the ***jar*** directory.
 
-::openFile{path="/home/project/guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java"}
+> To open the Converter.java file in your IDE, select
+> ***File*** > ***Open*** > guide-maven-multimodules/start/jar/src/main/java/io/openliberty/guides/multimodules/lib/Converter.java, or click the following button
+
+::openFile{path="/home/project/guide-maven-multimodules/start/jar/src/main/java/io/openliberty/guides/multimodules/lib/Converter.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.inventory;
+package io.openliberty.guides.multimodules.lib;
+
+public class Converter {
+
+    public static int getFeet(int cm) {
+        int feet = (int) (cm / 30.48);
+        return feet;
+    }
+
+    public static int getInches(int cm) {
+        double feet = cm / 30.48;
+        int inches = (int) (cm / 2.54) - ((int) feet * 12);
+        return inches;
+    }
+
+    public static int sum(int a, int b) {
+        return a + b;
+    }
+
+    public static int diff(int a, int b) {
+        return a - b;
+    }
+
+    public static int product(int a, int b) {
+        return a * b;
+    }
+
+    public static int quotient(int a, int b) {
+        return a / b;
+    }
+
+}
+```
+
+
+
+Change the ***getFeet*** method so that it converts from centimeters to feet, and the ***getInches*** method so that it converts from centimeters to inches. Update the ***sum***, ***diff***, ***product***, and ***quotient*** functions so that they add, subtract, multiply, and divide 2 numbers respectively.
+
+Now check out the application again at the ***/converter*** endpoint:
+::startApplication{port="9080" display="external" name="Check out the application" route="/converter"}
+
+Try entering a height in centimeters and see whether it converts correctly.
+
+
+### Testing the multi-module application
+
+To test the multi-module application, add integration tests to the EAR project.
+
+Create the integration test class in the ***ear*** directory.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-maven-multimodules/start/ear/src/test/java/it/io/openliberty/guides/multimodules/IT.java
+```
+
+
+> Then, to open the IT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-maven-multimodules/start/ear/src/test/java/it/io/openliberty/guides/multimodules/IT.java, or click the following button
+
+::openFile{path="/home/project/guide-maven-multimodules/start/ear/src/test/java/it/io/openliberty/guides/multimodules/IT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.multimodules;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import jakarta.json.JsonObject;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLSession;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
 
-@TestMethodOrder(OrderAnnotation.class)
-public class InventoryEndpointIT {
+public class IT {
+    String port = System.getProperty("http.port");
+    String war = "converter";
+    String urlBase = "http://localhost:" + port + "/" + war + "/";
 
-    private static String invUrl;
-    private static String sysUrl;
-    private static String systemServiceIp;
-
-    private static Client client;
-
-    @BeforeAll
-    public static void oneTimeSetup() {
-
-        String invServPort = System.getProperty("inventory.http.port");
-        String sysServPort = System.getProperty("system.http.port");
-
-        systemServiceIp = System.getProperty("system.ip");
-
-        invUrl = "http://localhost" + ":" + invServPort + "/inventory/systems/";
-        sysUrl = "http://localhost" + ":" + sysServPort + "/system/properties/";
-
-        client = ClientBuilder.newBuilder().hostnameVerifier(new HostnameVerifier() {
-            public boolean verify(String hostname, SSLSession session) {
-                return true;
-            }
-        }).build();
-
-        client.target(invUrl + "reset").request().post(null);
-    }
-
-    @AfterAll
-    public static void teardown() {
-        client.close();
+    @Test
+    public void testIndexPage() throws Exception {
+        String url = this.urlBase;
+        HttpURLConnection con = testRequestHelper(url, "GET");
+        assertEquals(200, con.getResponseCode(), "Incorrect response code from " + url);
+        assertTrue(testBufferHelper(con).contains("Enter the height in centimeters"),
+                        "Incorrect response from " + url);
     }
 
     @Test
-    @Order(1)
-    public void testEmptyInventory() {
-        Response response = this.getResponse(invUrl);
-        this.assertResponse(invUrl, response);
-
-        JsonObject obj = response.readEntity(JsonObject.class);
-
-        int expected = 0;
-        int actual = obj.getInt("total");
-        assertEquals(expected, actual,
-                    "The inventory should be empty on application start but it wasn't");
-
-        response.close();
+    public void testHeightsPage() throws Exception {
+        String url = this.urlBase + "heights.jsp?heightCm=10";
+        HttpURLConnection con = testRequestHelper(url, "POST");
+        assertTrue(testBufferHelper(con).contains("3        inches"),
+                        "Incorrect response from " + url);
     }
 
-    @Test
-    @Order(2)
-    public void testHostRegistration() {
-        this.visitSystemService();
-
-        Response response = this.getResponse(invUrl);
-        this.assertResponse(invUrl, response);
-
-        JsonObject obj = response.readEntity(JsonObject.class);
-
-        int expected = 1;
-        int actual = obj.getInt("total");
-        assertEquals(expected, actual,
-                        "The inventory should have one entry for " + systemServiceIp);
-
-        boolean serviceExists = obj.getJsonArray("systems").getJsonObject(0)
-                        .get("hostname").toString().contains(systemServiceIp);
-        assertTrue(serviceExists,
-                        "A host was registered, but it was not " + systemServiceIp);
-
-        response.close();
+    private HttpURLConnection testRequestHelper(String url, String method)
+                    throws Exception {
+        URL obj = new URL(url);
+        HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+        con.setRequestMethod(method);
+        return con;
     }
 
-    @Test
-    @Order(3)
-    public void testSystemPropertiesMatch() {
-        Response invResponse = this.getResponse(invUrl);
-        Response sysResponse = this.getResponse(sysUrl);
-
-        this.assertResponse(invUrl, invResponse);
-        this.assertResponse(sysUrl, sysResponse);
-
-        JsonObject jsonFromInventory = (JsonObject) invResponse
-                        .readEntity(JsonObject.class).getJsonArray("systems")
-                        .getJsonObject(0).get("properties");
-
-        JsonObject jsonFromSystem = sysResponse.readEntity(JsonObject.class);
-
-        String osNameFromInventory = jsonFromInventory.getString("os.name");
-        String osNameFromSystem = jsonFromSystem.getString("os.name");
-        this.assertProperty("os.name", systemServiceIp, osNameFromSystem,
-                        osNameFromInventory);
-
-        String userNameFromInventory = jsonFromInventory.getString("user.name");
-        String userNameFromSystem = jsonFromSystem.getString("user.name");
-        this.assertProperty("user.name", systemServiceIp, userNameFromSystem,
-                        userNameFromInventory);
-
-        invResponse.close();
-        sysResponse.close();
+    private String testBufferHelper(HttpURLConnection con) throws Exception {
+        BufferedReader in = new BufferedReader(
+                        new InputStreamReader(con.getInputStream()));
+        String inputLine;
+        StringBuffer response = new StringBuffer();
+        while ((inputLine = in.readLine()) != null) {
+            response.append(inputLine);
+        }
+        in.close();
+        return response.toString();
     }
 
-    @Test
-    @Order(4)
-    public void testUnknownHost() {
-        Response response = this.getResponse(invUrl);
-        this.assertResponse(invUrl, response);
-
-        Response badResponse = client.target(invUrl + "badhostname")
-                        .request(MediaType.APPLICATION_JSON).get();
-
-        String obj = badResponse.readEntity(String.class);
-
-        boolean isError = obj.contains("error");
-        assertTrue(isError,
-                        "badhostname is not a valid host but it didn't raise an error");
-
-        response.close();
-        badResponse.close();
-    }
-
-    private Response getResponse(String url) {
-        return client.target(url).request().get();
-    }
-
-
-    private void assertResponse(String url, Response response) {
-        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
-    }
-
-    private void assertProperty(String propertyName, String hostname, String expected,
-                    String actual) {
-        assertEquals(expected, actual, "JVM system property [" + propertyName + "] "
-                        + "in the system service does not match the one stored in "
-                        + "the inventory service for " + hostname);
-    }
-
-    private void visitSystemService() {
-        Response response = this.getResponse(sysUrl);
-        this.assertResponse(sysUrl, response);
-        response.close();
-
-        Response targetResponse = client.target(invUrl + systemServiceIp).request()
-                        .get();
-
-        targetResponse.close();
-    }
 }
 ```
 
 
 
-* The ***testEmptyInventory()*** method checks that the ***inventory*** service has a total of 0 systems before anything is added to it.
-* The ***testHostRegistration()*** method checks that the ***system*** service was added to ***inventory*** properly.
-* The ***testSystemPropertiesMatch()*** checks that the ***system*** properties match what was added into the ***inventory*** service.
-* The ***testUnknownHost()*** method checks that an error is raised if an unknown host name is being added into the ***inventory*** service.
-* The ***systemServiceIp*** variable has the same value as the IP address that you retrieved in the previous section when you manually added the ***system*** service into the ***inventory*** service. This value of the IP address is passed in when you run the tests.
+The ***testIndexPage*** tests to check that you can access the landing page.
+
+The ***testHeightsPage*** tests to check that the application can process the input value and calculate the result correctly.
+
 
 ### Running the tests
 
-Run the Maven **package** goal to compile the test classes. Run the Maven **failsafe** goal to test the services that are running in the Docker containers by setting **-Dsystem.ip** to the IP address that you determined previously.
+Because you started Open Liberty in dev mode, press the *enter/return* key to run the tests.
 
-```bash
-SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
-./mvnw package
-./mvnw failsafe:integration-test -Dsystem.ip="$SYSTEM_IP" -Dinventory.http.port=9081 -Dsystem.http.port=9080
-```
-
-If the tests pass, you see output similar to the following example:
+You will see the following output:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.653 s - in it.io.openliberty.guides.system.SystemEndpointIT
+Running it.io.openliberty.guides.multimodules.IT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.712 sec - in it.io.openliberty.guides.multimodules.IT
 
-Results:
+Results :
 
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
 
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.935 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
-
-Results:
-
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-When you are finished with the services, run the following commands to stop and remove your containers:
 
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the Liberty.
+
+
+::page{title="Building the multi-module application"}
+
+You have aggregated and developed the application. Now, you can run the Maven ***install*** goal from the ***start*** directory to build all your modules. This command creates a JAR file in the ***jar/target*** directory, a WAR file in the ***war/target*** directory, and an EAR file that contains the WAR file in the ***ear/target*** directory.
+
+Run the following commands to navigate to the start directory and build the entire application:
 ```bash
-docker stop inventory system 
-docker rm inventory system
+cd /home/project/guide-maven-multimodules/start
+./mvnw install
 ```
+
+Because the modules are independent, you can re-build them individually by running the Maven ***install*** goal from the corresponding ***start*** directory for each module.
+
+Or, run `./mvnw -pl <child project> install` from the start directory.
 
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You have just built Docker images and run two microservices on Open Liberty in containers. 
+You built and tested a multi-module Java application for unit conversion with Maven on Open Liberty.
+
 
 
 
@@ -865,31 +717,30 @@ You have just built Docker images and run two microservices on Open Liberty in c
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-containerize*** project by running the following commands:
+Delete the ***guide-maven-multimodules*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-containerize
+rm -fr guide-maven-multimodules
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Containerizing%20microservices&guide-id=cloud-hosted-guide-containerize)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20multi-module%20application&guide-id=cloud-hosted-guide-maven-multimodules)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-containerize/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-containerize/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-maven-multimodules/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-maven-multimodules/pulls)
 
 
 
 ### Where to next?
 
-* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
-* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
+* [Building a web application with Maven](https://openliberty.io/guides/maven-intro.html)
 
 
 ### Log out of the session
