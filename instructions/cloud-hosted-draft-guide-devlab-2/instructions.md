@@ -138,7 +138,7 @@ chmod 777 /home/project/guide-testcontainers/start/target/liberty/wlp/usr/server
 Build and run the container by running the ***devc*** goal with the PostgreSQL container IP address. If your PostgreSQL container IP address is not ***172.17.0.2***, replace the command with the right IP address.
 
 
-```
+```bash
 ./mvnw liberty:devc -DcontainerRunOpts="-e DB_HOSTNAME=172.17.0.2" -DserverStartTimeout=240
 ```
 
@@ -830,7 +830,7 @@ docker stop postgres-container
 Now, use the following Maven goal to run the tests from a cold start outside of dev mode:
 
 
-```
+```bash
 export TESTCONTAINERS_RYUK_DISABLED=true
 ./mvnw clean verify
 ```
