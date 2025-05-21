@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Testing reactive Java microservices guide!"}
+::page{title="Welcome to the Externalizing environment-specific microservice configuration for CI/CD guide!"}
 
-Learn how to test reactive Java microservices in true-to-production environments using Testcontainers.
+Learn how to create environment-specific configurations for microservices by using MicroProfile Config configuration profiles for easy management and portable deployments throughout the CI/CD lifecycle.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -17,14 +17,16 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You will learn how to write integration tests for reactive Java microservices and to run the tests in true-to-production environments by using containers with [Testcontainers](https://java.testcontainers.org/) and JUnit. Testcontainers tests your containerized application from outside the container so that you are testing the exact same image that runs in production. The reactive application in this guide sends and receives messages between services by using an external message broker, [Apache Kafka](https://kafka.apache.org/). Using an external message broker enables asynchronous communications between services so that requests are non-blocking and decoupled from responses. You can learn more about reactive Java services that use an external message broker to manage communications in the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
+Managing configurations for microservices can be challenging, especially when configurations require adjustments across various stages of the software development and delivery lifecycle. The MicroProfile Config configuration profile feature, also known as the [Config Profile](https://download.eclipse.org/microprofile/microprofile-config-3.0/microprofile-config-spec-3.0.html#configprofile), is a direct solution to this challenge. It simplifies the management of microservice configurations across diverse environments - from development to production and throughout the  continuous integration/continuous delivery (CI/CD) pipeline. By externalizing and tailoring configuration properties to each environment, the CI/CD process becomes more seamless, so you can concentrate on perfecting your application code and capabilities.
 
-![Reactive system inventory application](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-service-testing/prod/assets/reactive-messaging-system-inventory.png)
+You'll learn how to provide environment-specific configurations by using the MicroProfile Config configuration profile feature. You'll work with the MicroProfile Config API to create configuration profiles that use profile-specific configuration properties and configuration sources.
 
+This guide builds on the [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html) guide and the [Configuring microservices](https://openliberty.io/guides/microprofile-config.html) guide. If you are not familiar with externalizing the configuration of microservices, it will be helpful to read the [External configuration of microservices](https://openliberty.io/docs/latest/external-configuration.html) document and complete the aforementioned guides before you proceed.
 
-*True-to-production integration testing with Testcontainers*
+The application that you will work with is a ***query*** service, which fetches information about the running JVM from a ***system*** microservice. You'll use configuration profiles to externalize and manage the configurations across the development, testing, and production environments.
 
-Tests sometimes pass during the development and testing stages of an application's lifecycle but then fail in production because of differences between your development and production environments. While you can create mock objects and custom setups to minimize differences between environments, it is difficult to mimic a production system for an application that uses an external messaging system. Testcontainers addresses this problem by enabling the testing of applications in the same Docker containers that you’ll use in production. As a result, your environment remains the same throughout the application’s lifecycle – from development, through testing, and into production. You can learn more about Testcontainers in the [Building true-to-production integration tests with Testcontainers](https://openliberty.io/guides/testcontainers.html) guide.
+![System and query services DevOps](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-config-profile/prod/assets/system-query-devops.png)
+
 
 
 ::page{title="Getting started"}
@@ -38,11 +40,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-reactive-service-testing.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-config-profile.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-reactive-service-testing.git
-cd guide-reactive-service-testing
+git clone https://github.com/openliberty/guide-microprofile-config-profile.git
+cd guide-microprofile-config-profile
 ```
 
 
@@ -50,693 +52,466 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-In this IBM Cloud environment, you need to change the user home to ***/home/project*** by running the following command:
-```bash
-sudo usermod -d /home/project theia
-```
+::page{title="Creating a configuration profile for the dev environment"}
 
-
-### Try what you'll build
-
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-
-To try out the tests, go to the ***finish*** directory and run the following Maven goal to install the ***models*** artifact to the local Maven repository:
-
-
-```bash
-./mvnw -pl models install
-```
-
-Next, navigate to the ***finish*** directory and run the following Maven goal to build the ***system*** microservice and run the integration tests on an Open Liberty server in a container:
-
-
-```bash
-export TESTCONTAINERS_RYUK_DISABLED=true
-./mvnw -pl system verify
-```
-
-You will see the following output:
-
-```
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 52.46 s - in it.io.openliberty.guides.system.SystemServiceIT
-
- Results:
-
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-
-
- --- failsafe:3.2.5:verify (verify) @ system ---
- ------------------------------------------------------------------------
- BUILD SUCCESS
- ------------------------------------------------------------------------
- Total time:  57.710 s
- Finished at: 2024-02-01T08:48:15-08:00
- ------------------------------------------------------------------------
-```
-
-This command might take some time to run the first time because the dependencies and the Docker image for Open Liberty must download. If you run the same command again, it will be faster.
-
-You can also try out the ***inventory*** integration tests by repeating the same commands in the ***finish/inventory*** directory.
-
-
-::page{title="Testing with the Kafka consumer client"}
-
-
-
-
-
+The dev environment is used to test, experiment, debug, and refine your code, ensuring an application's functional readiness before progressing to subsequent stages in a software development and delivery lifecycle.
 
 Navigate to the ***start*** directory to begin.
-```bash
-cd /home/project/guide-reactive-service-testing/start
+
+The starting Java project, which you can find in the ***start*** directory, is a multi-module Maven project comprised of the ***system*** and ***query*** microservices. Each microservice is in its own corresponding directory, ***system*** and ***query***.
+
+
+
+The ***system*** microservice contains the three Maven build profiles: ***dev***, ***test***, and ***prod***, in which the ***dev*** profile is set as the default. Each build profile defines properties for a particular deployment configuration that the microservice uses.
+
+The MicroProfile Config configuration profile feature supplies configurations for different environments when only a single profile is active. The active profile is set using the ***mp.config.profile*** property. You can set it in any of the [configuration sources](https://openliberty.io/docs/latest/external-configuration.html#default) and it is read once during application startup. When a profile is active, its associated configuration properties are used. For the ***query*** service, the ***mp.config.profile*** property is set to ***dev*** in its Maven ***pom.xml***. This Liberty configuration variable indicates to the runtime that ***dev*** is the active configuration profile.
+
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
+
+Open a command-line session and run the following commands to navigate to the ***system*** directory and start the ***system*** service in the ***dev*** environment:
+
+include::{common-includes}/os-tabs.adoc[]
+
+[.tab_content.windows_section]
+[role='command']
+```
+cd /home/project/guide-microprofile-config-profile/start/system
+./mvnw liberty:dev
 ```
 
-The example reactive application consists of the ***system*** and ***inventory*** microservices. The ***system*** microservice produces messages to the Kafka message broker, and the ***inventory*** microservice consumes messages from the Kafka message broker. You will write integration tests to see how you can use the Kafka consumer and producer client APIs to test each service. Kafka test containers, Testcontainers, and JUnit are already included as required test dependencies in your Maven ***pom.xml*** files for the ***system*** and ***inventory*** microservices.
+Open another command-line session and run the following commands to navigate to the ***query*** directory and start the ***query*** service in the ***dev*** environment:
 
-The ***start*** directory contains three directories: the ***system*** microservice directory, the ***inventory*** microservice directory, and the ***models*** directory. The ***models*** directory contains the model class that defines the structure of the system load data that is used in the application. Run the following Maven goal to install the packaged ***models*** artifact to the local Maven repository so it can be used later by the ***system*** and ***inventory*** microservices:
+include::{common-includes}/os-tabs.adoc[]
 
-
-```bash
-./mvnw -pl models install
+[.tab_content.windows_section]
+[role='command']
 ```
-
-### Launching the system microservice in dev mode with container support
-
-Start the microservices in dev mode by running the following command to launch a Kafka instance that replicates the production environment. The ***startKafka*** script launches a local Kafka container. It also establishes a ***reactive-app*** network that allows the ***system*** and ***inventory*** microservices to connect to the Kafka message broker.
-
-
-```bash
-./scripts/startKafka.sh
+cd /home/project/guide-microprofile-config-profile/start/query
+./mvnw liberty:dev
 ```
-
-Navigate to the ***start*** directory.
-
-```bash
-cd /home/project/guide-reactive-service-testing/start
-```
-
-In this IBM Cloud environment, you must first create the ***logs*** directory by running the following commands:
-```bash
-mkdir -p /home/project/guide-reactive-service-testing/start/system/target/liberty/wlp/usr/servers/defaultServer/logs
-chmod 777 /home/project/guide-reactive-service-testing/start/system/target/liberty/wlp/usr/servers/defaultServer/logs
-```
-
-To launch the ***system*** microservice in dev mode with container support, configure the container by specifying the options within the ***\<containerRunOpts\>*** element to connect to the ***reactive-app*** network and expose the container port.
-
-Run the following goal to start the ***system*** microservice in dev mode with container support:
-
-
-```bash
-export TESTCONTAINERS_RYUK_DISABLED=true
-./mvnw -pl system liberty:devc
-```
-
-For more information about disabling Ryuk, see the [Testcontainers custom configuration](https://java.testcontainers.org/features/configuration/#disabling-ryuk) document.
 
 After you see the following message, your Liberty instance is ready in dev mode:
 
-
 ```
-**************************************************************
-*    Liberty is running in dev mode.
-*    ...    
-*    Liberty container port information:
-*        Internal container HTTP port [ 9083 ] is mapped to container host port [ 9083 ] <
-*   ...     
+**************************************************
+*     Liberty is running in dev mode.
 ```
 
-[Dev mode](https://openliberty.io/docs/latest/development-mode.html) holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-The ***system*** microservice actively seeks a Kafka topic for message push operations. After the Kafka service starts, the ***system*** microservice connects to the Kafka message broker by using the ***mp.messaging.connector.liberty-kafka.bootstrap.servers*** property. When you run your application in dev mode with container support, the running ***system*** container exposes its service on the ***9083*** port for testing purposes.
 
-### Testing the system microservice
+In the dev environment, the ***dev*** configuration profile is set in the ***system/pom.xml*** file as the configuration profile to use for running the ***system*** service. The ***system*** service runs on HTTP port ***9081*** and HTTPS port ***9444*** using the context root ***system/dev***. It uses a basic user registry with username ***alice*** and password ***alicepwd*** for resource authorization. Note that the ***basicRegistry*** element is a simple registry configuration for learning purposes. For more information on user registries, see the [User registries documentation](https://openliberty.io/docs/latest/user-registries-application-security.html).
 
-Now you can start writing the test by using Testcontainers.
+Click the following button to check out the ***query*** service:
 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+::startApplication{port="9085" display="external" name="Check out the query service" route="/query/systems/localhost"}
 
-Create the ***SystemServiceIT*** class.
+
+The ***query*** service returns the message: ***{"fail":"Failed to reach the client localhost."}***. This is because the current ***query*** service uses the default properties in the ***query/src/main/resources/META-INF/microprofile-config.properties*** file to access the ***system*** service.
+
+For proper communication with the development ***system*** service, the ***query*** service uses properties in the ***dev*** configuration profile.
+
+![System service running in development environment](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-config-profile/prod/assets/system-query-devops-development.png)
+
+
+There are two ways to define configuration properties that are associated with your configuration profile. The first is as individual configuration properties associated with a configuration profile that can be specified in any kind of MicroProfile configuration source. The second is through default ***microprofile-config.properties*** configuration files embedded in your application that can be associated with different configuration profiles. The former allows for flexibility in defining profile-specific configuration properties in the best configuration sources for your needs while the latter enables default profiles of configuration properties to be provided in your application.
+
+### Creating profile-specific configuration properties
+
+This approach involves directly associating individual configuration properties with a configuration profile. To define a configuration property for a particular config profile, use the ***%\<config_profile_id\>.\<property_name\>=\<value\>*** syntax, where ***\<config_profile_id\>*** is the unique identifier for the configuration profile and ***\<property_name\>*** is the name of the property that you want to set.
+
+Replace the ***microprofile-config.properties*** file.
+
+> To open the microprofile-config.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties"}
+
+
+
+```
+system.httpsPort=9443
+system.user=admin
+system.password=adminpwd
+system.contextRoot=system
+
+%dev.system.httpsPort=9444
+%dev.system.user=alice
+%dev.system.password=alicepwd
+%dev.system.contextRoot=system/dev
+```
+
+
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+
+
+
+Configure the ***%dev.**** properties in the ***microprofile-config.properties*** file based on the values from the ***dev*** profile of the ***system*** service.
+
+Because the active profile is set to ***dev***, each ***%dev.**** property overrides the value of the plain non-profile-specific property. For example, in this case, the ***%dev.system.httpsPort*** property overrides the ***system.httpsPort*** property and the value is resolved to ***9444***.
+
+Because you are running the ***query*** service in dev mode, the changes that you made are automatically picked up.
+
+Click the following button to try out the application:
+
+::startApplication{port="9085" display="external" name="Try out the application" route="/query/systems/localhost"}
+
+You can see the current OS and Java version in JSON format.
+
+
+### Creating profile-specific ***microprofile-config.properties*** configuration files
+
+Creating profile-specific ***microprofile-config.properties*** configuration files is a structured way to provide and manage more extensive sets of default configurations. You can create a configuration file for each configuration profile in the ***META-INF*** folder on the classpath of your application by using the ***microprofile-config-\<config_profile_id\>*** naming convention, where ***\<config_profile_id\>*** is the unique identifier for a configuration profile. After you create the file, you can add your configuration properties to it with the standard ***\<property_name\>=\<value\>*** syntax.
+
+Open another command-line session.
+
+Create the ***microprofile-config-dev.properties*** file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java
+touch /home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-dev.properties
 ```
 
 
-> Then, to open the SystemServiceIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java, or click the following button
+> Then, to open the microprofile-config-dev.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-dev.properties, or click the following button
 
-::openFile{path="/home/project/guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java"}
+::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-dev.properties"}
+
+
+
+```
+system.httpsPort=9444
+system.user=alice
+system.password=alicepwd
+system.contextRoot=system/dev
+```
+
+
+
+
+Define the ***system.**** properties in the ***microprofile-config-dev.properties*** file based on the values from the ***dev*** profile of the ***system*** service.
+
+Replace the ***microprofile-config.properties*** file.
+
+> To open the microprofile-config.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties"}
+
+
+
+```
+system.httpsPort=9443
+system.user=admin
+system.password=adminpwd
+system.contextRoot=system
+
+```
+
+
+
+
+Remove the ***%dev.**** properties from the ***microprofile-config.properties*** file.
+
+Because the active profile is set to ***dev***, any ***system.**** properties specified in the ***microprofile-config-dev.properties*** file take precedence over the ***system.**** property values in the ***microprofile-config.properties*** file.
+
+Now, click the following button to try out the application again:
+
+::startApplication{port="9085" display="external" name="Try out the application" route="/query/systems/localhost"}
+
+You can see the current OS and Java version in JSON format.
+
+When you are done checking out the application in ***dev*** environment, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***query*** services.
+
+::page{title="Creating a configuration profile for the test environment"}
+
+In CI/CD, the test environment is where integration tests ensure the readiness and quality of an application. A good testing configuration not only ensures smooth operations but also aligns the environment closely with potential production settings.
+
+![System service running in testing environment](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-config-profile/prod/assets/system-query-devops-testing.png)
+
+
+Create the ***microprofile-config-test.properties*** file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-test.properties
+```
+
+
+> Then, to open the microprofile-config-test.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-test.properties, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-test.properties"}
+
+
+
+```
+system.httpsPort=9445
+system.user=bob
+system.password=bobpwd
+system.contextRoot=system/test
+```
+
+
+
+
+Define the ***system.**** properties in the ***microprofile-config-test.properties*** file based on the values from the ***test*** profile of the ***system*** service.
+
+Create the ***QueryEndpointIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-config-profile/start/query/src/test/java/it/io/openliberty/guides/query/QueryEndpointIT.java
+```
+
+
+> Then, to open the QueryEndpointIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/test/java/it/io/openliberty/guides/query/QueryEndpointIT.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/test/java/it/io/openliberty/guides/query/QueryEndpointIT.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.system;
-
-import java.net.Socket;
-import java.time.Duration;
-import java.util.Collections;
-import java.util.Properties;
-import java.nio.file.Paths;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import org.testcontainers.containers.KafkaContainer;
-import org.testcontainers.containers.Network;
-import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.images.builder.ImageFromDockerfile;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.utility.DockerImageName;
-
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.serialization.StringDeserializer;
-
-import io.openliberty.guides.models.SystemLoad;
-import io.openliberty.guides.models.SystemLoad.SystemLoadDeserializer;
-
-@Testcontainers
-public class SystemServiceIT {
-
-    private static Logger logger = LoggerFactory.getLogger(SystemServiceIT.class);
-    private static Network network = Network.newNetwork();
-
-    public static KafkaConsumer<String, SystemLoad> consumer;
-
-    private static ImageFromDockerfile systemImage =
-        new ImageFromDockerfile("system:1.0-SNAPSHOT")
-            .withDockerfile(Paths.get("./Dockerfile"));
-
-    private static KafkaContainer kafkaContainer = new KafkaContainer(
-        DockerImageName.parse("confluentinc/cp-kafka:latest"))
-            .withListener(() -> "kafka:19092")
-            .withNetwork(network);
-
-    private static GenericContainer<?> systemContainer =
-        new GenericContainer(systemImage)
-            .withNetwork(network)
-            .withExposedPorts(9083)
-            .waitingFor(Wait.forHttp("/health/ready").forPort(9083))
-            .withStartupTimeout(Duration.ofMinutes(3))
-            .withLogConsumer(new Slf4jLogConsumer(logger))
-            .dependsOn(kafkaContainer);
-
-    private static boolean isServiceRunning(String host, int port) {
-        try {
-            Socket socket = new Socket(host, port);
-            socket.close();
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    @BeforeAll
-    public static void startContainers() {
-        if (isServiceRunning("localhost", 9083)) {
-            System.out.println("Testing with mvn liberty:devc");
-        } else {
-            kafkaContainer.start();
-            systemContainer.withEnv(
-                "mp.messaging.connector.liberty-kafka.bootstrap.servers",
-                "kafka:19092");
-            systemContainer.start();
-            System.out.println("Testing with mvn verify");
-        }
-    }
-
-    @BeforeEach
-    public void createKafkaConsumer() {
-        Properties consumerProps = new Properties();
-        if (isServiceRunning("localhost", 9083)) {
-            consumerProps.put(
-                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                "localhost:9094");
-        } else {
-            consumerProps.put(
-                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                kafkaContainer.getBootstrapServers());
-        }
-        consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "system-load-status");
-        consumerProps.put(
-            ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
-            StringDeserializer.class.getName());
-        consumerProps.put(
-            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
-            SystemLoadDeserializer.class.getName());
-        consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        consumer = new KafkaConsumer<String, SystemLoad>(consumerProps);
-        consumer.subscribe(Collections.singletonList("system.load"));
-    }
-
-    @AfterAll
-    public static void stopContainers() {
-        systemContainer.stop();
-        kafkaContainer.stop();
-        if (network != null) {
-            network.close();
-        }
-    }
-
-    @AfterEach
-    public void closeKafkaConsumer() {
-        consumer.close();
-    }
-
-    @Test
-    public void testCpuStatus() {
-        ConsumerRecords<String, SystemLoad> records =
-            consumer.poll(Duration.ofMillis(30 * 1000));
-        System.out.println("Polled " + records.count() + " records from Kafka:");
-
-        for (ConsumerRecord<String, SystemLoad> record : records) {
-            SystemLoad sl = record.value();
-            System.out.println(sl);
-            assertNotNull(sl.hostname);
-            assertNotNull(sl.loadAverage);
-        }
-        consumer.commitAsync();
-    }
-}
-```
-
-
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
-
-
-
-
-
-Construct the ***systemImage*** by using the ***ImageFromDockerfile*** class, which allows Testcontainers to build the Docker image from a Dockerfile during the test run time. For instance, the provided Dockerfile at the specified ***./Dockerfile*** paths is used to generate the ***system:1.0-SNAPSHOT*** image.
-
-Use the ***kafkaContainer*** class to instantiate the ***kafkaContainer*** test container, initiating the ***confluentinc/cp-kafka:latest*** Docker image. Similarly, use the ***GenericContainer*** class to create the ***systemContainer*** test container, starting the ***system:1.0-SNAPSHOT*** Docker image.
- 
-The ***withListener()*** is configured to ***kafka:19092***, as the containerized ***system*** microservice functions as an additional producer. Therefore, the Kafka container needs to set up a listener to accommodate this requirement. For more information about using an additional consumer or producer with a Kafka container, see the [Testcontainers Kafka documentation](https://java.testcontainers.org/modules/kafka/)
-
-Because containers are isolated by default, facilitating communication between the ***kafkaContainer*** and the ***systemContainer*** requires placing them on the same ***network***. The ***dependsOn()*** method is used to indicate that the ***system*** microservice container starts only after ensuring the readiness of the Kafka container. 
-
-Before you start the ***systemContainer***, you must override the ***mp.messaging.connector.liberty-kafka.bootstrap.servers*** property with ***kafka:19092*** by using the ***withEnv()*** method. This step creates a listener in the Kafka container that is configured to handle an additional producer.
-
-The test uses the ***KafkaConsumer*** client API, configuring the consumer to use the ***BOOTSTRAP_SERVERS_CONFIG*** property with the Kafka broker address if a local ***system*** microservice container is present. In the absence of a local service container, it uses the ***getBootstrapServers()*** method to obtain the broker address from the Kafka test container. Then, the consumer is set up to consume messages from the ***system.load*** topic within the ***Kafka*** container.
-
-To consume messages from a stream, the messages need to be deserialized from bytes. Kafka has its own default deserializer, but a custom deserializer is provided for you. The deserializer is configured by the ***VALUE_DESERIALIZER_CLASS_CONFIG*** property and is implemented in the ***SystemLoad*** class. To learn more about Kafka APIs and their usage, see the [official Kafka Documentation](https://kafka.apache.org/documentation/#api).
-
-The running ***system*** microservice container produces messages to the ***systemLoad*** Kafka topic, as denoted by the ***@Outgoing*** annotation. The ***testCpuStatus()*** test method uses the ***consumer.poll()*** method from the ***KafkaConsumer*** client API to retrieve a record from Kafka every 3 seconds within a specified timeout limit. This record is produced by the system service. Then, the method uses ***Assertions*** to verify that the polled record aligns with the expected record.
-
-### Running the tests
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
-
-You will see the following output:
-
-```
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 25.674 s - in it.io.openliberty.guides.system.SystemServiceIT
-
- Results:
-
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-
- Integration tests finished.
-```
-
-After you are finished running tests, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server.
-
-
-If you aren't running in dev mode, you can run the tests by running the following command:
-
-
-```bash
-./mvnw -pl system clean verify
-```
-
-You will see the following output:
-
-```
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 50.63 s - in it.io.openliberty.guides.system.SystemServiceIT
-
- Results:
-
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-
-
- --- failsafe:3.2.5:verify (verify) @ system ---
- ------------------------------------------------------------------------
- BUILD SUCCESS
- ------------------------------------------------------------------------
- Total time:  55.636 s
- Finished at: 2024-01-31T11:33:40-08:00
- ------------------------------------------------------------------------
-```
-
-
-::page{title="Testing with the Kafka producer client"}
-
-The ***inventory*** microservice is tested in the same way as the ***system*** microservice. The only difference is that the ***inventory*** microservice consumes messages, which means that tests are written to use the Kafka producer client.
-
-### Launching the inventory microservice in dev mode with container
-
-Navigate to the ***start*** directory.
-
-```bash
-cd /home/project/guide-reactive-service-testing/start
-```
-
-First, create the ***logs*** directory by running the following commands:
-```bash
-mkdir -p /home/project/guide-reactive-service-testing/start/inventory/target/liberty/wlp/usr/servers/defaultServer/logs
-chmod 777 /home/project/guide-reactive-service-testing/start/inventory/target/liberty/wlp/usr/servers/defaultServer/logs
-```
-
-Run the following goal to start the ***inventory*** microservice in dev mode with container support:
-
-
-```bash
-./mvnw -pl inventory liberty:devc
-```
-
-### Building a test REST client
-
-Create a REST client interface to access the ***inventory*** microservice.
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-Create the ***InventoryResourceClient*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java
-```
-
-
-> Then, to open the InventoryResourceClient.java file in your IDE, select
-> ***File*** > ***Open*** > guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java, or click the following button
-
-::openFile{path="/home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java"}
-
-
-
-```java
-package it.io.openliberty.guides.inventory;
-
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-
-@Path("/inventory")
-public interface InventoryResourceClient {
-
-    @GET
-    @Path("/systems")
-    @Produces(MediaType.APPLICATION_JSON)
-    Response getSystems();
-
-    @DELETE
-    @Produces(MediaType.APPLICATION_JSON)
-    Response resetSystems();
-
-}
-```
-
-
-
-The ***InventoryResourceClient*** interface declares the ***getSystems()*** and ***resetSystems()*** methods for accessing the corresponding endpoints within the ***inventory*** microservice.
-
-
-### Testing the inventory microservice
-
-Now you can start writing the test by using Testcontainers.
-
-Create the ***InventoryServiceIT*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java
-```
-
-
-> Then, to open the InventoryServiceIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java, or click the following button
-
-::openFile{path="/home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java"}
-
-
-
-```java
-package it.io.openliberty.guides.inventory;
-
-import java.util.List;
-import java.net.Socket;
-import java.time.Duration;
+package it.io.openliberty.guides.query;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import java.math.BigDecimal;
-import java.nio.file.Paths;
-import java.util.Properties;
-
-import jakarta.ws.rs.core.GenericType;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriBuilder;
-import jakarta.ws.rs.client.ClientBuilder;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Assertions;
-import org.testcontainers.containers.Network;
-import org.testcontainers.utility.DockerImageName;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.testcontainers.containers.KafkaContainer;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.images.builder.ImageFromDockerfile;
-import org.apache.kafka.common.serialization.StringSerializer;
-import org.jboss.resteasy.client.jaxrs.ResteasyClient;
-import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
-import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
-import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.junit.jupiter.api.Test;
 
-import io.openliberty.guides.models.SystemLoad;
-import io.openliberty.guides.models.SystemLoad.SystemLoadSerializer;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.Response;
 
+public class QueryEndpointIT {
 
-@Testcontainers
-public class InventoryServiceIT {
+    private static String port = System.getProperty("http.port");
+    private static String baseUrl = "http://localhost:" + port + "/query";
+    private static String systemHost = System.getProperty("system.host");
 
-    private static Logger logger = LoggerFactory.getLogger(InventoryServiceIT.class);
-
-    public static InventoryResourceClient client;
-
-    private static Network network = Network.newNetwork();
-    public static KafkaProducer<String, SystemLoad> producer;
-    private static ImageFromDockerfile inventoryImage =
-        new ImageFromDockerfile("inventory:1.0-SNAPSHOT")
-            .withDockerfile(Paths.get("./Dockerfile"));
-
-    private static KafkaContainer kafkaContainer = new KafkaContainer(
-        DockerImageName.parse("confluentinc/cp-kafka:latest"))
-            .withListener(() -> "kafka:19092")
-            .withNetwork(network);
-
-    private static GenericContainer<?> inventoryContainer =
-        new GenericContainer(inventoryImage)
-            .withNetwork(network)
-            .withExposedPorts(9085)
-            .waitingFor(Wait.forHttp("/health/ready").forPort(9085))
-            .withStartupTimeout(Duration.ofMinutes(3))
-            .withLogConsumer(new Slf4jLogConsumer(logger))
-            .dependsOn(kafkaContainer);
-
-    private static InventoryResourceClient createRestClient(String urlPath) {
-        ClientBuilder builder = ResteasyClientBuilder.newBuilder();
-        ResteasyClient client = (ResteasyClient) builder.build();
-        ResteasyWebTarget target = client.target(UriBuilder.fromPath(urlPath));
-        return target.proxy(InventoryResourceClient.class);
-    }
-
-    private static boolean isServiceRunning(String host, int port) {
-        try {
-            Socket socket = new Socket(host, port);
-            socket.close();
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    @BeforeAll
-    public static void startContainers() {
-
-        String urlPath;
-        if (isServiceRunning("localhost", 9085)) {
-            System.out.println("Testing with mvn liberty:devc");
-            urlPath = "http://localhost:9085";
-        } else {
-            System.out.println("Testing with mvn verify");
-            kafkaContainer.start();
-            inventoryContainer.withEnv(
-                "mp.messaging.connector.liberty-kafka.bootstrap.servers",
-                "kafka:19092");
-            inventoryContainer.start();
-            urlPath = "http://"
-                + inventoryContainer.getHost()
-                + ":" + inventoryContainer.getFirstMappedPort();
-        }
-
-        System.out.println("Creating REST client with: " + urlPath);
-        client = createRestClient(urlPath);
-    }
+    private static Client client;
 
     @BeforeEach
-    public void createKafkaProducer() {
-        Properties producerProps = new Properties();
-        if (isServiceRunning("localhost", 9085)) {
-            producerProps.put(
-                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                "localhost:9094");
-        } else {
-            producerProps.put(
-                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                kafkaContainer.getBootstrapServers());
-        }
-
-        producerProps.put(
-            ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
-            StringSerializer.class.getName());
-        producerProps.put(
-            ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
-            SystemLoadSerializer.class.getName());
-
-        producer = new KafkaProducer<String, SystemLoad>(producerProps);
-    }
-
-    @AfterAll
-    public static void stopContainers() {
-        client.resetSystems();
-        inventoryContainer.stop();
-        kafkaContainer.stop();
-        if (network != null) {
-            network.close();
-        }
+    public void setup() {
+        client = ClientBuilder.newClient();
     }
 
     @AfterEach
-    public void closeKafkaProducer() {
-        producer.close();
+    public void teardown() {
+        client.close();
     }
 
     @Test
-    public void testCpuUsage() throws InterruptedException {
-        SystemLoad sl = new SystemLoad("localhost", 1.1);
-        producer.send(new ProducerRecord<String, SystemLoad>("system.load", sl));
-        Thread.sleep(5000);
-        Response response = client.getSystems();
-        Assertions.assertEquals(200, response.getStatus(), "Response should be 200");
-        List<Properties> systems =
-            response.readEntity(new GenericType<List<Properties>>() { });
-        assertEquals(systems.size(), 1);
-        for (Properties system : systems) {
-            assertEquals(sl.hostname, system.get("hostname"),
-                "Hostname doesn't match!");
-            BigDecimal systemLoad = (BigDecimal) system.get("systemLoad");
-            assertEquals(sl.loadAverage, systemLoad.doubleValue(),
-                "CPU load doesn't match!");
-        }
+    public void testQuerySystem() {
+
+        Response response = this.getResponse(baseUrl + "/systems/" + systemHost);
+        this.assertResponse(baseUrl, response);
+
+        JsonObject jsonObj = response.readEntity(JsonObject.class);
+        assertNotNull(jsonObj.getString("os.name"), "os.name is null");
+        assertNotNull(jsonObj.getString("java.version"), "java.version is null");
+
+        response.close();
     }
+
+    @Test
+    public void testUnknownHost() {
+        Response response = this.getResponse(baseUrl + "/systems/unknown");
+        this.assertResponse(baseUrl, response);
+
+        JsonObject json = response.readEntity(JsonObject.class);
+        assertEquals("Failed to reach the client unknown.", json.getString("fail"),
+            "Fail message is wrong.");
+        response.close();
+    }
+
+    private Response getResponse(String url) {
+        return client.target(url).request().get();
+    }
+
+    private void assertResponse(String url, Response response) {
+        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+    }
+
 }
 ```
 
 
 
+Implement endpoint tests to test the basic functionality of the ***query*** microservice. If a test failure occurs, you might have introduced a bug into the code.
+
+See the following descriptions of test cases:
+
+* ***testQuerySystem()*** verifies the ***/query/systems/{hostname}*** endpoint.
+
+* ***testUnknownHost()*** verifies that an unknown host or a host that does not expose their JVM system properties is correctly handled with a fail message.
+
+### Running the tests in the test environment
+
+Now, navigate to the ***start*** directory.
 
 
-The ***InventoryServiceIT*** class uses the ***KafkaProducer*** client API to generate messages in the test environment, which are then consumed by the ***inventory*** microservice container.
 
-Similar to ***system*** microservice testing, the configuration of the producer ***BOOTSTRAP_SERVERS_CONFIG*** property depends on whether a local ***inventory*** microservice container is detected. In addition, the producer is configured with a custom serializer provided in the ***SystemLoad*** class.
-
-The ***testCpuUsage*** test method uses the ***producer.send()*** method, using the ***KafkaProducer*** client API, to generate the ***Systemload*** message. Then, it uses ***Assertions*** to verify that the response from the ***inventory*** microservice aligns with the expected outcome.
-
-### Running the tests
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
-
-You will see the following output:
-
-```
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 32.564 s - in it.io.openliberty.guides.inventory.InventoryServiceIT
-
- Results:
-
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-
- Integration tests finished.
-```
-
-After you are finished running tests, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server.
-
-If you aren't running in dev mode, you can run the tests by running the following command:
-
+Test the application under the ***test*** environment by running the following script that contains different Maven goals to ***build***, ***start***, ***test***, and ***stop*** the services.
 
 ```bash
-./mvnw -pl inventory clean verify
+cd /home/project/guide-microprofile-config-profile/start
+./scripts/testApp.sh
 ```
 
-You will see the following output:
+If the tests pass, you see output similar to the following example:
 
 ```
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 53.22 s - in it.io.openliberty.guides.inventory.InventoryServiceIT
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.539 s - in it.io.openliberty.guides.system.SystemEndpointIT
 
- Results:
+Results:
 
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 
+...
 
- --- failsafe:3.2.5:verify (verify) @ inventory ---
- ------------------------------------------------------------------------
- BUILD SUCCESS
- ------------------------------------------------------------------------
- Total time:  58.789 s
- Finished at: 2024-01-31T11:40:43-08:00
- ------------------------------------------------------------------------
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.query.QueryEndpointIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.706 s - in it.io.openliberty.guides.query.QueryEndpointIT
+
+Results:
+
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+
 ```
 
+::page{title="Next steps"}
 
-When you're finished trying out the microservice, you can stop the local Kafka container by running the following command from the ***start*** directory:
+Deploying the application to a Kubernetes environment using the Open Liberty Operator is an optional learning step in this guide.
 
+To further explore deploying microservices using Kubernetes and the Open Liberty Operator, you can read the following guides:
+
+ [Deploying a microservice to Kubernetes using Open Liberty Operator](https://openliberty.io/guides/openliberty-operator-intro.html)
+ [Deploying a microservice to OpenShift 4 using Open Liberty Operator](https://openliberty.io/guides/openliberty-operator-openshift.html)
+
+A secure production environment is essential for application security. In the previous sections, you learned how to use the MicroProfile Config API to externalize credentials and other properties for accessing the ***system*** service. This strategy makes the application more adaptable to different environments without the need to change code and rebuild your application.
+
+In the this section, you'll learn how to use Kubernetes secrets to provide the credentials and how to pass them to the ***query*** service by using MicroProfile Config.
+
+### Deploying the application in the prod environment with Kubernetes
+
+
+
+
+
+
+Before deploying, create the Dockerfile files for both ***system*** and ***query*** microservices. Then, build their ***.war*** files and Docker images in the ***start*** directory.
 
 ```bash
-cd /home/project/guide-reactive-service-testing/start
-./scripts/stopKafka.sh
+cp /home/project/guide-microprofile-config-profile/finish/system/Dockerfile /home/project/guide-microprofile-config-profile/start/system
+cp /home/project/guide-microprofile-config-profile/finish/query/Dockerfile /home/project/guide-microprofile-config-profile/start/query
+cd /home/project/guide-microprofile-config-profile/start
+./mvnw -P prod clean package
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t query:1.0-SNAPSHOT query/.
 ```
 
+The Maven ***clean*** and ***package*** goals can clean the ***target*** directories and build the ***.war*** application files from scratch. The ***microprofile-config-dev.properties*** and ***microprofile-config-test.properties*** files of the ***query*** microservice are excluded from the ***prod*** build. The default ***microprofile-config.properties*** file is automatically applied.
+
+The Docker ***build*** command packages the ***.war*** files of the ***system*** and ***query*** microservices with their default configuration into your Docker images.
+
+After building the images, push your images to the container registry on IBM Cloud with the following commands:
+
+```bash
+docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+docker tag query:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/query:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/query:1.0-SNAPSHOT
+```
+
+And, you can create a Kubernetes secret for storing sensitive data such as credentials.
+
+```bash
+kubectl create secret generic sys-app-credentials \
+        --from-literal username=$USERNAME \
+        --from-literal password=password
+```
+
+For more information about managing secrets, see the [Managing Secrets using kubectl](https://kubernetes.io/docs/tasks/configmap-secret/managing-secret-using-kubectl) documentation.
+
+Finally, write up the ***deploy.yaml*** deployment file to configure the deployment of the ***system*** and ***query*** microservices by using the Open Liberty Operator. The ***sys-app-credentials*** Kubernetes secrets set the environment variables ***DEFAULT_USERNAME*** and ***DEFAULT_PASSWORD*** for the ***system*** microservice, and ***SYSTEM_USER*** and ***SYSTEM_PASSWORD*** for the ***query*** microservice.
+
+```bash
+cp /home/project/guide-microprofile-config-profile/finish/deploy.yaml /home/project/guide-microprofile-config-profile/start
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"${SN_ICR_NAMESPACE}"'/system:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
+sed -i 's=query:1.0-SNAPSHOT=us.icr.io/'"${SN_ICR_NAMESPACE}"'/query:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
+```
+
+If you want to override another property, you can specify it in the ***env*** sections of the ***deploy.yaml*** file. For example, set the ***CONTEXT_ROOT*** environment variable in the ***system*** deployment and the ***SYSTEM_CONTEXTROOT*** environment variable in the ***query*** deployment.
+
+After the images and the secret are ready, you can deploy the microservices to your production environment with Kubernetes.
+
+```bash
+kubectl apply -f deploy.yaml
+```
+When the apps are deployed, run the following command to check the status of your pods:
+```bash
+kubectl get pods
+```
+
+You'll see an output similar to the following example if all the pods are healthy and running:
+
+```
+----
+NAME                     READY   STATUS    RESTARTS   AGE
+query-7b7b6db4b6-cqtqx   1/1     Running   0          4s
+system-bc85bc8dc-rw5pb   1/1     Running   0          5s
+----
+```
+
+To access the exposed **query** microservice, the service must be port-forwarded. Run the following command to set up port forwarding to access the **query** service:
+
+```bash
+kubectl port-forward svc/query 9448
+```
+
+Open another command-line session and access the microservice by running the following command:
+```bash
+curl -k -s "https://localhost:9448/query/systems/system.${SN_ICR_NAMESPACE}.svc" | jq
+```
+
+You'll see an output similar to the following example:
+
+```
+{
+  "hostname": "system.sn-labs-username.svc",
+  "java.version": "11.0.23",
+  "os.name": "Linux"
+}
+```
+
+After trying out the microservice, press **CTRL+C** in the command line session where you ran the `kubectl port-forward` command to stop the port forwarding, and then delete all resources by running the following commands:
+```bash
+cd /home/project/guide-microprofile-config-profile/start
+kubectl delete -f deploy.yaml
+kubectl delete secret sys-app-credentials
+docker image prune -a -f
+```
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just tested two reactive Java microservices using Testcontainers.
+You just learned how to use the MicroProfile Config's configuration profile feature to configure your application for multiple CI/CD environments.
 
+
+Feel free to try one of the related guides. They demonstrate new technologies that you can learn to expand on what you built in this guide.
 
 
 ### Clean up your environment
@@ -744,34 +519,31 @@ You just tested two reactive Java microservices using Testcontainers.
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-reactive-service-testing*** project by running the following commands:
+Delete the ***guide-microprofile-config-profile*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-reactive-service-testing
+rm -fr guide-microprofile-config-profile
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Testing%20reactive%20Java%20microservices&guide-id=cloud-hosted-guide-reactive-service-testing)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Externalizing%20environment-specific%20microservice%20configuration%20for%20CI/CD&guide-id=cloud-hosted-guide-microprofile-config-profile)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-reactive-service-testing/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-reactive-service-testing/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-config-profile/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-config-profile/pulls)
 
 
 
 ### Where to next?
 
-* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
-* [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html)
-
-**Learn more about Testcontainers**
-* [Visit the official Testcontainers website](https://testcontainers.com/)
+* [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
 
 
 ### Log out of the session
