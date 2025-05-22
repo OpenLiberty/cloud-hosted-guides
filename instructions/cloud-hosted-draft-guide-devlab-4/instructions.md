@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Managing microservice traffic using Istio guide!"}
+::page{title="Welcome to the Caching HTTP session data using JCache and Hazelcast guide!"}
 
-Explore how to manage microservice traffic using Istio.
+
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,56 +14,42 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
-
 ::page{title="What you'll learn"}
 
-You will learn how to deploy an application to a Kubernetes cluster and enable {istio} on it. You will also learn how to configure
-{istio} to shift traffic to implement blue-green deployments for microservices.
+### What is a session?
+On the internet, a web server doesn't know who you are or what you do
+because it's processing stateless HTTP requests. An HTTP session provides a way to store
+information to be used across multiple requests.
+Session variables store user information like user name or items in a shopping cart.
+By default, session variables will timeout after 30 minutes of being unused.
+Cookies, which also store user information, are maintained on a client's computer,
+whereas session variables are maintained on a web server. For security reasons,
+an HTTP session is preferred over cookies when used with sensitive data.
+A session hides data from users.
+Cookies can be manipulated by a savvy user to make fake requests to your site.
 
-### What is {istio}?
+### What is session persistence?
+High traffic websites must support thousands of users in a fast and reliable way.
+Load balancing requires running several instances of the same application in parallel
+so that traffic can be routed to different instances to maximize speed and reliability.
+Unless a user is tied to a particular instance, running multiple instances of the same
+application can pose an out-of-sync problem when each instance keeps an isolated copy of its
+session data. HTTP session data caching can solve this problem by allowing all
+instances of the application to share caches among each other.
+Sharing caches among instances eliminates the need to route a user to the same instance
+and helps in failover situations by distributing the cache.
 
-[istio](https://istio.io/) is a service mesh, meaning that it's a platform for managing
-how microservices interact with each other and the outside world.
-{istio} consists of a control plane and sidecars that are injected into application pods. The sidecars contain
-the [Envoy](https://www.envoyproxy.io/) proxy. You can think of Envoy as a sidecar that intercepts
-and controls all the HTTP and TCP traffic to and from your container.
+![Session Cache](https://raw.githubusercontent.com/OpenLiberty/guide-sessions/prod/assets/sessionCache.png)
 
-While {istio} runs on top of Kubernetes and that will be the focus of this guide, you can also use {istio} with
-other environments such as [Docker Compose](https://docs.docker.com/compose/overview/). istio has many features such as
-traffic shifting, request routing, access control, and distributed tracing, but the focus of this guide will be on traffic shifting.
 
-### Why {istio}?
+You will learn how to build an application that creates and uses HTTP session data.
+You will also learn how to use Open Liberty's ***sessionCache*** feature to persist HTTP sessions
+by using Java Caching (JCache), the standard caching API for Java.
 
-{istio} provides a collection of features that allows you to manage several aspects of your services.
-One example is {istio}'s routing features. You can route HTTP requests based on several factors such as HTTP headers or cookies.
-Another use case for {istio} is telemetry, which you can use to enable distributed tracing. Distributed tracing allows you
-to visualize how HTTP requests travel between different services in your cluster by using a tool such as [Jaeger](https://www.jaegertracing.io/).
-Additionally, as part of its collection of security features, {istio} allows you to enable mutual TLS between pods in your cluster.
-Enabling TLS between pods secures communication between microservices internally.
-
-https://openliberty.io/guides/istio-intro.html#what-are-blue-green-deployments[Blue-green deployments] are a method of deploying your applications such that you have two nearly identical environments where one acts
-as a sort of staging environment and the other is a production environment. This allows you to switch traffic from staging to production
-once a new version of your application has been verified to work.
-You'll use {istio} to implement blue-green deployments. The traffic shifting feature allows you to allocate a percentage of
-traffic to certain versions of services. You can use this feature to shift 100 percent of live traffic to blue deployments and 100 percent
-of test traffic to green deployments. Then, you can shift the traffic to point to the opposite deployments as necessary to
-perform blue-green deployments.
-
-The microservice you'll deploy is called ***system***.
-It responds with your current system's JVM properties and it returns the app version in the response header.
-You will increment the version number when you update the application.
-With this number, you can determine which version of the microservice is running in your production or test environments.
-
-### What are blue-green deployments?
-
-Blue-green deployments are a way of deploying your applications such that you have two environments where your application runs.
-In this scenario, you will have a production environment and a test environment.
-At any point in time, the blue deployment can accept production traffic and the green deployment can accept test traffic, or vice versa.
-When you want to deploy a new version of your application, you deploy to the color that is acting as your test environment.
-After the new version is verified on the test environment, the traffic is shifted over.
-Thus, your live traffic is now being handled by what used to be the test site.
-
+You will containerize and deploy the application to a local Kubernetes cluster.
+You will then replicate the application in multiple pods and see that the session data is cached and
+shared among all instances of the application. Even if an instance is unavailable, the other instances
+are able to take over and handle requests from the same user by using the cached session data.
 
 
 
@@ -78,11 +64,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-istio-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-sessions.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-istio-intro.git
-cd guide-istio-intro
+git clone https://github.com/openliberty/guide-sessions.git
+cd guide-sessions
 ```
 
 
@@ -91,493 +77,523 @@ The ***start*** directory contains the starting project that you will build upon
 The ***finish*** directory contains the finished project that you will build.
 
 
+::page{title="Creating the application"}
+
+The application that you are working with is a shopping cart web service that uses JAX-RS,
+which is a Java API for building RESTful web services.
+You'll learn how to persist a user's shopping cart data between Open Liberty instances by using the
+***sessionCache*** feature. The ***sessionCache*** feature persists HTTP
+sessions using JCache. You can have high-performance HTTP session persistence
+without using a relational database.
+
+Navigate to the ***start*** directory to begin.
+
+Create the ***CartApplication*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartApplication.java
+```
+
+
+> Then, to open the CartApplication.java file in your IDE, select
+> ***File*** > ***Open*** > guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartApplication.java, or click the following button
+
+::openFile{path="/home/project/guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartApplication.java"}
+
+
+
+```java
+package io.openliberty.guides.cart;
+
+import jakarta.ws.rs.ApplicationPath;
+import jakarta.ws.rs.core.Application;
+
+@ApplicationPath("/")
+public class CartApplication extends Application {
+
+}
+```
+
+
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
+
+The ***CartApplication*** class extends the generic JAX-RS application class that is needed to run the
+application.
+
+Create the ***CartResource*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartResource.java
+```
+
+
+> Then, to open the CartResource.java file in your IDE, select
+> ***File*** > ***Open*** > guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartResource.java, or click the following button
+
+::openFile{path="/home/project/guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartResource.java"}
+
+
+
+```java
+package io.openliberty.guides.cart;
+
+import java.util.Enumeration;
+
+import jakarta.json.Json;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+
+@Path("/")
+public class CartResource {
+
+    @POST
+    @Path("cart/{item}&{price}")
+    @Produces(MediaType.TEXT_PLAIN)
+    @APIResponse(responseCode = "200", description = "Item successfully added to cart.")
+    @Operation(summary = "Add a new item to cart.")
+    public String addToCart(@Context HttpServletRequest request,
+                    @Parameter(description = "Item you need for intergalatic travel.",
+                               required = true)
+                    @PathParam("item") String item,
+                    @Parameter(description = "Price for this item.",
+                               required = true)
+                    @PathParam("price") double price) {
+        HttpSession session = request.getSession();
+        session.setAttribute(item, price);
+        return item + " added to your cart and costs $" + price;
+    }
+
+    @GET
+    @Path("cart")
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponse(responseCode = "200",
+        description = "Items successfully retrieved from your cart.")
+    @Operation(summary = "Return an JsonObject instance which contains "
+                        + "the items in your cart and the subtotal.")
+    public JsonObject getCart(@Context HttpServletRequest request) {
+        HttpSession session = request.getSession();
+        Enumeration<String> names = session.getAttributeNames();
+        JsonObjectBuilder builder = Json.createObjectBuilder();
+        builder.add("pod-name", getHostname());
+        builder.add("session-id", session.getId());
+        JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+        Double subtotal = 0.0;
+        while (names.hasMoreElements()) {
+            String name = names.nextElement();
+            String price = session.getAttribute(name).toString();
+            arrayBuilder.add(name + " | $" + price);
+            subtotal += Double.valueOf(price).doubleValue();
+        }
+        builder.add("cart", arrayBuilder);
+        builder.add("subtotal", subtotal);
+        return builder.build();
+    }
+
+    private String getHostname() {
+        String hostname = System.getenv("HOSTNAME");
+        if (hostname == null) {
+            hostname = "localhost";
+        }
+        return hostname;
+    }
+}
+```
+
+
+
+The ***CartResource*** class defines the REST endpoints at which a user can make
+an HTTP request.
+
+The ***addToCart*** and ***getCart*** methods
+have a number of annotations. Most of these annotations are used by the
+MicroProfile OpenAPI and JAX-RS features to document the REST endpoints and map Java objects to web resources.
+More information about these annotations can be found in the
+[Documenting RESTful APIs](https://openliberty.io/guides/microprofile-openapi.html#augmenting-the-existing-jax-rs-annotations-with-openapi-annotations)
+and
+[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html#creating-a-jax-rs-application)
+guides.
+
+The ***cart/{item}&{price}*** endpoint demonstrates how to set session data.
+The ***@PathParam*** annotation injects a custom ***item*** and
+***price*** from the POST request into the method parameter.
+The ***addToCart*** method gets the current ***session*** and binds
+the ***{item}:{price}*** key-value pair into the session by the ***setAttribute()*** method.
+A response is then built and returned to confirm that an item was added to your cart and session.
+
+The ***cart*** endpoint demonstrates how to get session data.
+The ***getCart*** method gets the current session, iterates through all key-value
+pairs that are stored in the current session, and creates a ***JsonObject*** response.
+The ***JsonObject*** response is returned to confirm the Liberty instance by
+***pod-name***, the session by ***session-id***,
+and the items in your cart by ***cart***.
+
+
+::page{title="Configuring session persistence"}
+
+### Using client-server vs peer-to-peer model
+
+Session caching is only valuable when a server is connected to at least
+one other member. There are two different ways session caching can behave in a
+cluster environment:
+
+* Client-server model: A Liberty instance can act as the JCache client and connect
+to a dedicated JCache server.
+* Peer-to-peer model: A Liberty instance can connect with other Liberty instances
+that are also running with the session cache and configured to be
+part of the same cluster.
+
+You'll use the peer-to-peer model in a Kubernetes environment for this guide.
+
+### Configuring session persistence with JCache in Open Liberty
+
+JCache, which stands for Java Caching, is an interface
+to standardize distributed caching on the Java platform.
+The ***sessionCache*** feature uses JCache, which allows for session
+persistence by providing a common cache of session data between Liberty instances.
+This feature doesn't include a JCache implementation.
+For this guide, you'll use Hazelcast as an open source JCache provider.
+
+Hazelcast is a JCache provider. Open Liberty needs to be configured to use
+Hazelcast after the ***sessionCache*** feature is enabled.
+
+Create the Liberty ***server.xml*** configuration file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-sessions/start/src/main/liberty/config/server.xml
+```
+
+
+> Then, to open the server.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-sessions/start/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-sessions/start/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="Liberty Server for Sessions Management">
+
+    <featureManager>
+        <platform>jakartaee-10.0</platform>
+        <platform>microprofile-7.0</platform>
+        <feature>servlet</feature>
+        <feature>restfulWS</feature>
+        <feature>jsonb</feature>
+        <feature>jsonp</feature>
+        <feature>mpOpenAPI</feature>
+        <feature>sessionCache-1.0</feature>
+    </featureManager>
+
+    <variable name="http.port" defaultValue="9090"/>
+    <variable name="https.port" defaultValue="9453"/>
+    <variable name="app.context.root" defaultValue="guide-sessions"/>
+
+    <httpEndpoint httpPort="${http.port}" httpsPort="${https.port}"
+        id="defaultHttpEndpoint" host="*" />
+    <httpSessionCache libraryRef="jCacheVendorLib"
+        uri="file:${server.config.dir}/hazelcast-config.xml" />
+    <library id="jCacheVendorLib">
+        <file name="${shared.resource.dir}/hazelcast-5.3.6.jar" />
+    </library>
+
+    <webApplication location="guide-sessions.war" contextRoot="${app.context.root}" />
+
+</server>
+```
 
 
 
 
-::page{title="Deploying Istio"}
+The ***library*** element includes the library reference that indicates
+to the Liberty where the Hazelcast implementation of JCache is located. 
+Your Hazelcast implementation of JCache is a JAR file that resides in the shared resources directory that is defined by the ***file*** element.
+The ***hazelcast-*.jar*** file is downloaded by the Liberty Maven plugin. The ***configuration*** is defined in the provided Maven POM file.
 
-Install istio by following the instructions in the official [istio Getting started documentation](https://istio.io/latest/docs/setup/getting-started).
+### Configuring Hazelcast
 
-Run the following command to verify that the ***istioctl*** path was set successfully:
+
+By default, all Open Liberty instances that run the ***sessionCache***
+feature and Hazelcast are connected using a peer-to-peer model.
+
+You can share the session cache only among certain Hazelcast instances
+by using the ***cluster-name*** configuration element in the Hazelcast configuration file.
+
+Create the ***hazelcast-config.xml*** configuration file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-sessions/start/src/main/liberty/config/hazelcast-config.xml
+```
+
+
+> Then, to open the hazelcast-config.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-sessions/start/src/main/liberty/config/hazelcast-config.xml, or click the following button
+
+::openFile{path="/home/project/guide-sessions/start/src/main/liberty/config/hazelcast-config.xml"}
+
+
+
+```xml
+<hazelcast xmlns="http://www.hazelcast.com/schema/config"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.hazelcast.com/schema/config
+       https://hazelcast.com/schema/config/hazelcast-config-5.3.xsd">
+
+    <cluster-name>CartCluster</cluster-name>
+
+    <network>
+        <join>
+           <multicast enabled="true"/>
+        </join>
+    </network>
+
+</hazelcast>
+```
+
+
+
+The ***CartCluster*** cluster name is defined in the ***hazelcast-config.xml*** file. To allow Hazelcast cluster members to find each other, enable the ***multicast*** communication in the ***network*** configuration.
+
+In the ***server.xml*** configuration file, a reference to the Hazelcast configuration file is made by using
+the ***httpSessionCache*** tag.
+
+
+Create the ***bootstrap.properties*** file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-sessions/start/src/main/liberty/config/bootstrap.properties
+```
+
+
+> Then, to open the bootstrap.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-sessions/start/src/main/liberty/config/bootstrap.properties, or click the following button
+
+::openFile{path="/home/project/guide-sessions/start/src/main/liberty/config/bootstrap.properties"}
+
+
+
+```
+hazelcast.jcache.provider.type=member
+```
+
+
+
+Hazelcast JCache provides the client and member providers. Set ***hazelcast.jcache.provider.type*** to ***member*** to use the member provider.
+
+There are more configuration settings that you can explore in the
+[Hazelcast documentation](https://docs.hazelcast.org/docs/latest/manual/html-single/#understanding-configuration).
+
+
+::page{title="Running the application"}
+
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
-istioctl version
+./mvnw liberty:dev
 ```
 
-The output will be similar to the following example:
+After you see the following message, your Liberty instance is ready in dev mode:
+
 ```
-no running Istio pods in "istio-system"
-1.24.2
+**************************************************************
+*    Liberty is running in dev mode.
 ```
 
-Run the following command to configure the {istio} profile on Kubernetes:
-```bash
-istioctl install --set profile=demo
-```
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-The following output appears when the installation is complete:
-```
-✔ Istio core installed
-✔ Istiod installed
-✔ Egress gateways installed
-✔ Ingress gateways installed
-✔ Installation complete
-```
 
-Verify that Istio was successfully deployed by running the following command:
+
+Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
+
+
+Point your browser to the ***link:http\://localhost:9090/openapi/ui/*** URL.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```bash
-kubectl get deployments -n istio-system
+curl link:http://localhost:9090/openapi/ui/
 ```
 
-All the values in the ***AVAILABLE*** column will have a value of ***1*** after
-the deployment is complete.
 
-```
-NAME                     READY   UP-TO-DATE   AVAILABLE   AGE
-istio-egressgateway      1/1     1            1           2m48s
-istio-ingressgateway     1/1     1            1           2m48s
-istiod                   1/1     1            1           2m48s
-```
- 
-Ensure that the {istio} deployments are all available before you continue. The deployments might take a few minutes to become available. If the deployments aren't available after a few minutes, then increase the amount of memory available to your Kubernetes cluster. On Docker Desktop, you can increase the memory from your {docker} preferences. On {minikube}, you can increase the memory by using the ***--memory*** flag.
+This URL displays the available REST endpoints.
 
-Finally, create the ***istio-injection*** label and set its value to ***enabled***:
+First, make a POST request to the ***/cart/{item}&{price}*** endpoint. To make this request, expand the POST
+endpoint on the UI, click the ***Try it out*** button, provide an item and a price,
+and then click the ***Execute*** button.
+The POST request adds a user-specified item and price to a session
+that represents data in a user's cart.
+
+Next, make a GET request to the ***/cart*** endpoint. To make this request, expand the GET
+endpoint on the UI, click the ***Try it out*** button,
+and then click the ***Execute*** button. The GET request
+returns a pod name, a session ID, and all the items from your session.
+
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
+
+
+
+::page{title="Containerizing the application"}
+
+Before you can deploy the application to Kubernetes, you need to containerize it with Docker.
+
+Make sure to start your Docker daemon before you proceed.
+
+The Dockerfile is provided at the ***start*** directory. If you're unfamiliar with Dockerfile,
+check out the [Containerizing microservices](https://openliberty.io/guides/containerize.html) guide,
+which covers Dockerfile in depth.
+
+Run the ***mvnw package*** command from the ***start*** directory so that the ***.war*** file resides in the ***target*** directory.
+
 
 ```bash
-kubectl label namespace default istio-injection=enabled
+./mvnw package
 ```
 
-Adding this label enables automatic {istio} sidecar injection. Automatic injection means that sidecars are automatically injected into your pods when you deploy your application.
 
-::page{title="Deploying version 1 of the system microservice"}
 
-Navigate to the ***guide-{projectid}/start*** directory and run the following command to build the application locally.
+To build and containerize the application, run the following Docker build command in the ***start*** directory:
 
 ```bash
-./mvnw clean package
+docker build -t cart-app:1.0-SNAPSHOT .
 ```
 
-
-
-Next, run the ***docker build*** commands to build the container image for your application:
-```bash
-docker build -t system:1.0-SNAPSHOT .
-```
-
-The command builds a {docker} image for the ***system*** microservice.
-The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format.
-The tag for an image describes the specific image version.
-If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
-You can verify that this image was created by running the following command: 
-
+When the build finishes, run the following command to list all local Docker images:
 ```bash
 docker images
 ```
 
-You'll see an image called ***system:1.0-SNAPSHOT*** listed in a table similar to the output.
-
+Verify that the ***cart-app:1.0-SNAPSHOT*** image is listed among the Docker images, for example:
 ```
-REPOSITORY                     TAG                              IMAGE ID        CREATED          SIZE
-system                         1.0-SNAPSHOT                     8856039f4c42    9 minutes ago    745MB
-istio/proxyv2                  1.24.2                           7a3aaffcf645    3 weeks ago      347MB
-istio/pilot                    1.24.2                           4974b5b22dcc    3 weeks ago      261MB
-icr.io/appcafe/open-liberty    kernel-slim-java11-openj9-ubi    d6ef646493e1    8 days ago       729MB
+REPOSITORY                     TAG
+cart-app                       1.0-SNAPSHOT
+icr.io/appcafe/open-liberty    kernel-slim-java11-openj9-ubi
 ```
 
-To deploy the ***system*** microservice to the Kubernetes cluster, use the following command to deploy the microservice.
 
+::page{title="Deploying and running the application in Kubernetes"}
+
+
+Now that the containerized application is built, deploy it to a local Kubernetes cluster by using
+a Kubernetes resource definition, which is provided in the ***kubernetes.yaml*** file
+at the ***start*** directory.
+
+First, use the ***ClusterRoleBinding*** Kubernetes API object to grant Hazelcast members to access the cluster.
 ```bash
-kubectl apply -f system.yaml
+kubectl apply -f https://raw.githubusercontent.com/hazelcast/hazelcast/master/kubernetes-rbac.yaml
 ```
 
-You can see that your resources are created:
-
-```
-gateway.networking.istio.io/sys-app-gateway created
-service/system-service created
-deployment.apps/system-deployment-blue created
-deployment.apps/system-deployment-green created
-destinationrule.networking.istio.io/system-destination-rule created
-```
-
-system.yaml
-```
-```
-
-View the ***system.yaml*** file. It contains two ***deployments***, a ***service***, a ***gateway***, and a ***destination rule***. One of the deployments is labeled ***blue*** and the second deployment is labeled ***green***. The service points to both of these deployments. The {istio} gateway is the entry point for HTTP requests to the cluster. A destination rule is used to apply policies post-routing, in this situation it is used to define service subsets that can be specifically routed to.
-
-traffic.yaml
-```
-```
-
-View the ***traffic.yaml*** file. It contains two virtual services. A virtual service defines how requests are routed to your applications. In the virtual services, you can configure the weight, which controls the amount of traffic going to each deployment. In this case, the weights should be 100 or 0, which corresponds to which deployment is live.
-
-Deploy the resources defined in the ***traffic.yaml*** file.
-
+Run the following command to deploy the application into `3` replicated pods as defined
+in the ***kubernetes.yaml*** file:
 ```bash
-kubectl apply -f traffic.yaml
+kubectl apply -f kubernetes.yaml
 ```
 
-You can see that the virtual services have been created.
-
-```
-virtualservice.networking.istio.io/system-virtual-service created
-virtualservice.networking.istio.io/system-test-virtual-service created
-```
-
-You can check that all of the deployments are available by running the following command.
-
+When the application is deployed, run the following command to check the status of your pods:
 ```bash
-kubectl get deployments
+kubectl get pods
 ```
 
-The command produces a list of deployments for your microservices that is similar to the following output.
+You see an output similar to the following if all the pods are working correctly:
 
 ```
-NAME                     DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
-system-deployment-blue    1         1         1            1           1m
-system-deployment-green   1         1         1            1           1m
-```
-
-After all the deployments are available, you will make a request to version 1 of the deployed application. As defined in the ***system.yaml***, file the ***gateway*** is expecting the host to be ***example.com***. However, requests to ***example.com*** won't be routed to the appropriate IP address. To ensure that the gateway routes your requests appropriately, ensure that the Host header is set to ***example.com***. For instance, you can set the ***Host*** header with the ***-H*** option of the ***curl*** command.
-
-
-Make a request to the service by running the following ***curl*** command.
-
-
-```bash
-export INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
-curl -H "Host:example.com" -I http://***minikube ip***:$INGRESS_PORT/system/properties
+NAME                             READY  STATUS   RESTARTS  AGE
+cart-deployment-98f4ff789-2xlhs  1/1    Running  0         17s
+cart-deployment-98f4ff789-6rvfj  1/1    Running  0         17s
+cart-deployment-98f4ff789-qrh45  1/1    Running  0         17s
 ```
 
 
-You'll see a header called ***x-app-version*** along with the corresponding version.
+
+Run the ***minikube ip*** command to get the hostname for minikube.
+Then, go to the ***http://[hostname]:31000/openapi/ui/*** URL in your browser. 
+This URL displays the available REST endpoints.
+
+Make a POST request to the ***/cart/{item}&{price}*** endpoint. To make this request, expand the POST
+endpoint on the UI, click the ***Try it out*** button, provide an item and a price,
+and then click the ***Execute*** button.
+The POST request adds a user-specified item and price to a session
+that represents data in a user's cart.
+
+Next, make a GET request to the ***/cart*** endpoint. To make this request, expand the GET
+endpoint on the UI, click the ***Try it out*** button, and then click the ***Execute*** button.
+The GET request returns a pod name, a session ID, and all the items from your session.
 
 ```
-x-app-version: 1.0-SNAPSHOT
-```
-
-
-::page{title="Deploying version 2 of the system microservice"}
-
-Replace the ***SystemResource*** class.
-
-> To open the SystemResource.java file in your IDE, select
-> ***File*** > ***Open*** > guide-istio-intro/start/src/main/java/io/openliberty/guides/system/SystemResource.java, or click the following button
-
-::openFile{path="/home/project/guide-istio-intro/start/src/main/java/io/openliberty/guides/system/SystemResource.java"}
-
-
-
-```java
-package io.openliberty.guides.system;
-
-import jakarta.enterprise.context.RequestScoped;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-
-@RequestScoped
-@Path("/properties")
-public class SystemResource {
-
-  public static String appVersion = "2.0-SNAPSHOT";
-
-  @GET
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response getProperties() {
-    return Response.ok(System.getProperties())
-      .header("X-Pod-Name", System.getenv("HOSTNAME"))
-      .header("X-App-Version", appVersion)
-      .build();
-  }
+{
+  "pod-name": "cart-deployment-98f4ff789-2xlhs",
+  "session-id": "RyJKzmka6Yc-ZCMzEA8-uPq",
+  "cart": [
+    "eggs | $2.89"
+  ],
+  "subtotal": 2.89
 }
 ```
 
-
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
-
-
-The ***system*** microservice is set up to respond with the version that is set in the ***SystemResource.java*** file.
-The tag for the {docker} image is also dependent on the version that is specified in the ***SystemResource.java*** file.
-Manually update the ***APP_VERSION*** field of the microservice to ***2.0-SNAPSHOT***.
-
-Use Maven to repackage your microservice:
+Replace the ***[pod-name]*** in the following command, and then run the command to pause
+the pod for the GET request that you just ran:
 
 ```bash
-./mvnw clean package
+kubectl exec -it [pod-name] -- /opt/ol/wlp/bin/server pause
 ```
 
-Next, build the new version of the container image as ***2.0-SNAPSHOT***:
-```bash
-docker build -t system:2.0-SNAPSHOT .
-```
+Repeat the GET request. You see the same ***session-id***
+but a different ***pod-name*** because the session data is cached but the request
+is served by a different pod (Liberty instance).
 
-Deploy the new image to the green deployment.
-
-```bash
-kubectl set image deployment/system-deployment-green system-container=system:2.0-SNAPSHOT
-```
-
-You will work with two environments.
-One of the environments is a test site that is located at ***test.example.com***.
-The other environment is your production environment that is located at ***example.com***.
-To begin with, the production environment is tied to the blue deployment and the test environment is tied to the green deployment.
-
-Test the updated microservice by making requests to the test site.
-The ***x-app-version*** header now has a value of ***2.0-SNAPSHOT*** on the test site and is still ***1.0-SNAPSHOT*** on the live site.
-
-Make a request to the service by running the following ***curl*** command.
-
+Verify that the Hazelcast cluster is running by checking the Open Liberty log. 
+To check the log, run the following command:
 
 ```bash
-curl -H "Host:test.example.com" -I http://***minikube ip***:$INGRESS_PORT/system/properties
+kubectl exec -it [pod-name] -- cat /logs/messages.log
 ```
 
-You'll see the new version in the ***x-app-version*** response header.
+You see a message similar to the following:
 
 ```
-x-app-version: 2.0-SNAPSHOT
+... [10.1.0.46]:5701 [CartCluster] [5.3.0]
+
+Members {size:3, ver:3} [
+	Member [10.1.0.40]:5701 - 01227d80-501e-4789-ae9d-6fb348d794ea
+	Member [10.1.0.41]:5701 - a68d0ed1-f50e-4a4c-82b0-389f356b8c73 this
+	Member [10.1.0.42]:5701 - b0dfa05a-c110-45ed-9424-adb1b2896a3d
+]
 ```
 
-Update the ***traffic.yaml*** file in the ***start*** directory.
-
-> To open the traffic.yaml file in your IDE, select
-> ***File*** > ***Open*** > guide-istio-intro/start/traffic.yaml, or click the following button
-
-::openFile{path="/home/project/guide-istio-intro/start/traffic.yaml"}
-
-
-
-After you see that the microservice is working on the test site, modify the ***weights*** in the ***traffic.yaml*** file to shift 100 percent of the ***example.com*** traffic to the green deployment, and 100 percent of the ***test.example.com*** traffic to the blue deployment.
-
-
-Deploy the updated ***traffic.yaml*** file.
+You can resume the paused pod by running the following command:
 
 ```bash
-kubectl apply -f traffic.yaml
+kubectl exec -it [pod-name] -- /opt/ol/wlp/bin/server resume
 ```
 
-Ensure that the live traffic is now being routed to version 2 of the microservice.
 
 
-Make a request to the service by running the following ***curl*** command.
+::page{title="Tearing down the environment"}
 
+When you no longer need your deployed application, you can delete all Kubernetes resources and disable the Hazelcast members' access to the cluster by running the ***kubectl delete*** commands:
 
 ```bash
-curl -H "Host:example.com" -I http://***minikube ip***:$INGRESS_PORT/system/properties
-```
-
-
-You'll see the new version in the ***x-app-version*** response header.
-
-```
-x-app-version: 2.0-SNAPSHOT
-```
-
-::page{title="Testing microservices that are running on Kubernetes"}
-
-Next, you will create a test to verify that the correct version of your microservice is running.
-
-Create the ***SystemEndpointIT*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-istio-intro/start/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
-```
-
-
-> Then, to open the SystemEndpointIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-istio-intro/start/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java, or click the following button
-
-::openFile{path="/home/project/guide-istio-intro/start/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java"}
-
-
-
-```java
-package it.io.openliberty.guides.system;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLSession;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.Response;
-
-import io.openliberty.guides.system.SystemResource;
-
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.TestMethodOrder;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.AfterEach;
-
-@TestMethodOrder(OrderAnnotation.class)
-public class SystemEndpointIT {
-
-    private static String clusterUrl;
-
-    private Client client;
-    private Response response;
-
-    @BeforeAll
-    public static void oneTimeSetup() {
-        System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
-
-        String clusterIp = System.getProperty("cluster.ip");
-        String nodePort = System.getProperty("port");
-
-        clusterUrl = "http://" + clusterIp + ":" + nodePort + "/system/properties/";
-    }
-
-    @BeforeEach
-    public void setup() {
-        response = null;
-        client = ClientBuilder.newBuilder()
-                    .hostnameVerifier(new HostnameVerifier() {
-                        public boolean verify(String hostname, SSLSession session) {
-                            return true;
-                        }
-                    })
-                    .build();
-    }
-
-    @AfterEach
-    public void teardown() {
-        client.close();
-    }
-
-    @Test
-    @Order(1)
-    public void testPodNameNotNull() {
-        response = this.getResponse(clusterUrl);
-        this.assertResponse(clusterUrl, response);
-        String greeting = response.getHeaderString("X-Pod-Name");
-
-        String message = "Container name should not be null but it was. "
-            + "The service is probably not running inside a container";
-
-        assertNotNull(greeting, message);
-    }
-
-    @Test
-    @Order(2)
-    public void testAppVersion() {
-        response = this.getResponse(clusterUrl);
-
-        String expectedVersion = SystemResource.appVersion;
-        String actualVersion = response.getHeaderString("X-App-Version");
-
-        assertEquals(expectedVersion, actualVersion);
-    }
-
-    @Test
-    @Order(3)
-    public void testGetProperties() {
-        Client client = ClientBuilder.newClient();
-
-        WebTarget target = client.target(clusterUrl);
-        Response response = target
-            .request()
-            .header("Host", System.getProperty("host-header"))
-            .get();
-
-        assertEquals(200, response.getStatus(),
-            "Incorrect response code from " + clusterUrl);
-
-        response.close();
-    }
-
-    private Response getResponse(String url) {
-        return client
-            .target(url)
-            .request()
-            .header("Host", System.getProperty("host-header"))
-            .get();
-    }
-
-    private void assertResponse(String url, Response response) {
-        assertEquals(200, response.getStatus(),
-            "Incorrect response code from " + url);
-    }
-
-}
-```
-
-
-
-The ***testAppVersion()*** test case verifies that the correct version number is returned in the response headers.
-
-Run the following commands to compile and start the tests:
-
-
-```bash
-./mvnw test-compile
-./mvnw failsafe:integration-test -Dcluster.ip=***minikube ip*** -Dport=$INGRESS_PORT
-```
-The ***cluster.ip*** and ***port*** parameters refer to the IP address and port for the {istio} gateway.
-
-If the tests pass, then you should see output similar to the following example:
-
-```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.503 s - in it.io.openliberty.guides.system.SystemEndpointIT
-
-Results:
-
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
-```
-
-::page{title="Tearing down your environment"}
-
-You might want to teardown all the deployed resources as a cleanup step.
-
-Delete your resources from the cluster:
-
-```bash
-kubectl delete -f system.yaml
-kubectl delete -f traffic.yaml
-```
-
-Delete the ***istio-injection*** label from the default namespace. The hyphen immediately
-after the label name indicates that the label should be deleted.
-
-```bash
-kubectl label namespace default istio-injection-
-```
-
-Delete all {istio} resources from the cluster:
-
-```bash
-istioctl uninstall --purge
-```
-
-
-Perform the following steps to return your environment to a clean state.
-
-. Point the Docker daemon back to your local machine:
-+
-```bash
-eval $(minikube docker-env -u)
-```
-
-. Stop and delete your Minikube cluster:
-+
-```bash
-minikube stop
-minikube delete
+kubectl delete -f kubernetes.yaml
+kubectl delete -f https://raw.githubusercontent.com/hazelcast/hazelcast/master/kubernetes-rbac.yaml
 ```
 
 
@@ -586,7 +602,9 @@ minikube delete
 
 ### Nice Work!
 
-You have deployed a microservice that runs on Open Liberty to a Kubernetes cluster and used {istio} to implement a blue-green deployment scheme.
+You have created, used, and cached HTTP session data for an application that was running on Open Liberty
+
+and deployed in a Kubernetes cluster.
 
 
 
@@ -595,33 +613,32 @@ You have deployed a microservice that runs on Open Liberty to a Kubernetes clust
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-istio-intro*** project by running the following commands:
+Delete the ***guide-sessions*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-istio-intro
+rm -fr guide-sessions
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Managing%20microservice%20traffic%20using%20Istio&guide-id=cloud-hosted-guide-istio-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Caching%20HTTP%20session%20data%20using%20JCache%20and%20Hazelcast&guide-id=cloud-hosted-guide-sessions)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-istio-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-istio-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-sessions/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-sessions/pulls)
 
 
 
 ### Where to next?
 
-* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Documenting RESTful APIs](https://openliberty.io/guides/microprofile-openapi.html)
 * [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
-* [Configuring microservices running in Kubernetes](https://openliberty.io/guides/kubernetes-microprofile-config.html)
-* [Checking the health of microservices on Kubernetes](https://openliberty.io/guides/kubernetes-microprofile-health.html)
 
 
 ### Log out of the session
