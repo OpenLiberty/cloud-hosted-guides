@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Building a dynamic web application with integrated user interface and backend logic guide!"}
+::page{title="Welcome to the Securing microservices with JSON Web Tokens guide!"}
 
-Learn how to build a dynamic web application using Jakarta Faces, Jakarta Contexts and Dependency Injection, and Jakarta Expression Language.
+You'll explore how to control user and role access to microservices with MicroProfile JSON Web Token (MicroProfile JWT).
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -17,13 +17,24 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You'll learn how to build a dynamic web application using Jakarta Faces for the user interface (UI), Jakarta Contexts and Dependency Injection (CDI) for managing backend logic, and Jakarta Expression Language (EL) for data binding.
+You will add token-based authentication mechanisms to authenticate, authorize, and verify users by implementing MicroProfile JWT in the ***system*** microservice.
 
-Jakarta Faces is a framework for building component-based web applications that simplifies UI development by managing reusable components, handling user interactions, and binding data to backend logic. It provides built-in lifecycle management, event handling, and server-side validation, reducing the need for manual request processing. Jakarta Faces also includes tag libraries that allows developers define UI components using markup and connect them to backend objects without writing repetitive setup code.
+A JSON Web Token (JWT) is a self-contained token that is designed to securely transmit information as a JSON object. The information in this JSON object is digitally signed and can be trusted and verified by the recipient.
 
-To further streamline development, Jakarta Faces works with CDI to manage backend components. CDI allows beans to be automatically created and injected where needed, making it easier to manage application logic. Jakarta Expression Language enables data binding between the UI and backend, allowing UI components to dynamically display data and trigger backend actions.
+For microservices, a token-based authentication mechanism offers a lightweight way for security controls and security tokens to propagate user identities across different services. JSON Web Token is becoming the most common token format because it follows well-defined and known standards.
 
-The application you will build in this guide is a dynamic web application that displays system load data on demand. Using Jakarta Faces for the UI, you'll create a table to show the system CPU load and heap memory usage. You'll also learn how to use CDI to provide the system load data from a managed bean, and to use Jakarta Expression Language to bind this data to the UI components.
+MicroProfile JWT standards define the required format of JWT for authentication and authorization. The standards also map JWT claims to various Jakarta EE container APIs and make the set of claims available through getter methods.
+
+In this guide, the application uses JWTs to authenticate a user, allowing them to make authorized requests to a secure backend service.
+
+You will be working with two services, a ***frontend*** service and a secure ***system*** backend service. The ***frontend*** service logs a user in, builds a JWT, and makes authorized requests to the secure ***system*** service for JVM system properties. The following diagram depicts the application that is used in this guide:
+
+![JWT frontend and system services](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-jwt/prod/assets/JWT_Diagram.png)
+
+
+The user signs in to the ***frontend*** service with a username and a password, at which point a JWT is created. The ***frontend*** service then makes requests, with the JWT included, to the ***system*** backend service. The secure ***system*** service verifies the JWT to ensure that the request came from the authorized ***frontend*** service. After the JWT is validated, the information in the claims, such as the user's role, can be trusted and used to determine which system properties the user has access to.
+
+To learn more about JSON Web Tokens, check out the [jwt.io website](https://jwt.io/introduction/). If you want to learn more about how JWTs can be used for user authentication and authorization, check out the Open Liberty [Single Sign-on documentation](https://openliberty.io/docs/latest/single-sign-on.html).
 
 ::page{title="Getting started"}
 
@@ -36,11 +47,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-jakarta-faces.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-jwt.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-jakarta-faces.git
-cd guide-jakarta-faces
+git clone https://github.com/openliberty/guide-microprofile-jwt.git
+cd guide-microprofile-jwt
 ```
 
 
@@ -50,50 +61,87 @@ The ***finish*** directory contains the finished project that you will build.
 
 ### Try what you'll build
 
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed. 
+The ***finish*** directory contains the finished JWT security implementation for the services in the application. Try the finished application before you build your own.
 
-To try out the application, first go to the ***finish*** directory and run Maven with the ***liberty:run*** goal to build the application and deploy it to Open Liberty:
+To try out the application, run the following commands to navigate to the ***finish*** directory and deploy the ***frontend*** service to Open Liberty:
 
 
 ```bash
 cd finish
-./mvnw liberty:run
+./mvnw -pl frontend liberty:run
 ```
 
-After you see the following message, your Liberty instance is ready.
+Open another command-line session and run the following commands to navigate to the ***finish*** directory and deploy the ***system*** service to Open Liberty:
+
+
+```bash
+cd finish
+./mvnw -pl system liberty:run
+```
+
+After you see the following message in both command-line sessions, both of your services are ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
 ```
 
 
-Check out the web application by clicking the following button:
+To launch the front-end web application, click the following button. From here, you can log in to the application with the form-based login.
+::startApplication{port="9090" display="external" name="Launch Application" route="/login.jsf"}
 
-::startApplication{port="9080" display="external" name="Launch application" route="/index.xhtml"}
+Log in with one of the following usernames and its corresponding password:
 
-Click the <img src="https://raw.githubusercontent.com/OpenLiberty/guide-jakarta-faces/prod/assets/refresh.png" width="18" height="18" alt="refresh icon"> refresh button, located next to the table title, to update and display the latest system load data in the table.
+| *Username* | *Password* | *Role*
+| --- | --- | ---
+| bob | bobpwd | admin, user
+| alice | alicepwd | user
+| carl | carlpwd | user
 
-After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+You're redirected to a page that displays information that the front end requested from the ***system*** service, such as the system username. If you log in as an ***admin***, you can also see the current OS. Click ***Log Out*** and log in as a ***user***. You'll see the message ***You are not authorized to access this system property*** because the ***user*** role doesn't have sufficient privileges to view current OS information. 
 
+Additionally, the ***groups*** claim of the JWT is read by the ***system*** service and requested by the front end to be displayed.
+
+
+You can try accessing these services without a JWT by going to the ***system*** endpoint. Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following curl command from the terminal in the IDE:
 ```bash
-./mvnw liberty:stop
+curl -k https://localhost:8443/system/properties/os
 ```
 
-::page{title="Creating a static Jakarta Faces page"}
+The response is empty because you don't have access. Access is granted if a valid JWT is sent with the request. The following error also appears in the command-line session of the ***system*** service:
 
-Start by creating a page that displays an empty table by using Jakarta Faces to extend standard HTML. The table will display the system load data and serves as the starting point for your application.
-
-Navigate to the ***start*** directory to begin.
-
-```bash
-cd /home/project/guide-jakarta-faces/start
+```
+[ERROR] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
 ```
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you are done with the application, stop both the ***frontend*** and ***system*** services by pressing `Ctrl+C` in the command-line sessions where you ran them. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
+
 
 ```bash
-cd start
-./mvnw liberty:dev
+./mvnw -pl system liberty:stop
+./mvnw -pl frontend liberty:stop
+```
+
+
+::page{title="Creating the secure system service"}
+
+
+To begin, run the following command to navigate to the ***start*** directory:
+```bash
+cd /home/project/guide-microprofile-jwt/start
+```
+
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following commands to start the ***frontend*** service in dev mode:
+
+
+```bash
+./mvnw -pl frontend liberty:dev
+```
+
+Open another command-line session and run the following commands to navigate to the ***system*** directory and start the ***system*** service in dev mode:
+
+
+```bash
+./mvnw -pl system liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
@@ -103,458 +151,531 @@ After you see the following message, your Liberty instance is ready in dev mode:
 *    Liberty is running in dev mode.
 ```
 
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+The ***system*** service provides endpoints for the ***frontend*** service to use to request system properties. This service is secure and requires a valid JWT to be included in requests that are made to it. The claims in the JWT are used to determine what properties the user has access to.
 
-Create the index.xhtml file.
+Create the secure ***system*** service.
+
+Create the ***SystemResource*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-jakarta-faces/start/src/main/webapp/index.xhtml
+touch /home/project/guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java
 ```
 
 
-> Then, to open the index.xhtml file in your IDE, select
-> ***File*** > ***Open*** > guide-jakarta-faces/start/src/main/webapp/index.xhtml, or click the following button
+> Then, to open the SystemResource.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java, or click the following button
 
-::openFile{path="/home/project/guide-jakarta-faces/start/src/main/webapp/index.xhtml"}
+::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java"}
 
 
 
-```
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="jakarta.faces.html"
-      xmlns:f="jakarta.faces.core"
-      xmlns:ui="jakarta.faces.facelets">
+```java
+package io.openliberty.guides.system;
 
-  <h:head>
-    <meta charset="UTF-8" />
-    <title>Open Liberty - Jakarta Faces Example</title>
-    <h:outputStylesheet library="css" name="styles.css" />
-    <link href="favicon.ico" rel="icon" />
-    <link href="favicon.ico" rel="shortcut icon" />
-  </h:head>
-  <h:body>
-    <section id="appIntro">
-      <div id="titleSection">
-        <h1 id="appTitle">Jakarta Faces Example</h1>
-        <div class="line"></div>
-        <div class="headerImage"></div>
-      </div>
+import jakarta.json.JsonArray;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.annotation.security.RolesAllowed;
 
-      <div class="msSection" id="systemLoads">
-        <div class="headerRow">
-          <div class="headerIcon">
-            <img src="#{resource['img/sysProps.svg']}" />
-          </div>
-          <div class="headerTitleWithButton" id="sysPropTitle">
-            <h2>System Loads</h2>
-          </div>
-        </div>
-        <div class="sectionContent">
-          <h:dataTable id="systemLoadsTable">
-            <h:column>
-              <f:facet name="header">Time</f:facet>
-            </h:column>
-            <h:column>
-              <f:facet name="header">CPU Load (%)</f:facet>
-            </h:column>
-            <h:column>
-              <f:facet name="header">Heap Memory Usage (%)</f:facet>
-            </h:column>
-          </h:dataTable>
-        </div>
-      </div>
-    </section>
-    <ui:include src="/WEB-INF/includes/footer.xhtml" />
-  </h:body>
-</html>
+import org.eclipse.microprofile.jwt.Claim;
+
+@RequestScoped
+@Path("/properties")
+public class SystemResource {
+
+    @Inject
+    @Claim("groups")
+    private JsonArray roles;
+
+    @GET
+    @Path("/username")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({ "admin", "user" })
+    public String getUsername() {
+        return System.getProperties().getProperty("user.name");
+    }
+
+    @GET
+    @Path("/os")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({ "admin" })
+    public String getOS() {
+        return System.getProperties().getProperty("os.name");
+    }
+
+    @GET
+    @Path("/jwtroles")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({ "admin", "user" })
+    public String getRoles() {
+        return roles.toString();
+    }
+}
 ```
 
 
 Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
+This class has role-based access control. The role names that are used in the ***@RolesAllowed*** annotations are mapped to group names in the ***groups*** claim of the JWT, which results in an authorization decision wherever the security constraint is applied.
 
-In the ***index.xhtml*** file, the ***xmlns*** attributes define the XML namespaces for various Jakarta Faces tag libraries. These namespaces allow the page to use Jakarta Faces tags for templating, creating UI components, and enabling core functionality, such as form submissions and data binding. For more information on the various tag libraries and their roles in Jakarta Faces, refer to the [Jakarta Faces Tag Libraries](https://jakarta.ee/learn/docs/jakartaee-tutorial/current/web/faces-facelets/faces-facelets.html#_tag_libraries_supported_by_facelets) and the [VDL Documentation Generator](https://jakarta.ee/specifications/faces/4.0/vdldoc) documentation.
+The ***/username*** endpoint returns the system's username and is annotated with the ***@RolesAllowed({"admin, "user"})*** annotation. Only authenticated users with the role of ***admin*** or ***user*** can access this endpoint.
 
-The ***index.xhtml*** file combines standard HTML elements with Jakarta Faces components, providing both static layout and dynamic functionality. Standard HTML elements, like ***div*** and ***section***, structure the page's layout. Jakarta Faces tags offer additional features beyond standard HTML, such as managing UI components, including resources, and binding data. For example, the ***h:outputStylesheet*** tag loads a CSS file for styling, and the ***ui:include*** tag incorporates reusable components, such as the provided ***footer.xhtml*** file, to streamline maintenance and reuse across multiple pages. The ***h:dataTable*** tag is used to display a table.
+The ***/os*** endpoint returns the system's current OS. Here, the ***@RolesAllowed*** annotation is limited to ***admin***, meaning that only authenticated users with the role of ***admin*** are able to access the endpoint.
 
-At this point, the page defines a table that has no data entries. We'll add dynamic content in the following steps.
+While the ***@RolesAllowed*** annotation automatically reads from the ***groups*** claim of the JWT to make an authorization decision, you can also manually access the claims of the JWT by using the ***@Claim*** annotation. In this case, the ***groups*** claim is injected into the ***roles*** JSON array. The roles that are parsed from the ***groups*** claim of the JWT are then exposed back to the front end at the ***/jwtroles*** endpoint. To read more about different claims and ways to access them, check out the [MicroProfile JWT documentation](https://github.com/eclipse/microprofile-jwt-auth/blob/master/spec/src/main/asciidoc/interoperability.asciidoc).
 
-::page{title="Configuring the Faces Servlet"}
 
-Before you can access the Jakarta Faces page, you need to configure a Faces servlet in your application. This servlet handles all requests for ***.xhtml*** pages and processes them using Jakarta Faces.
+::page{title="Creating a client to access the secure system service"}
 
-Create the web.xml file.
+Create a RESTful client interface for the ***frontend*** service.
+
+Create the ***SystemClient*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-jakarta-faces/start/src/main/webapp/WEB-INF/web.xml
+touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java
 ```
 
 
-> Then, to open the web.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-jakarta-faces/start/src/main/webapp/WEB-INF/web.xml, or click the following button
+> Then, to open the SystemClient.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java, or click the following button
 
-::openFile{path="/home/project/guide-jakarta-faces/start/src/main/webapp/WEB-INF/web.xml"}
+::openFile{path="/home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java"}
+
+
+
+```java
+package io.openliberty.guides.frontend.client;
+
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.HeaderParam;
+
+import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+
+@RegisterRestClient(baseUri = "https://localhost:8443/system")
+@Path("/properties")
+@RequestScoped
+public interface SystemClient extends AutoCloseable {
+
+    @GET
+    @Path("/os")
+    @Produces(MediaType.APPLICATION_JSON)
+    String getOS(@HeaderParam("Authorization") String authHeader);
+
+    @GET
+    @Path("/username")
+    @Produces(MediaType.APPLICATION_JSON)
+    String getUsername(@HeaderParam("Authorization") String authHeader);
+
+    @GET
+    @Path("/jwtroles")
+    @Produces(MediaType.APPLICATION_JSON)
+    String getJwtRoles(@HeaderParam("Authorization") String authHeader);
+}
+```
+
+
+
+This interface declares methods for accessing each of the endpoints that were
+previously set up in the ***system*** service.
+
+The MicroProfile Rest Client feature automatically builds and generates a client implementation based on what is defined in the ***SystemClient*** interface. You don't need to set up the client and connect with the remote service.
+
+As discussed, the ***system*** service is secured and requests made to it must include a valid JWT in the ***Authorization*** header. The ***@HeaderParam*** annotations include the JWT by specifying that the value of the ***String authHeader*** parameter, which contains the JWT, be used as the value for the ***Authorization*** header. This header is included in all of the requests that are made to the ***system*** service through this client.
+
+Create the application bean that the front-end UI uses to request data.
+
+Create the ***ApplicationBean*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java
+```
+
+
+> Then, to open the ApplicationBean.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java"}
+
+
+
+```java
+package io.openliberty.guides.frontend;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+
+import io.openliberty.guides.frontend.client.SystemClient;
+import io.openliberty.guides.frontend.util.SessionUtils;
+
+
+@ApplicationScoped
+@Named
+public class ApplicationBean {
+
+    @Inject
+    @RestClient
+    private SystemClient defaultRestClient;
+
+    public String getJwt() {
+        String jwtTokenString = SessionUtils.getJwtToken();
+        String authHeader = "Bearer " + jwtTokenString;
+        return authHeader;
+    }
+
+    public String getOs() {
+        String authHeader = getJwt();
+        String os;
+        try {
+            os = defaultRestClient.getOS(authHeader);
+        } catch (Exception e) {
+            return "You are not authorized to access this system property";
+        }
+        return os;
+    }
+
+    public String getUsername() {
+        String authHeader = getJwt();
+        return defaultRestClient.getUsername(authHeader);
+    }
+
+    public String getJwtRoles() {
+        String authHeader = getJwt();
+        return defaultRestClient.getJwtRoles(authHeader);
+    }
+
+}
+```
+
+
+
+The application bean is used to populate the table in the front end by making requests for data through the ***defaultRestClient***, which is an injected instance of the ***SystemClient*** class that you created. The ***getOs()***, ***getUsername()***, and ***getJwtRoles()*** methods call their associated methods of the ***SystemClient*** class with the ***authHeader*** passed in as a parameter. The ***authHeader*** is a string that consists of the JWT with ***Bearer*** prefixed to it. The ***authHeader*** is included in the ***Authorization*** header of the subsequent requests that are made by the ***defaultRestClient*** instance.
+
+
+The JWT for these requests is retrieved from the session attributes with the ***getJwt()*** method. The JWT is stored in the session attributes by the provided ***LoginBean*** class. When the user logs in to the front end, the ***doLogin()*** method is called and builds the JWT. Then, the ***setAttribute()*** method stores it as an ***HttpSession*** attribute. The JWT is built by using the ***JwtBuilder*** APIs in the ***buildJwt()*** method. You can see that the ***claim()*** method is being used to set the ***groups*** and the ***aud*** claims of the token. The ***groups*** claim is used to provide the role-based access that you implemented. The ***aud*** claim is used to specify the audience that the JWT is intended for.
+
+::page{title="Configuring MicroProfile JWT"}
+
+Configure the ***mpJwt*** feature in the ***microprofile-config.properties*** file for the ***system*** service.
+
+Create the microprofile-config.properties file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-jwt/start/system/src/main/resources/META-INF/microprofile-config.properties
+```
+
+
+> Then, to open the microprofile-config.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-jwt/start/system/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/main/resources/META-INF/microprofile-config.properties"}
+
+
+
+```
+mp.jwt.verify.issuer=http://openliberty.io
+mp.jwt.token.header=Authorization
+mp.jwt.token.cookie=Bearer
+mp.jwt.verify.audiences=systemService, adminServices
+mp.jwt.verify.publickey.algorithm=RS256
+```
+
+
+
+The following table breaks down some of the properties:
+
+| *Property* |   *Description*
+| ---| ---
+| ***mp.jwt.verify.issuer*** | Specifies the expected value of the issuer claim on an incoming JWT. Incoming JWTs with an issuer claim that's different from this expected value aren't considered valid.
+| ***mp.jwt.token.header***  | With this property, you can control the HTTP request header, which is expected to contain a JWT. You can either specify Authorization, by default, or the Cookie values.
+| ***mp.jwt.token.cookie*** | Specifies the name of the cookie, which is expected to contain a JWT token. The default value is Bearer.
+| ***mp.jwt.verify.audiences*** |  With this property, you can create a list of allowable audience (aud) values. At least one of these values must be found in the claim. Previously, this configuration was included in the ***server.xml*** file.
+| ***mp.jwt.decrypt.key.location*** | With this property, you can specify the location of the Key Management key. It is a Private key that is used to decrypt the Content Encryption key, which is then used to decrypt the JWE ciphertext. This private key must correspond to the public key that is used to encrypt the Content Encryption key.
+| ***mp.jwt.verify.publickey.algorithm*** | With this property, you can control the Public Key Signature Algorithm that is supported by the MicroProfile JWT endpoint. The default value is RS256. Previously, this configuration was included in the ***server.xml*** file.
+
+For more information about these and other JWT properties, see the [MicroProfile Config properties for MicroProfile JSON Web Token documentation](https://openliberty.io/docs/latest/reference/microprofile-config-properties.html#jwt).
+
+Next, add the MicroProfile JSON Web Token feature to the Liberty ***server.xml*** configuration file for the ***system*** service.
+
+Replace the system ***server.xml*** configuration file.
+
+> To open the server.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-jwt/start/system/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/main/liberty/config/server.xml"}
 
 
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
-         version="6.0">
+<server description="Sample Liberty server">
 
-    <context-param>
-        <param-name>jakarta.faces.PROJECT_STAGE</param-name>
-        <param-value>Development</param-value>
-    </context-param>
+  <featureManager>
+    <platform>jakartaee-10.0</platform>
+    <platform>microprofile-7.0</platform>
+    <feature>restfulWS</feature>
+    <feature>jsonb</feature>
+    <feature>jsonp</feature>
+    <feature>cdi</feature>
+    <feature>mpConfig</feature>
+    <feature>mpRestClient</feature>
+    <feature>appSecurity</feature>
+    <feature>servlet</feature>
+    <feature>mpJwt</feature>
+  </featureManager>
 
-    <!-- Faces Servlet Configuration -->
-    <servlet>
-        <servlet-name>Faces Servlet</servlet-name>
-        <servlet-class>jakarta.faces.webapp.FacesServlet</servlet-class>
-        <load-on-startup>1</load-on-startup>
-    </servlet>
+  <variable name="http.port" defaultValue="8080"/>
+  <variable name="https.port" defaultValue="8443"/>
 
-    <!-- Servlet Mapping -->
-    <servlet-mapping>
-        <servlet-name>Faces Servlet</servlet-name>
-        <url-pattern>*.xhtml</url-pattern>
-    </servlet-mapping>
+  <keyStore id="defaultKeyStore" password="secret"/>
 
-</web-app>
+  <httpEndpoint host="*" httpPort="${http.port}" httpsPort="${https.port}"
+                id="defaultHttpEndpoint"/>
+                 
+  <webApplication location="system.war" contextRoot="/"/>
+
+</server>
 ```
 
 
 
-The ***servlet*** element defines the Faces servlet that is responsible for processing requests for Jakarta Faces pages. The ***load-on-startup*** element with a value of ***1*** specifies that the servlet is loaded and initialized first when the application starts.
-
-The ***servlet-mapping*** element specifies which URL patterns are routed to the Faces servlet. In this case, all URLs ending with ***.xhtml*** are mapped to be processed by Jakarta Faces. This ensures that any request for an ***.xhtml*** page is handled by the Faces servlet, which manages the lifecycle of Jakarta Faces components, processes the page, and renders the output. 
-
-By configuring both the servlet and the servlet mapping, you're ensuring that Jakarta Faces pages are properly processed and delivered in response to user requests.
-
-The ***jakarta.faces.PROJECT_STAGE*** context parameter determines the current stage of the application in its development lifecycle. Because it is currently set to ***Development***, you will see additional debugging information, including developer-friendly warning messages such as ***WARNING: Apache MyFaces Core is running in DEVELOPMENT mode.*** For more information about valid values and how to set the ***PROJECT_STAGE*** parameter, see the official [Jakarta Faces ProjectStage documentation](https://jakarta.ee/specifications/faces/4.1/apidocs/jakarta.faces/jakarta/faces/application/projectstage).
-
-In your dev mode console, type ***r*** and press the ***enter/return*** key to restart the Liberty instance so that Liberty reads the configuration changes. When you see the following message, your Liberty instance is ready in dev mode:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
+The ***mpJwt*** feature adds the libraries that are required for MicroProfile JWT implementation.
 
 
-Check out the web application that you created by clicking the following button:
+::page{title="Building and running the application"}
 
-::startApplication{port="9080" display="external" name="Launch application" route="/index.xhtml"}
+Because you are running the ***frontend*** and ***system*** services in dev mode, the changes that you made were automatically picked up. You're now ready to check out your application in your browser.
 
-You should see the static page with the system loads table displaying only the headers and no data.
 
-::page{title="Implementing backend logic with dependency injection"}
+To launch the front-end web application, click the following button:
+::startApplication{port="9090" display="external" name="Launch Application" route="/login.jsf"}
 
-To provide system load data to your web application, you'll create a CDI-managed bean that retrieves information about the system CPU load and memory usage. This bean is accessible from the Jakarta Faces page and supplies the data that is displayed.
+Log in with one of the following usernames and its corresponding password:
 
-Create the SystemLoadBean class.
+| *Username* | *Password* | *Role*
+| --- | --- | ---
+| bob | bobpwd | admin, user
+| alice | alicepwd | user
+| carl | carlpwd | user
 
-> Run the following touch command in your terminal
+After you log in as an ***admin***, you can see the information that's retrieved from the ***system*** service. Click ***Log Out*** and log in as a ***user***. With successfully implemented role-based access in the application, if you log in as a ***user*** role, you don't have access to the OS property.
+
+You can also see the value of the ***groups*** claim in the row with the ***Roles:*** label. These roles are read from the JWT and sent back to the front end to be displayed.
+
+
+You can check that the ***system*** service is secured against unauthenticated requests by going to the **system** endpoint. Run the following curl command from the terminal in the IDE:
 ```bash
-touch /home/project/guide-jakarta-faces/start/src/main/java/io/openliberty/guides/bean/SystemLoadBean.java
+curl -k https://localhost:8443/system/properties/os
 ```
 
+You'll see an empty response because you didn't authenticate with a valid JWT. 
 
-> Then, to open the SystemLoadBean.java file in your IDE, select
-> ***File*** > ***Open*** > guide-jakarta-faces/start/src/main/java/io/openliberty/guides/bean/SystemLoadBean.java, or click the following button
+In the front end, you see your JWT displayed in the row with the ***JSON Web Token*** label.
 
-::openFile{path="/home/project/guide-jakarta-faces/start/src/main/java/io/openliberty/guides/bean/SystemLoadBean.java"}
+To see the specific information that this JWT holds, you can enter it into the token reader on the [JWT.io website](https://JWT.io). The token reader shows you the header, which contains information about the JWT, as shown in the following example:
 
-
-
-```java
-package io.openliberty.guides.bean;
-
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-import java.io.Serializable;
-
-import jakarta.annotation.PostConstruct;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Named;
-
-import com.sun.management.OperatingSystemMXBean;
-
-import io.openliberty.guides.bean.model.SystemLoadData;
-
-@Named("systemLoadBean")
-@ApplicationScoped
-public class SystemLoadBean implements Serializable {
-    private static final long serialVersionUID = 1L;
-
-    private List<SystemLoadData> systemLoads;
-
-    private static final OperatingSystemMXBean OS =
-        (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-
-    private static final MemoryMXBean MEM =
-        ManagementFactory.getMemoryMXBean();
-
-    @PostConstruct
-    public void init() {
-        systemLoads = new ArrayList<>();
-        fetchSystemLoad();
-    }
-
-    public void fetchSystemLoad() {
-        String time = Calendar.getInstance().getTime().toString();
-
-        double cpuLoad = OS.getCpuLoad() * 100;
-
-        long heapMax = MEM.getHeapMemoryUsage().getMax();
-        long heapUsed = MEM.getHeapMemoryUsage().getUsed();
-        double memoryUsage = heapUsed * 100.0 / heapMax;
-
-        SystemLoadData data = new SystemLoadData(time, cpuLoad, memoryUsage);
-
-        systemLoads.add(data);
-    }
-
-    public List<SystemLoadData> getSystemLoads() {
-        return systemLoads;
-    }
+```
+{
+  "kid": "NPzyG3ZMzljUwQgbzi44",
+  "typ": "JWT",
+  "alg": "RS256"
 }
 ```
 
-
-
-Annotate the ***SystemLoadBean*** class with a ***@Named*** annotation to make it accessible in the Jakarta Faces pages under the ***systemLoadBean*** name. Because the ***SystemLoadBean*** bean is a CDI-managed bean, a scope is necessary. Annotating it with the ***@ApplicationScoped*** annotation indicates that it is initialized once and is shared between all requests while the application runs. To learn more about CDI, see the [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html) guide.
-
-The ***@PostConstruct*** annotation ensures the ***init()*** method runs after the ***SystemLoadBean*** is initialized and dependencies are injected. The ***init()*** method sets up any required resources for the bean's lifecyccle.
-
-The ***fetchSystemLoad()*** method retrieves the current system load and memory usage, then updates the list of system load data.
-
-The ***getSystemLoads()*** method is a getter method for accessing the list of system load data from the Jakarta Faces page.
-
-::page{title="Binding data to the UI with expression language"}
-
-Now that you have implemented the backend logic with CDI, you'll update the Jakarta Faces page to display the dynamic system load data. You'll do this by using Jakarta Expression Language to bind the UI components to the backend data.
-
-Replace the index.xhtml file.
-
-> To open the index.xhtml file in your IDE, select
-> ***File*** > ***Open*** > guide-jakarta-faces/start/src/main/webapp/index.xhtml, or click the following button
-
-::openFile{path="/home/project/guide-jakarta-faces/start/src/main/webapp/index.xhtml"}
-
-
+The token reader also shows you the payload, which contains the claims information:
 
 ```
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="jakarta.faces.html"
-      xmlns:f="jakarta.faces.core"
-      xmlns:ui="jakarta.faces.facelets">
-  <h:head>
-    <meta charset="UTF-8" />
-    <title>Open Liberty - Jakarta Faces Example</title>
-    <h:outputStylesheet library="css" name="styles.css" />
-    <link href="favicon.ico" rel="icon" />
-    <link href="favicon.ico" rel="shortcut icon" />
-  </h:head>
-  <h:body>
-    <section id="appIntro">
-      <div id="titleSection">
-        <h1 id="appTitle">Jakarta Faces Example</h1>
-        <div class="line"></div>
-        <div class="headerImage"></div>
-      </div>
-
-      <div class="msSection" id="systemLoads">
-        <h:form id="systemLoadForm">
-          <div class="headerRow">
-            <div class="headerIcon">
-              <img src="#{resource['img/sysProps.svg']}" />
-            </div>
-            <div class="headerTitleWithButton" id="sysPropTitle">
-              <h2>System Loads</h2>
-              <h:commandButton id="refreshButton" styleClass="refreshButton" value=""
-                               title="Refresh system load data"
-                               action="#{systemLoadBean.fetchSystemLoad}" >
-                <f:ajax render="systemLoadForm" />
-              </h:commandButton>
-            </div>
-          </div>
-          <div class="sectionContent">
-            <h:dataTable id="systemLoadsTable"
-                         value="#{systemLoadBean.systemLoads}"
-                         var="systemLoadData"
-                         styleClass = "systemLoadsTable"
-                         headerClass = "systemLoadsTableHeader"
-                         rowClasses = "systemLoadsTableOddRow,systemLoadsTableEvenRow">
-              <h:column>
-                <f:facet name="header">Time</f:facet>
-                <h:outputText value="#{systemLoadData.time}" />
-              </h:column>
-
-              <h:column>
-                <f:facet name="header">CPU Load (%)</f:facet>
-                <h:outputText
-                  value="#{systemLoadData.cpuLoad == null ? '-' : systemLoadData.cpuLoad}">
-                  <f:convertNumber pattern="#0.0000000" />
-                </h:outputText>
-              </h:column>
-
-              <h:column>
-                <f:facet name="header">Heap Memory Usage (%)</f:facet>
-                <h:outputText
-                  value="#{systemLoadData.memoryUsage == null ? '-' : systemLoadData.memoryUsage}">
-                  <f:convertNumber pattern="#0.00" />
-                </h:outputText>
-              </h:column>
-            </h:dataTable>
-          </div>
-        </h:form>
-      </div>
-    </section>
-    <ui:include src="/WEB-INF/includes/footer.xhtml" />
-  </h:body>
-</html>
+{
+  "token_type": "Bearer",
+  "sub": "bob",
+  "upn": "bob",
+  "groups": [ "admin", "user" ],
+  "iss": "http://openliberty.io",
+  "exp": 1596723489,
+  "iat": 1596637089
+}
 ```
 
+You can learn more about these claims in the [MicroProfile JWT documentation](https://github.com/eclipse/microprofile-jwt-auth/blob/master/spec/src/main/asciidoc/interoperability.asciidoc).
 
-
-
-
-The ***index.xhtml*** uses an ***h:commandButton*** tag to create the refresh button. When the button is clicked, the ***#{systemLoadBean.fetchSystemLoad}*** action invokes the ***fetchSystemLoad()*** method using Jakarta Expression Language. This expression references the ***systemLoadBean*** managed bean, triggering the method to update the system load data. The ***f:ajax*** tag ensures that the ***systemLoadForm*** component is re-rendered without requiring a full page reload.
-
-The ***systemLoadsTable*** is populated using the ***h:dataTable*** tag, which iterates over the list of system load data provided by the ***systemLoadBean***. The ***#{systemLoadBean.systemLoads}*** expression calls the ***getSystemLoads()*** method from the managed bean, binding the data to the UI components. If the ***systemLoadBean*** isn't created yet, it is automatically initialized at this point. For each entry, the ***time***, ***cpuLoad***, and ***memoryUsage*** fields are displayed by using the ***h:outputText*** tag. The ***f:convertNumber*** tag formats ***cpuLoad*** to seven decimal places and ***memoryUsage*** to two decimal places.
-
-To format the table, set the ***styleClass***, ***headerClass***, and ***rowClasses*** attributes in the ***h:dataTable*** tag. The style elements are defined in the ***src/main/webapp/resources/css/styles.css*** file.
-
-::page{title="Running the application"}
-
-
-The required ***faces***, ***expressionLanguage***, and ***cdi*** features are enabled for you in the Liberty ***server.xml*** configuration file.
-
-Because you started the Open Liberty in dev mode at the beginning of the guide, all the changes were automatically picked up.
-
-
-Now, you can check out the web application that you created by clicking the following button:
-
-::startApplication{port="9080" display="external" name="Launch application" route="/index.xhtml"}
-
-Click on the <img src="https://raw.githubusercontent.com/OpenLiberty/guide-jakarta-faces/prod/assets/refresh.png" width="18" height="18" alt="refresh icon"> refresh button to trigger an update on the system loads table.
 
 ::page{title="Testing the application"}
 
-While you can manually verify the web application by visiting ***http\://localhost:9080/index.xhtml,*** automated tests are a much better approach because they are more reliable and trigger a failure if a breaking change is introduced. You can write unit tests for your CDI bean to ensure that the basic operations you implemented function correctly.
+You can manually check that the ***system*** service is secure by making requests to each of the endpoints with and without valid JWTs. However, automated tests are a much better approach because they are more reliable and trigger a failure if a breaking change is introduced.
 
-Create the SystemLoadBeanTest class.
+Create the ***SystemEndpointIT*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-jakarta-faces/start/src/test/java/io/openliberty/guides/bean/SystemLoadBeanTest.java
+touch /home/project/guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
 ```
 
 
-> Then, to open the SystemLoadBeanTest.java file in your IDE, select
-> ***File*** > ***Open*** > guide-jakarta-faces/start/src/test/java/io/openliberty/guides/bean/SystemLoadBeanTest.java, or click the following button
+> Then, to open the SystemEndpointIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java, or click the following button
 
-::openFile{path="/home/project/guide-jakarta-faces/start/src/test/java/io/openliberty/guides/bean/SystemLoadBeanTest.java"}
+::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java"}
 
 
 
 ```java
-package io.openliberty.guides.bean;
+package it.io.openliberty.guides.system;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.Invocation.Builder;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MediaType;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import io.openliberty.guides.bean.model.SystemLoadData;
+import it.io.openliberty.guides.system.util.JwtBuilder;
 
-public class SystemLoadBeanTest {
+public class SystemEndpointIT {
 
-    private SystemLoadBean systemLoadBean;
+    static String authHeaderAdmin;
+    static String authHeaderUser;
+    static String urlOS;
+    static String urlUsername;
+    static String urlRoles;
 
-    @BeforeEach
-    public void setUp() {
-        systemLoadBean = new SystemLoadBean();
-        systemLoadBean.init();
+    @BeforeAll
+    public static void setup() throws Exception {
+        String urlBase = "http://" + System.getProperty("hostname")
+                 + ":" + System.getProperty("http.port")
+                 + "/system/properties";
+        urlOS = urlBase + "/os";
+        urlUsername = urlBase + "/username";
+        urlRoles = urlBase + "/jwtroles";
+
+        authHeaderAdmin = "Bearer " + new JwtBuilder().createAdminJwt("testUser");
+        authHeaderUser = "Bearer " + new JwtBuilder().createUserJwt("testUser");
     }
 
     @Test
-    public void testInitMethod() {
-        assertNotNull(systemLoadBean.getSystemLoads(),
-                      "System loads should not be null after initialization");
-        assertFalse(systemLoadBean.getSystemLoads().isEmpty(),
-                    "System loads should not be empty after initialization");
+    public void testOSEndpoint() {
+        Response response = makeRequest(urlOS, authHeaderAdmin);
+        assertEquals(200, response.getStatus(),
+                    "Incorrect response code from " + urlOS);
+        assertEquals(System.getProperty("os.name"), response.readEntity(String.class),
+                "The system property for the local and remote JVM should match");
+
+        response = makeRequest(urlOS, authHeaderUser);
+        assertEquals(403, response.getStatus(),
+                    "Incorrect response code from " + urlOS);
+
+        response = makeRequest(urlOS, null);
+        assertEquals(401, response.getStatus(),
+                    "Incorrect response code from " + urlOS);
+
+        response.close();
     }
 
     @Test
-    public void testFetchSystemLoad() {
-        int initialSize = systemLoadBean.getSystemLoads().size();
-        systemLoadBean.fetchSystemLoad();
-        int newSize = systemLoadBean.getSystemLoads().size();
-        assertEquals(initialSize + 1, newSize,
-                     "System loads size should increase by 1 after fetching new data");
+    public void testUsernameEndpoint() {
+        Response response = makeRequest(urlUsername, authHeaderAdmin);
+        assertEquals(200, response.getStatus(),
+                "Incorrect response code from " + urlUsername);
+
+        response = makeRequest(urlUsername, authHeaderUser);
+        assertEquals(200, response.getStatus(),
+                "Incorrect response code from " + urlUsername);
+
+        response = makeRequest(urlUsername, null);
+        assertEquals(401, response.getStatus(),
+                "Incorrect response code from " + urlUsername);
+
+        response.close();
     }
 
     @Test
-    public void testDataIntegrity() {
-        systemLoadBean.fetchSystemLoad();
-        SystemLoadData data = systemLoadBean.getSystemLoads().get(0);
-        assertNotNull(data.getTime(), "Time should not be null");
-        assertNotNull(data.getCpuLoad(), "Recent load should not be null");
-        assertNotNull(data.getMemoryUsage(), "Memory usage should not be null");
+    public void testRolesEndpoint() {
+        Response response = makeRequest(urlRoles, authHeaderAdmin);
+        assertEquals(200, response.getStatus(),
+                "Incorrect response code from " + urlRoles);
+        assertEquals("[\"admin\",\"user\"]", response.readEntity(String.class),
+                "Incorrect groups claim in token " + urlRoles);
+
+        response = makeRequest(urlRoles, authHeaderUser);
+        assertEquals(200, response.getStatus(),
+                "Incorrect response code from " + urlRoles);
+        assertEquals("[\"user\"]", response.readEntity(String.class),
+                "Incorrect groups claim in token " + urlRoles);
+
+        response = makeRequest(urlRoles, null);
+        assertEquals(401, response.getStatus(),
+                "Incorrect response code from " + urlRoles);
+
+        response.close();
     }
+
+    private Response makeRequest(String url, String authHeader) {
+        try (Client client = ClientBuilder.newClient()) {
+            Builder builder = client.target(url).request();
+            builder.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+            if (authHeader != null) {
+            builder.header(HttpHeaders.AUTHORIZATION, authHeader);
+            }
+            Response response = builder.get();
+            return response;
+        }
+    }
+
 }
 ```
 
 
 
-The ***setUp()*** method is annotated with the ***@BeforeEach*** annotation, indicating that it is run before each test case to ensure a clean state for each test execution. In this case, it creates a new instance of ***SystemLoadBean*** and manually calls the ***init()*** method to initialize the list of system load data before each test.
+The ***testOSEndpoint()***, ***testUsernameEndpoint()***, and ***testRolesEndpoint()*** tests test the ***/os***, ***/username***, and ***/roles*** endpoints.
 
-The ***testInitMethod()*** test case verifies that after initializing ***SystemLoadBean***, the list of system load data is not null and contains at least one entry.
-
-The ***testFetchSystemLoad()*** test case verifies that after calling the ***fetchSystemLoad()*** method, the size of the list of system load data increases by one.
-
-The ***testDataIntegrity()*** test case verifies that each ***SystemLoadData*** entry in the list of system load data contains valid values for ***time***, ***cpuLoad***, and ***memoryUsage***.
+Each test makes three requests to its associated endpoint. The first ***makeRequest()*** call has a JWT with the ***admin*** role. The second ***makeRequest()*** call has a JWT with the ***user*** role. The third ***makeRequest()*** call has no JWT at all. The responses to these requests are checked based on the role-based access rules for the endpoints. The ***admin*** requests should be successful on all endpoints. The ***user*** requests should be denied by the ***/os*** endpoint but successfully access the ***/username*** and ***/jwtroles*** endpoints. The requests that don't include a JWT should be denied access to all endpoints.
 
 ### Running the tests
 
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
-
-You see the following output:
+Because you started Open Liberty in dev mode, press the ***enter/return*** key from the command-line session of the ***system*** service to run the tests. You see the following output:
 
 ```
 -------------------------------------------------------
- T E S T S
+  T E S T S
 -------------------------------------------------------
-Running io.openliberty.guides.bean.SystemLoadBeanTest
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.037 s -- in io.openliberty.guides.bean.SystemLoadBeanTest
+Running it.io.openliberty.guides.system.SystemEndpointIT
+[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
+[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
+[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.648 s - in it.io.openliberty.guides.system.SystemEndpointIT
 
 Results:
 
 Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
+The three errors in the output are expected and result from the ***system*** service successfully rejecting the requests that didn't include a JWT.
+
+When you are finished testing the application, stop both the ***frontend*** and ***system*** services by pressing `Ctrl+C` in the command-line sessions where you ran them. 
 
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just built a dynamic web application on Open Liberty by using Jakarta Faces for the user interface, CDI for managing beans, and Jakarta Expression Language for binding and handling data.
-
+You learned how to use MicroProfile JWT to validate JWTs, authenticate and authorize users to secure your microservices in Open Liberty.
 
 
 
@@ -563,30 +684,32 @@ You just built a dynamic web application on Open Liberty by using Jakarta Faces 
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-jakarta-faces*** project by running the following commands:
+Delete the ***guide-microprofile-jwt*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-jakarta-faces
+rm -fr guide-microprofile-jwt
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Building%20a%20dynamic%20web%20application%20with%20integrated%20user%20interface%20and%20backend%20logic&guide-id=cloud-hosted-guide-jakarta-faces)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Securing%20microservices%20with%20JSON%20Web%20Tokens&guide-id=cloud-hosted-guide-microprofile-jwt)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-jakarta-faces/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-jakarta-faces/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-jwt/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-jwt/pulls)
 
 
 
 ### Where to next?
 
-* [Streaming messages between client and server services using gRPC](https://openliberty.io/guides/grpc-intro.html)
+* [Authenticating users through social media providers](https://openliberty.io/guides/social-media-login.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 
 
 ### Log out of the session
