@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Bidirectional communication between services using Jakarta WebSocket guide!"}
+::page{title="Welcome to the Configuring microservices guide!"}
 
-Learn how to use Jakarta WebSocket to send and receive messages between services without closing the connection.
+Learn how to provide external configuration to microservices using MicroProfile Config.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -17,14 +17,12 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-Jakarta WebSocket enables two-way communication between client and server endpoints. First, each client makes an HTTP connection to a Jakarta WebSocket server. The server can then broadcast messages to the clients. link:[Server-Sent Events (SSE)](link:https://openliberty.io/guides/reactive-messaging-sse.html) also enables a client to receive automatic updates from a server via an HTTP connection however WebSocket differs from Server-Sent Events in that SSE is unidirectional from server to client, whereas WebSocket is bidirectional. WebSocket also enables real-time updates over a smaller bandwidth than SSE. The connection isn't closed meaning that the client can continue to send and receive messages with the server, without having to poll the server to receive any replies.
+You will learn how to externalize and inject both static and dynamic configuration properties for microservices using MicroProfile Config.
 
-The application that you will build in this guide consists of the ***client*** service and the ***system*** server service. The following diagram depicts the application that is used in this guide. 
+You will learn to aggregate multiple configuration sources, assign prioritization values to these sources, merge configuration values, and create custom configuration sources.
 
-![Application architecture where system and client services use the Jakarta Websocket API to connect and communicate.](https://raw.githubusercontent.com/OpenLiberty/guide-jakarta-websocket/prod/assets/architecture.png)
+The application that you will be working with is an ***inventory*** service which stores the information about various JVMs running on different hosts. Whenever a request is made to the ***inventory*** service to retrieve the JVM system properties of a particular host, the ***inventory*** service will communicate with the ***system*** service on that host to get these system properties. You will add configuration properties to simulate if a service is down for maintenance.
 
-
-You'll learn how to use the link:[Jakarta WebSocket API](link:https://openliberty.io/docs/latest/reference/javadoc/liberty-jakartaee10-javadoc.html?path=liberty-jakartaee10-javadoc/jakarta/websocket/package-summary.html) to build the ***system*** service and the scheduler in the ***client*** service. The scheduler pushes messages to the system service every 10 seconds, then the system service broadcasts the messages to any connected clients. You will also learn how to use a JavaScript ***WebSocket*** object in an HTML file to build a WebSocket connection, subscribe to different events, and display the broadcasting messages from the ***system*** service in a table.
 
 ::page{title="Getting started"}
 
@@ -37,11 +35,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-jakarta-websocket.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-config.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-jakarta-websocket.git
-cd guide-jakarta-websocket
+git clone https://github.com/openliberty/guide-microprofile-config.git
+cd guide-microprofile-config
 ```
 
 
@@ -51,170 +49,132 @@ The ***finish*** directory contains the finished project that you will build.
 
 ### Try what you'll build
 
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed. 
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To try out the application, go to the finish directory and run the following Maven goal to build the ***system*** service and deploy it to Open Liberty:
-
-
-```bash
-./mvnw -pl system liberty:run
-```
-
-Next, open another command-line session and run the following command to start the ***client*** service:
-
+To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
 
 ```bash
-./mvnw -pl client liberty:run
+cd finish
+./mvnw liberty:run
 ```
 
-After you see the following message in both command-line sessions, both your services are ready.
+After you see the following message, your Liberty instance is ready:
 
 ```
-The defaultServer is ready to run a smarter planet. 
+The defaultServer server is ready to run a smarter planet.
 ```
 
-Check out the service at the ***http\://localhost:9080*** URL. See that the table is being updated for every 10 seconds. 
 
-After you are finished checking out the application, stop both the ***system*** and ***client*** services by pressing `Ctrl+C` in the command-line sessions where you ran them. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following curl command to test the availability of the ***system*** microservice and retrieve the system information:
+```bash
+curl -s http://localhost:9080/system/properties | jq
+```
 
+Run the following curl command to test the availability of the **inventory** microservice and retrieve the information for a list of all previously registered hosts:
+```bash
+curl -s http://localhost:9080/inventory/systems | jq
+```
+
+In addition, you can run the following curl command to access a third microservice, which retrieves and aggregates all of the configuration properties and sources that are added throughout this guide.
+```bash
+curl -s http://localhost:9080/config | jq
+```
+
+After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
-./mvnw -pl system liberty:stop
-./mvnw -pl client liberty:stop
-```
- 
-
-::page{title="Creating the WebSocket server service"}
-
-In this section, you will create the ***system*** WebSocket server service that broadcasts messages to clients.
-
-Navigate to the ***start*** directory to begin.
-
-```bash
-cd /home/project/guide-jakarta-websocket/start
+./mvnw liberty:stop
 ```
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following command to start the ***system*** service in dev mode:
+::page{title="Ordering multiple configuration sources"}
 
+
+To begin, run the following command to navigate to the **start** directory:
+```bash
+cd /home/project/guide-microprofile-config/start
+```
+
+
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
-./mvnw -pl system liberty:dev
+./mvnw liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
-**************************************************
-*     Liberty is running in dev mode.
+**************************************************************
+*    Liberty is running in dev mode.
 ```
 
-The ***system*** service is responsible for handling the messages produced by the ***client*** scheduler, building system load messages, and forwarding them to clients.
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-Create the SystemService class.
+MicroProfile Config combines configuration properties from multiple sources, each known as a ConfigSource. Each ConfigSource has a specified priority, defined by its ***config_ordinal*** value.
+
+A higher ordinal value means that the values taken from this ConfigSource will override values from ConfigSources with a lower ordinal value.
+
+The following four sources are the default configuration sources:
+
+* A ***\<variable name="..." value="..."/\>*** element in the server.xml file has a default ordinal of 500.
+* System properties has a default ordinal of 400. (e.g. ***bootstrap.properties*** file)
+* Environment variables have a default ordinal of 300. (e.g. ***server.env*** file)
+* The ***META-INF/microprofile-config.properties*** configuration property file on the classpath has a default ordinal of 100.
+
+Access the ***src/main/resources/META-INF/microprofile-config.properties*** local configuration file. This configuration file is the default configuration source for an application that uses MicroProfile Config.
+
+
+::page{title="Injecting static configuration"}
+
+The MicroProfile Config API is included in the MicroProfile dependency that is specified in your ***pom.xml*** file. Look for the dependency with the ***microprofile*** artifact ID. This dependency provides a library that allows you to use the MicroProfile Config API to externalize configurations for your microservices. The ***mpConfig*** feature is also enabled in the ***src/main/liberty/config/server.xml*** file.
+
+
+
+Now navigate to the ***src/main/resources/META-INF/microprofile-config.properties*** local configuration file to check some static configuration. This configuration file is the default configuration source for an application that uses MicroProfile Config.
+
+The ***io_openliberty_guides_port_number*** property that has already been defined in this file, determines the port number of the REST service.
+
+
+To use this configuration property,
+create the ***InventoryConfig.java*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
+touch /home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
 ```
 
 
-> Then, to open the SystemService.java file in your IDE, select
-> ***File*** > ***Open*** > guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
+> Then, to open the InventoryConfig.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java, or click the following button
 
-::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
+::openFile{path="/home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java"}
 
 
 
 ```java
-package io.openliberty.guides.system;
+package io.openliberty.guides.inventory;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
-import java.util.Calendar;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.logging.Logger;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import io.openliberty.guides.config.Email;
 
-import jakarta.json.Json;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonObjectBuilder;
-import jakarta.websocket.CloseReason;
-import jakarta.websocket.OnClose;
-import jakarta.websocket.OnError;
-import jakarta.websocket.OnMessage;
-import jakarta.websocket.OnOpen;
-import jakarta.websocket.Session;
-import jakarta.websocket.server.ServerEndpoint;
+@RequestScoped
+public class InventoryConfig {
 
-import com.sun.management.OperatingSystemMXBean;
+  @Inject
+  @ConfigProperty(name = "io_openliberty_guides_port_number")
+  private int portNumber;
 
-@ServerEndpoint(value = "/systemLoad",
-                decoders = { SystemLoadDecoder.class },
-                encoders = { SystemLoadEncoder.class })
-public class SystemService {
+  private Provider<Boolean> inMaintenance;
 
-    private static Logger logger = Logger.getLogger(SystemService.class.getName());
 
-    private static Set<Session> sessions = new HashSet<>();
+  public int getPortNumber() {
+    return portNumber;
+  }
 
-    private static final OperatingSystemMXBean OS =
-        (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
 
-    private static final MemoryMXBean MEM =
-        ManagementFactory.getMemoryMXBean();
-
-    public static void sendToAllSessions(JsonObject systemLoad) {
-        for (Session session : sessions) {
-            try {
-                session.getBasicRemote().sendObject(systemLoad);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    @OnOpen
-    public void onOpen(Session session) {
-        logger.info("Server connected to session: " + session.getId());
-        sessions.add(session);
-    }
-
-    @OnMessage
-    public void onMessage(String option, Session session) {
-        logger.info("Server received message \"" + option + "\" "
-                    + "from session: " + session.getId());
-        try {
-            JsonObjectBuilder builder = Json.createObjectBuilder();
-            builder.add("time", Calendar.getInstance().getTime().toString());
-            if (option.equalsIgnoreCase("cpuLoad")
-                || option.equalsIgnoreCase("both")) {
-                builder.add("cpuLoad", Double.valueOf(OS.getCpuLoad() * 100.0));
-            }
-            if (option.equalsIgnoreCase("memoryUsage")
-                || option.equalsIgnoreCase("both")) {
-                long heapMax = MEM.getHeapMemoryUsage().getMax();
-                long heapUsed = MEM.getHeapMemoryUsage().getUsed();
-                builder.add("memoryUsage", Double.valueOf(heapUsed * 100.0 / heapMax));
-            }
-            JsonObject systemLoad = builder.build();
-            sendToAllSessions(systemLoad);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    @OnClose
-    public void onClose(Session session, CloseReason closeReason) {
-        logger.info("Session " + session.getId()
-                    + " was closed with reason " + closeReason.getCloseCode());
-        sessions.remove(session);
-    }
-
-    @OnError
-    public void onError(Session session, Throwable throwable) {
-        logger.info("WebSocket error for " + session.getId() + " "
-                    + throwable.getMessage());
-    }
 }
 ```
 
@@ -222,565 +182,688 @@ public class SystemService {
 Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-Annotate the ***SystemService*** class with a ***@ServerEndpoint*** annotation to make it a WebSocket server. The ***@ServerEndpoint***  ***value*** attribute specifies the URI where the endpoint will be deployed. The ***encoders*** attribute specifies the classes to encode messages and the ***decoders*** attribute specifies the classes to decode messages. Provide methods that define the parts of the WebSocket lifecycle like establishing a connection, receiving a message, and closing the connection by annotating them with the ***@OnOpen***, ***@OnMessage*** and ***@OnClose*** annotations respectively. The method that is annotated with the ***@OnError*** annotation is responsible for tackling errors.
+Inject the ***io_openliberty_guides_port_number*** property, and add the ***getPortNumber()*** class method to the ***InventoryConfig.java*** file.
 
-The ***onOpen()*** method stores up the client sessions. The ***onClose()*** method displays the reason for closing the connection and removes the closing session from the client sessions.
+The ***@Inject*** annotation injects the port number directly, the injection value is static and fixed on application starting.
 
-The ***onMessage()*** method is called when receiving a message through the ***option*** parameter. The ***option*** parameter signifies which message to construct, either system load, memory usage data, or both, and sends out the ***JsonObject*** message. The ***sendToAllSessions()*** method uses the WebSocket API to broadcast the message to all client sessions.
+The ***getPortNumber()*** method directly returns the value of ***portNumber*** because it has been injected.
 
-Create the SystemLoadEncoder class.
+::page{title="Injecting dynamic configuration"}
+
+Note that three default config sources mentioned above are static and fixed on application starting, so the properties within them cannot be modified while the Liberty is running. However, you can externalize configuration data out of the application package, through the creation of custom configuration sources, so that the service updates configuration changes dynamically.
+
+### Creating custom configuration sources
+
+
+Custom configuration sources can be created by implementing the ***org.eclipse.microprofile.config.spi.ConfigSource*** interface and using the ***java.util.ServiceLoader*** mechanism.
+
+A ***CustomConfigSource.json*** JSON file has already been created in the ***resources*** directory. This JSON file simulates a remote configuration resource in real life. This file contains 4 custom config properties and has an ordinal of ***150***. To use these properties in the application, the data object needs to be transformed from this JSON file to the configuration for your application.
+
+To link this JSON file to your application and to implement the ***ConfigSource*** interface,
+
+create the ***CustomConfigSource*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadEncoder.java
+touch /home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomConfigSource.java
 ```
 
 
-> Then, to open the SystemLoadEncoder.java file in your IDE, select
-> ***File*** > ***Open*** > guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadEncoder.java, or click the following button
+> Then, to open the CustomConfigSource.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomConfigSource.java, or click the following button
 
-::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadEncoder.java"}
+::openFile{path="/home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomConfigSource.java"}
 
 
 
 ```java
-package io.openliberty.guides.system;
+package io.openliberty.guides.config;
 
-import jakarta.json.JsonObject;
-import jakarta.websocket.EncodeException;
-import jakarta.websocket.Encoder;
-
-public class SystemLoadEncoder implements Encoder.Text<JsonObject> {
-
-    @Override
-    public String encode(JsonObject object) throws EncodeException {
-        return object.toString();
-    }
-}
-```
-
-
-
-The ***SystemLoadEncoder*** class implements the ***Encoder.Text*** interface. Override the ***encode()*** method that accepts the ***JsonObject*** message and converts the message to a string.
-
-Create the SystemLoadDecoder class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadDecoder.java
-```
-
-
-> Then, to open the SystemLoadDecoder.java file in your IDE, select
-> ***File*** > ***Open*** > guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadDecoder.java, or click the following button
-
-::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/main/java/io/openliberty/guides/system/SystemLoadDecoder.java"}
-
-
-
-```java
-package io.openliberty.guides.system;
-
-import java.io.StringReader;
-
+import jakarta.json.stream.JsonParser;
+import jakarta.json.stream.JsonParser.Event;
 import jakarta.json.Json;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonReader;
-import jakarta.websocket.DecodeException;
-import jakarta.websocket.Decoder;
+import java.math.BigDecimal;
+import java.io.StringReader;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
-public class SystemLoadDecoder implements Decoder.Text<JsonObject> {
+import java.io.BufferedReader;
+import java.io.FileReader;
+import org.eclipse.microprofile.config.spi.ConfigSource;
 
-    @Override
-    public JsonObject decode(String s) throws DecodeException {
-        try (JsonReader reader = Json.createReader(new StringReader(s))) {
-            return reader.readObject();
-        } catch (Exception e) {
-            JsonObject error = Json.createObjectBuilder()
-                    .add("error", e.getMessage())
-                    .build();
-            return error;
-        }
+/**
+ * User-provided ConfigSources are dynamic.
+ * The getProperties() method will be periodically invoked by the runtime
+ * to retrieve up-to-date values. The frequency is controlled by
+ * the microprofile.config.refresh.rate Java system property,
+ * which is in milliseconds and can be customized.
+ */
+public class CustomConfigSource implements ConfigSource {
+
+  String fileLocation = System.getProperty("user.dir").split("target")[0]
+      + "resources/CustomConfigSource.json";
+
+  @Override
+  public int getOrdinal() {
+    return Integer.parseInt(getProperties().get("config_ordinal"));
+  }
+
+  @Override
+  public Set<String> getPropertyNames() {
+    return getProperties().keySet();
+  }
+
+  @Override
+  public String getValue(String key) {
+    return getProperties().get(key);
+  }
+
+  @Override
+  public String getName() {
+    return "Custom Config Source: file:" + this.fileLocation;
+  }
+
+  public Map<String, String> getProperties() {
+    Map<String, String> m = new HashMap<String, String>();
+    String jsonData = this.readFile(this.fileLocation);
+    JsonParser parser = Json.createParser(new StringReader(jsonData));
+    String key = null;
+    while (parser.hasNext()) {
+      final Event event = parser.next();
+      switch (event) {
+      case KEY_NAME:
+        key = parser.getString();
+        break;
+      case VALUE_STRING:
+        String string = parser.getString();
+        m.put(key, string);
+        break;
+      case VALUE_NUMBER:
+        BigDecimal number = parser.getBigDecimal();
+        m.put(key, number.toString());
+        break;
+      case VALUE_TRUE:
+        m.put(key, "true");
+        break;
+      case VALUE_FALSE:
+        m.put(key, "false");
+        break;
+      default:
+        break;
+      }
     }
+    parser.close();
+    return m;
+  }
 
-    @Override
-    public boolean willDecode(String s) {
-        try (JsonReader reader = Json.createReader(new StringReader(s))) {
-            reader.readObject();
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+  public String readFile(String fileName) {
+    String result = "";
+    try {
+      BufferedReader br = new BufferedReader(new FileReader(fileName));
+      StringBuilder sb = new StringBuilder();
+      String line = br.readLine();
+      while (line != null) {
+        sb.append(line);
+        line = br.readLine();
+      }
+      result = sb.toString();
+      br.close();
+    } catch (Exception e) {
+      e.printStackTrace();
     }
-
+    return result;
+  }
 }
 ```
 
 
 
-The ***SystemLoadDecoder*** class implements the ***Decoder.Text*** interface.
-Override the ***decode()*** method that accepts string message and decodes the string back into a ***JsonObject***. The ***willDecode()*** override method checks out whether the string can be decoded into a JSON object and returns a Boolean value.
+The ***getProperties()*** method reads the key value pairs from the ***resources/CustomConfigSource.json*** JSON file and writes the information into a map.
 
+Finally, register the custom configuration source.
 
-The required ***websocket*** and ***jsonb*** features for the ***system*** service have been enabled for you in the Liberty ***server.xml*** configuration file.
-
-
-::page{title="Creating the client service"}
-
-In this section, you will create the WebSocket client that communicates with the WebSocket server and the scheduler that uses the WebSocket client to send messages to the server. You'll also create an HTML file that uses a JavaScript ***WebSocket*** object to build a WebSocket connection, subscribe to different events, and display the broadcasting messages from the ***system*** service in a table.
-
-On another command-line session, navigate to the ***start*** directory and run the following goal to start the ***client*** service in dev mode:
-
-
-```bash
-./mvnw -pl client liberty:dev
-```
-
-After you see the following message, your Liberty instance is ready in dev mode:
-
-```
-**************************************************
-*     Liberty is running in dev mode.
-```
-
-Create the SystemClient class.
+Create the configuration file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemClient.java
+touch /home/project/guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.ConfigSource
 ```
 
 
-> Then, to open the SystemClient.java file in your IDE, select
-> ***File*** > ***Open*** > guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemClient.java, or click the following button
+> Then, to open the org.eclipse.microprofile.config.spi.ConfigSource file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.ConfigSource, or click the following button
 
-::openFile{path="/home/project/guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemClient.java"}
+::openFile{path="/home/project/guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.ConfigSource"}
+
+
+
+```
+io.openliberty.guides.config.CustomConfigSource
+```
+
+
+
+Add the fully qualified class name of the configuration source into it.
+
+
+### Enabling dynamic configuration injection
+
+Now that the custom configuration source has successfully been set up, you can enable dynamic configuration injection of the properties being set in this ConfigSource. To enable this dynamic injection,
+
+replace the ***InventoryConfig.java*** class.
+
+> To open the InventoryConfig.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java"}
 
 
 
 ```java
-package io.openliberty.guides.client.scheduler;
+package io.openliberty.guides.inventory;
 
-import java.io.IOException;
-import java.net.URI;
-import java.util.logging.Logger;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import io.openliberty.guides.config.Email;
 
-import jakarta.websocket.ClientEndpoint;
-import jakarta.websocket.ContainerProvider;
-import jakarta.websocket.OnMessage;
-import jakarta.websocket.OnOpen;
-import jakarta.websocket.Session;
-import jakarta.websocket.WebSocketContainer;
+@RequestScoped
+public class InventoryConfig {
 
-@ClientEndpoint()
-public class SystemClient {
+  @Inject
+  @ConfigProperty(name = "io_openliberty_guides_port_number")
+  private int portNumber;
 
-    private static Logger logger = Logger.getLogger(SystemClient.class.getName());
+  @Inject
+  @ConfigProperty(name = "io_openliberty_guides_inventory_inMaintenance")
+  private Provider<Boolean> inMaintenance;
 
-    private Session session;
 
-    public SystemClient(URI endpoint) {
-        try {
-            WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-            container.connectToServer(this, endpoint);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
+  public int getPortNumber() {
+    return portNumber;
+  }
 
-    @OnOpen
-    public void onOpen(Session session) {
-        this.session = session;
-        logger.info("Scheduler connected to the server.");
-    }
-
-    @OnMessage
-    public void onMessage(String message, Session session) throws Exception {
-        logger.info("Scheduler received message from the server: " + message);
-    }
-
-    public void sendMessage(String message) {
-        session.getAsyncRemote().sendText(message);
-        logger.info("Scheduler sent message \"" + message + "\" to the server.");
-    }
-
-    public void close() {
-        try {
-            session.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        logger.info("Scheduler closed the session.");
-    }
+  public boolean isInMaintenance() {
+    return inMaintenance.get();
+  }
 
 }
 ```
 
 
+Inject the ***io_openliberty_guides_inventory_inMaintenance*** property, and add the ***isInMaintenance()*** class method.
 
-Annotate the ***SystemClient*** class with ***@ClientEndpoint*** annotation to make it as a WebSocket client. Create a constructor that uses the ***websocket*** APIs to establish connection with the server. Provide a method with the ***@OnOpen*** annotation that persists the client session when the connection is established. The ***onMessage()*** method that is annotated with the ***@OnMessage*** annotation handles messages from the server.
+The ***@Inject*** and ***@ConfigProperty*** annotations inject the ***io_openliberty_guides_inventory_inMaintenance*** configuration property from the ***CustomConfigSource.json*** file. The ***Provider\<\>*** interface used, forces the service to retrieve the inMaintenance value just in time. This retrieval of the value just in time makes the config injection dynamic and able to change without having to restart the application.
 
-Create the SystemLoadScheduler class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemLoadScheduler.java
-```
+Every time that you invoke the ***inMaintenance.get()*** method, the ***Provider\<\>*** interface picks up the latest value of the ***io_openliberty_guides_inventory_inMaintenance*** property from configuration sources.
 
 
-> Then, to open the SystemLoadScheduler.java file in your IDE, select
-> ***File*** > ***Open*** > guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemLoadScheduler.java, or click the following button
+::page{title="Creating custom converters"}
 
-::openFile{path="/home/project/guide-jakarta-websocket/start/client/src/main/java/io/openliberty/guides/client/scheduler/SystemLoadScheduler.java"}
+Configuration values are purely Strings. MicroProfile Config API has built-in converters that automatically converts configured Strings into target types such as ***int***, ***Integer***, ***boolean***, ***Boolean***, ***float***, ***Float***, ***double*** and ***Double***. Therefore, in the previous section, it is type-safe to directly set the variable type to ***Provider\<Boolean\>***.
+
+To convert configured Strings to an arbitrary class type, such as the ***Email*** class type,
+replace the ***Email*** Class.
+
+> To open the Email.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/Email.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/Email.java"}
 
 
 
 ```java
-package io.openliberty.guides.client.scheduler;
 
-import java.net.URI;
-import java.util.Random;
+package io.openliberty.guides.config;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
-import jakarta.ejb.Schedule;
-import jakarta.ejb.Singleton;
+public class Email {
+  private String name;
+  private String domain;
 
-@Singleton
-public class SystemLoadScheduler {
-
-    private SystemClient client;
-    private static final String[] MESSAGES = new String[] {
-        "cpuLoad", "memoryUsage", "both" };
-
-    @PostConstruct
-    public void init() {
-        try {
-            client = new SystemClient(new URI("ws://localhost:9081/systemLoad"));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+  public Email(String value) {
+    String[] components = value.split("@");
+    if (components.length == 2) {
+      name = components[0];
+      domain = components[1];
     }
+  }
 
-    @Schedule(second = "*/10", minute = "*", hour = "*", persistent = false)
-    public void sendSystemLoad() {
-        Random r = new Random();
-        client.sendMessage(MESSAGES[r.nextInt(MESSAGES.length)]);
-    }
+  public String getEmailName() {
+    return name;
+  }
 
-    @PreDestroy
-    public void close() {
-        client.close();
-    }
+  public String getEmailDomain() {
+    return domain;
+  }
+
+  public String toString() {
+    return name + "@" + domain;
+  }
 }
 ```
 
 
 
+To use this ***Email*** class type, add a custom converter by implementing the generic interface ***org.eclipse.microprofile.config.spi.Converter\<T\>***. The Type parameter of the interface is the target type the String is converted to.
 
-
-Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
-
-The ***SystemLoadScheduler*** class uses the ***SystemClient*** class to establish a connection to the server by the ***ws://localhost:9081/systemLoad*** URI at the ***@PostConstruct*** annotated method. The ***sendSystemLoad()*** method calls the client to send a random string from either ***cpuLoad***, ***memoryUsage***, or ***both*** to the ***system*** service. Using the link:[Jakarta Enterprise Beans Schedule](link:https://openliberty.io/docs/latest/reference/javadoc/liberty-jakartaee10-javadoc.html?path=liberty-jakartaee10-javadoc/jakarta/ejb/Schedule.html), annotate the ***sendSystemLoad()*** method with the ***@Schedule*** annotation so that it sends out a message every 10 seconds.
-
-Now, create the front-end UI. The images and styles for the UI are provided for you. 
-
-Create the index.html file.
+Create the ***CustomEmailConverter*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-jakarta-websocket/start/client/src/main/webapp/index.html
+touch /home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomEmailConverter.java
 ```
 
 
-> Then, to open the index.html file in your IDE, select
-> ***File*** > ***Open*** > guide-jakarta-websocket/start/client/src/main/webapp/index.html, or click the following button
+> Then, to open the CustomEmailConverter.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomEmailConverter.java, or click the following button
 
-::openFile{path="/home/project/guide-jakarta-websocket/start/client/src/main/webapp/index.html"}
+::openFile{path="/home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomEmailConverter.java"}
 
 
 
-```html
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="UTF-8">
-        <title>Open Liberty - Jakarta WebSocket Example</title>
-        <link rel="stylesheet" href="css/styles.css">
-        <link href="favicon.ico" rel="icon" />
-        <link href="favicon.ico" rel="shortcut icon" />
-    </head>
-    <body>
-        <section id="appIntro">
-            <div id="titleSection">
-                <h1 id="appTitle">Jakarta WebSocket Example</h1>
-                <div class="line"></div>
-                <div class="headerImage"></div>
-            </div>
+```java
+package io.openliberty.guides.config;
 
-            <div class="msSection" id="systemLoads">
-                <div class="headerRow">
-                    <div class="headerIcon">
-                      <img src="img/sysProps.svg"/>
-                    </div>
-                    <div class="headerTitle" id="sysPropTitle">
-                      <h2>System Loads</h2>
-                    </div>
-                </div>
-                <div class="sectionContent">
-                    <table id="systemLoadsTable">
-                        <tbody id="systemLoadsTableBody">
-                            <tr>
-                                <th>Time</th>
-                                <th>CPU Load (%)</th>
-                                <th>Heap Memory Usage (%)</th>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-        <footer class="bodyFooter">
-            <div class="bodyFooterLink">
-                <a id="licenseLink"
-                   href="https://github.com/OpenLiberty/open-liberty/blob/release/LICENSE"
-                >License</a>
-                <a href="https://github.com/OpenLiberty">GitHub</a>
-                <a href="https://stackoverflow.com/questions/tagged/open-liberty">stackoverflow</a>
-                <a href="https://groups.io/g/openliberty">groups.io</a>
-                <a href="https://openliberty.io/">openliberty.io</a>
-            </div>
-            <p id="footer_text">an IBM open source project</p>
-            <p id="footer_copyright">&copy;Copyright IBM Corp. 2022, 2024</p>
-        </footer>
-        <script>
-    const webSocket = new WebSocket('ws://localhost:9081/systemLoad')
+import org.eclipse.microprofile.config.spi.Converter;
 
-    webSocket.onopen = function (event) {
-        console.log(event);
-    };
+public class CustomEmailConverter implements Converter<Email> {
 
-    webSocket.onmessage = function (event) {
-        var data = JSON.parse(event.data);
-        var tableRow = document.createElement('tr');
-        var cpuLoad = data.cpuLoad == null ? '-' : data.cpuLoad.toFixed(7);
-        var memoryUsage = data.memoryUsage == null ? '-' : data.memoryUsage.toFixed(2);
-        tableRow.innerHTML = '<td>' + data.time + '</td>' +
-                             '<td>' + cpuLoad + '</td>' +
-                             '<td>' + memoryUsage + '</td>';
-        document.getElementById('systemLoadsTableBody').appendChild(tableRow);
-    };
-    
-    webSocket.onerror = function (event) {
-        console.log(event);
-    };
-        </script>
-    </body>
-</html>
+  @Override
+  public Email convert(String value) {
+    return new Email(value);
+  }
+
+}
 ```
 
 
 
-The ***index.html*** front-end UI displays a table in which each row contains a time, system load, and the memory usage of the ***system*** service. Use a JavaScript ***WebSocket*** object to establish a connection to the server by the ***ws://localhost:9081/systemLoad*** URI. The ***webSocket.onopen*** event is triggered when the connection is established. The ***webSocket.onmessage*** event receives messages from the server and inserts a row with the data from the message into the table. The ***webSocket.onerror*** event defines how to tackle errors.
+This implements the ***Converter\<T\>*** interface.
+
+To register your implementation,
+create the configuration file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.Converter
+```
 
 
-The required features for the ***client*** service are enabled for you in the Liberty ***server.xml*** configuration file.
+> Then, to open the org.eclipse.microprofile.config.spi.Converter file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.Converter, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.Converter"}
+
+
+
+```
+io.openliberty.guides.config.CustomEmailConverter
+```
+
+
+Add the fully qualified class name of the custom converter into it.
+
+To use the custom ***Email*** converter,
+replace the ***InventoryConfig*** class.
+
+> To open the InventoryConfig.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java"}
+
+
+
+```java
+package io.openliberty.guides.inventory;
+
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import io.openliberty.guides.config.Email;
+
+@RequestScoped
+public class InventoryConfig {
+
+  @Inject
+  @ConfigProperty(name = "io_openliberty_guides_port_number")
+  private int portNumber;
+
+  @Inject
+  @ConfigProperty(name = "io_openliberty_guides_inventory_inMaintenance")
+  private Provider<Boolean> inMaintenance;
+
+  @Inject
+  @ConfigProperty(name = "io_openliberty_guides_email")
+  private Provider<Email> email;
+
+  public int getPortNumber() {
+    return portNumber;
+  }
+
+  public boolean isInMaintenance() {
+    return inMaintenance.get();
+  }
+
+  public Email getEmail() {
+    return email.get();
+  }
+}
+```
+
+
+Inject the ***io_openliberty_guides_email*** property, and add the ***getEmail()*** method.
+
+::page{title="Adding configuration to the microservice"}
+
+To use externalized configuration in the ***inventory*** service,
+replace the ***InventoryResource*** class.
+
+> To open the InventoryResource.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java"}
+
+
+
+```java
+package io.openliberty.guides.inventory;
+
+import java.util.Properties;
+
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+
+
+@RequestScoped
+@Path("systems")
+public class InventoryResource {
+
+  @Inject
+  InventoryManager manager;
+
+  @Inject
+  InventoryConfig inventoryConfig;
+
+  @GET
+  @Path("{hostname}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response getPropertiesForHost(@PathParam("hostname") String hostname) {
+
+    if (!inventoryConfig.isInMaintenance()) {
+      Properties props = manager.get(hostname, inventoryConfig.getPortNumber());
+      if (props == null) {
+        return Response.status(Response.Status.NOT_FOUND)
+                       .entity("{ \"error\" : \"Unknown hostname or the system service "
+                       + "may not be running on " + hostname + "\" }")
+                       .build();
+      }
+
+      manager.add(hostname, props);
+      return Response.ok(props).build();
+    } else {
+      return Response.status(Response.Status.SERVICE_UNAVAILABLE)
+                     .entity("{ \"error\" : \"Service is currently in maintenance. "
+                     + "Contact: " + inventoryConfig.getEmail().toString() + "\" }")
+                     .build();
+    }
+  }
+
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response listContents() {
+    if (!inventoryConfig.isInMaintenance()) {
+      return Response.ok(manager.list()).build();
+    } else {
+      return Response.status(Response.Status.SERVICE_UNAVAILABLE)
+                     .entity("{ \"error\" : \"Service is currently in maintenance. "
+                     + "Contact: " + inventoryConfig.getEmail().toString() + "\" }")
+                     .build();
+    }
+  }
+
+}
+
+```
+
+
+To add configuration to the ***inventory*** service, the ***InventoryConfig*** object is injected to the existing class.
+
+The port number from the configuration is retrieved by the ***inventoryConfig.getPortNumber()*** method and passed to the ***manager.get()*** method as a parameter.
+
+To determine whether the inventory service is in maintenance or not (according to the configuration value), ***inventoryConfig.isInMaintenance()*** class method is used. If you set the ***io_openliberty_guides_inventory_inMaintenance*** property to ***true*** in the configuration, the inventory service returns the message, ***ERROR: Service is currently in maintenance***, along with the contact email. The email configuration value can be obtained by calling ***inventoryConfig.getEmail()*** method.
+
+
 
 
 ::page{title="Running the application"}
 
-Because you are running the ***system*** and ***client*** services in dev mode, the changes that you made are automatically picked up. You're now ready to check out your application in your browser.
+You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
-Point your browser to the ***http\://localhost:9080*** URL to test out the ***client*** service. Notice that the table is updated every 10 seconds.
 
-Visit the ***http\://localhost:9080*** URL again on a different tab or browser and verify that both sessions are updated every 10 seconds.
+While the Liberty is running, run the following curl command to access the ***system*** microservice:
+```bash
+curl -s http://localhost:9080/system/properties | jq
+```
+
+and run the following curl command to access the ***inventory*** microservice:
+```bash
+curl -s http://localhost:9080/inventory/systems | jq
+```
+
+You can find the service that retrieves configuration information that is specific to this guide by running the following curl command:
+```bash
+curl -s http://localhost:9080/config | jq
+```
+
+The ***config_ordinal*** value of the custom configuration source is set to ***150***. It overrides configuration values of the default ***microprofile-config.properties*** source, which has a ***config_ordinal*** value of ***100***.
+
+
+
+
+Play with this application by changing configuration values for each property in the ***resources/CustomConfigSource.json*** file. Your changes are added dynamically, and you do not need to restart the Liberty. Rerun the following curl command to see the dynamic changes:
+```bash
+curl -s http://localhost:9080/config | jq
+```
+
+For example, change ***io_openliberty_guides_inventory_inMaintenance*** from ***false*** to ***true***, then try to access http://localhost:9080/inventory/systems again by running the following curl command:
+```bash
+curl -s http://localhost:9080/inventory/systems | jq
+```
+
+The following message displays: ***ERROR: Service is currently in maintenance***.
+
 
 
 ::page{title="Testing the application"}
 
-Create the SystemClient class.
+Create the ***ConfigurationIT*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemClient.java
+touch /home/project/guide-microprofile-config/start/src/test/java/it/io/openliberty/guides/config/ConfigurationIT.java
 ```
 
 
-> Then, to open the SystemClient.java file in your IDE, select
-> ***File*** > ***Open*** > guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemClient.java, or click the following button
+> Then, to open the ConfigurationIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-config/start/src/test/java/it/io/openliberty/guides/config/ConfigurationIT.java, or click the following button
 
-::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemClient.java"}
+::openFile{path="/home/project/guide-microprofile-config/start/src/test/java/it/io/openliberty/guides/config/ConfigurationIT.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.system;
-
-import java.net.URI;
-
-import io.openliberty.guides.system.SystemLoadDecoder;
-import jakarta.json.JsonObject;
-import jakarta.websocket.ClientEndpoint;
-import jakarta.websocket.ContainerProvider;
-import jakarta.websocket.OnMessage;
-import jakarta.websocket.OnOpen;
-import jakarta.websocket.Session;
-import jakarta.websocket.WebSocketContainer;
-
-@ClientEndpoint()
-public class SystemClient {
-
-    private Session session;
-
-    public SystemClient(URI endpoint) {
-        try {
-            WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-            container.connectToServer(this, endpoint);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @OnOpen
-    public void onOpen(Session session) {
-        this.session = session;
-    }
-
-    @OnMessage
-    public void onMessage(String message, Session userSession) throws Exception {
-        SystemLoadDecoder decoder = new SystemLoadDecoder();
-        JsonObject systemLoad = decoder.decode(message);
-        SystemServiceIT.verify(systemLoad);
-    }
-
-    public void sendMessage(String message) {
-        session.getAsyncRemote().sendText(message);
-    }
-
-    public void close() throws Exception {
-        session.close();
-    }
-
-}
-```
-
-
-
-The ***SystemClient*** class is used to communicate and test the ***system*** service. Its implementation is similar to the client class from the ***client*** service that you created in the previous section. At the ***onMessage()*** method, decode and verify the message. 
-
-Create the SystemServiceIT class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java
-```
-
-
-> Then, to open the SystemServiceIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java, or click the following button
-
-::openFile{path="/home/project/guide-jakarta-websocket/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java"}
-
-
-
-```java
-package it.io.openliberty.guides.system;
+package it.io.openliberty.guides.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.net.URI;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.Response;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
-import jakarta.json.JsonObject;
-
 @TestMethodOrder(OrderAnnotation.class)
-public class SystemServiceIT {
+public class ConfigurationIT {
 
-    private static CountDownLatch countDown;
+  private String port;
+  private String baseUrl;
+  private Client client;
 
-    @Test
-    @Order(1)
-    public void testSystem() throws Exception {
-        startCountDown(1);
-        URI uri = new URI("ws://localhost:9081/systemLoad");
-        SystemClient client = new SystemClient(uri);
-        client.sendMessage("both");
-        countDown.await(5, TimeUnit.SECONDS);
-        client.close();
-        assertEquals(0, countDown.getCount(),
-                "The countDown was not 0.");
+  private final String INVENTORY_HOSTS = "inventory/systems";
+  private final String USER_DIR = System.getProperty("user.dir");
+  private final String DEFAULT_CONFIG_FILE = USER_DIR
+      + "/src/main/resources/META-INF/microprofile-config.properties";
+  private final String CUSTOM_CONFIG_FILE = USER_DIR.split("target")[0]
+      + "/resources/CustomConfigSource.json";
+  private final String INV_MAINTENANCE_PROP = "io_openliberty_guides"
+      + "_inventory_inMaintenance";
+
+  @BeforeEach
+  public void setup() {
+    port = System.getProperty("http.port");
+    baseUrl = "http://localhost:" + port + "/";
+    ConfigITUtil.setDefaultJsonFile(CUSTOM_CONFIG_FILE);
+
+    client = ClientBuilder.newClient();
+  }
+
+  @AfterEach
+  public void teardown() {
+    ConfigITUtil.setDefaultJsonFile(CUSTOM_CONFIG_FILE);
+    client.close();
+  }
+
+  @Test
+  @Order(1)
+  public void testInitialServiceStatus() {
+    boolean status = Boolean.valueOf(ConfigITUtil.readPropertyValueInFile(
+        INV_MAINTENANCE_PROP, DEFAULT_CONFIG_FILE));
+    if (!status) {
+      Response response = ConfigITUtil.getResponse(client, baseUrl + INVENTORY_HOSTS);
+
+      int expected = Response.Status.OK.getStatusCode();
+      int actual = response.getStatus();
+      assertEquals(expected, actual);
+    } else {
+      assertEquals(
+         "{ \"error\" : \"Service is currently in maintenance."
+         + "Contact: admin@guides.openliberty.io\" }",
+          ConfigITUtil.getStringFromURL(client, baseUrl + INVENTORY_HOSTS),
+          "The Inventory Service should be in maintenance");
     }
+  }
 
-    @Test
-    @Order(2)
-    public void testSystemMultipleSessions() throws Exception {
-        startCountDown(3);
-        URI uri = new URI("ws://localhost:9081/systemLoad");
-        SystemClient client1 = new SystemClient(uri);
-        SystemClient client2 = new SystemClient(uri);
-        SystemClient client3 = new SystemClient(uri);
-        client2.sendMessage("cpuLoad");
-        countDown.await(5, TimeUnit.SECONDS);
-        client1.close();
-        client2.close();
-        client3.close();
-        assertEquals(0, countDown.getCount(),
-            "The countDown was not 0.");
-    }
+  @Test
+  @Order(2)
+  public void testPutServiceInMaintenance() {
+    Response response = ConfigITUtil.getResponse(client, baseUrl + INVENTORY_HOSTS);
 
-    private static void startCountDown(int count) {
-        countDown = new CountDownLatch(count);
-    }
+    int expected = Response.Status.OK.getStatusCode();
+    int actual = response.getStatus();
+    assertEquals(expected, actual);
 
-    public static void verify(JsonObject systemLoad) {
-        assertNotNull(systemLoad.getString("time"));
-        assertTrue(
-            systemLoad.getJsonNumber("cpuLoad") != null
-            || systemLoad.getJsonNumber("memoryUsage") != null
-        );
-        countDown.countDown();
-    }
+    ConfigITUtil.switchInventoryMaintenance(CUSTOM_CONFIG_FILE, true);
+
+    String error = ConfigITUtil.getStringFromURL(client, baseUrl + INVENTORY_HOSTS);
+
+    assertEquals(
+         "{ \"error\" : \"Service is currently in maintenance. "
+         + "Contact: admin@guides.openliberty.io\" }",
+        error, "The inventory service should be down in the end");
+  }
+
+  @Test
+  @Order(3)
+  public void testChangeEmail() {
+    ConfigITUtil.switchInventoryMaintenance(CUSTOM_CONFIG_FILE, true);
+
+    String error = ConfigITUtil.getStringFromURL(client, baseUrl + INVENTORY_HOSTS);
+
+    assertEquals(
+         "{ \"error\" : \"Service is currently in maintenance. "
+         + "Contact: admin@guides.openliberty.io\" }",
+        error, "The email should be admin@guides.openliberty.io in the beginning");
+
+    ConfigITUtil.changeEmail(CUSTOM_CONFIG_FILE, "service@guides.openliberty.io");
+
+    error = ConfigITUtil.getStringFromURL(client, baseUrl + INVENTORY_HOSTS);
+
+    assertEquals(
+         "{ \"error\" : \"Service is currently in maintenance. "
+         + "Contact: service@guides.openliberty.io\" }",
+        error, "The email should be service@guides.openliberty.io in the beginning");
+  }
+
 }
 ```
 
 
 
-There are two test cases to ensure correct functionality of the ***system*** service. The ***testSystem()*** method verifies one client connection and the ***testSystemMultipleSessions()*** method verifies multiple client connections. 
+
+
+The ***testInitialServiceStatus()*** test case reads the value of the ***io_openliberty_guides_inventory_inMaintenance*** configuration property in the ***META-INF/microprofile-config.properties*** file and checks the HTTP response of the inventory service. If the configuration value is ***false***, the service returns a valid response. Otherwise, the service returns the following message: ***ERROR: Service is currently in maintenance***.
+
+Because the ***io_openliberty_guides_inventory_inMaintenance*** configuration property is set to ***false*** by default, the ***testPutServiceInMaintenance()*** test case first checks that the inventory service is not in maintenance in the beginning. Next, this test switches the value of the ***io_openliberty_guides_inventory_inMaintenance*** configuration property to ***true***. In the end, the inventory service returns the following message: ***ERROR: Service is currently in maintenance***.
+
+The ***testChangeEmail()*** test case first puts the ***inventory*** service in maintenance, then it changes the email address in the configuration file. In the end, the ***inventory*** service should display the error message with the latest email address.
+
+In addition, a few endpoint tests have been provided for you to test the basic functionality of the ***inventory*** and ***system*** services. If a test failure occurs, then you must have introduced a bug into the code. Remember that you must register the custom configuration source and custom converter in the ***src/main/resources/META-INF/services/*** directory. If you don't complete these steps, the tests will fail. These tests run automatically as a part of the integration test suite.
+
 
 ### Running the tests
 
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started the ***system*** service.
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+
+You see the following output:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.system.SystemServiceIT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.247 s - in it.io.openliberty.guides.system.SystemServiceIT
+Running it.io.openliberty.guides.config.ConfigurationIT
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 5.92 s - in it.io.openliberty.guides.config.ConfigurationIT
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.017 s - in it.io.openliberty.guides.system.SystemEndpointIT
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+[WARNING ] Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
+Could not send Message.
+[err] The specified host is unknown.
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.077 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
 
 Results:
 
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 7, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-When you are done checking out the services, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***client*** services.
+The warning and error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the ***testUnknownHost()*** test from the ***InventoryEndpointIT*** integration test.
 
+To see whether the tests detect a failure, remove the configuration resetting line in the ***setup()*** method of the ***ConfigurationIT.java*** file. Then, manually change some configuration values in the ***resources/CustomConfigSource.json*** file. Rerun the tests. You will see a test failure occur.
+
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You developed an application that subscribes to real time updates by using Jakarta WebSocket and Open Liberty.
+You just built and tested a MicroProfile application with MicroProfile Config in Open Liberty.
 
 
+Feel free to try one of the related guides. They demonstrate new technologies that you can learn and expand on top what you built in this guide.
 
 
 ### Clean up your environment
@@ -788,30 +871,32 @@ You developed an application that subscribes to real time updates by using Jakar
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-jakarta-websocket*** project by running the following commands:
+Delete the ***guide-microprofile-config*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-jakarta-websocket
+rm -fr guide-microprofile-config
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Bidirectional%20communication%20between%20services%20using%20Jakarta%20WebSocket&guide-id=cloud-hosted-guide-jakarta-websocket)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Configuring%20microservices&guide-id=cloud-hosted-guide-microprofile-config)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-jakarta-websocket/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-jakarta-websocket/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-config/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-config/pulls)
 
 
 
 ### Where to next?
 
-* [Streaming messages between client and server services using gRPC](https://openliberty.io/guides/grpc-intro.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html)
 
 
 ### Log out of the session
