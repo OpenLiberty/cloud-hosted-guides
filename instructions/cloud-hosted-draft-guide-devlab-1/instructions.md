@@ -101,11 +101,12 @@ cd /home/project/guide-liberty-deep-dive/start/inventory
 
 Build and deploy the ***inventory*** microservice to Liberty by running the Maven ***liberty:run*** goal:
 
+
 ```bash
-mvn liberty:run
+./mvnw liberty:run
 ```
 
-The ***mvn*** command initiates a Maven build, during which the target directory is created to store all build-related files.
+The previous command initiates a Maven build, during which the target directory is created to store all build-related files.
 
 The ***liberty:run*** argument specifies the Liberty ***run*** goal, which starts a Liberty instance in the foreground. As part of this phase, a Liberty runtime is downloaded and installed into the ***target/liberty/wlp*** directory. Additionally, a Liberty instance is created and configured in the ***target/liberty/wlp/usr/servers/defaultServer*** directory, and the application is installed into that Liberty instance by using [loose config](https://www.ibm.com/support/knowledgecenter/en/SSEQTP_liberty/com.ibm.websphere.wlp.doc/ae/rwlp_loose_applications.html).
 
@@ -4457,7 +4458,7 @@ docker rm postgres-container
 
 ### Building the container image
 
-Run the ***mvn package*** command from the ***start/inventory*** directory so that the ***.war*** file resides in the ***target*** directory.
+Run the Maven ***package*** command from the ***start/inventory*** directory so that the ***.war*** file resides in the ***target*** directory.
 
 ```bash
 cd /home/project/guide-liberty-deep-dive/start/inventory
