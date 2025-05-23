@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Caching HTTP session data using JCache and Hazelcast guide!"}
+::page{title="Welcome to the Externalizing environment-specific microservice configuration for CI/CD guide!"}
 
-
+Learn how to create environment-specific configurations for microservices by using MicroProfile Config configuration profiles for easy management and portable deployments throughout the CI/CD lifecycle.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,42 +14,18 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 ::page{title="What you'll learn"}
 
-### What is a session?
-On the internet, a web server doesn't know who you are or what you do
-because it's processing stateless HTTP requests. An HTTP session provides a way to store
-information to be used across multiple requests.
-Session variables store user information like user name or items in a shopping cart.
-By default, session variables will timeout after 30 minutes of being unused.
-Cookies, which also store user information, are maintained on a client's computer,
-whereas session variables are maintained on a web server. For security reasons,
-an HTTP session is preferred over cookies when used with sensitive data.
-A session hides data from users.
-Cookies can be manipulated by a savvy user to make fake requests to your site.
+Managing configurations for microservices can be challenging, especially when configurations require adjustments across various stages of the software development and delivery lifecycle. The MicroProfile Config configuration profile feature, also known as the [Config Profile](https://download.eclipse.org/microprofile/microprofile-config-3.0/microprofile-config-spec-3.0.html#configprofile), is a direct solution to this challenge. It simplifies the management of microservice configurations across diverse environments - from development to production and throughout the  continuous integration/continuous delivery (CI/CD) pipeline. By externalizing and tailoring configuration properties to each environment, the CI/CD process becomes more seamless, so you can concentrate on perfecting your application code and capabilities.
 
-### What is session persistence?
-High traffic websites must support thousands of users in a fast and reliable way.
-Load balancing requires running several instances of the same application in parallel
-so that traffic can be routed to different instances to maximize speed and reliability.
-Unless a user is tied to a particular instance, running multiple instances of the same
-application can pose an out-of-sync problem when each instance keeps an isolated copy of its
-session data. HTTP session data caching can solve this problem by allowing all
-instances of the application to share caches among each other.
-Sharing caches among instances eliminates the need to route a user to the same instance
-and helps in failover situations by distributing the cache.
+You'll learn how to provide environment-specific configurations by using the MicroProfile Config configuration profile feature. You'll work with the MicroProfile Config API to create configuration profiles that use profile-specific configuration properties and configuration sources.
 
-![Session Cache](https://raw.githubusercontent.com/OpenLiberty/guide-sessions/prod/assets/sessionCache.png)
+This guide builds on the [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html) guide and the [Configuring microservices](https://openliberty.io/guides/microprofile-config.html) guide. If you are not familiar with externalizing the configuration of microservices, it will be helpful to read the [External configuration of microservices](https://openliberty.io/docs/latest/external-configuration.html) document and complete the aforementioned guides before you proceed.
 
+The application that you will work with is a ***query*** service, which fetches information about the running JVM from a ***system*** microservice. You'll use configuration profiles to externalize and manage the configurations across the development, testing, and production environments.
 
-You will learn how to build an application that creates and uses HTTP session data.
-You will also learn how to use Open Liberty's ***sessionCache*** feature to persist HTTP sessions
-by using Java Caching (JCache), the standard caching API for Java.
-
-You will containerize and deploy the application to a local Kubernetes cluster.
-You will then replicate the application in multiple pods and see that the session data is cached and
-shared among all instances of the application. Even if an instance is unavailable, the other instances
-are able to take over and handle requests from the same user by using the cached session data.
+![System and query services DevOps](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-config-profile/prod/assets/system-query-devops.png)
 
 
 
@@ -64,11 +40,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-sessions.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-config-profile.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-sessions.git
-cd guide-sessions
+git clone https://github.com/openliberty/guide-microprofile-config-profile.git
+cd guide-microprofile-config-profile
 ```
 
 
@@ -76,536 +52,458 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
+::page{title="Creating a configuration profile for the dev environment"}
 
-::page{title="Creating the application"}
-
-The application that you are working with is a shopping cart web service that uses JAX-RS,
-which is a Java API for building RESTful web services.
-You'll learn how to persist a user's shopping cart data between Open Liberty instances by using the
-***sessionCache*** feature. The ***sessionCache*** feature persists HTTP
-sessions using JCache. You can have high-performance HTTP session persistence
-without using a relational database.
+The dev environment is used to test, experiment, debug, and refine your code, ensuring an application's functional readiness before progressing to subsequent stages in a software development and delivery lifecycle.
 
 Navigate to the ***start*** directory to begin.
 
-Create the ***CartApplication*** class.
+The starting Java project, which you can find in the ***start*** directory, is a multi-module Maven project comprised of the ***system*** and ***query*** microservices. Each microservice is in its own corresponding directory, ***system*** and ***query***.
 
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartApplication.java
-```
 
 
-> Then, to open the CartApplication.java file in your IDE, select
-> ***File*** > ***Open*** > guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartApplication.java, or click the following button
+The ***system*** microservice contains the three Maven build profiles: ***dev***, ***test***, and ***prod***, in which the ***dev*** profile is set as the default. Each build profile defines properties for a particular deployment configuration that the microservice uses.
 
-::openFile{path="/home/project/guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartApplication.java"}
+The MicroProfile Config configuration profile feature supplies configurations for different environments when only a single profile is active. The active profile is set using the ***mp.config.profile*** property. You can set it in any of the [configuration sources](https://openliberty.io/docs/latest/external-configuration.html#default) and it is read once during application startup. When a profile is active, its associated configuration properties are used. For the ***query*** service, the ***mp.config.profile*** property is set to ***dev*** in its Maven ***pom.xml***. This Liberty configuration variable indicates to the runtime that ***dev*** is the active configuration profile.
 
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
 
-
-```java
-package io.openliberty.guides.cart;
-
-import jakarta.ws.rs.ApplicationPath;
-import jakarta.ws.rs.core.Application;
-
-@ApplicationPath("/")
-public class CartApplication extends Application {
-
-}
-```
-
-
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
-
-
-The ***CartApplication*** class extends the generic JAX-RS application class that is needed to run the
-application.
-
-Create the ***CartResource*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartResource.java
-```
-
-
-> Then, to open the CartResource.java file in your IDE, select
-> ***File*** > ***Open*** > guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartResource.java, or click the following button
-
-::openFile{path="/home/project/guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartResource.java"}
-
-
-
-```java
-package io.openliberty.guides.cart;
-
-import java.util.Enumeration;
-
-import jakarta.json.Json;
-import jakarta.json.JsonArrayBuilder;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonObjectBuilder;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.MediaType;
-
-import org.eclipse.microprofile.openapi.annotations.Operation;
-import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-
-@Path("/")
-public class CartResource {
-
-    @POST
-    @Path("cart/{item}&{price}")
-    @Produces(MediaType.TEXT_PLAIN)
-    @APIResponse(responseCode = "200", description = "Item successfully added to cart.")
-    @Operation(summary = "Add a new item to cart.")
-    public String addToCart(@Context HttpServletRequest request,
-                    @Parameter(description = "Item you need for intergalatic travel.",
-                               required = true)
-                    @PathParam("item") String item,
-                    @Parameter(description = "Price for this item.",
-                               required = true)
-                    @PathParam("price") double price) {
-        HttpSession session = request.getSession();
-        session.setAttribute(item, price);
-        return item + " added to your cart and costs $" + price;
-    }
-
-    @GET
-    @Path("cart")
-    @Produces(MediaType.APPLICATION_JSON)
-    @APIResponse(responseCode = "200",
-        description = "Items successfully retrieved from your cart.")
-    @Operation(summary = "Return an JsonObject instance which contains "
-                        + "the items in your cart and the subtotal.")
-    public JsonObject getCart(@Context HttpServletRequest request) {
-        HttpSession session = request.getSession();
-        Enumeration<String> names = session.getAttributeNames();
-        JsonObjectBuilder builder = Json.createObjectBuilder();
-        builder.add("pod-name", getHostname());
-        builder.add("session-id", session.getId());
-        JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
-        Double subtotal = 0.0;
-        while (names.hasMoreElements()) {
-            String name = names.nextElement();
-            String price = session.getAttribute(name).toString();
-            arrayBuilder.add(name + " | $" + price);
-            subtotal += Double.valueOf(price).doubleValue();
-        }
-        builder.add("cart", arrayBuilder);
-        builder.add("subtotal", subtotal);
-        return builder.build();
-    }
-
-    private String getHostname() {
-        String hostname = System.getenv("HOSTNAME");
-        if (hostname == null) {
-            hostname = "localhost";
-        }
-        return hostname;
-    }
-}
-```
-
-
-
-The ***CartResource*** class defines the REST endpoints at which a user can make
-an HTTP request.
-
-The ***addToCart*** and ***getCart*** methods
-have a number of annotations. Most of these annotations are used by the
-MicroProfile OpenAPI and JAX-RS features to document the REST endpoints and map Java objects to web resources.
-More information about these annotations can be found in the
-[Documenting RESTful APIs](https://openliberty.io/guides/microprofile-openapi.html#augmenting-the-existing-jax-rs-annotations-with-openapi-annotations)
-and
-[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html#creating-a-jax-rs-application)
-guides.
-
-The ***cart/{item}&{price}*** endpoint demonstrates how to set session data.
-The ***@PathParam*** annotation injects a custom ***item*** and
-***price*** from the POST request into the method parameter.
-The ***addToCart*** method gets the current ***session*** and binds
-the ***{item}:{price}*** key-value pair into the session by the ***setAttribute()*** method.
-A response is then built and returned to confirm that an item was added to your cart and session.
-
-The ***cart*** endpoint demonstrates how to get session data.
-The ***getCart*** method gets the current session, iterates through all key-value
-pairs that are stored in the current session, and creates a ***JsonObject*** response.
-The ***JsonObject*** response is returned to confirm the Liberty instance by
-***pod-name***, the session by ***session-id***,
-and the items in your cart by ***cart***.
-
-
-::page{title="Configuring session persistence"}
-
-### Using client-server vs peer-to-peer model
-
-Session caching is only valuable when a server is connected to at least
-one other member. There are two different ways session caching can behave in a
-cluster environment:
-
-* Client-server model: A Liberty instance can act as the JCache client and connect
-to a dedicated JCache server.
-* Peer-to-peer model: A Liberty instance can connect with other Liberty instances
-that are also running with the session cache and configured to be
-part of the same cluster.
-
-You'll use the peer-to-peer model in a Kubernetes environment for this guide.
-
-### Configuring session persistence with JCache in Open Liberty
-
-JCache, which stands for Java Caching, is an interface
-to standardize distributed caching on the Java platform.
-The ***sessionCache*** feature uses JCache, which allows for session
-persistence by providing a common cache of session data between Liberty instances.
-This feature doesn't include a JCache implementation.
-For this guide, you'll use Hazelcast as an open source JCache provider.
-
-Hazelcast is a JCache provider. Open Liberty needs to be configured to use
-Hazelcast after the ***sessionCache*** feature is enabled.
-
-Create the Liberty ***server.xml*** configuration file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-sessions/start/src/main/liberty/config/server.xml
-```
-
-
-> Then, to open the server.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-sessions/start/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-sessions/start/src/main/liberty/config/server.xml"}
-
-
-
-```xml
-<server description="Liberty Server for Sessions Management">
-
-    <featureManager>
-        <platform>jakartaee-10.0</platform>
-        <platform>microprofile-7.0</platform>
-        <feature>servlet</feature>
-        <feature>restfulWS</feature>
-        <feature>jsonb</feature>
-        <feature>jsonp</feature>
-        <feature>mpOpenAPI</feature>
-        <feature>sessionCache-1.0</feature>
-    </featureManager>
-
-    <variable name="http.port" defaultValue="9090"/>
-    <variable name="https.port" defaultValue="9453"/>
-    <variable name="app.context.root" defaultValue="guide-sessions"/>
-
-    <httpEndpoint httpPort="${http.port}" httpsPort="${https.port}"
-        id="defaultHttpEndpoint" host="*" />
-    <httpSessionCache libraryRef="jCacheVendorLib"
-        uri="file:${server.config.dir}/hazelcast-config.xml" />
-    <library id="jCacheVendorLib">
-        <file name="${shared.resource.dir}/hazelcast-5.3.6.jar" />
-    </library>
-
-    <webApplication location="guide-sessions.war" contextRoot="${app.context.root}" />
-
-</server>
-```
-
-
-
-
-The ***library*** element includes the library reference that indicates
-to the Liberty where the Hazelcast implementation of JCache is located. 
-Your Hazelcast implementation of JCache is a JAR file that resides in the shared resources directory that is defined by the ***file*** element.
-The ***hazelcast-*.jar*** file is downloaded by the Liberty Maven plugin. The ***configuration*** is defined in the provided Maven POM file.
-
-### Configuring Hazelcast
-
-
-By default, all Open Liberty instances that run the ***sessionCache***
-feature and Hazelcast are connected using a peer-to-peer model.
-
-You can share the session cache only among certain Hazelcast instances
-by using the ***cluster-name*** configuration element in the Hazelcast configuration file.
-
-Create the ***hazelcast-config.xml*** configuration file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-sessions/start/src/main/liberty/config/hazelcast-config.xml
-```
-
-
-> Then, to open the hazelcast-config.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-sessions/start/src/main/liberty/config/hazelcast-config.xml, or click the following button
-
-::openFile{path="/home/project/guide-sessions/start/src/main/liberty/config/hazelcast-config.xml"}
-
-
-
-```xml
-<hazelcast xmlns="http://www.hazelcast.com/schema/config"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://www.hazelcast.com/schema/config
-       https://hazelcast.com/schema/config/hazelcast-config-5.3.xsd">
-
-    <cluster-name>CartCluster</cluster-name>
-
-    <network>
-        <join>
-           <multicast enabled="true"/>
-        </join>
-    </network>
-
-</hazelcast>
-```
-
-
-
-The ***CartCluster*** cluster name is defined in the ***hazelcast-config.xml*** file. To allow Hazelcast cluster members to find each other, enable the ***multicast*** communication in the ***network*** configuration.
-
-In the ***server.xml*** configuration file, a reference to the Hazelcast configuration file is made by using
-the ***httpSessionCache*** tag.
-
-
-Create the ***bootstrap.properties*** file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-sessions/start/src/main/liberty/config/bootstrap.properties
-```
-
-
-> Then, to open the bootstrap.properties file in your IDE, select
-> ***File*** > ***Open*** > guide-sessions/start/src/main/liberty/config/bootstrap.properties, or click the following button
-
-::openFile{path="/home/project/guide-sessions/start/src/main/liberty/config/bootstrap.properties"}
-
-
-
-```
-hazelcast.jcache.provider.type=member
-```
-
-
-
-Hazelcast JCache provides the client and member providers. Set ***hazelcast.jcache.provider.type*** to ***member*** to use the member provider.
-
-There are more configuration settings that you can explore in the
-[Hazelcast documentation](https://docs.hazelcast.org/docs/latest/manual/html-single/#understanding-configuration).
-
-
-::page{title="Running the application"}
-
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+Open a command-line session and run the following commands to navigate to the ***system*** directory and start the ***system*** service in the ***dev*** environment:
 
 ```bash
+cd /home/project/guide-microprofile-config-profile/start/system
+./mvnw liberty:dev
+```
+
+Open another command-line session and run the following commands to navigate to the ***query*** directory and start the ***query*** service in the ***dev*** environment:
+
+```bash
+cd /home/project/guide-microprofile-config-profile/start/query
 ./mvnw liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
-**************************************************************
-*    Liberty is running in dev mode.
+**************************************************
+*     Liberty is running in dev mode.
 ```
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
 
+In the dev environment, the ***dev*** configuration profile is set in the ***system/pom.xml*** file as the configuration profile to use for running the ***system*** service. The ***system*** service runs on HTTP port ***9081*** and HTTPS port ***9444*** using the context root ***system/dev***. It uses a basic user registry with username ***alice*** and password ***alicepwd*** for resource authorization. Note that the ***basicRegistry*** element is a simple registry configuration for learning purposes. For more information on user registries, see the [User registries documentation](https://openliberty.io/docs/latest/user-registries-application-security.html).
 
-Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
+Click the following button to check out the ***query*** service:
+
+::startApplication{port="9085" display="external" name="Check out the query service" route="/query/systems/localhost"}
 
 
-Point your browser to the ***link:http\://localhost:9090/openapi/ui/*** URL.
+The ***query*** service returns the message: ***{"fail":"Failed to reach the client localhost."}***. This is because the current ***query*** service uses the default properties in the ***query/src/main/resources/META-INF/microprofile-config.properties*** file to access the ***system*** service.
+
+For proper communication with the development ***system*** service, the ***query*** service uses properties in the ***dev*** configuration profile.
+
+![System service running in development environment](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-config-profile/prod/assets/system-query-devops-development.png)
 
 
-_To see the output for this URL in the IDE, run the following command at a terminal:_
+There are two ways to define configuration properties that are associated with your configuration profile. The first is as individual configuration properties associated with a configuration profile that can be specified in any kind of MicroProfile configuration source. The second is through default ***microprofile-config.properties*** configuration files embedded in your application that can be associated with different configuration profiles. The former allows for flexibility in defining profile-specific configuration properties in the best configuration sources for your needs while the latter enables default profiles of configuration properties to be provided in your application.
+
+### Creating profile-specific configuration properties
+
+This approach involves directly associating individual configuration properties with a configuration profile. To define a configuration property for a particular config profile, use the ***%\<config_profile_id\>.\<property_name\>=\<value\>*** syntax, where ***\<config_profile_id\>*** is the unique identifier for the configuration profile and ***\<property_name\>*** is the name of the property that you want to set.
+
+Replace the ***microprofile-config.properties*** file.
+
+> To open the microprofile-config.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties"}
+
+
+
+```
+system.httpsPort=9443
+system.user=admin
+system.password=adminpwd
+system.contextRoot=system
+
+%dev.system.httpsPort=9444
+%dev.system.user=alice
+%dev.system.password=alicepwd
+%dev.system.contextRoot=system/dev
+```
+
+
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+
+
+
+Configure the ***%dev.**** properties in the ***microprofile-config.properties*** file based on the values from the ***dev*** profile of the ***system*** service.
+
+Because the active profile is set to ***dev***, each ***%dev.**** property overrides the value of the plain non-profile-specific property. For example, in this case, the ***%dev.system.httpsPort*** property overrides the ***system.httpsPort*** property and the value is resolved to ***9444***.
+
+Because you are running the ***query*** service in dev mode, the changes that you made are automatically picked up.
+
+Click the following button to try out the application:
+
+::startApplication{port="9085" display="external" name="Try out the application" route="/query/systems/localhost"}
+
+You can see the current OS and Java version in JSON format.
+
+
+### Creating profile-specific ***microprofile-config.properties*** configuration files
+
+Creating profile-specific ***microprofile-config.properties*** configuration files is a structured way to provide and manage more extensive sets of default configurations. You can create a configuration file for each configuration profile in the ***META-INF*** folder on the classpath of your application by using the ***microprofile-config-\<config_profile_id\>*** naming convention, where ***\<config_profile_id\>*** is the unique identifier for a configuration profile. After you create the file, you can add your configuration properties to it with the standard ***\<property_name\>=\<value\>*** syntax.
+
+Open another command-line session.
+
+Create the ***microprofile-config-dev.properties*** file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-dev.properties
+```
+
+
+> Then, to open the microprofile-config-dev.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-dev.properties, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-dev.properties"}
+
+
+
+```
+system.httpsPort=9444
+system.user=alice
+system.password=alicepwd
+system.contextRoot=system/dev
+```
+
+
+
+
+Define the ***system.**** properties in the ***microprofile-config-dev.properties*** file based on the values from the ***dev*** profile of the ***system*** service.
+
+Replace the ***microprofile-config.properties*** file.
+
+> To open the microprofile-config.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties"}
+
+
+
+```
+system.httpsPort=9443
+system.user=admin
+system.password=adminpwd
+system.contextRoot=system
+
+```
+
+
+
+
+Remove the ***%dev.**** properties from the ***microprofile-config.properties*** file.
+
+Because the active profile is set to ***dev***, any ***system.**** properties specified in the ***microprofile-config-dev.properties*** file take precedence over the ***system.**** property values in the ***microprofile-config.properties*** file.
+
+Now, click the following button to try out the application again:
+
+::startApplication{port="9085" display="external" name="Try out the application" route="/query/systems/localhost"}
+
+You can see the current OS and Java version in JSON format.
+
+When you are done checking out the application in ***dev*** environment, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***query*** services.
+
+::page{title="Creating a configuration profile for the test environment"}
+
+In CI/CD, the test environment is where integration tests ensure the readiness and quality of an application. A good testing configuration not only ensures smooth operations but also aligns the environment closely with potential production settings.
+
+![System service running in testing environment](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-config-profile/prod/assets/system-query-devops-testing.png)
+
+
+Create the ***microprofile-config-test.properties*** file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-test.properties
+```
+
+
+> Then, to open the microprofile-config-test.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-test.properties, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-test.properties"}
+
+
+
+```
+system.httpsPort=9445
+system.user=bob
+system.password=bobpwd
+system.contextRoot=system/test
+```
+
+
+
+
+Define the ***system.**** properties in the ***microprofile-config-test.properties*** file based on the values from the ***test*** profile of the ***system*** service.
+
+Create the ***QueryEndpointIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-config-profile/start/query/src/test/java/it/io/openliberty/guides/query/QueryEndpointIT.java
+```
+
+
+> Then, to open the QueryEndpointIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/test/java/it/io/openliberty/guides/query/QueryEndpointIT.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/test/java/it/io/openliberty/guides/query/QueryEndpointIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.query;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.Response;
+
+public class QueryEndpointIT {
+
+    private static String port = System.getProperty("http.port");
+    private static String baseUrl = "http://localhost:" + port + "/query";
+    private static String systemHost = System.getProperty("system.host");
+
+    private static Client client;
+
+    @BeforeEach
+    public void setup() {
+        client = ClientBuilder.newClient();
+    }
+
+    @AfterEach
+    public void teardown() {
+        client.close();
+    }
+
+    @Test
+    public void testQuerySystem() {
+
+        Response response = this.getResponse(baseUrl + "/systems/" + systemHost);
+        this.assertResponse(baseUrl, response);
+
+        JsonObject jsonObj = response.readEntity(JsonObject.class);
+        assertNotNull(jsonObj.getString("os.name"), "os.name is null");
+        assertNotNull(jsonObj.getString("java.version"), "java.version is null");
+
+        response.close();
+    }
+
+    @Test
+    public void testUnknownHost() {
+        Response response = this.getResponse(baseUrl + "/systems/unknown");
+        this.assertResponse(baseUrl, response);
+
+        JsonObject json = response.readEntity(JsonObject.class);
+        assertEquals("Failed to reach the client unknown.", json.getString("fail"),
+            "Fail message is wrong.");
+        response.close();
+    }
+
+    private Response getResponse(String url) {
+        return client.target(url).request().get();
+    }
+
+    private void assertResponse(String url, Response response) {
+        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+    }
+
+}
+```
+
+
+
+Implement endpoint tests to test the basic functionality of the ***query*** microservice. If a test failure occurs, you might have introduced a bug into the code.
+
+See the following descriptions of test cases:
+
+* ***testQuerySystem()*** verifies the ***/query/systems/{hostname}*** endpoint.
+
+* ***testUnknownHost()*** verifies that an unknown host or a host that does not expose their JVM system properties is correctly handled with a fail message.
+
+### Running the tests in the test environment
+
+Now, navigate to the ***start*** directory.
+
+
+
+Test the application under the ***test*** environment by running the following script that contains different Maven goals to ***build***, ***start***, ***test***, and ***stop*** the services.
 
 ```bash
-curl link:http://localhost:9090/openapi/ui/
+cd /home/project/guide-microprofile-config-profile/start
+./scripts/testApp.sh
 ```
 
+If the tests pass, you see output similar to the following example:
 
-This URL displays the available REST endpoints.
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.539 s - in it.io.openliberty.guides.system.SystemEndpointIT
 
-First, make a POST request to the ***/cart/{item}&{price}*** endpoint. To make this request, expand the POST
-endpoint on the UI, click the ***Try it out*** button, provide an item and a price,
-and then click the ***Execute*** button.
-The POST request adds a user-specified item and price to a session
-that represents data in a user's cart.
+Results:
 
-Next, make a GET request to the ***/cart*** endpoint. To make this request, expand the GET
-endpoint on the UI, click the ***Try it out*** button,
-and then click the ***Execute*** button. The GET request
-returns a pod name, a session ID, and all the items from your session.
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
+...
+
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.query.QueryEndpointIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.706 s - in it.io.openliberty.guides.query.QueryEndpointIT
+
+Results:
+
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+
+```
+
+::page{title="Next steps"}
+
+Deploying the application to a Kubernetes environment using the Open Liberty Operator is an optional learning step in this guide.
+
+To further explore deploying microservices using Kubernetes and the Open Liberty Operator, you can read the following guides:
+
+ [Deploying a microservice to Kubernetes using Open Liberty Operator](https://openliberty.io/guides/openliberty-operator-intro.html)
+ [Deploying a microservice to OpenShift 4 using Open Liberty Operator](https://openliberty.io/guides/openliberty-operator-openshift.html)
+
+A secure production environment is essential for application security. In the previous sections, you learned how to use the MicroProfile Config API to externalize credentials and other properties for accessing the ***system*** service. This strategy makes the application more adaptable to different environments without the need to change code and rebuild your application.
+
+In the this section, you'll learn how to use Kubernetes secrets to provide the credentials and how to pass them to the ***query*** service by using MicroProfile Config.
+
+### Deploying the application in the prod environment with Kubernetes
 
 
 
-::page{title="Containerizing the application"}
 
-Before you can deploy the application to Kubernetes, you need to containerize it with Docker.
 
-Make sure to start your Docker daemon before you proceed.
 
-The Dockerfile is provided at the ***start*** directory. If you're unfamiliar with Dockerfile,
-check out the [Containerizing microservices](https://openliberty.io/guides/containerize.html) guide,
-which covers Dockerfile in depth.
-
-Run the ***mvnw package*** command from the ***start*** directory so that the ***.war*** file resides in the ***target*** directory.
-
+Before deploying, create the Dockerfile files for both ***system*** and ***query*** microservices. Then, build their ***.war*** files and Docker images in the ***start*** directory.
 
 ```bash
-./mvnw package
+cp /home/project/guide-microprofile-config-profile/finish/system/Dockerfile /home/project/guide-microprofile-config-profile/start/system
+cp /home/project/guide-microprofile-config-profile/finish/query/Dockerfile /home/project/guide-microprofile-config-profile/start/query
+cd /home/project/guide-microprofile-config-profile/start
+./mvnw -P prod clean package
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t query:1.0-SNAPSHOT query/.
 ```
 
+The Maven ***clean*** and ***package*** goals can clean the ***target*** directories and build the ***.war*** application files from scratch. The ***microprofile-config-dev.properties*** and ***microprofile-config-test.properties*** files of the ***query*** microservice are excluded from the ***prod*** build. The default ***microprofile-config.properties*** file is automatically applied.
 
+The Docker ***build*** command packages the ***.war*** files of the ***system*** and ***query*** microservices with their default configuration into your Docker images.
 
-To build and containerize the application, run the following Docker build command in the ***start*** directory:
+After building the images, push your images to the container registry on IBM Cloud with the following commands:
 
 ```bash
-docker build -t cart-app:1.0-SNAPSHOT .
+docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+docker tag query:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/query:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/query:1.0-SNAPSHOT
 ```
 
-When the build finishes, run the following command to list all local Docker images:
+And, you can create a Kubernetes secret for storing sensitive data such as credentials.
+
 ```bash
-docker images
+kubectl create secret generic sys-app-credentials \
+        --from-literal username=$USERNAME \
+        --from-literal password=password
 ```
 
-Verify that the ***cart-app:1.0-SNAPSHOT*** image is listed among the Docker images, for example:
-```
-REPOSITORY                     TAG
-cart-app                       1.0-SNAPSHOT
-icr.io/appcafe/open-liberty    kernel-slim-java11-openj9-ubi
-```
+For more information about managing secrets, see the [Managing Secrets using kubectl](https://kubernetes.io/docs/tasks/configmap-secret/managing-secret-using-kubectl) documentation.
 
+Finally, write up the ***deploy.yaml*** deployment file to configure the deployment of the ***system*** and ***query*** microservices by using the Open Liberty Operator. The ***sys-app-credentials*** Kubernetes secrets set the environment variables ***DEFAULT_USERNAME*** and ***DEFAULT_PASSWORD*** for the ***system*** microservice, and ***SYSTEM_USER*** and ***SYSTEM_PASSWORD*** for the ***query*** microservice.
 
-::page{title="Deploying and running the application in Kubernetes"}
-
-
-Now that the containerized application is built, deploy it to a local Kubernetes cluster by using
-a Kubernetes resource definition, which is provided in the ***kubernetes.yaml*** file
-at the ***start*** directory.
-
-First, use the ***ClusterRoleBinding*** Kubernetes API object to grant Hazelcast members to access the cluster.
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/hazelcast/hazelcast/master/kubernetes-rbac.yaml
+cp /home/project/guide-microprofile-config-profile/finish/deploy.yaml /home/project/guide-microprofile-config-profile/start
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"${SN_ICR_NAMESPACE}"'/system:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
+sed -i 's=query:1.0-SNAPSHOT=us.icr.io/'"${SN_ICR_NAMESPACE}"'/query:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
 ```
 
-Run the following command to deploy the application into `3` replicated pods as defined
-in the ***kubernetes.yaml*** file:
+If you want to override another property, you can specify it in the ***env*** sections of the ***deploy.yaml*** file. For example, set the ***CONTEXT_ROOT*** environment variable in the ***system*** deployment and the ***SYSTEM_CONTEXTROOT*** environment variable in the ***query*** deployment.
+
+After the images and the secret are ready, you can deploy the microservices to your production environment with Kubernetes.
+
 ```bash
-kubectl apply -f kubernetes.yaml
+kubectl apply -f deploy.yaml
 ```
-
-When the application is deployed, run the following command to check the status of your pods:
+When the apps are deployed, run the following command to check the status of your pods:
 ```bash
 kubectl get pods
 ```
 
-You see an output similar to the following if all the pods are working correctly:
+You'll see an output similar to the following example if all the pods are healthy and running:
 
 ```
-NAME                             READY  STATUS   RESTARTS  AGE
-cart-deployment-98f4ff789-2xlhs  1/1    Running  0         17s
-cart-deployment-98f4ff789-6rvfj  1/1    Running  0         17s
-cart-deployment-98f4ff789-qrh45  1/1    Running  0         17s
+----
+NAME                     READY   STATUS    RESTARTS   AGE
+query-7b7b6db4b6-cqtqx   1/1     Running   0          4s
+system-bc85bc8dc-rw5pb   1/1     Running   0          5s
+----
 ```
 
+To access the exposed **query** microservice, the service must be port-forwarded. Run the following command to set up port forwarding to access the **query** service:
 
+```bash
+kubectl port-forward svc/query 9448
+```
 
-Run the ***minikube ip*** command to get the hostname for minikube.
-Then, go to the ***http://[hostname]:31000/openapi/ui/*** URL in your browser. 
-This URL displays the available REST endpoints.
+Open another command-line session and access the microservice by running the following command:
+```bash
+curl -k -s "https://localhost:9448/query/systems/system.${SN_ICR_NAMESPACE}.svc" | jq
+```
 
-Make a POST request to the ***/cart/{item}&{price}*** endpoint. To make this request, expand the POST
-endpoint on the UI, click the ***Try it out*** button, provide an item and a price,
-and then click the ***Execute*** button.
-The POST request adds a user-specified item and price to a session
-that represents data in a user's cart.
-
-Next, make a GET request to the ***/cart*** endpoint. To make this request, expand the GET
-endpoint on the UI, click the ***Try it out*** button, and then click the ***Execute*** button.
-The GET request returns a pod name, a session ID, and all the items from your session.
+You'll see an output similar to the following example:
 
 ```
 {
-  "pod-name": "cart-deployment-98f4ff789-2xlhs",
-  "session-id": "RyJKzmka6Yc-ZCMzEA8-uPq",
-  "cart": [
-    "eggs | $2.89"
-  ],
-  "subtotal": 2.89
+  "hostname": "system.sn-labs-username.svc",
+  "java.version": "11.0.23",
+  "os.name": "Linux"
 }
 ```
 
-Replace the ***[pod-name]*** in the following command, and then run the command to pause
-the pod for the GET request that you just ran:
-
+After trying out the microservice, press **CTRL+C** in the command line session where you ran the `kubectl port-forward` command to stop the port forwarding, and then delete all resources by running the following commands:
 ```bash
-kubectl exec -it [pod-name] -- /opt/ol/wlp/bin/server pause
+cd /home/project/guide-microprofile-config-profile/start
+kubectl delete -f deploy.yaml
+kubectl delete secret sys-app-credentials
+docker image prune -a -f
 ```
-
-Repeat the GET request. You see the same ***session-id***
-but a different ***pod-name*** because the session data is cached but the request
-is served by a different pod (Liberty instance).
-
-Verify that the Hazelcast cluster is running by checking the Open Liberty log. 
-To check the log, run the following command:
-
-```bash
-kubectl exec -it [pod-name] -- cat /logs/messages.log
-```
-
-You see a message similar to the following:
-
-```
-... [10.1.0.46]:5701 [CartCluster] [5.3.0]
-
-Members {size:3, ver:3} [
-	Member [10.1.0.40]:5701 - 01227d80-501e-4789-ae9d-6fb348d794ea
-	Member [10.1.0.41]:5701 - a68d0ed1-f50e-4a4c-82b0-389f356b8c73 this
-	Member [10.1.0.42]:5701 - b0dfa05a-c110-45ed-9424-adb1b2896a3d
-]
-```
-
-You can resume the paused pod by running the following command:
-
-```bash
-kubectl exec -it [pod-name] -- /opt/ol/wlp/bin/server resume
-```
-
-
-
-::page{title="Tearing down the environment"}
-
-When you no longer need your deployed application, you can delete all Kubernetes resources and disable the Hazelcast members' access to the cluster by running the ***kubectl delete*** commands:
-
-```bash
-kubectl delete -f kubernetes.yaml
-kubectl delete -f https://raw.githubusercontent.com/hazelcast/hazelcast/master/kubernetes-rbac.yaml
-```
-
-
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You have created, used, and cached HTTP session data for an application that was running on Open Liberty
+You just learned how to use the MicroProfile Config's configuration profile feature to configure your application for multiple CI/CD environments.
 
-and deployed in a Kubernetes cluster.
 
+Feel free to try one of the related guides. They demonstrate new technologies that you can learn to expand on what you built in this guide.
 
 
 ### Clean up your environment
@@ -613,32 +511,31 @@ and deployed in a Kubernetes cluster.
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-sessions*** project by running the following commands:
+Delete the ***guide-microprofile-config-profile*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-sessions
+rm -fr guide-microprofile-config-profile
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Caching%20HTTP%20session%20data%20using%20JCache%20and%20Hazelcast&guide-id=cloud-hosted-guide-sessions)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Externalizing%20environment-specific%20microservice%20configuration%20for%20CI/CD&guide-id=cloud-hosted-guide-microprofile-config-profile)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-sessions/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-sessions/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-config-profile/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-config-profile/pulls)
 
 
 
 ### Where to next?
 
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Documenting RESTful APIs](https://openliberty.io/guides/microprofile-openapi.html)
-* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
+* [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
 
 
 ### Log out of the session
