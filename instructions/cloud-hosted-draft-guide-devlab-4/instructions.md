@@ -71,15 +71,13 @@ When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/devel
 Open a command-line session and run the following commands to navigate to the ***system*** directory and start the ***system*** service in the ***dev*** environment:
 
 ```bash
-cd /home/project/guide-microprofile-config-profile/start/system
-./mvnw liberty:dev
+./mvnw -pl system liberty:dev
 ```
 
 Open another command-line session and run the following commands to navigate to the ***query*** directory and start the ***query*** service in the ***dev*** environment:
 
 ```bash
-cd /home/project/guide-microprofile-config-profile/start/query
-./mvnw liberty:dev
+./mvnw -pl query liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
