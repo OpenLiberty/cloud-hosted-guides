@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Creating reactive Java microservices guide!"}
+::page{title="Welcome to the Deploying microservices to Kubernetes guide!"}
 
-Learn how to write reactive Java microservices using MicroProfile Reactive Messaging.
+Deploy microservices in Open Liberty Docker containers to Kubernetes and manage them with the Kubernetes CLI, kubectl.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,21 +14,38 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
+
+::page{title="What is Kubernetes?"}
+
+Kubernetes is an open source container orchestrator that automates many tasks involved in deploying, managing, and scaling containerized applications.
+
+Over the years, Kubernetes has become a major tool in containerized environments as containers are being further leveraged for all steps of a continuous delivery pipeline.
+
+### Why use Kubernetes?
+
+Managing individual containers can be challenging. A small team can easily manage a few containers for development but managing hundreds of containers can be a headache, even for a large team of experienced developers. Kubernetes is a tool for deployment in containerized environments. It handles scheduling, deployment, as well as mass deletion and creation of containers. It provides update rollout abilities on a large scale that would otherwise prove extremely tedious to do. Imagine that you updated a Docker image, which now needs to propagate to a dozen containers. While you could destroy and then re-create these containers, you can also run a short one-line command to have Kubernetes make all those updates for you. Of course, this is just a simple example. Kubernetes has a lot more to offer.
+
+### Architecture
+
+Deploying an application to Kubernetes means deploying an application to a Kubernetes cluster.
+
+A typical Kubernetes cluster is a collection of physical or virtual machines called nodes that run containerized applications. A cluster is made up of one parent node that manages the cluster, and many worker nodes that run the actual application instances inside Kubernetes objects called pods.
+
+A pod is a basic building block in a Kubernetes cluster. It represents a single running process that encapsulates a container or in some scenarios many closely coupled containers. Pods can be replicated to scale applications and handle more traffic. From the perspective of a cluster, a set of replicated pods is still one application instance, although it might be made up of dozens of instances of itself. A single pod or a group of replicated pods are managed by Kubernetes objects called controllers. A controller handles replication, self-healing, rollout of updates, and general management of pods. One example of a controller that you will use in this guide is a deployment.
+
+A pod or a group of replicated pods are abstracted through Kubernetes objects called services that define a set of rules by which the pods can be accessed. In a basic scenario, a Kubernetes service exposes a node port that can be used together with the cluster IP address to access the pods encapsulated by the service.
+
+To learn about the various Kubernetes resources that you can configure, see the [official Kubernetes documentation](https://kubernetes.io/docs/concepts/).
+
+
 ::page{title="What you'll learn"}
 
-You will learn how to build reactive microservices that can send requests to other microservices, and asynchronously receive and process the responses. You will use an external messaging system to handle the asynchronous messages that are sent and received between the microservices as streams of events. MicroProfile Reactive Messaging makes it easy to write and configure your application to send, receive, and process the events efficiently.
+You will learn how to deploy two microservices in Open Liberty containers to a local Kubernetes cluster. You will then manage your deployed microservices using the ***kubectl*** command line interface for Kubernetes. The ***kubectl*** CLI is your primary tool for communicating with and managing your Kubernetes cluster.
 
-*Asynchronous messaging between microservices*
+The two microservices you will deploy are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of the running container and it returns the pod's name in the HTTP header making replicas easy to distinguish from each other. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This process demonstrates how communication can be established between pods inside a cluster.
 
-Asynchronous communication between microservices can be used to build reactive and responsive applications. By decoupling the requests sent by a microservice from the responses that it receives, the microservice is not blocked from performing other tasks while waiting for the requested data to become available. Imagine asynchronous communication as a restaurant. A waiter might come to your table and take your order. While you are waiting for your food to be prepared, that waiter serves other tables and takes their orders too. When your food is ready, the waiter brings your food to the table and then continues to serve the other tables. If the waiter were to operate synchronously, they must take your order and then wait until they deliver your food before serving any other tables. In microservices, a request call from a REST client to another microservice can be time-consuming because the network might be slow, or the other service might be overwhelmed with requests and can’t respond quickly. But in an asynchronous system, the microservice sends a request to another microservice and continues to send other calls and to receive and process other responses until it receives a response to the original request.
-
-*What is MicroProfile Reactive Messaging?*
-
-MicroProfile Reactive Messaging provides an easy way to asynchronously send, receive, and process messages that are received as continuous streams of events. You simply annotate application beans' methods and Open Liberty converts the annotated methods to reactive streams-compatible publishers, subscribers, and processors and connects them up to each other. MicroProfile Reactive Messaging provides a Connector API so that your methods can be connected to external messaging systems that produce and consume the streams of events, such as [Apache Kafka](https://kafka.apache.org/).
-
-The application in this guide consists of two microservices, ***system*** and ***inventory***. Every 15 seconds, the ***system*** microservice calculates and publishes an event that contains its current average system load. The ***inventory*** microservice subscribes to that information so that it can keep an updated list of all the systems and their current system loads. The current inventory of systems can be accessed via the ***/systems*** REST endpoint. You'll create the ***system*** and ***inventory*** microservices using MicroProfile Reactive Messaging.
-
-![Reactive system inventory](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/prod/assets/reactive-messaging-system-inventory.png)
+You will use a local single-node Kubernetes cluster.
 
 
 ::page{title="Getting started"}
@@ -42,11 +59,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-reactive-messaging.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-intro.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-microprofile-reactive-messaging.git
-cd guide-microprofile-reactive-messaging
+git clone https://github.com/openliberty/guide-kubernetes-intro.git
+cd guide-kubernetes-intro
 ```
 
 
@@ -54,595 +71,511 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-::page{title="Creating the producer in the system microservice"}
 
-Navigate to the ***start*** directory to begin. 
+
+
+::page{title="Building and containerizing the microservices"}
+
+The first step of deploying to Kubernetes is to build your microservices and containerize them with Docker.
+
+The starting Java project, which you can find in the ***start*** directory, is a multi-module Maven project that's made up of the ***system*** and ***inventory*** microservices. Each microservice resides in its own directory, ***start/system*** and ***start/inventory***. Each of these directories also contains a Dockerfile, which is necessary for building Docker images. If you're unfamiliar with Dockerfiles, check out the [Containerizing Microservices](https://openliberty.io/guides/containerize.html) guide, which covers Dockerfiles in depth.
+
+Navigate to the ***start*** directory and build the applications by running the following commands:
+
+
 ```bash
-cd /home/project/guide-microprofile-reactive-messaging/start
+cd start
+./mvnw clean package
 ```
 
-The ***system*** microservice is the producer of the messages that are published to the Kafka messaging system as a stream of events. Every 15 seconds, the ***system*** microservice publishes an event that contains its calculation of the average system load (its CPU usage) for the last minute.
 
-Create the ***SystemService*** class.
+
+Next, run the ***docker build*** commands to build container images for your application:
+```bash
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+```
+
+The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
+
+During the build, you'll see various Docker messages describing what images are being downloaded and built. When the build finishes, run the following command to list all local Docker images:
+```bash
+docker images
+```
+
+
+Verify that the ***system:1.0-SNAPSHOT*** and ***inventory:1.0-SNAPSHOT*** images are listed among them, for example:
+
+```
+REPOSITORY                                TAG                       
+inventory                                 1.0-SNAPSHOT
+system                                    1.0-SNAPSHOT
+openliberty/open-liberty                  kernel-slim-java11-openj9-ubi
+```
+
+If you don't see the ***system:1.0-SNAPSHOT*** and ***inventory:1.0-SNAPSHOT*** images, then check the Maven build log for any potential errors. If the images built without errors, push them to your container registry on IBM Cloud with the following commands:
+
+```bash
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+```
+
+
+::page{title="Deploying the microservices"}
+
+Now that your Docker images are built, deploy them using a Kubernetes resource definition.
+
+A Kubernetes resource definition is a yaml file that contains a description of all your deployments, services, or any other resources that you want to deploy. All resources can also be deleted from the cluster by using the same yaml file that you used to deploy them.
+
+Create the Kubernetes configuration file in the ***start*** directory.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
+touch /home/project/guide-kubernetes-intro/start/kubernetes.yaml
 ```
 
 
-> Then, to open the SystemService.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
+> Then, to open the kubernetes.yaml file in your IDE, select
+> ***File*** > ***Open*** > guide-kubernetes-intro/start/kubernetes.yaml, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
+::openFile{path="/home/project/guide-kubernetes-intro/start/kubernetes.yaml"}
 
 
 
-```java
-package io.openliberty.guides.system;
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: system-deployment
+  labels:
+    app: system
+spec:
+  selector:
+    matchLabels:
+      app: system
+  template:
+    metadata:
+      labels:
+        app: system
+    spec:
+      containers:
+      - name: system-container
+        image: system:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9090
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-deployment
+  labels:
+    app: inventory
+spec:
+  selector:
+    matchLabels:
+      app: inventory
+  template:
+    metadata:
+      labels:
+        app: inventory
+    spec:
+      containers:
+      - name: inventory-container
+        image: inventory:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9090
+        env:
+        - name: SYS_APP_HOSTNAME
+          value: system-service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: system-service
+spec:
+  type: NodePort
+  selector:
+    app: system
+  ports:
+  - protocol: TCP
+    port: 9090
+    targetPort: 9090
+    nodePort: 31000
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.concurrent.TimeUnit;
-
-import jakarta.enterprise.context.ApplicationScoped;
-
-import org.eclipse.microprofile.reactive.messaging.Outgoing;
-import org.reactivestreams.Publisher;
-
-import io.openliberty.guides.models.SystemLoad;
-import io.reactivex.rxjava3.core.Flowable;
-
-@ApplicationScoped
-public class SystemService {
-
-    private static final OperatingSystemMXBean OS_MEAN =
-            ManagementFactory.getOperatingSystemMXBean();
-    private static String hostname = null;
-
-    private static String getHostname() {
-        if (hostname == null) {
-            try {
-                return InetAddress.getLocalHost().getHostName();
-            } catch (UnknownHostException e) {
-                return System.getenv("HOSTNAME");
-            }
-        }
-        return hostname;
-    }
-
-    @Outgoing("systemLoad")
-    public Publisher<SystemLoad> sendSystemLoad() {
-        return Flowable.interval(15, TimeUnit.SECONDS)
-                .map((interval -> new SystemLoad(getHostname(),
-                Double.valueOf(OS_MEAN.getSystemLoadAverage()))));
-    }
-
-}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service
+spec:
+  type: NodePort
+  selector:
+    app: inventory
+  ports:
+  - protocol: TCP
+    port: 9090
+    targetPort: 9090
+    nodePort: 32000
 ```
 
 
 Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
+This file defines four Kubernetes resources. It defines two deployments and two services. A Kubernetes deployment is a resource that controls the creation and management of pods. A service exposes your deployment so that you can make requests to your containers. Three key items to look at when creating the deployments are the ***labels***, ***image***, and ***containerPort*** fields. The ***labels*** is a way for a Kubernetes service to reference specific deployments. The ***image*** is the name and tag of the Docker image that you want to use for this container. Finally, the ***containerPort*** is the port that your container exposes to access your application. For the services, the key point to understand is that they expose your deployments. The binding between deployments and services is specified by labels -- in this case the ***app*** label. You will also notice the service has a type of ***NodePort***. This means you can access these services from outside of your cluster via a specific port. In this case, the ports are ***31000*** and ***32000***, but port numbers can also be randomized if the ***nodePort*** field is not used.
 
-The ***SystemService*** class contains a ***Publisher*** method that is called ***sendSystemLoad()***, which calculates and returns the average system load. The ***@Outgoing*** annotation on the ***sendSystemLoad()*** method indicates that the method publishes its calculation as a message on a topic in the Kafka messaging system. The ***Flowable.interval()*** method from ***rxJava*** is used to set the frequency of how often the system service publishes the calculation to the event stream.
+Update the image names so that the images in your IBM Cloud container registry are used, and remove the ***nodePort*** fields so that the ports can be generated automatically:
 
-The messages are transported between the service and the Kafka messaging system through a channel called ***systemLoad***. The name of the channel to use is set in the ***@Outgoing("systemLoad")*** annotation. Later in the guide, you will configure the service so that any messages sent by the ***system*** service through the ***systemLoad*** channel are published on a topic called ***system.load***, as shown in the following diagram:
-
-![Reactive system publisher](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/prod/assets/reactive-messaging-system-inventory-publisher.png)
-
-
-::page{title="Creating the consumer in the inventory microservice"}
-
-The ***inventory*** microservice records in its inventory the average system load information that it received from potentially multiple instances of the ***system*** service.
-
-Create the ***InventoryResource*** class.
-
-> Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-microprofile-reactive-messaging/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=nodePort: 31000==g' kubernetes.yaml
+sed -i 's=nodePort: 32000==g' kubernetes.yaml
 ```
 
-
-> Then, to open the InventoryResource.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-reactive-messaging/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-reactive-messaging/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java"}
-
-
-
-```java
-package io.openliberty.guides.inventory;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-
-import org.eclipse.microprofile.reactive.messaging.Incoming;
-
-import io.openliberty.guides.models.SystemLoad;
-
-@ApplicationScoped
-@Path("/inventory")
-public class InventoryResource {
-
-    private static Logger logger = Logger.getLogger(InventoryResource.class.getName());
-
-    @Inject
-    private InventoryManager manager;
-
-    @GET
-    @Path("/systems")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getSystems() {
-        List<Properties> systems = manager.getSystems()
-                .values()
-                .stream()
-                .collect(Collectors.toList());
-        return Response
-                .status(Response.Status.OK)
-                .entity(systems)
-                .build();
-    }
-
-    @GET
-    @Path("/systems/{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getSystem(@PathParam("hostname") String hostname) {
-        Optional<Properties> system = manager.getSystem(hostname);
-        if (system.isPresent()) {
-            return Response
-                    .status(Response.Status.OK)
-                    .entity(system)
-                    .build();
-        }
-        return Response
-                .status(Response.Status.NOT_FOUND)
-                .entity("hostname does not exist.")
-                .build();
-    }
-
-    @DELETE
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response resetSystems() {
-        manager.resetSystems();
-        return Response
-                .status(Response.Status.OK)
-                .build();
-    }
-
-    @Incoming("systemLoad")
-    public void updateStatus(SystemLoad sl)  {
-        String hostname = sl.hostname;
-        if (manager.getSystem(hostname).isPresent()) {
-            manager.updateCpuStatus(hostname, sl.loadAverage);
-            logger.info("Host " + hostname + " was updated: " + sl);
-        } else {
-            manager.addSystem(hostname, sl.loadAverage);
-            logger.info("Host " + hostname + " was added: " + sl);
-        }
-    }
-}
-```
-
-
-
-
-The ***inventory*** microservice receives the message from the ***system*** microservice over the ***@Incoming("systemLoad")*** channel. The properties of this channel are defined in the ***microprofile-config.properties*** file. The ***inventory*** microservice is also a RESTful service that is served at the ***/inventory*** endpoint.
-
-The ***InventoryResource*** class contains a method called ***updateStatus()***, which receives the message that contains the average system load and updates its existing inventory of systems and their average system load. The ***@Incoming("systemLoad")*** annotation on the ***updateStatus()*** method indicates that the method retrieves the average system load information by connecting to the channel called ***systemLoad***. Later in the guide, you will configure the service so that any messages sent by the ***system*** service through the ***systemLoad*** channel are retrieved from a topic called ***system.load***, as shown in the following diagram:
-
-![Reactive system inventory detail](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/prod/assets/reactive-messaging-system-inventory-detail.png)
-
-
-::page{title="Configuring the MicroProfile Reactive Messaging connectors for Kafka"}
-
-The ***system*** and ***inventory*** services exchange messages with the external messaging system through a channel. The MicroProfile Reactive Messaging Connector API makes it easy to connect each service to the channel. You just need to add configuration keys in a properties file for each of the services. These configuration keys define properties such as the name of the channel and the topic in the Kafka messaging system. Open Liberty includes the ***liberty-kafka*** connector for sending and receiving messages from Apache Kafka.
-
-The system and inventory microservices each have a MicroProfile Config properties file to define the properties of their outgoing and incoming streams.
-
-Create the system/microprofile-config.properties file.
-
-> Run the following touch command in your terminal
+Run the following commands to deploy the resources as defined in kubernetes.yaml:
 ```bash
-touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/resources/META-INF/microprofile-config.properties
+kubectl apply -f kubernetes.yaml
 ```
 
-
-> Then, to open the microprofile-config.properties file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-reactive-messaging/start/system/src/main/resources/META-INF/microprofile-config.properties, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-reactive-messaging/start/system/src/main/resources/META-INF/microprofile-config.properties"}
-
-
-
-```
-mp.messaging.connector.liberty-kafka.bootstrap.servers=kafka:9092
-
-mp.messaging.outgoing.systemLoad.connector=liberty-kafka
-mp.messaging.outgoing.systemLoad.topic=system.load
-mp.messaging.outgoing.systemLoad.key.serializer=org.apache.kafka.common.serialization.StringSerializer
-mp.messaging.outgoing.systemLoad.value.serializer=io.openliberty.guides.models.SystemLoad$SystemLoadSerializer
-```
-
-
-
-The ***mp.messaging.connector.liberty-kafka.bootstrap.servers*** property configures the hostname and port for connecting to the Kafka server. The ***system*** microservice uses an outgoing connector to send messages through the ***systemLoad*** channel to the ***system.load*** topic in the Kafka message broker so that the ***inventory*** microservices can consume the messages. The ***key.serializer*** and ***value.serializer*** properties characterize how to serialize the messages. The ***SystemLoadSerializer*** class implements the logic for turning a ***SystemLoad*** object into JSON and is configured as the ***value.serializer***.
-
-The ***inventory*** microservice uses a similar ***microprofile-config.properties*** configuration to define its required incoming stream.
-
-Create the inventory/microprofile-config.properties file.
-
-> Run the following touch command in your terminal
+When the apps are deployed, run the following command to check the status of your pods:
 ```bash
-touch /home/project/guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties
+kubectl get pods
 ```
 
-
-> Then, to open the microprofile-config.properties file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties"}
-
-
+You'll see an output similar to the following if all the pods are healthy and running:
 
 ```
-mp.messaging.connector.liberty-kafka.bootstrap.servers=kafka:9092
-
-mp.messaging.incoming.systemLoad.connector=liberty-kafka
-mp.messaging.incoming.systemLoad.topic=system.load
-mp.messaging.incoming.systemLoad.key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
-mp.messaging.incoming.systemLoad.value.deserializer=io.openliberty.guides.models.SystemLoad$SystemLoadDeserializer
-mp.messaging.incoming.systemLoad.group.id=system-load-status
+NAME                                    READY     STATUS    RESTARTS   AGE
+system-deployment-6bd97d9bf6-4ccds      1/1       Running   0          15s
+inventory-deployment-645767664f-nbtd9   1/1       Running   0          15s
 ```
 
-
-
-The ***inventory*** microservice uses an incoming connector to receive messages through the ***systemLoad*** channel. The messages were published by the ***system*** microservice to the ***system.load*** topic in the Kafka message broker. The ***key.deserializer*** and ***value.deserializer*** properties define how to deserialize the messages. The ***SystemLoadDeserializer*** class implements the logic for turning JSON into a ***SystemLoad*** object and is configured as the ***value.deserializer***. The ***group.id*** property defines a unique name for the consumer group. A consumer group is a collection of consumers who share a common identifier for the group. You can also view a consumer group as the various machines that ingest from the Kafka topics. All of these properties are required by the [Apache Kafka Producer Configs](https://kafka.apache.org/documentation/#producerconfigs) and [Apache Kafka Consumer Configs](https://kafka.apache.org/documentation/#consumerconfigs).
-
-::page{title="Configuring Liberty"}
-
-To run the services, the Open Liberty on which each service runs needs to be correctly configured. Relevant features, including the [MicroProfile Reactive Messaging feature](https://openliberty.io/docs/ref/feature/#mpReactiveMessaging-3.0.html), must be enabled for the ***system*** and ***inventory*** services.
-
-Create the system/server.xml configuration file.
-
-> Run the following touch command in your terminal
+You can also inspect individual pods in more detail by running the following command:
 ```bash
-touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/liberty/config/server.xml
+kubectl describe pods
 ```
 
-
-> Then, to open the server.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-reactive-messaging/start/system/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-reactive-messaging/start/system/src/main/liberty/config/server.xml"}
+You can also issue the ***kubectl get*** and ***kubectl describe*** commands on other Kubernetes resources, so feel free to inspect all other resources.
 
 
+In this execise, you need to access the services by using the Kubernetes API. Run the following command to start a proxy to the Kubernetes API server:
 
-```xml
-<server description="System Service">
-
-  <featureManager>
-    <platform>jakartaee-10.0</platform>
-    <platform>microprofile-7.0</platform>
-    <feature>cdi</feature>
-    <feature>concurrent</feature>
-    <feature>jsonb</feature>
-    <feature>mpHealth</feature>
-    <feature>mpConfig</feature>
-    <feature>mpReactiveMessaging</feature>
-  </featureManager>
-
-  <variable name="http.port" defaultValue="9083"/>
-  <variable name="https.port" defaultValue="9446"/>
-
-  <httpEndpoint host="*" httpPort="${http.port}"
-      httpsPort="${https.port}" id="defaultHttpEndpoint"/>
-
-  <logging consoleLogLevel="INFO"/>
-  <webApplication location="system.war" contextRoot="/"/>
-</server>
-```
-
-
-
-
-The ***server.xml*** file is already configured for the ***inventory*** microservice.
-
-::page{title="Building and running the application"}
-
-Build the ***system*** and ***inventory*** microservices using Maven and then run them in Docker containers.
-
-Create the Maven configuration file.
-
-> Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
+kubectl proxy
 ```
 
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following commands to store the proxy path of the ***system*** and ***inventory*** services.
+```bash
+SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/system-service/proxy
+INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/inventory-service/proxy
+```
 
-> Then, to open the pom.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-reactive-messaging/start/system/pom.xml, or click the following button
+Run the following echo commands to verify the variables:
 
-::openFile{path="/home/project/guide-microprofile-reactive-messaging/start/system/pom.xml"}
+```bash
+echo $SYSTEM_PROXY && echo $INVENTORY_PROXY
+```
+
+The output appears as shown in the following example:
+
+```
+localhost:8001/api/v1/namespaces/sn-labs-yourname/services/system-service/proxy
+localhost:8001/api/v1/namespaces/sn-labs-yourname/services/inventory-service/proxy
+```
+
+Then, use the following ***curl*** command to access your ***system*** microservice:
+
+```bash
+curl -s http://$SYSTEM_PROXY/system/properties | jq
+```
+
+Also, use the following ***curl*** command to access your ***inventory*** microservice:
+
+```bash
+curl -s http://$INVENTORY_PROXY/inventory/systems/system-service | jq
+```
+
+The ***http://$SYSTEM_PROXY/system/properties*** URL returns system properties and the name of the pod in an HTTP header that is called ***X-Pod-Name***. To view the header, you can use the ***-I*** option in the ***curl*** command when you make a request to the ***http://$SYSTEM_PROXY/system/properties*** URL.
+
+```bash
+curl -I http://$SYSTEM_PROXY/system/properties
+```
+
+The ***http://$INVENTORY_PROXY/inventory/systems/system-service*** URL adds properties from the ***system-service*** endpoint to the inventory Kubernetes Service. Making a request to the ***http://$INVENTORY_PROXY/inventory/systems/[kube-service]*** URL in general adds to the inventory. That result depends on whether the ***kube-service*** endpoint is a valid Kubernetes service that can be accessed.
+
+
+::page{title="Rolling update"}
+
+Without continuous updates, a Kubernetes cluster is susceptible to a denial of a service attack. Rolling updates continually install Kubernetes patches without disrupting the availability of the deployed applications. Update the yaml file as follows to add the ***rollingUpdate*** configuration. 
+
+Replace the Kubernetes configuration file
+
+> To open the kubernetes.yaml file in your IDE, select
+> ***File*** > ***Open*** > guide-kubernetes-intro/start/kubernetes.yaml, or click the following button
+
+::openFile{path="/home/project/guide-kubernetes-intro/start/kubernetes.yaml"}
 
 
 
-```xml
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: system-deployment
+  labels:
+    app: system
+spec:
+  selector:
+    matchLabels:
+      app: system
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: system
+    spec:
+      containers:
+      - name: system-container
+        image: system:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9090
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-deployment
+  labels:
+    app: inventory
+spec:
+  selector:
+    matchLabels:
+      app: inventory
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: inventory
+    spec:
+      containers:
+      - name: inventory-container
+        image: inventory:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9090
+        env:
+        - name: SYS_APP_HOSTNAME
+          value: system-service
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: system-service
+spec:
+  type: NodePort
+  selector:
+    app: system
+  ports:
+  - protocol: TCP
+    port: 9090
+    targetPort: 9090
+    nodePort: 31000
 
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>system</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>war</packaging>
-
-    <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <!-- Liberty configuration -->
-        <liberty.var.http.port>9083</liberty.var.http.port>
-        <liberty.var.https.port>9446</liberty.var.https.port>
-    </properties>
-
-    <dependencies>
-        <!-- Provided dependencies -->
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>10.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>7.0</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.microprofile.reactive.messaging</groupId>
-            <artifactId>microprofile-reactive-messaging-api</artifactId>
-            <version>3.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <!-- Required dependencies -->
-        <dependency>
-            <groupId>io.openliberty.guides</groupId>
-            <artifactId>models</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka-clients</artifactId>
-            <version>3.9.0</version>
-        </dependency>
-        <dependency>
-            <groupId>io.reactivex.rxjava3</groupId>
-            <artifactId>rxjava</artifactId>
-            <version>3.1.10</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>2.0.17</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>2.0.17</version>
-        </dependency>
-        <!-- For tests -->
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>kafka</artifactId>
-            <version>1.21.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.12.2</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>1.21.0</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.4.0</version>
-                <configuration>
-                    <packagingExcludes>pom.xml</packagingExcludes>
-                </configuration>
-            </plugin>
-
-            <!-- Liberty plugin -->
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.11.3</version>
-                <configuration>
-                    <!-- devc config -->
-                    <containerRunOpts>
-                        -p 9085:9085
-                        --network=reactive-app
-                    </containerRunOpts>
-                </configuration>
-            </plugin>
-
-            <!-- Plugin to run unit tests -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.3</version>
-            </plugin>
-
-            <!-- Plugin to run integration tests -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.3</version>
-                <executions>
-                    <execution>
-                        <id>integration-test</id>
-                        <goals>
-                            <goal>integration-test</goal>
-                        </goals>
-                        <configuration>
-                            <trimStackTrace>false</trimStackTrace>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>verify</id>
-                        <goals>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-</project>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service
+spec:
+  type: NodePort
+  selector:
+    app: inventory
+  ports:
+  - protocol: TCP
+    port: 9090
+    targetPort: 9090
+    nodePort: 32000
 ```
 
 
 
-The ***pom.xml*** file lists the ***microprofile-reactive-messaging-api***, ***kafka-clients***, and ***rxjava*** dependencies.
+The ***rollingUpdate*** configuration has two attributes, ***maxUnavailable*** and ***maxSurge***. The ***maxUnavailable*** attribute specifies the the maximum number of Kubernetes pods that can be unavailable during the update process. Similarly, the ***maxSurge*** attribute specifies the maximum number of additional pods that can be created during the update process.
 
-The ***microprofile-reactive-messaging-api*** dependency is needed to enable the use of MicroProfile Reactive Messaging API. The ***kafka-clients*** dependency is added because the application needs a Kafka client to connect to the Kafka broker. The ***rxjava*** dependency is used for creating events at regular intervals.
+The ***readinessProbe*** allows Kubernetes to know whether the service is ready to handle requests. The readiness health check classes for the ***/health/ready*** endpoint to the ***inventory*** and ***system*** services are provided for you. If you want to learn more about how to use health checks in Kubernetes, check out the [Kubernetes-microprofile-health](https://openliberty.io/guides/kubernetes-microprofile-health.html) guide. 
 
-Start your Docker environment. Dockerfiles are provided for you to use.
+Update the image names and remove the ***nodePort*** fields by running the following commands:
+```bash
+cd /home/project/guide-kubernetes-intro/start
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=nodePort: 31000==g' kubernetes.yaml
+sed -i 's=nodePort: 32000==g' kubernetes.yaml
+```
 
-To build the application, run the Maven ***install*** and ***package*** goals from the command line in the ***start*** directory:
+Run the following command to deploy the ***inventory*** and ***system*** microservices with the new configuration:
+```bash
+kubectl apply -f kubernetes.yaml
+```
+
+Run the following command to check the status of your pods are ready and running:
+```bash
+kubectl get pods
+```
+
+::page{title="Scaling a deployment"}
+
+To use load balancing, you need to scale your deployments. When you scale a deployment, you replicate its pods, creating more running instances of your applications. Scaling is one of the primary advantages of Kubernetes because you can replicate your application to accommodate more traffic, and then descale your deployments to free up resources when the traffic decreases.
+
+As an example, scale the ***system*** deployment to three pods by running the following command:
+```bash
+kubectl scale deployment/system-deployment --replicas=3
+```
+
+Use the following command to verify that two new pods have been created.
+```bash
+kubectl get pods
+```
+
+```
+NAME                                    READY     STATUS    RESTARTS   AGE
+system-deployment-6bd97d9bf6-4ccds      1/1       Running   0          1m
+system-deployment-6bd97d9bf6-jf9rs      1/1       Running   0          25s
+system-deployment-6bd97d9bf6-x4zth      1/1       Running   0          25s
+inventory-deployment-645767664f-nbtd9   1/1       Running   0          1m
+```
+
+
+Wait for your two new pods to be in the ready state, then make the following ***curl*** command:
+
+```bash
+curl -I http://$SYSTEM_PROXY/system/properties
+```
+
+Notice that the ***X-Pod-Name*** header has a different value when you call it multiple times. The value changes because three pods that all serve the ***system*** application are now running. Similarly, to descale your deployments you can use the same scale command with fewer replicas.
+
+```bash
+kubectl scale deployment/system-deployment --replicas=1
+```
+
+::page{title="Redeploy microservices"}
+
+When you're building your application, you might want to quickly test a change. To run a quick test, you can rebuild your Docker images then delete and re-create your Kubernetes resources. Note that there is only one ***system*** pod after you redeploy because you're deleting all of the existing pods.
 
 
 ```bash
-./mvnw -pl models install
-./mvnw package
-```
+cd /home/project/guide-kubernetes-intro/start
+kubectl delete -f kubernetes.yaml
 
-
-
-Run the following commands to containerize the microservices:
-
-```bash
+./mvnw clean package
 docker build -t system:1.0-SNAPSHOT system/.
 docker build -t inventory:1.0-SNAPSHOT inventory/.
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+
+kubectl apply -f kubernetes.yaml
 ```
 
-Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It also creates containers for Kafka and the microservices in the project. For simplicity, the script starts one instance of the system service.
+Updating your applications in this way is fine for development environments, but it is not suitable for production. If you want to deploy an updated image to a production cluster, you can update the container in your deployment with a new image. Once the new container is ready, Kubernetes automates both the creation of a new container and the decommissioning of the old one.
 
+
+::page{title="Testing microservices that are running on Kubernetes"}
+
+A few tests are included for you to test the basic functionality of the microservices. If a test failure occurs, then you might have introduced a bug into the code.  To run the tests, wait for all pods to be in the ready state before proceeding further. The default properties defined in the ***pom.xml*** are:
+
+| *Property*                        | *Description*
+| ---| ---
+| ***system.kube.service***       | Name of the Kubernetes Service wrapping the ***system*** pods, ***system-service*** by default.
+| ***system.service.root***       | The Kubernetes Service ***system-service*** root path, ***localhost:31000*** by default.
+| ***inventory.service.root*** | The Kubernetes Service ***inventory-service*** root path, ***localhost:32000*** by default.
+
+Navigate back to the ***start*** directory.
+
+
+Update the ***pom.xml*** files so that the ***system.service.root*** and ***inventory.service.root*** properties match the values to access the ***system*** and **inventory*** services.
 
 ```bash
-./scripts/startContainers.sh
+sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' inventory/pom.xml
+sed -i 's=localhost:32000='"$INVENTORY_PROXY"'=g' inventory/pom.xml
+sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' system/pom.xml
 ```
 
-::page{title="Testing the application"}
-
-The application might take some time to become available. After the application is up and running, you can access it by making a GET request to the ***/systems*** endpoint of the ***inventory*** service. 
-
-
-
-Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
-
-
-Visit the ***http\://localhost:9085/health*** URL to confirm that the ***inventory*** microservice is up and running.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
+Run the integration tests by using the following command:
 
 ```bash
-curl -s http://localhost:9085/health | jq
+./mvnw failsafe:integration-test
 ```
 
-
-
-
-When both the liveness and readiness health checks are up, go to the ***http\://localhost:9085/inventory/systems*** URL to access the ***inventory*** microservice.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9085/inventory/systems | jq
-```
-
-
-You see the CPU ***systemLoad*** property for all the systems:
+If the tests pass, you'll see an output similar to the following for each service respectively:
 
 ```
-{
-   "hostname":"30bec2b63a96",
-   "systemLoad":2.25927734375
-}
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.372 s - in it.io.openliberty.guides.system.SystemEndpointIT
+
+Results:
+
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
 ```
 
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.714 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
 
-You can revisit the ***http\://localhost:9085/inventory/systems*** URL after a while, and you will notice the CPU ***systemLoad*** property for the systems changed.
+Results:
 
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9085/inventory/systems | jq
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-
-
-You can use the ***http://localhost:9085/inventory/systems/{hostname}*** URL to see the CPU ***systemLoad*** property for one particular system.
-
-In the following example, the ***30bec2b63a96*** value is the ***hostname***. If you go to the ***http://localhost:9085/inventory/systems/30bec2b63a96*** URL, you can see the CPU ***systemLoad*** property only for the ***30bec2b63a96*** ***hostname***:
-
-```
-{
-   "hostname":"30bec2b63a96",
-   "systemLoad":2.25927734375
-}
-```
 
 ::page{title="Tearing down the environment"}
 
-Run the following script to stop the application:
+Press **CTRL+C** to stop the proxy server that was started at step 6 ***Deploying the microservices***.
 
-
+When you no longer need your deployed microservices, you can delete all Kubernetes resources by running the ***kubectl delete*** command:
 ```bash
-./scripts/stopContainers.sh
+kubectl delete -f kubernetes.yaml
 ```
+
+
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just developed a reactive Java application using MicroProfile Reactive Messaging, Open Liberty, and Kafka.
+You have just deployed two microservices that are running in Open Liberty to Kubernetes. You then scaled a microservice and ran integration tests against miroservices that are running in a Kubernetes cluster.
+
 
 
 
@@ -651,30 +584,31 @@ You just developed a reactive Java application using MicroProfile Reactive Messa
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-microprofile-reactive-messaging*** project by running the following commands:
+Delete the ***guide-kubernetes-intro*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-microprofile-reactive-messaging
+rm -fr guide-kubernetes-intro
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20reactive%20Java%20microservices&guide-id=cloud-hosted-guide-microprofile-reactive-messaging)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Deploying%20microservices%20to%20Kubernetes&guide-id=cloud-hosted-guide-kubernetes-intro)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-kubernetes-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-kubernetes-intro/pulls)
 
 
 
 ### Where to next?
 
-* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
+* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+* [Managing microservice traffic using Istio](https://openliberty.io/guides/istio-intro.html)
 
 
 ### Log out of the session
