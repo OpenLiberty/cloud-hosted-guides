@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Configuring microservices running in Kubernetes guide!"}
+::page{title="Welcome to the Building a web application with Maven guide!"}
 
-Explore how to externalize configuration using MicroProfile Config and configure your microservices using Kubernetes ConfigMaps and Secrets.
+Learn how to build and test a simple web application using Maven and Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -15,14 +15,37 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 ::page{title="What you'll learn"}
-You will learn how and why to externalize your microservice's configuration. Externalized configuration is useful because configuration usually changes depending on your environment. You will also learn how to configure the environment by providing required values to your application using Kubernetes.
 
-MicroProfile Config provides useful annotations that you can use to inject configured values into your code. These values can come from any configuration source, such as environment variables. Using environment variables allows for easier deployment to different environments. To learn more about MicroProfile Config, read the [Configuring microservices](https://openliberty.io/guides/microprofile-config.html) guide.
+You will learn how to configure a simple web servlet application using [Maven](https://maven.apache.org/what-is-maven.html) and the [Liberty Maven plugin](https://github.com/OpenLiberty/ci.maven/blob/main/README.md). When you compile and build the application code, Maven downloads and installs Open Liberty. If you run the application, Maven creates an Open Liberty instance and runs the application on it. The application displays a simple web page with a link that, when clicked, calls the servlet to return a simple response of ***Hello! How are you today?***.
 
-Furthermore, you'll learn how to set these environment variables with ConfigMaps and Secrets. These resources are provided by Kubernetes and act as a data source for your environment variables. You can use a ConfigMap or Secret to set environment variables for any number of containers.
+One benefit of using a build tool like Maven is that you can define the details of the project and any dependencies it has, and Maven automatically downloads and installs the dependencies. Another benefit of using Maven is that it can run repeatable, automated tests on the application. You can, of course, test your application manually by starting a Liberty instance and pointing a web browser at the application URL. However, automated tests are a much better approach because you can easily rerun the same tests each time the application is built. If the tests don't pass after you change the application, the build fails, and you know that you introduced a regression that requires a fix to your code. 
 
+Choosing a build tool often comes down to personal or organizational preference, but you might choose to use Maven for several reasons. Maven defines its builds by using XML, which is probably familiar to you already. As a mature, commonly used build tool, Maven probably integrates with whichever IDE you prefer to use. Maven also has an extensive plug-in library that offers various ways to quickly customize your build. Maven can be a good choice if your team is already familiar with it. 
+
+You will create a Maven build definition file that's called a ***pom.xml*** file, which stands for Project Object Model, and use it to build your web application. You will then create a simple, automated test and configure Maven to automatically run the test.
+
+
+::page{title="Installing Maven"}
+
+
+Run the following command to test that Maven Wrapper is installed:
+
+
+```bash
+cd finish
+./mvnw --version
+```
+
+If Maven Wrapper is installed properly, you see information about the Maven installation similar to the following example:
+
+```
+Apache Maven 3.9.6 (05c21c65bdfed0f71a2f2ada8b84da59348c4c5d)
+Maven home: /Applications/Maven/apache-maven-3.9.6
+Java version: 11.0.12, vendor: International Business Machines Corporation, runtime: /Library/Java/JavaVirtualMachines/ibm-semeru-open-11.jdk/Contents/Home
+Default locale: en_US, platform encoding: UTF-8
+OS name: "mac os x", version: "11.6", arch: "x86_64", family: "mac"
+```
 
 ::page{title="Getting started"}
 
@@ -35,11 +58,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-microprofile-config.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-maven-intro.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-kubernetes-microprofile-config.git
-cd guide-kubernetes-microprofile-config
+git clone https://github.com/openliberty/guide-maven-intro.git
+cd guide-maven-intro
 ```
 
 
@@ -48,619 +71,356 @@ The ***start*** directory contains the starting project that you will build upon
 The ***finish*** directory contains the finished project that you will build.
 
 
-::page{title="Deploying the microservices"}
+### Try what you'll build
 
-The two microservices you will deploy are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of the running container. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This demonstrates how communication can be established between pods inside a cluster. To build these applications, navigate to the ***start*** directory and run the following command.
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-
-```bash
-cd start
-./mvnw clean package
-```
-
-
-
-Next, run the ***docker build*** commands to build container images for your application:
-```bash
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-```
-
-The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
-
-Push your images to the container registry on IBM Cloud with the following commands:
+To try out the application, first go to the ***finish*** directory and run Maven with the ***liberty:run*** goal to build the application and deploy it to Open Liberty:
 
 ```bash
-docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
-docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+cd finish
+./mvnw liberty:run
 ```
 
-Update the image names and set the image pull policy to **Always** so that the images in your IBM Cloud container registry are used, and remove the **nodePort** fields so that the ports can be automatically generated:
+After you see the following message, your Liberty instance is ready.
+
+```
+The guideServer server is ready to run a smarter planet.
+```
+
+
+Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session. Run the following curl command to view the output of the application: 
+```bash
+curl -s http://localhost:9080/ServletSample/servlet
+```
+
+The servlet returns a simple response of ***Hello! How are you today?***.
+
+After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=nodePort: 31000==g' kubernetes.yaml
-sed -i 's=nodePort: 32000==g' kubernetes.yaml
+./mvnw liberty:stop
 ```
 
-Run the following command to deploy the necessary Kubernetes resources to serve the applications.
+
+::page{title="Creating a simple application"}
+
+The simple web application that you will build using Maven and Open Liberty is provided for you in the ***start*** directory so that you can focus on learning about Maven. This application uses a standard Maven directory structure, eliminating the need to customize the ***pom.xml*** file so that Maven understands your project layout.
+
+All the application source code, including the Open Liberty ***server.xml*** configuration file, is in the ***src/main/liberty/config*** directory:
+
+```
+    └── src
+        └── main
+           └── java
+           └── resources
+           └── webapp
+           └── liberty
+                  └── config
+```
+
+
+::page{title="Creating the project POM file"}
+Navigate to the ***start*** directory to begin.
 ```bash
-kubectl apply -f kubernetes.yaml
+cd /home/project/guide-maven-intro/start
 ```
 
-When this command finishes, wait for the pods to be in the Ready state. Run the following command to view the status of the pods.
+Before you can build the project, define the Maven Project Object Model (POM) file, the ***pom.xml***. 
+
+Create the pom.xml file in the ***start*** directory.
+
+> Run the following touch command in your terminal
 ```bash
-kubectl get pods
+touch /home/project/guide-maven-intro/start/pom.xml
 ```
 
-When the pods are ready, the output shows ***1/1*** for READY and ***Running*** for STATUS.
 
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-6bd97d9bf6-6d2cj     1/1       Running   0          34s
-inventory-deployment-645767664f-7gnxf  1/1       Running   0          34s
-```
+> Then, to open the pom.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-maven-intro/start/pom.xml, or click the following button
 
-After the pods are ready, you will make requests to your services.
-
-
-In this IBM cloud environment, you need to set up port forwarding to access the services. Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following commands to set up port forwarding to access the **system** service.
-```bash
-SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
-kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9090
-```
-
-Then, open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following commands to set up port forwarding to access the **inventory** service.
-```bash
-INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
-kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9090
-```
-
-Then use the following commands to access your **system** microservice. The ***-u*** option is used to pass in the username ***bob*** and the password ***bobpwd***.
-```bash
-SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
-curl -s http://localhost:$SYSTEM_NODEPORT/system/properties -u bob:bobpwd | jq
-```
-
-Use the following commands to access your ***inventory*** microservice.
-```bash
-INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
-curl -s http://localhost:$INVENTORY_NODEPORT/inventory/systems/system-service | jq
-```
-
-When you're done trying out the microservices, press **CTRL+C** in the command line sessions where you ran the ***kubectl port-forward*** commands to stop the port forwarding.
-
-::page{title="Modifying system microservice"}
-
-The ***system*** service is hardcoded to use a single forward slash as the context root. The context root is set in the ***webApplication***
-element, where the ***contextRoot*** attribute is specified as ***"/"***. You'll make the value of the ***contextRoot*** attribute configurable by implementing it as a variable.
-
-Replace the ***server.xml*** file.
-
-> To open the server.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-kubernetes-microprofile-config/start/system/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-kubernetes-microprofile-config/start/system/src/main/liberty/config/server.xml"}
+::openFile{path="/home/project/guide-maven-intro/start/pom.xml"}
 
 
 
 ```xml
-<server description="Sample Liberty server">
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-  <featureManager>
-    <platform>jakartaee-10.0</platform>
-    <platform>microprofile-7.0</platform>
-    <feature>restfulWS</feature>
-    <feature>jsonb</feature>
-    <feature>cdi</feature>
-    <feature>jsonp</feature>
-    <feature>mpConfig</feature>
-    <feature>mpHealth</feature>
-    <feature>appSecurity</feature>
-  </featureManager>
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>ServletSample</artifactId>
+    <packaging>war</packaging>
+    <version>1.0-SNAPSHOT</version>
 
-  <variable name="http.port" defaultValue="9090"/>
-  <variable name="https.port" defaultValue="9453"/>
-  <variable name="system.app.username" defaultValue="bob"/>
-  <variable name="system.app.password" defaultValue="bobpwd"/>
-  <variable name="context.root" defaultValue="/"/>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <!-- Liberty configuration -->
+        <liberty.var.http.port>9080</liberty.var.http.port>
+        <liberty.var.https.port>9443</liberty.var.https.port>
+        <liberty.var.app.context.root>${project.artifactId}</liberty.var.app.context.root>
+    </properties>
 
-  <httpEndpoint host="*" httpPort="${http.port}" 
-    httpsPort="${https.port}" id="defaultHttpEndpoint" />
+    <dependencies>
+        <!-- Provided dependencies -->
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>10.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>7.0</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <!-- For testing -->
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.14</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.12.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
-  <webApplication location="guide-kubernetes-microprofile-config-system.war" contextRoot="${context.root}"/>
-
-  <basicRegistry id="basic" realm="BasicRegistry">
-    <user name="${system.app.username}" password="${system.app.password}" />
-  </basicRegistry>
-
-</server>
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.4.0</version>
+            </plugin>
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.11.3</version>
+                <configuration>
+                    <serverName>guideServer</serverName>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.5.3</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <http.port>${liberty.var.http.port}</http.port>
+                        <war.name>${liberty.var.app.context.root}</war.name>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
 ```
 
 
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-The ***contextRoot*** attribute in the ***webApplication*** element now gets its value from the ***context.root*** variable. To find a value for the ***context.root*** variable, Open Liberty looks for the following environment variables, in order:
+The ***pom.xml*** file starts with a root ***project*** element and a ***modelversion*** element, which is always set to ***4.0.0***. 
+
+A typical POM for a Liberty application contains the following sections:
+
+* **Project coordinates**: The identifiers for this application.
+* **Properties** (***properties***): Any properties for the project go here, including compilation details and any values that are referenced during compilation of the Java source code and generating the application.
+* **Dependencies** (***dependencies***): Any Java dependencies that are required for compiling, testing, and running the application are listed here.
+* **Build plugins** (***build***): Maven is modular and each of its capabilities is provided by a separate plugin. This is where you specify which Maven plugins should be used to build this project and any configuration information needed by those plugins.
+
+The project coordinates describe the name and version of the application. The ***artifactId*** gives a name to the web application project, which is used to name the output files that are generated by the build (e.g. the WAR file) and the Open Liberty instance that is created. You'll notice that other fields in the ***pom.xml*** file use variables that are resolved by the ***artifactId*** field. This is so that you can update the name of the sample application, including files generated by Maven, in a single place in the ***pom.xml*** file. The value of the ***packaging*** field is ***war*** so that the project output artifact is a WAR file.
+
+The first four properties in the properties section of the project, just define the encoding (***UTF-8***) and version of Java (***Java 11***) that Maven uses to compile the application source code.
+
+Open Liberty configuration properties provide you with a single place to specify values that are used in multiple places throughout the application. For example, the ***http.port*** value is used in both the Liberty ***server.xml*** configuration file and will be used in the test class that you will add (***EndpointIT.java***) to the application. Because the ***http.port*** value is specified in the ***pom.xml*** file, you can easily change the port number that the Liberty instance runs on without updating the application code in multiple places.
 
 
-* `context.root`
-* `context_root`
-* `CONTEXT_ROOT`
+The ***HelloServlet.java*** class depends on ***jakarta.jakartaee-api*** to compile. Maven will download this dependency from the Maven Central repository using the ***groupId***, ***artifactId***, and ***version*** details that you provide here. The dependency is set to ***provided***, which means that the API is in the Liberty runtime and doesn't need to be packaged by the application.
 
-::page{title="Modifying inventory microservice"}
+The ***build*** section gives details of the two plugins that Maven uses to build this project.
 
-The ***inventory*** service is hardcoded to use ***bob*** and ***bobpwd*** as the credentials to authenticate against the ***system*** service. You'll make these credentials configurable. 
+* The Maven plugin for generating a WAR file as one of the output files.
+* The Liberty Maven plug-in, which allows you to install applications into Open Liberty and manage the associated Liberty instances.
 
-Replace the ***SystemClient*** class.
+In the ***liberty-maven-plugin*** plug-in section, you can add a ***configuration*** element to specify Open Liberty configuration details. For example, the ***serverName*** field defines the name of the Open Liberty instance that Maven creates. You specified ***guideServer*** as the value for ***serverName***. If the ***serverName*** field is not included, the default value is ***defaultServer***.
 
-> To open the SystemClient.java file in your IDE, select
-> ***File*** > ***Open*** > guide-kubernetes-microprofile-config/start/inventory/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java, or click the following button
 
-::openFile{path="/home/project/guide-kubernetes-microprofile-config/start/inventory/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java"}
+
+::page{title="Running the application"}
+
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+
+```bash
+./mvnw liberty:dev
+```
+
+After you see the following message, your Liberty instance is ready in dev mode:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+
+
+Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session. Run the following curl command to view the output of the application: 
+```bash
+curl -s http://localhost:9080/ServletSample/servlet
+```
+
+The servlet returns a simple response of ***Hello! How are you today?***.
+
+::page{title="Testing the web application"}
+
+One of the benefits of building an application with Maven is that Maven can be configured to run a set of tests. You can write tests for the individual units of code outside of a running Liberty instance (unit tests), or you can write them to call the Liberty instance directly (integration tests). In this example you will create a simple integration test that checks that the web page opens and that the correct response is returned when the link is clicked.
+
+Create the ***EndpointIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java  
+```
+
+
+> Then, to open the EndpointIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java, or click the following button
+
+::openFile{path="/home/project/guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java"}
 
 
 
 ```java
-package io.openliberty.guides.inventory.client;
+package io.openliberty.guides.hello.it;
 
-import java.net.URI;
-import java.util.Base64;
-import java.util.Properties;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import jakarta.enterprise.context.RequestScoped;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.Invocation.Builder;
-import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
-@RequestScoped
-public class SystemClient {
+public class EndpointIT {
+    private static String siteURL;
 
-  private final String SYSTEM_PROPERTIES = "/system/properties";
-  private final String PROTOCOL = "http";
-
-  @Inject
-  @ConfigProperty(name = "CONTEXT_ROOT", defaultValue = "")
-  String CONTEXT_ROOT;
-
-  @Inject
-  @ConfigProperty(name = "http.port")
-  String HTTP_PORT;
-
-  @Inject
-  @ConfigProperty(name = "SYSTEM_APP_USERNAME")
-  private String username;
-
-  @Inject
-  @ConfigProperty(name = "SYSTEM_APP_PASSWORD")
-  private String password;
-
-  public Properties getProperties(String hostname) {
-    Properties properties = null;
-    Client client = ClientBuilder.newClient();
-    try {
-        Builder builder = getBuilder(hostname, client);
-        properties = getPropertiesHelper(builder);
-    } catch (Exception e) {
-        System.err.println(
-        "Exception thrown while getting properties: " + e.getMessage());
-    } finally {
-        client.close();
+    @BeforeAll
+    public static void init() {
+        String port = System.getProperty("http.port");
+        String war = System.getProperty("war.name");
+        siteURL = "http://localhost:" + port + "/" + war + "/" + "servlet";
     }
-    return properties;
-  }
 
-  private Builder getBuilder(String hostname, Client client) throws Exception {
-    URI uri = new URI(
-                  PROTOCOL, null, hostname, Integer.valueOf(HTTP_PORT),
-                  CONTEXT_ROOT + SYSTEM_PROPERTIES, null, null);
-    String urlString = uri.toString();
-    Builder builder = client.target(urlString).request();
-    builder.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-           .header(HttpHeaders.AUTHORIZATION, getAuthHeader());
-    return builder;
-  }
+    @Test
+    public void testServlet() throws Exception {
 
-  private Properties getPropertiesHelper(Builder builder) throws Exception {
-    Response response = builder.get();
-    if (response.getStatus() == Status.OK.getStatusCode()) {
-        return response.readEntity(Properties.class);
-    } else {
-        System.err.println("Response Status is not OK.");
-        return null;
+        CloseableHttpClient client = HttpClientBuilder.create().build();
+        HttpGet httpGet = new HttpGet(siteURL);
+        CloseableHttpResponse response = null;
+
+        try {
+            response = client.execute(httpGet);
+
+            int statusCode = response.getStatusLine().getStatusCode();
+            assertEquals(HttpStatus.SC_OK, statusCode, "HTTP GET failed");
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(
+                                        response.getEntity().getContent()));
+            String line;
+            StringBuffer buffer = new StringBuffer();
+            while ((line = reader.readLine()) != null) {
+                buffer.append(line);
+            }
+            reader.close();
+            assertTrue(buffer.toString().contains("Hello! How are you today?"),
+                "Unexpected response body: " + buffer.toString());
+        } finally {
+            response.close();
+            httpGet.releaseConnection();
+        }
     }
-  }
-
-  private String getAuthHeader() {
-    String usernamePassword = username + ":" + password;
-    String encoded = Base64.getEncoder().encodeToString(usernamePassword.getBytes());
-    return "Basic " + encoded;
-  }
 }
 ```
 
 
 
-The changes introduced here use MicroProfile Config and CDI to inject the value of the environment variables ***CONTEXT_ROOT***, ***SYSTEM_APP_USERNAME*** and ***SYSTEM_APP_PASSWORD*** into the ***SystemClient*** class.
+The test class name ends in ***IT*** to indicate that it contains an integration test. 
+
+Maven is configured to run the integration test using the ***maven-failsafe-plugin***. The ***systemPropertyVariables*** section defines some variables that the test class uses. The test code needs to know where to find the application that it is testing. While the port number and context root information can be hardcoded in the test class, it is better to specify it in a single place like the Maven ***pom.xml*** file because this information is also used by other files in the project. The ***systemPropertyVariables*** section passes these details to the Java test program as a series of system properties, resolving the ***http.port*** and ***war.name*** variables.
 
 
-::page{title="Creating a ConfigMap and Secret"}
+The following lines in the ***EndpointIT*** test class uses these system variables to build up the URL of the application.
 
-Several options exist to configure an environment variable in a Docker container. You can set it directly in the ***Dockerfile*** with the ***ENV*** command. You can also set it in your ***kubernetes.yaml*** file by specifying a name and a value for the environment variable that you want to set for a specific container. With these options in mind, you're going to use a ConfigMap and Secret to set these values. These are resources provided by Kubernetes as a way to provide configuration values to your containers. A benefit is that they can be reused across many different containers, even if they all require different environment variables to be set with the same value.
+In the test class, after defining how to build the application URL, the ***@Test*** annotation indicates the start of the test method.
 
-Create a ConfigMap to configure the app name with the following ***kubectl*** command.
-```bash
-kubectl create configmap sys-app-root --from-literal contextRoot=/dev
+In the ***try block*** of the test method, an HTTP ***GET*** request to the URL of the application returns a status code. If the response to the request includes the string ***Hello! How are you today?***, the test passes. If that string is not in the response, the test fails.  The HTTP client then disconnects from the application.
+
+In the ***import*** statements of this test class, you'll notice that the test has some new dependencies. Before the test can be compiled by Maven, you need to update the ***pom.xml*** to include these dependencies.
+
+The Apache ***httpclient*** and ***junit-jupiter-engine*** dependencies are needed to compile and run the integration test ***EndpointIT*** class. The scope for each of the dependencies is set to ***test*** because the libraries are needed only during the Maven build and do not needed to be packaged with the application.
+
+Now, the created WAR file contains the web application, and dev mode can run any integration test classes that it finds. Integration test classes are classes with names that end in ***IT***.
+
+The directory structure of the project should now look like this:
+
 ```
-
-This command deploys a ConfigMap named ***sys-app-root*** to your cluster. It has a key called ***contextRoot*** with a value of ***/dev***. The ***--from-literal*** flag allows you to specify individual key-value pairs to store in this ConfigMap. Other available options, such as ***--from-file*** and ***--from-env-file***, provide more versatility as to what you want to configure. Details about these options can be found in the [Kubernetes CLI documentation](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#-em-configmap-em-).
-
-Run the following command to display details of the ConfigMap.
-```bash
-kubectl describe configmaps sys-app-root
-```
-
-Create a Secret to configure the new credentials that ***inventory*** uses to authenticate against ***system*** with the following ***kubectl*** command.
-```bash
-kubectl create secret generic sys-app-credentials --from-literal username=alice --from-literal password=wonderland
-```
- 
-This command looks similar to the command to create a ConfigMap, but one difference is the word ***generic***. This word creates a Secret that doesn't store information in any specialized way. Different types of secrets are available, such as secrets to store Docker credentials and secrets to store public and private key pairs.
-
-Run the following command to display details of the Secret.
-```bash
-kubectl describe secrets/sys-app-credentials
-```
-
-A Secret is similar to a ConfigMap. A key difference is that a Secret is used for confidential information such as credentials. One of the main differences is that you must explicitly tell ***kubectl*** to show you the contents of a Secret. Additionally, when it does show you the information, it only shows you a Base64 encoded version so that a casual onlooker doesn't accidentally see any sensitive data. Secrets don't provide any encryption by default, that is something you'll either need to do yourself or find an alternate option to configure. Encryption is not required for the application to run.
-
-
-
-::page{title="Updating Kubernetes resources"}
-
-Next, you will update your Kubernetes deployments to set the environment variables in your containers based on the values that are configured in the ConfigMap and Secret that you created previously. 
-
-Replace the kubernetes file.
-
-> To open the kubernetes.yaml file in your IDE, select
-> ***File*** > ***Open*** > guide-kubernetes-microprofile-config/start/kubernetes.yaml, or click the following button
-
-::openFile{path="/home/project/guide-kubernetes-microprofile-config/start/kubernetes.yaml"}
-
-
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: system-deployment
-  labels:
-    app: system
-spec:
-  selector:
-    matchLabels:
-      app: system
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
-  template:
-    metadata:
-      labels:
-        app: system
-    spec:
-      containers:
-      - name: system-container
-        image: system:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9090
-        # system probes
-        startupProbe:
-          httpGet:
-            path: /health/started
-            port: 9090
-        livenessProbe:
-          httpGet:
-            path: /health/live
-            port: 9090
-          initialDelaySeconds: 60
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
-        readinessProbe:
-           httpGet:
-            path: /health/ready
-            port: 9090
-           initialDelaySeconds: 30
-           periodSeconds: 10
-           timeoutSeconds: 3
-           failureThreshold: 1
-        # Set the environment variables
-        env:
-        - name: CONTEXT_ROOT
-          valueFrom:
-            configMapKeyRef:
-              name: sys-app-root
-              key: contextRoot
-        - name: SYSTEM_APP_USERNAME
-          valueFrom:
-            secretKeyRef:
-              name: sys-app-credentials
-              key: username
-        - name: SYSTEM_APP_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: sys-app-credentials
-              key: password
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: inventory-deployment
-  labels:
-    app: inventory
-spec:
-  selector:
-    matchLabels:
-      app: inventory
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
-  template:
-    metadata:
-      labels:
-        app: inventory
-    spec:
-      containers:
-      - name: inventory-container
-        image: inventory:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9090
-        # inventory probes
-        startupProbe:
-          httpGet:
-            path: /health/started
-            port: 9090
-        livenessProbe:
-          httpGet:
-            path: /health/live
-            port: 9090
-          initialDelaySeconds: 60
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
-        readinessProbe:
-          httpGet:
-            path: /health/ready
-            port: 9090
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
-        # Set the environment variables
-        env:
-        - name: SYS_APP_HOSTNAME
-          value: system-service
-        - name: CONTEXT_ROOT
-          valueFrom:
-            configMapKeyRef:
-              name: sys-app-root
-              key: contextRoot
-        - name: SYSTEM_APP_USERNAME
-          valueFrom:
-            secretKeyRef:
-              name: sys-app-credentials
-              key: username
-        - name: SYSTEM_APP_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: sys-app-credentials
-              key: password
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: system-service
-spec:
-  type: NodePort
-  selector:
-    app: system
-  ports:
-  - protocol: TCP
-    port: 9090
-    targetPort: 9090
-    nodePort: 31000
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: inventory-service
-spec:
-  type: NodePort
-  selector:
-    app: inventory
-  ports:
-  - protocol: TCP
-    port: 9090
-    targetPort: 9090
-    nodePort: 32000
+    └── src
+        ├── main
+        │  └── java
+        │  └── resources
+        │  └── webapp
+        │  └── liberty
+        │         └── config
+        └── test
+            └── java
 ```
 
 
+### Running the tests
 
-The ***CONTEXT_ROOT***, ***SYSTEM_APP_USERNAME***, and ***SYSTEM_APP_PASSWORD*** environment variables are set in the ***env*** sections of ***system-container*** and ***inventory-container***.
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
 
-Using the ***valueFrom*** field, you can specify the value of an environment variable from various sources. These sources include a ConfigMap, a Secret, and information about the cluster. In this example ***configMapKeyRef*** gets the value ***contextRoot*** from the ***sys-app-root*** ConfigMap. Similarly, ***secretKeyRef*** gets the values ***username*** and ***password*** from the ***sys-app-credentials*** Secret.
-
-
-::page{title="Deploying your changes"}
-
-
-Rebuild the application using Maven ***clean package***.
-```bash
-cd /home/project/guide-kubernetes-microprofile-config/start
-./mvnw clean package
-```
-
-Run the ***docker build*** commands to rebuild container images for your application:
-```bash
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-```
-
-
-Push your updated images to the container registry on IBM Cloud with the following commands:
-
-```bash
-docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
-docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
-```
-
-Update the image names and set the image pull policy to **Always** so that the images in your IBM Cloud container registry are used, and remove the **nodePort** fields so that the ports can be automatically generated:
-
-```bash
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=nodePort: 31000==g' kubernetes.yaml
-sed -i 's=nodePort: 32000==g' kubernetes.yaml
-```
-
-Run the following command to deploy your changes to the Kubernetes cluster.
-```bash
-kubectl replace --force -f kubernetes.yaml
-```
-
-When this command finishes, wait for the pods to be in the Ready state. Run the following command to view the status of the pods.
-```bash
-kubectl get pods
-```
-
-When the pods are ready, the output shows ***1/1*** for READY and ***Running*** for STATUS.
-
-
-Set up port forwarding to the new services.
-
-Run the following commands to set up port forwarding to access the ***system*** service.
-
-```bash
-SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
-kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9090
-```
-
-Then, run the following commands to set up port forwarding to access the **inventory** service.
-
-```bash
-INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
-kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9090
-```
-
-You now need to use the new username, ***alice***, and the new password, ***wonderland***, to log in. Access your application with the following commands:
-
-```bash
-SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
-curl -s http://localhost:$SYSTEM_NODEPORT/dev/system/properties -u alice:wonderland | jq
-```
-
-Notice that the URL you are using to reach the application now has ***/dev*** as the context root. 
-
-
-Verify the inventory service is working as intended by using the following commands:
-
-```bash
-INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
-curl -s http://localhost:$INVENTORY_NODEPORT/inventory/systems/system-service | jq
-```
-
-If it is not working, then check the configuration of the credentials.
-
-::page{title="Testing the microservices"}
-
-
-
-Update the ***pom.xml*** files so that the ***system.service.root*** and ***inventory.service.root*** properties have the correct ports to access the **system** and **inventory** services.
-
-```bash
-cd /home/project/guide-kubernetes-microprofile-config/start
-SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
-INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
-sed -i 's=localhost:31000='"localhost:$SYSTEM_NODEPORT"'=g' inventory/pom.xml
-sed -i 's=localhost:32000='"localhost:$INVENTORY_NODEPORT"'=g' inventory/pom.xml
-sed -i 's=localhost:31000='"localhost:$SYSTEM_NODEPORT"'=g' system/pom.xml
-```
-
-Run the integration tests by using the following command:
-
-```bash
-./mvnw failsafe:integration-test \
-    -Dsystem.service.root=localhost:$SYSTEM_NODEPORT \
-    -Dsystem.context.root=/dev \
-    -Dinventory.service.root=localhost:$INVENTORY_NODEPORT
-```
-
-The tests for ***inventory*** verify that the service can communicate with ***system*** using the configured credentials. If the credentials are misconfigured, then the ***inventory*** test fails, so the ***inventory*** test indirectly verifies that the credentials are correctly configured.
-
-After the tests succeed, you should see output similar to the following in your console.
+You see the following output:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.706 s - in it.io.openliberty.guides.system.SystemEndpointIT
+Running io.openliberty.guides.hello.it.EndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.255 sec - in io.openliberty.guides.hello.it.EndpointIT
 
-Results:
+Results :
 
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.696 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
-
-Results:
-
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
-```
-
-::page{title="Tearing down the environment"}
-
-Press **CTRL+C** in the command-line sessions where you ran ***kubectl port-forward*** to stop the port forwarding. 
-
-Run the following commands to delete all the resources that you created.
-
-```bash
-kubectl delete -f kubernetes.yaml
-kubectl delete configmap sys-app-root
-kubectl delete secret sys-app-credentials
-```
+To see whether the test detects a failure, change the ***response string*** in the servlet ***src/main/java/io/openliberty/guides/hello/HelloServlet.java*** so that it doesn't match the string that the test is looking for. Then re-run the tests and check that the test fails.
 
 
-
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You have used MicroProfile Config to externalize the configuration of two microservices, and then you configured them by creating a ConfigMap and Secret in your Kubernetes cluster.
-
+You built and tested a web application project with an Open Liberty instance using Maven.
 
 
 
@@ -669,33 +429,31 @@ You have used MicroProfile Config to externalize the configuration of two micros
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-kubernetes-microprofile-config*** project by running the following commands:
+Delete the ***guide-maven-intro*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-kubernetes-microprofile-config
+rm -fr guide-maven-intro
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Configuring%20microservices%20running%20in%20Kubernetes&guide-id=cloud-hosted-guide-kubernetes-microprofile-config)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Building%20a%20web%20application%20with%20Maven&guide-id=cloud-hosted-guide-maven-intro)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-config/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-config/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-maven-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-maven-intro/pulls)
 
 
 
 ### Where to next?
 
-* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
-* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+* [Creating a multi-module application](https://openliberty.io/guides/maven-multimodules.html)
+* [Building a web application with Gradle](https://openliberty.io/guides/gradle-intro.html)
 
 
 ### Log out of the session
