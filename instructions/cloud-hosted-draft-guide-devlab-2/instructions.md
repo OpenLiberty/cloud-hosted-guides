@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Building a web application with Maven guide!"}
+::page{title="Welcome to the Deploying a microservice to OpenShift 4 using Open Liberty Operator guide!"}
 
-Learn how to build and test a simple web application using Maven and Open Liberty.
+Explore how to deploy a microservice to Red Hat OpenShift 4 using Open Liberty Operator.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,38 +14,19 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 ::page{title="What you'll learn"}
 
-You will learn how to configure a simple web servlet application using [Maven](https://maven.apache.org/what-is-maven.html) and the [Liberty Maven plugin](https://github.com/OpenLiberty/ci.maven/blob/main/README.md). When you compile and build the application code, Maven downloads and installs Open Liberty. If you run the application, Maven creates an Open Liberty instance and runs the application on it. The application displays a simple web page with a link that, when clicked, calls the servlet to return a simple response of ***Hello! How are you today?***.
+You will learn how to deploy a cloud-native application with a microservice to Red Hat OpenShift 4 by using the Open Liberty Operator. 
 
-One benefit of using a build tool like Maven is that you can define the details of the project and any dependencies it has, and Maven automatically downloads and installs the dependencies. Another benefit of using Maven is that it can run repeatable, automated tests on the application. You can, of course, test your application manually by starting a Liberty instance and pointing a web browser at the application URL. However, automated tests are a much better approach because you can easily rerun the same tests each time the application is built. If the tests don't pass after you change the application, the build fails, and you know that you introduced a regression that requires a fix to your code. 
+[OpenShift](https://www.openshift.com/) is a Kubernetes-based platform with added functions. It streamlines the DevOps process by providing an intuitive development pipeline. It also provides integration with multiple tools to make the deployment and management of cloud applications easier. You can learn more about Kubernetes by checking out the [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html) guide.
 
-Choosing a build tool often comes down to personal or organizational preference, but you might choose to use Maven for several reasons. Maven defines its builds by using XML, which is probably familiar to you already. As a mature, commonly used build tool, Maven probably integrates with whichever IDE you prefer to use. Maven also has an extensive plug-in library that offers various ways to quickly customize your build. Maven can be a good choice if your team is already familiar with it. 
+[Kubernetes operators](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/#operators-in-kubernetes) provide an easy way to automate the management and updating of applications by abstracting away some of the details of cloud application management. To learn more about operators, check out this [Operators tech topic article](https://www.openshift.com/learn/topics/operators). 
 
-You will create a Maven build definition file that's called a ***pom.xml*** file, which stands for Project Object Model, and use it to build your web application. You will then create a simple, automated test and configure Maven to automatically run the test.
+The application in this guide consists of one microservice, ***system***. The system microservice returns the JVM system properties of its host.
 
-
-::page{title="Installing Maven"}
-
-
-Run the following command to test that Maven Wrapper is installed:
+You will deploy the ***system*** microservice by using the Open Liberty Operator. The [Open Liberty Operator](https://github.com/OpenLiberty/open-liberty-operator) provides a method of packaging, deploying, and managing Open Liberty applications on Kubernetes-based clusters. The Open Liberty Operator watches Open Liberty resources and creates various Kubernetes resources, including ***Deployments***, ***Services***, and ***Routes***, depending on the configurations. The Operator then continuously compares the current state of the resources with the desired state of application deployment and reconciles them when necessary.
 
 
-```bash
-cd finish
-./mvnw --version
-```
-
-If Maven Wrapper is installed properly, you see information about the Maven installation similar to the following example:
-
-```
-Apache Maven 3.9.6 (05c21c65bdfed0f71a2f2ada8b84da59348c4c5d)
-Maven home: /Applications/Maven/apache-maven-3.9.6
-Java version: 11.0.12, vendor: International Business Machines Corporation, runtime: /Library/Java/JavaVirtualMachines/ibm-semeru-open-11.jdk/Contents/Home
-Default locale: en_US, platform encoding: UTF-8
-OS name: "mac os x", version: "11.6", arch: "x86_64", family: "mac"
-```
 
 ::page{title="Getting started"}
 
@@ -58,11 +39,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-maven-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-openliberty-operator-openshift.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-maven-intro.git
-cd guide-maven-intro
+git clone https://github.com/openliberty/guide-openliberty-operator-openshift.git
+cd guide-openliberty-operator-openshift
 ```
 
 
@@ -71,356 +52,422 @@ The ***start*** directory contains the starting project that you will build upon
 The ***finish*** directory contains the finished project that you will build.
 
 
-### Try what you'll build
-
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-
-To try out the application, first go to the ***finish*** directory and run Maven with the ***liberty:run*** goal to build the application and deploy it to Open Liberty:
-
-```bash
-cd finish
-./mvnw liberty:run
-```
-
-After you see the following message, your Liberty instance is ready.
-
-```
-The guideServer server is ready to run a smarter planet.
-```
+::page{title="Installing the Operator"}
 
 
-Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session. Run the following curl command to view the output of the application: 
-```bash
-curl -s http://localhost:9080/ServletSample/servlet
-```
-
-The servlet returns a simple response of ***Hello! How are you today?***.
-
-After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+A project is created for you to use in this exercise. Run the following command to see your project name:
 
 ```bash
-./mvnw liberty:stop
+oc projects
 ```
 
+In this Skill Network enviornment, the Open Liberty Operator is already installed by the administrator. If you like to learn how to install the Open Liberty Operator, you can learn from the [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators) guide or the Open Liberty Operator [document](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1.adoc#operator-installation).
 
-::page{title="Creating a simple application"}
+Run the following command to view all the supported API resources that are available through the Open Liberty Operator:
 
-The simple web application that you will build using Maven and Open Liberty is provided for you in the ***start*** directory so that you can focus on learning about Maven. This application uses a standard Maven directory structure, eliminating the need to customize the ***pom.xml*** file so that Maven understands your project layout.
-
-All the application source code, including the Open Liberty ***server.xml*** configuration file, is in the ***src/main/liberty/config*** directory:
-
-```
-    └── src
-        └── main
-           └── java
-           └── resources
-           └── webapp
-           └── liberty
-                  └── config
-```
-
-
-::page{title="Creating the project POM file"}
-Navigate to the ***start*** directory to begin.
 ```bash
-cd /home/project/guide-maven-intro/start
+oc api-resources --api-group=apps.openliberty.io
 ```
 
-Before you can build the project, define the Maven Project Object Model (POM) file, the ***pom.xml***. 
+Look for the following output, which shows the [custom resource definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRDs) that can be used by the Open Liberty Operator:
 
-Create the pom.xml file in the ***start*** directory.
+```
+NAME                      SHORTNAMES         APIVERSION               NAMESPACED   KIND
+openlibertyapplications   olapp,olapps       apps.openliberty.io/v1   true         OpenLibertyApplication
+openlibertydumps          oldump,oldumps     apps.openliberty.io/v1   true         OpenLibertyDump
+openlibertytraces         oltrace,oltraces   apps.openliberty.io/v1   true         OpenLibertyTrace
+```
+
+Each CRD defines a kind of object that can be used, which is specified in the previous example by the ***KIND*** value. The ***SHORTNAME*** value specifies alternative names that you can substitute in the configuration to refer to an object kind. For example, you can refer to the ***OpenLibertyApplication*** object kind by one of its specified shortnames, such as ***olapps***. 
+
+The ***openlibertyapplications*** CRD defines a set of configurations for deploying an Open Liberty-based application, including the application image, number of instances, and storage settings. The Open Liberty Operator watches for changes to instances of the ***OpenLibertyApplication*** object kind and creates Kubernetes resources that are based on the configuration that is defined in the CRD.
+
+
+::page{title="Deploying the system microservice to OpenShift"}
+
+To deploy the ***system*** microservice, you must first package the microservice, then create and run an OpenShift build to produce runnable container images of the packaged microservice.
+
+### Packaging the microservice
+
+Ensure that you are in the ***start*** directory and run the following command to package the ***system*** microservice:
+
+
+```bash
+cd /home/project/guide-openliberty-operator-openshift/start
+./mvnw clean package
+```
+
+### Building and pushing the image
+
+Create a build template to configure how to build your container image.
+
+Create the ***build.yaml*** template file in the ***start*** directory.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-maven-intro/start/pom.xml
+touch /home/project/guide-openliberty-operator-openshift/start/build.yaml
 ```
 
 
-> Then, to open the pom.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-maven-intro/start/pom.xml, or click the following button
+> Then, to open the build.yaml file in your IDE, select
+> ***File*** > ***Open*** > guide-openliberty-operator-openshift/start/build.yaml, or click the following button
 
-::openFile{path="/home/project/guide-maven-intro/start/pom.xml"}
+::openFile{path="/home/project/guide-openliberty-operator-openshift/start/build.yaml"}
 
 
 
-```xml
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>ServletSample</artifactId>
-    <packaging>war</packaging>
-    <version>1.0-SNAPSHOT</version>
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <!-- Liberty configuration -->
-        <liberty.var.http.port>9080</liberty.var.http.port>
-        <liberty.var.https.port>9443</liberty.var.https.port>
-        <liberty.var.app.context.root>${project.artifactId}</liberty.var.app.context.root>
-    </properties>
-
-    <dependencies>
-        <!-- Provided dependencies -->
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>10.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>7.0</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-        <!-- For testing -->
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.14</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.12.2</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.4.0</version>
-            </plugin>
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.11.3</version>
-                <configuration>
-                    <serverName>guideServer</serverName>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.3</version>
-                <configuration>
-                    <systemPropertyVariables>
-                        <http.port>${liberty.var.http.port}</http.port>
-                        <war.name>${liberty.var.app.context.root}</war.name>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-</project>
+```yaml
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: "build-template"
+  annotations:
+    description: "Build template for the system service"
+    tags: "build"
+objects:
+  - apiVersion: v1
+    kind: ImageStream
+    metadata:
+      name: "system-imagestream"
+      labels:
+        name: "system"
+  - apiVersion: v1
+    kind: BuildConfig
+    metadata:
+      name: "system-buildconfig"
+      labels:
+        name: "system"
+    spec:
+      source:
+        type: Binary
+      strategy:
+        type: Docker
+      output:
+        to:
+          kind: ImageStreamTag
+          name: "system-imagestream:1.0-SNAPSHOT"
 ```
 
 
 Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-The ***pom.xml*** file starts with a root ***project*** element and a ***modelversion*** element, which is always set to ***4.0.0***. 
+The ***build.yaml*** template includes two objects. The ***ImageStream*** object provides an abstraction from the image in the image registry, which allows you to reference and tag the image. The image registry is the integrated internal OpenShift Container Registry.
 
-A typical POM for a Liberty application contains the following sections:
+The ***BuildConfig*** object defines a single build definition and any triggers that kickstart the build. The ***source*** spec defines the build input. In this case, the build inputs are your ***binary*** (local) files, which are streamed to OpenShift for the build. The uploaded files need to include the packaged ***WAR*** application binaries, which is why you needed to run the Maven commands. The template specifies a ***Docker*** strategy build, which invokes the ***docker build*** command, and creates a runnable container image of the microservice from the build input.
 
-* **Project coordinates**: The identifiers for this application.
-* **Properties** (***properties***): Any properties for the project go here, including compilation details and any values that are referenced during compilation of the Java source code and generating the application.
-* **Dependencies** (***dependencies***): Any Java dependencies that are required for compiling, testing, and running the application are listed here.
-* **Build plugins** (***build***): Maven is modular and each of its capabilities is provided by a separate plugin. This is where you specify which Maven plugins should be used to build this project and any configuration information needed by those plugins.
-
-The project coordinates describe the name and version of the application. The ***artifactId*** gives a name to the web application project, which is used to name the output files that are generated by the build (e.g. the WAR file) and the Open Liberty instance that is created. You'll notice that other fields in the ***pom.xml*** file use variables that are resolved by the ***artifactId*** field. This is so that you can update the name of the sample application, including files generated by Maven, in a single place in the ***pom.xml*** file. The value of the ***packaging*** field is ***war*** so that the project output artifact is a WAR file.
-
-The first four properties in the properties section of the project, just define the encoding (***UTF-8***) and version of Java (***Java 11***) that Maven uses to compile the application source code.
-
-Open Liberty configuration properties provide you with a single place to specify values that are used in multiple places throughout the application. For example, the ***http.port*** value is used in both the Liberty ***server.xml*** configuration file and will be used in the test class that you will add (***EndpointIT.java***) to the application. Because the ***http.port*** value is specified in the ***pom.xml*** file, you can easily change the port number that the Liberty instance runs on without updating the application code in multiple places.
-
-
-The ***HelloServlet.java*** class depends on ***jakarta.jakartaee-api*** to compile. Maven will download this dependency from the Maven Central repository using the ***groupId***, ***artifactId***, and ***version*** details that you provide here. The dependency is set to ***provided***, which means that the API is in the Liberty runtime and doesn't need to be packaged by the application.
-
-The ***build*** section gives details of the two plugins that Maven uses to build this project.
-
-* The Maven plugin for generating a WAR file as one of the output files.
-* The Liberty Maven plug-in, which allows you to install applications into Open Liberty and manage the associated Liberty instances.
-
-In the ***liberty-maven-plugin*** plug-in section, you can add a ***configuration*** element to specify Open Liberty configuration details. For example, the ***serverName*** field defines the name of the Open Liberty instance that Maven creates. You specified ***guideServer*** as the value for ***serverName***. If the ***serverName*** field is not included, the default value is ***defaultServer***.
-
-
-
-::page{title="Running the application"}
-
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+Run the following command to create the objects for the ***system*** microservice:
 
 ```bash
-./mvnw liberty:dev
+oc process -f build.yaml | oc create -f -
 ```
 
-After you see the following message, your Liberty instance is ready in dev mode:
+Next, run the following command to view the newly created ***ImageStream*** objects and the build configurations for the microservice:
 
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
-
-
-Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session. Run the following curl command to view the output of the application: 
 ```bash
-curl -s http://localhost:9080/ServletSample/servlet
+oc get all -l name=system
 ```
 
-The servlet returns a simple response of ***Hello! How are you today?***.
+Look for the following similar resources:
 
-::page{title="Testing the web application"}
+```
+NAME                                                TYPE     FROM     LATEST
+buildconfig.build.openshift.io/system-buildconfig   Docker   Binary   0
 
-One of the benefits of building an application with Maven is that Maven can be configured to run a set of tests. You can write tests for the individual units of code outside of a running Liberty instance (unit tests), or you can write them to call the Liberty instance directly (integration tests). In this example you will create a simple integration test that checks that the web page opens and that the correct response is returned when the link is clicked.
+NAME                                                IMAGE REPOSITORY                                                                   TAGS           UPDATED
+imagestream.image.openshift.io/system-imagestream   default-route-openshift-image-registry.apps-crc.testing/guide/system-imagestream
+```   
 
-Create the ***EndpointIT*** class.
+Ensure that you are in the ***start*** directory and trigger the build by running the following command:
+
+```bash
+oc start-build system-buildconfig --from-dir=system/.
+```
+
+The local ***system*** directory is uploaded to OpenShift to be built into the Docker image. Run the following command to list the build and track its status:
+
+```bash
+oc get builds
+```
+
+Look for the output that is similar to the following example:
+
+```
+NAME                    TYPE     FROM             STATUS     STARTED
+system-buildconfig-1    Docker   Binary@f24cb58   Running    45 seconds ago
+```
+
+You might need to wait some time until the build is complete. To check whether the build is complete, run the following command to view the build log until the ***Push successful*** message appears:
+
+```bash
+oc logs build/system-buildconfig-1
+```
+
+### Checking the image
+
+During the build process, the image associated with the ***ImageStream*** object that you created earlier was pushed to the image registry and tagged. Run the following command to view the newly updated ***ImageStream*** object:
+
+```bash
+oc get imagestreams
+```
+
+Run the following command to get more details on the newly pushed image within the stream:
+
+```bash
+oc describe imagestream/system-imagestream
+```
+
+The following example shows part of the ***system-imagestream*** output:
+
+```
+Name:               system-imagestream
+Namespace:          guide
+Created:            2 minutes ago
+Labels:             name=system
+Annotations:        <none>
+Image Repository:   default-route-openshift-image-registry.apps-crc.testing/guide/system-imagestream
+Image Lookup:       local=false
+Unique Images:      1
+Tags:               1
+
+...
+```
+
+Now you're ready to deploy the image.
+
+### Deploying the image
+
+You can configure the specifics of the Open Liberty Operator-controlled deployment with a YAML configuration file.
+
+Create the ***deploy.yaml*** configuration file in the ***start*** directory.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java  
+touch /home/project/guide-openliberty-operator-openshift/start/deploy.yaml
 ```
 
 
-> Then, to open the EndpointIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java, or click the following button
+> Then, to open the deploy.yaml file in your IDE, select
+> ***File*** > ***Open*** > guide-openliberty-operator-openshift/start/deploy.yaml, or click the following button
 
-::openFile{path="/home/project/guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java"}
+::openFile{path="/home/project/guide-openliberty-operator-openshift/start/deploy.yaml"}
 
 
 
-```java
-package io.openliberty.guides.hello.it;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
-public class EndpointIT {
-    private static String siteURL;
-
-    @BeforeAll
-    public static void init() {
-        String port = System.getProperty("http.port");
-        String war = System.getProperty("war.name");
-        siteURL = "http://localhost:" + port + "/" + war + "/" + "servlet";
-    }
-
-    @Test
-    public void testServlet() throws Exception {
-
-        CloseableHttpClient client = HttpClientBuilder.create().build();
-        HttpGet httpGet = new HttpGet(siteURL);
-        CloseableHttpResponse response = null;
-
-        try {
-            response = client.execute(httpGet);
-
-            int statusCode = response.getStatusLine().getStatusCode();
-            assertEquals(HttpStatus.SC_OK, statusCode, "HTTP GET failed");
-
-            BufferedReader reader = new BufferedReader(new InputStreamReader(
-                                        response.getEntity().getContent()));
-            String line;
-            StringBuffer buffer = new StringBuffer();
-            while ((line = reader.readLine()) != null) {
-                buffer.append(line);
-            }
-            reader.close();
-            assertTrue(buffer.toString().contains("Hello! How are you today?"),
-                "Unexpected response body: " + buffer.toString());
-        } finally {
-            response.close();
-            httpGet.releaseConnection();
-        }
-    }
-}
+```yaml
+apiVersion: apps.openliberty.io/v1
+kind: OpenLibertyApplication
+metadata:
+  name: system
+  labels:
+    name: system
+spec:
+  applicationImage: guide/system-imagestream:1.0-SNAPSHOT
+  pullPolicy: Always
+  service:
+    port: 9443
+  expose: true
+  env:
+    - name: WLP_LOGGING_MESSAGE_FORMAT
+      value: "json"
+    - name: WLP_LOGGING_MESSAGE_SOURCE
+      value: "message,trace,accessLog,ffdc,audit"
 ```
 
 
 
-The test class name ends in ***IT*** to indicate that it contains an integration test. 
+The ***deploy.yaml*** file is configured to deploy one ***OpenLibertyApplication*** resource, ***system***, which is controlled by the Open Liberty Operator.
 
-Maven is configured to run the integration test using the ***maven-failsafe-plugin***. The ***systemPropertyVariables*** section defines some variables that the test class uses. The test code needs to know where to find the application that it is testing. While the port number and context root information can be hardcoded in the test class, it is better to specify it in a single place like the Maven ***pom.xml*** file because this information is also used by other files in the project. The ***systemPropertyVariables*** section passes these details to the Java test program as a series of system properties, resolving the ***http.port*** and ***war.name*** variables.
+The ***applicationImage*** parameter defines what container image is deployed as part of the ***OpenLibertyApplication*** CRD. This parameter follows the ***\<project-name\>/\<image-stream-name\>[:tag]*** format. The parameter can also point to an image hosted on an external registry, such as Docker Hub. The ***system*** microservice is configured to use the ***image*** created from the earlier build. 
+
+One of the benefits of using ***ImageStream*** objects is that the operator redeploys the application when it detects that a new image is pushed. The ***env*** parameter is used to specify environment variables that are passed to the container at runtime.
+
+Additionally, the microservice includes the ***service*** and ***expose*** parameters. The ***service.port*** parameter specifies which port is exposed by the container, allowing the microservice to be accessed from outside the container. To access the microservice from outside of the cluster, it must be exposed by setting the ***expose*** parameter to ***true***. After you expose the microservice, the Operator automatically creates and configures routes for external access to your microservice.
 
 
-The following lines in the ***EndpointIT*** test class uses these system variables to build up the URL of the application.
-
-In the test class, after defining how to build the application URL, the ***@Test*** annotation indicates the start of the test method.
-
-In the ***try block*** of the test method, an HTTP ***GET*** request to the URL of the application returns a status code. If the response to the request includes the string ***Hello! How are you today?***, the test passes. If that string is not in the response, the test fails.  The HTTP client then disconnects from the application.
-
-In the ***import*** statements of this test class, you'll notice that the test has some new dependencies. Before the test can be compiled by Maven, you need to update the ***pom.xml*** to include these dependencies.
-
-The Apache ***httpclient*** and ***junit-jupiter-engine*** dependencies are needed to compile and run the integration test ***EndpointIT*** class. The scope for each of the dependencies is set to ***test*** because the libraries are needed only during the Maven build and do not needed to be packaged with the application.
-
-Now, the created WAR file contains the web application, and dev mode can run any integration test classes that it finds. Integration test classes are classes with names that end in ***IT***.
-
-The directory structure of the project should now look like this:
-
-```
-    └── src
-        ├── main
-        │  └── java
-        │  └── resources
-        │  └── webapp
-        │  └── liberty
-        │         └── config
-        └── test
-            └── java
+Run the following commands to update the **applicationImage** with the **pullSecret** and deploy the **system** microservice with the previously explained configuration:
+```bash
+sed -i 's=guide/system-imagestream:1.0-SNAPSHOT='"$SN_ICR_NAMESPACE"'/system-imagestream:1.0-SNAPSHOT\n  pullSecret: icr=g' deploy.yaml
+oc apply -f deploy.yaml
 ```
 
+Next, run the following command to view your newly created ***OpenLibertyApplications*** resources:
 
-### Running the tests
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
-
-You see the following output:
-
-```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running io.openliberty.guides.hello.it.EndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.255 sec - in io.openliberty.guides.hello.it.EndpointIT
-
-Results :
-
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+```bash
+oc get OpenLibertyApplications
 ```
 
-To see whether the test detects a failure, change the ***response string*** in the servlet ***src/main/java/io/openliberty/guides/hello/HelloServlet.java*** so that it doesn't match the string that the test is looking for. Then re-run the tests and check that the test fails.
+You can also replace ***OpenLibertyApplications*** with the shortname ***olapps***.
+
+Look for output that is similar to the following example:
+
+```
+NAME      IMAGE                                    EXPOSED   RECONCILED   AGE
+system    guide/system-imagestream:1.0-SNAPSHOT    true      True         10s
+```
+
+A ***RECONCILED*** state value of ***True*** indicates that the operator was able to successfully process the ***OpenLibertyApplications*** instances. Run the following command to view details of your microservice:
+
+```bash
+oc describe olapps/system
+```
+
+This example shows part of the ***olapps/system*** output:
+
+```
+Name:         system
+Namespace:    guide
+Labels:       app.kubernetes.io/part-of=system
+              name=system
+Annotations:  <none>
+API Version:  apps.openliberty.io/v1
+Kind:         OpenLibertyApplication
+
+...
+```
+
+::page{title="Accessing the microservice"}
+
+To access the exposed ***system*** microservice, run the following command and make note of the ***HOST***:
+
+```bash
+oc get routes
+```
+
+Look for an output that is similar to the following example:
+
+```
+NAME     HOST/PORT                                                     PATH   SERVICES   PORT       TERMINATION   WILDCARD
+system   system-guide.2886795274-80-kota02.environments.katacoda.com          system     9443-tcp                 None
+```
 
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
+Visit the microservice by going to the following URL: 
+***https://[HOST]/system/properties***
+
+Make sure to substitute the appropriate ***[HOST]*** value. For example, using the output from the command above, ***system-guide.2886795274-80-kota02.environments.katacoda.com*** is the ***HOST***. The following example shows this value substituted for ***HOST*** in the URL: ***https://system-guide.2886795274-80-kota02.environments.katacoda.com/system/properties***.
+
+Or, you can run the following command to get the URL:
+```bash
+echo https://`oc get routes system -o jsonpath='{.spec.host}'`/system/properties
+```
+
+Then, hold the **CTRL** key and click on the URL in the terminal to visit the microservice.
+
+When you’re done trying out the microservice, run following command to stop the microservice:
+```bash
+oc delete -f deploy.yaml
+```
+
+::page{title="Specifying optional parameters"}
+
+You can also use the Open Liberty Operator to implement optional parameters in your application deployment by specifying the associated CRDs in your ***deploy.yaml*** file. For example, you can configure the [Kubernetes liveness, readiness and startup probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/). Visit the [Open Liberty Operator user guide](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1.adoc#configuration) to find all of the supported optional CRDs.
+
+To configure the Kubernetes liveness, readiness and startup probes by using the Open Liberty Operator, specify the ***probes*** in your ***deploy.yaml*** file. The ***startup*** probe verifies whether deployed application is fully initialized before the liveness probe takes over. Then, the ***liveness*** probe determines whether the application is running and the ***readiness*** probe determines whether the application is ready to process requests. For more information about application health checks, see the [Checking the health of microservices on Kubernetes](https://openliberty.io/guides/kubernetes-microprofile-health.html) guide.
+
+Replace the ***deploy.yaml*** configuration file.
+
+> To open the deploy.yaml file in your IDE, select
+> ***File*** > ***Open*** > guide-openliberty-operator-openshift/start/deploy.yaml, or click the following button
+
+::openFile{path="/home/project/guide-openliberty-operator-openshift/start/deploy.yaml"}
+
+
+
+```yaml
+apiVersion: apps.openliberty.io/v1
+kind: OpenLibertyApplication
+metadata:
+  name: system
+  labels:
+    name: system
+spec:
+  applicationImage: guide/system-imagestream:1.0-SNAPSHOT
+  pullPolicy: Always
+  service:
+    port: 9443
+  expose: true
+  env:
+    - name: WLP_LOGGING_MESSAGE_FORMAT
+      value: "json"
+    - name: WLP_LOGGING_MESSAGE_SOURCE
+      value: "message,trace,accessLog,ffdc,audit"
+  probes:
+    startup:
+      failureThreshold: 12
+      httpGet:
+        path: /health/started
+        port: 9443
+        scheme: HTTPS
+      initialDelaySeconds: 30
+      periodSeconds: 2
+      timeoutSeconds: 10
+    liveness:
+      failureThreshold: 12
+      httpGet:
+        path: /health/live
+        port: 9443
+        scheme: HTTPS
+      initialDelaySeconds: 30
+      periodSeconds: 2
+      timeoutSeconds: 10
+    readiness:
+      failureThreshold: 12
+      httpGet:
+        path: /health/ready
+        port: 9443
+        scheme: HTTPS
+      initialDelaySeconds: 30
+      periodSeconds: 2
+      timeoutSeconds: 10
+```
+
+
+
+The ***/health/started***, ***/health/live***, and ***/health/ready*** health check endpoints are already created for you. 
+
+
+Run the following commands to update the **applicationImage** with the **pullSecret** and deploy the **system** microservice with the new configuration:
+```bash
+sed -i 's=guide/system-imagestream:1.0-SNAPSHOT='"$SN_ICR_NAMESPACE"'/system-imagestream:1.0-SNAPSHOT\n  pullSecret: icr=g' deploy.yaml
+oc apply -f deploy.yaml
+```
+Run the following command to check status of the pods:
+```bash
+oc describe pods | grep health
+```
+
+Look for the following output to confirm that the health checks are successfully applied and working:
+
+```
+Liveness:   http-get http://:9080/health/live delay=30s timeout=10s period=2s #success=1 #failure=12
+Readiness:  http-get http://:9080/health/ready delay=30s timeout=10s period=2s #success=1 #failure=12
+Startup:    http-get http://:9080/health/started delay=30s timeout=10s period=2s #success=1 #failure=12
+```
+
+Run the following command to get the URL:
+```bash
+echo https://`oc get routes system -o jsonpath='{.spec.host}'`/system/properties
+```
+
+Then, hold the **CTRL** key and click on the URL in the terminal to visit the microservice.
+
+::page{title="Tearing down the environment"}
+
+
+When you no longer need your deployed microservice, you can delete all resources by running the following commands:
+
+```bash
+oc delete -f deploy.yaml
+oc delete imagestream.image.openshift.io/system-imagestream
+oc delete bc system-buildconfig
+```
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You built and tested a web application project with an Open Liberty instance using Maven.
+You just deployed a microservice running in Open Liberty to OpenShift 4 and configured the Kubernetes liveness, readiness and startup probes by using the Open Liberty Operator.
 
 
 
@@ -429,31 +476,32 @@ You built and tested a web application project with an Open Liberty instance usi
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-maven-intro*** project by running the following commands:
+Delete the ***guide-openliberty-operator-openshift*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-maven-intro
+rm -fr guide-openliberty-operator-openshift
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Building%20a%20web%20application%20with%20Maven&guide-id=cloud-hosted-guide-maven-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Deploying%20a%20microservice%20to%20OpenShift%204%20using%20Open%20Liberty%20Operator&guide-id=cloud-hosted-guide-openliberty-operator-openshift)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-maven-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-maven-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-openliberty-operator-openshift/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-openliberty-operator-openshift/pulls)
 
 
 
 ### Where to next?
 
-* [Creating a multi-module application](https://openliberty.io/guides/maven-multimodules.html)
-* [Building a web application with Gradle](https://openliberty.io/guides/gradle-intro.html)
+* [Deploying microservices to OpenShift 3](https://openliberty.io/guides/cloud-openshift.html)
+* [Deploying microservices to OpenShift 4 using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html)
+* [Deploying microservices to an OKD cluster using Minishift](https://openliberty.io/guides/okd.html)
 
 
 ### Log out of the session
