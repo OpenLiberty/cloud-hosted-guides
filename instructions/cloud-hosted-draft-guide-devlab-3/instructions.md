@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Externalizing environment-specific microservice configuration for CI/CD guide!"}
+::page{title="Welcome to the Deploying a microservice to OpenShift 4 using Open Liberty Operator guide!"}
 
-Learn how to create environment-specific configurations for microservices by using MicroProfile Config configuration profiles for easy management and portable deployments throughout the CI/CD lifecycle.
+Explore how to deploy a microservice to Red Hat OpenShift 4 using Open Liberty Operator.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,18 +14,17 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 ::page{title="What you'll learn"}
 
-Managing configurations for microservices can be challenging, especially when configurations require adjustments across various stages of the software development and delivery lifecycle. The MicroProfile Config configuration profile feature, also known as the [Config Profile](https://download.eclipse.org/microprofile/microprofile-config-3.0/microprofile-config-spec-3.0.html#configprofile), is a direct solution to this challenge. It simplifies the management of microservice configurations across diverse environments - from development to production and throughout the  continuous integration/continuous delivery (CI/CD) pipeline. By externalizing and tailoring configuration properties to each environment, the CI/CD process becomes more seamless, so you can concentrate on perfecting your application code and capabilities.
+You will learn how to deploy a cloud-native application with a microservice to Red Hat OpenShift 4 by using the Open Liberty Operator. 
 
-You'll learn how to provide environment-specific configurations by using the MicroProfile Config configuration profile feature. You'll work with the MicroProfile Config API to create configuration profiles that use profile-specific configuration properties and configuration sources.
+[OpenShift](https://www.openshift.com/) is a Kubernetes-based platform with added functions. It streamlines the DevOps process by providing an intuitive development pipeline. It also provides integration with multiple tools to make the deployment and management of cloud applications easier. You can learn more about Kubernetes by checking out the [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html) guide.
 
-This guide builds on the [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html) guide and the [Configuring microservices](https://openliberty.io/guides/microprofile-config.html) guide. If you are not familiar with externalizing the configuration of microservices, it will be helpful to read the [External configuration of microservices](https://openliberty.io/docs/latest/external-configuration.html) document and complete the aforementioned guides before you proceed.
+[Kubernetes operators](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/#operators-in-kubernetes) provide an easy way to automate the management and updating of applications by abstracting away some of the details of cloud application management. To learn more about operators, check out this [Operators tech topic article](https://www.openshift.com/learn/topics/operators). 
 
-The application that you will work with is a ***query*** service, which fetches information about the running JVM from a ***system*** microservice. You'll use configuration profiles to externalize and manage the configurations across the development, testing, and production environments.
+The application in this guide consists of one microservice, ***system***. The system microservice returns the JVM system properties of its host.
 
-![System and query services DevOps](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-config-profile/prod/assets/system-query-devops.png)
+You will deploy the ***system*** microservice by using the Open Liberty Operator. The [Open Liberty Operator](https://github.com/OpenLiberty/open-liberty-operator) provides a method of packaging, deploying, and managing Open Liberty applications on Kubernetes-based clusters. The Open Liberty Operator watches Open Liberty resources and creates various Kubernetes resources, including ***Deployments***, ***Services***, and ***Routes***, depending on the configurations. The Operator then continuously compares the current state of the resources with the desired state of application deployment and reconciles them when necessary.
 
 
 
@@ -40,11 +39,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-config-profile.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-openliberty-operator-openshift.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-microprofile-config-profile.git
-cd guide-microprofile-config-profile
+git clone https://github.com/openliberty/guide-openliberty-operator-openshift.git
+cd guide-openliberty-operator-openshift
 ```
 
 
@@ -52,456 +51,424 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-::page{title="Creating a configuration profile for the dev environment"}
 
-The dev environment is used to test, experiment, debug, and refine your code, ensuring an application's functional readiness before progressing to subsequent stages in a software development and delivery lifecycle.
-
-Navigate to the ***start*** directory to begin.
-
-The starting Java project, which you can find in the ***start*** directory, is a multi-module Maven project comprised of the ***system*** and ***query*** microservices. Each microservice is in its own corresponding directory, ***system*** and ***query***.
+::page{title="Installing the Operator"}
 
 
-
-The ***system*** microservice contains the three Maven build profiles: ***dev***, ***test***, and ***prod***, in which the ***dev*** profile is set as the default. Each build profile defines properties for a particular deployment configuration that the microservice uses.
-
-The MicroProfile Config configuration profile feature supplies configurations for different environments when only a single profile is active. The active profile is set using the ***mp.config.profile*** property. You can set it in any of the [configuration sources](https://openliberty.io/docs/latest/external-configuration.html#default) and it is read once during application startup. When a profile is active, its associated configuration properties are used. For the ***query*** service, the ***mp.config.profile*** property is set to ***dev*** in its Maven ***pom.xml***. This Liberty configuration variable indicates to the runtime that ***dev*** is the active configuration profile.
-
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
-
-Open a command-line session and run the following commands to navigate to the ***system*** directory and start the ***system*** service in the ***dev*** environment:
+A project is created for you to use in this exercise. Run the following command to see your project name:
 
 ```bash
-./mvnw -pl system liberty:dev
+oc projects
 ```
 
-Open another command-line session and run the following commands to navigate to the ***query*** directory and start the ***query*** service in the ***dev*** environment:
+In this Skill Network enviornment, the Open Liberty Operator is already installed by the administrator. If you like to learn how to install the Open Liberty Operator, you can learn from the [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators) guide or the Open Liberty Operator [document](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1.adoc#operator-installation).
+
+Run the following command to view all the supported API resources that are available through the Open Liberty Operator:
 
 ```bash
-./mvnw -pl query liberty:dev
+oc api-resources --api-group=apps.openliberty.io
 ```
 
-After you see the following message, your Liberty instance is ready in dev mode:
+Look for the following output, which shows the [custom resource definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRDs) that can be used by the Open Liberty Operator:
 
 ```
-**************************************************
-*     Liberty is running in dev mode.
+NAME                      SHORTNAMES         APIVERSION               NAMESPACED   KIND
+openlibertyapplications   olapp,olapps       apps.openliberty.io/v1   true         OpenLibertyApplication
+openlibertydumps          oldump,oldumps     apps.openliberty.io/v1   true         OpenLibertyDump
+openlibertytraces         oltrace,oltraces   apps.openliberty.io/v1   true         OpenLibertyTrace
 ```
 
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+Each CRD defines a kind of object that can be used, which is specified in the previous example by the ***KIND*** value. The ***SHORTNAME*** value specifies alternative names that you can substitute in the configuration to refer to an object kind. For example, you can refer to the ***OpenLibertyApplication*** object kind by one of its specified shortnames, such as ***olapps***. 
+
+The ***openlibertyapplications*** CRD defines a set of configurations for deploying an Open Liberty-based application, including the application image, number of instances, and storage settings. The Open Liberty Operator watches for changes to instances of the ***OpenLibertyApplication*** object kind and creates Kubernetes resources that are based on the configuration that is defined in the CRD.
 
 
-In the dev environment, the ***dev*** configuration profile is set in the ***system/pom.xml*** file as the configuration profile to use for running the ***system*** service. The ***system*** service runs on HTTP port ***9081*** and HTTPS port ***9444*** using the context root ***system/dev***. It uses a basic user registry with username ***alice*** and password ***alicepwd*** for resource authorization. Note that the ***basicRegistry*** element is a simple registry configuration for learning purposes. For more information on user registries, see the [User registries documentation](https://openliberty.io/docs/latest/user-registries-application-security.html).
+::page{title="Deploying the system microservice to OpenShift"}
 
-Click the following button to check out the ***query*** service:
+To deploy the ***system*** microservice, you must first package the microservice, then create and run an OpenShift build to produce runnable container images of the packaged microservice.
 
-::startApplication{port="9085" display="external" name="Check out the query service" route="/query/systems/localhost"}
+### Packaging the microservice
 
-
-The ***query*** service returns the message: ***{"fail":"Failed to reach the client localhost."}***. This is because the current ***query*** service uses the default properties in the ***query/src/main/resources/META-INF/microprofile-config.properties*** file to access the ***system*** service.
-
-For proper communication with the development ***system*** service, the ***query*** service uses properties in the ***dev*** configuration profile.
-
-![System service running in development environment](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-config-profile/prod/assets/system-query-devops-development.png)
+Ensure that you are in the ***start*** directory and run the following command to package the ***system*** microservice:
 
 
-There are two ways to define configuration properties that are associated with your configuration profile. The first is as individual configuration properties associated with a configuration profile that can be specified in any kind of MicroProfile configuration source. The second is through default ***microprofile-config.properties*** configuration files embedded in your application that can be associated with different configuration profiles. The former allows for flexibility in defining profile-specific configuration properties in the best configuration sources for your needs while the latter enables default profiles of configuration properties to be provided in your application.
-
-### Creating profile-specific configuration properties
-
-This approach involves directly associating individual configuration properties with a configuration profile. To define a configuration property for a particular config profile, use the ***%\<config_profile_id\>.\<property_name\>=\<value\>*** syntax, where ***\<config_profile_id\>*** is the unique identifier for the configuration profile and ***\<property_name\>*** is the name of the property that you want to set.
-
-Replace the ***microprofile-config.properties*** file.
-
-> To open the microprofile-config.properties file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties"}
-
-
-
-```
-system.httpsPort=9443
-system.user=admin
-system.password=adminpwd
-system.contextRoot=system
-
-%dev.system.httpsPort=9444
-%dev.system.user=alice
-%dev.system.password=alicepwd
-%dev.system.contextRoot=system/dev
+```bash
+cd /home/project/guide-openliberty-operator-openshift/start
+./mvnw clean package
 ```
 
+### Building and pushing the image
 
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+Create a build template to configure how to build your container image.
 
-
-
-Configure the ***%dev.**** properties in the ***microprofile-config.properties*** file based on the values from the ***dev*** profile of the ***system*** service.
-
-Because the active profile is set to ***dev***, each ***%dev.**** property overrides the value of the plain non-profile-specific property. For example, in this case, the ***%dev.system.httpsPort*** property overrides the ***system.httpsPort*** property and the value is resolved to ***9444***.
-
-Because you are running the ***query*** service in dev mode, the changes that you made are automatically picked up.
-
-Click the following button to try out the application:
-
-::startApplication{port="9085" display="external" name="Try out the application" route="/query/systems/localhost"}
-
-You can see the current OS and Java version in JSON format.
-
-
-### Creating profile-specific ***microprofile-config.properties*** configuration files
-
-Creating profile-specific ***microprofile-config.properties*** configuration files is a structured way to provide and manage more extensive sets of default configurations. You can create a configuration file for each configuration profile in the ***META-INF*** folder on the classpath of your application by using the ***microprofile-config-\<config_profile_id\>*** naming convention, where ***\<config_profile_id\>*** is the unique identifier for a configuration profile. After you create the file, you can add your configuration properties to it with the standard ***\<property_name\>=\<value\>*** syntax.
-
-Open another command-line session.
-
-Create the ***microprofile-config-dev.properties*** file.
+Create the ***build.yaml*** template file in the ***start*** directory.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-dev.properties
+touch /home/project/guide-openliberty-operator-openshift/start/build.yaml
 ```
 
 
-> Then, to open the microprofile-config-dev.properties file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-dev.properties, or click the following button
+> Then, to open the build.yaml file in your IDE, select
+> ***File*** > ***Open*** > guide-openliberty-operator-openshift/start/build.yaml, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-dev.properties"}
-
-
-
-```
-system.httpsPort=9444
-system.user=alice
-system.password=alicepwd
-system.contextRoot=system/dev
-```
+::openFile{path="/home/project/guide-openliberty-operator-openshift/start/build.yaml"}
 
 
 
-
-Define the ***system.**** properties in the ***microprofile-config-dev.properties*** file based on the values from the ***dev*** profile of the ***system*** service.
-
-Replace the ***microprofile-config.properties*** file.
-
-> To open the microprofile-config.properties file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties"}
-
-
-
-```
-system.httpsPort=9443
-system.user=admin
-system.password=adminpwd
-system.contextRoot=system
-
-```
-
-
-
-
-Remove the ***%dev.**** properties from the ***microprofile-config.properties*** file.
-
-Because the active profile is set to ***dev***, any ***system.**** properties specified in the ***microprofile-config-dev.properties*** file take precedence over the ***system.**** property values in the ***microprofile-config.properties*** file.
-
-Now, click the following button to try out the application again:
-
-::startApplication{port="9085" display="external" name="Try out the application" route="/query/systems/localhost"}
-
-You can see the current OS and Java version in JSON format.
-
-When you are done checking out the application in ***dev*** environment, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***query*** services.
-
-::page{title="Creating a configuration profile for the test environment"}
-
-In CI/CD, the test environment is where integration tests ensure the readiness and quality of an application. A good testing configuration not only ensures smooth operations but also aligns the environment closely with potential production settings.
-
-![System service running in testing environment](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-config-profile/prod/assets/system-query-devops-testing.png)
-
-
-Create the ***microprofile-config-test.properties*** file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-test.properties
+```yaml
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: "build-template"
+  annotations:
+    description: "Build template for the system service"
+    tags: "build"
+objects:
+  - apiVersion: v1
+    kind: ImageStream
+    metadata:
+      name: "system-imagestream"
+      labels:
+        name: "system"
+  - apiVersion: v1
+    kind: BuildConfig
+    metadata:
+      name: "system-buildconfig"
+      labels:
+        name: "system"
+    spec:
+      source:
+        type: Binary
+      strategy:
+        type: Docker
+      output:
+        to:
+          kind: ImageStreamTag
+          name: "system-imagestream:1.0-SNAPSHOT"
 ```
 
 
-> Then, to open the microprofile-config-test.properties file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-test.properties, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-test.properties"}
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
+The ***build.yaml*** template includes two objects. The ***ImageStream*** object provides an abstraction from the image in the image registry, which allows you to reference and tag the image. The image registry is the integrated internal OpenShift Container Registry.
 
-```
-system.httpsPort=9445
-system.user=bob
-system.password=bobpwd
-system.contextRoot=system/test
-```
+The ***BuildConfig*** object defines a single build definition and any triggers that kickstart the build. The ***source*** spec defines the build input. In this case, the build inputs are your ***binary*** (local) files, which are streamed to OpenShift for the build. The uploaded files need to include the packaged ***WAR*** application binaries, which is why you needed to run the Maven commands. The template specifies a ***Docker*** strategy build, which invokes the ***docker build*** command, and creates a runnable container image of the microservice from the build input.
 
-
-
-
-Define the ***system.**** properties in the ***microprofile-config-test.properties*** file based on the values from the ***test*** profile of the ***system*** service.
-
-Create the ***QueryEndpointIT*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-microprofile-config-profile/start/query/src/test/java/it/io/openliberty/guides/query/QueryEndpointIT.java
-```
-
-
-> Then, to open the QueryEndpointIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/test/java/it/io/openliberty/guides/query/QueryEndpointIT.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/test/java/it/io/openliberty/guides/query/QueryEndpointIT.java"}
-
-
-
-```java
-package it.io.openliberty.guides.query;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.Response;
-
-public class QueryEndpointIT {
-
-    private static String port = System.getProperty("http.port");
-    private static String baseUrl = "http://localhost:" + port + "/query";
-    private static String systemHost = System.getProperty("system.host");
-
-    private static Client client;
-
-    @BeforeEach
-    public void setup() {
-        client = ClientBuilder.newClient();
-    }
-
-    @AfterEach
-    public void teardown() {
-        client.close();
-    }
-
-    @Test
-    public void testQuerySystem() {
-
-        Response response = this.getResponse(baseUrl + "/systems/" + systemHost);
-        this.assertResponse(baseUrl, response);
-
-        JsonObject jsonObj = response.readEntity(JsonObject.class);
-        assertNotNull(jsonObj.getString("os.name"), "os.name is null");
-        assertNotNull(jsonObj.getString("java.version"), "java.version is null");
-
-        response.close();
-    }
-
-    @Test
-    public void testUnknownHost() {
-        Response response = this.getResponse(baseUrl + "/systems/unknown");
-        this.assertResponse(baseUrl, response);
-
-        JsonObject json = response.readEntity(JsonObject.class);
-        assertEquals("Failed to reach the client unknown.", json.getString("fail"),
-            "Fail message is wrong.");
-        response.close();
-    }
-
-    private Response getResponse(String url) {
-        return client.target(url).request().get();
-    }
-
-    private void assertResponse(String url, Response response) {
-        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
-    }
-
-}
-```
-
-
-
-Implement endpoint tests to test the basic functionality of the ***query*** microservice. If a test failure occurs, you might have introduced a bug into the code.
-
-See the following descriptions of test cases:
-
-* ***testQuerySystem()*** verifies the ***/query/systems/{hostname}*** endpoint.
-
-* ***testUnknownHost()*** verifies that an unknown host or a host that does not expose their JVM system properties is correctly handled with a fail message.
-
-### Running the tests in the test environment
-
-Now, navigate to the ***start*** directory.
-
-
-
-Test the application under the ***test*** environment by running the following script that contains different Maven goals to ***build***, ***start***, ***test***, and ***stop*** the services.
+Run the following command to create the objects for the ***system*** microservice:
 
 ```bash
-cd /home/project/guide-microprofile-config-profile/start
-./scripts/testApp.sh
+oc process -f build.yaml | oc create -f -
 ```
 
-If the tests pass, you see output similar to the following example:
+Next, run the following command to view the newly created ***ImageStream*** objects and the build configurations for the microservice:
+
+```bash
+oc get all -l name=system
+```
+
+Look for the following similar resources:
 
 ```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.539 s - in it.io.openliberty.guides.system.SystemEndpointIT
+NAME                                                TYPE     FROM     LATEST
+buildconfig.build.openshift.io/system-buildconfig   Docker   Binary   0
 
-Results:
+NAME                                                IMAGE REPOSITORY                                                                   TAGS           UPDATED
+imagestream.image.openshift.io/system-imagestream   default-route-openshift-image-registry.apps-crc.testing/guide/system-imagestream
+```   
 
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+Ensure that you are in the ***start*** directory and trigger the build by running the following command:
+
+```bash
+oc start-build system-buildconfig --from-dir=system/.
+```
+
+The local ***system*** directory is uploaded to OpenShift to be built into the Docker image. Run the following command to list the build and track its status:
+
+```bash
+oc get builds
+```
+
+Look for the output that is similar to the following example:
+
+```
+NAME                    TYPE     FROM             STATUS     STARTED
+system-buildconfig-1    Docker   Binary@f24cb58   Running    45 seconds ago
+```
+
+You might need to wait some time until the build is complete. To check whether the build is complete, run the following command to view the build log until the ***Push successful*** message appears:
+
+```bash
+oc logs build/system-buildconfig-1
+```
+
+### Checking the image
+
+During the build process, the image associated with the ***ImageStream*** object that you created earlier was pushed to the image registry and tagged. Run the following command to view the newly updated ***ImageStream*** object:
+
+```bash
+oc get imagestreams
+```
+
+Run the following command to get more details on the newly pushed image within the stream:
+
+```bash
+oc describe imagestream/system-imagestream
+```
+
+The following example shows part of the ***system-imagestream*** output:
+
+```
+Name:               system-imagestream
+Namespace:          guide
+Created:            2 minutes ago
+Labels:             name=system
+Annotations:        <none>
+Image Repository:   default-route-openshift-image-registry.apps-crc.testing/guide/system-imagestream
+Image Lookup:       local=false
+Unique Images:      1
+Tags:               1
 
 ...
-
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.query.QueryEndpointIT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.706 s - in it.io.openliberty.guides.query.QueryEndpointIT
-
-Results:
-
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
-
 ```
 
-::page{title="Next steps"}
+Now you're ready to deploy the image.
 
-Deploying the application to a Kubernetes environment using the Open Liberty Operator is an optional learning step in this guide.
+### Deploying the image
 
-To further explore deploying microservices using Kubernetes and the Open Liberty Operator, you can read the following guides:
+You can configure the specifics of the Open Liberty Operator-controlled deployment with a YAML configuration file.
 
- [Deploying a microservice to Kubernetes using Open Liberty Operator](https://openliberty.io/guides/openliberty-operator-intro.html)
- [Deploying a microservice to OpenShift 4 using Open Liberty Operator](https://openliberty.io/guides/openliberty-operator-openshift.html)
+Create the ***deploy.yaml*** configuration file in the ***start*** directory.
 
-A secure production environment is essential for application security. In the previous sections, you learned how to use the MicroProfile Config API to externalize credentials and other properties for accessing the ***system*** service. This strategy makes the application more adaptable to different environments without the need to change code and rebuild your application.
-
-In the this section, you'll learn how to use Kubernetes secrets to provide the credentials and how to pass them to the ***query*** service by using MicroProfile Config.
-
-### Deploying the application in the prod environment with Kubernetes
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-openliberty-operator-openshift/start/deploy.yaml
+```
 
 
+> Then, to open the deploy.yaml file in your IDE, select
+> ***File*** > ***Open*** > guide-openliberty-operator-openshift/start/deploy.yaml, or click the following button
+
+::openFile{path="/home/project/guide-openliberty-operator-openshift/start/deploy.yaml"}
 
 
 
+```yaml
+apiVersion: apps.openliberty.io/v1
+kind: OpenLibertyApplication
+metadata:
+  name: system
+  labels:
+    name: system
+spec:
+  applicationImage: guide/system-imagestream:1.0-SNAPSHOT
+  pullPolicy: Always
+  service:
+    port: 9443
+  expose: true
+  env:
+    - name: WLP_LOGGING_MESSAGE_FORMAT
+      value: "json"
+    - name: WLP_LOGGING_MESSAGE_SOURCE
+      value: "message,trace,accessLog,ffdc,audit"
+```
 
-Before deploying, create the Dockerfile files for both ***system*** and ***query*** microservices. Then, build their ***.war*** files and Docker images in the ***start*** directory.
+
+
+The ***deploy.yaml*** file is configured to deploy one ***OpenLibertyApplication*** resource, ***system***, which is controlled by the Open Liberty Operator.
+
+The ***applicationImage*** parameter defines what container image is deployed as part of the ***OpenLibertyApplication*** CRD. This parameter follows the ***\<project-name\>/\<image-stream-name\>[:tag]*** format. The parameter can also point to an image hosted on an external registry, such as Docker Hub. The ***system*** microservice is configured to use the ***image*** created from the earlier build. 
+
+One of the benefits of using ***ImageStream*** objects is that the operator redeploys the application when it detects that a new image is pushed. The ***env*** parameter is used to specify environment variables that are passed to the container at runtime.
+
+Additionally, the microservice includes the ***service*** and ***expose*** parameters. The ***service.port*** parameter specifies which port is exposed by the container, allowing the microservice to be accessed from outside the container. To access the microservice from outside of the cluster, it must be exposed by setting the ***expose*** parameter to ***true***. After you expose the microservice, the Operator automatically creates and configures routes for external access to your microservice.
+
+
+Run the following commands to update the **applicationImage** with the **pullSecret** and deploy the **system** microservice with the previously explained configuration:
+```bash
+sed -i 's=guide/system-imagestream:1.0-SNAPSHOT='"$SN_ICR_NAMESPACE"'/system-imagestream:1.0-SNAPSHOT\n  pullSecret: icr=g' deploy.yaml
+oc apply -f deploy.yaml
+```
+
+Next, run the following command to view your newly created ***OpenLibertyApplications*** resources:
 
 ```bash
-cp /home/project/guide-microprofile-config-profile/finish/system/Dockerfile /home/project/guide-microprofile-config-profile/start/system
-cp /home/project/guide-microprofile-config-profile/finish/query/Dockerfile /home/project/guide-microprofile-config-profile/start/query
-cd /home/project/guide-microprofile-config-profile/start
-./mvnw -P prod clean package
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t query:1.0-SNAPSHOT query/.
+oc get OpenLibertyApplications
 ```
 
-The Maven ***clean*** and ***package*** goals can clean the ***target*** directories and build the ***.war*** application files from scratch. The ***microprofile-config-dev.properties*** and ***microprofile-config-test.properties*** files of the ***query*** microservice are excluded from the ***prod*** build. The default ***microprofile-config.properties*** file is automatically applied.
+You can also replace ***OpenLibertyApplications*** with the shortname ***olapps***.
 
-The Docker ***build*** command packages the ***.war*** files of the ***system*** and ***query*** microservices with their default configuration into your Docker images.
+Look for output that is similar to the following example:
 
-After building the images, push your images to the container registry on IBM Cloud with the following commands:
+```
+NAME      IMAGE                                    EXPOSED   RECONCILED   AGE
+system    guide/system-imagestream:1.0-SNAPSHOT    true      True         10s
+```
+
+A ***RECONCILED*** state value of ***True*** indicates that the operator was able to successfully process the ***OpenLibertyApplications*** instances. Run the following command to view details of your microservice:
 
 ```bash
-docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
-docker tag query:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/query:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/query:1.0-SNAPSHOT
+oc describe olapps/system
 ```
 
-And, you can create a Kubernetes secret for storing sensitive data such as credentials.
+This example shows part of the ***olapps/system*** output:
+
+```
+Name:         system
+Namespace:    guide
+Labels:       app.kubernetes.io/part-of=system
+              name=system
+Annotations:  <none>
+API Version:  apps.openliberty.io/v1
+Kind:         OpenLibertyApplication
+
+...
+```
+
+::page{title="Accessing the microservice"}
+
+To access the exposed ***system*** microservice, run the following command and make note of the ***HOST***:
 
 ```bash
-kubectl create secret generic sys-app-credentials \
-        --from-literal username=$USERNAME \
-        --from-literal password=password
+oc get routes
 ```
 
-For more information about managing secrets, see the [Managing Secrets using kubectl](https://kubernetes.io/docs/tasks/configmap-secret/managing-secret-using-kubectl) documentation.
+Look for an output that is similar to the following example:
 
-Finally, write up the ***deploy.yaml*** deployment file to configure the deployment of the ***system*** and ***query*** microservices by using the Open Liberty Operator. The ***sys-app-credentials*** Kubernetes secrets set the environment variables ***DEFAULT_USERNAME*** and ***DEFAULT_PASSWORD*** for the ***system*** microservice, and ***SYSTEM_USER*** and ***SYSTEM_PASSWORD*** for the ***query*** microservice.
+```
+NAME     HOST/PORT                                                     PATH   SERVICES   PORT       TERMINATION   WILDCARD
+system   system-guide.2886795274-80-kota02.environments.katacoda.com          system     9443-tcp                 None
+```
+
+
+Visit the microservice by going to the following URL: 
+***https://[HOST]/system/properties***
+
+Make sure to substitute the appropriate ***[HOST]*** value. For example, using the output from the command above, ***system-guide.2886795274-80-kota02.environments.katacoda.com*** is the ***HOST***. The following example shows this value substituted for ***HOST*** in the URL: ***https://system-guide.2886795274-80-kota02.environments.katacoda.com/system/properties***.
+
+Or, you can run the following command to get the URL:
+```bash
+echo https://`oc get routes system -o jsonpath='{.spec.host}'`/system/properties
+```
+
+Then, hold the **CTRL** key and click on the URL in the terminal to visit the microservice.
+
+When you’re done trying out the microservice, run following command to stop the microservice:
+```bash
+oc delete -f deploy.yaml
+```
+
+::page{title="Specifying optional parameters"}
+
+You can also use the Open Liberty Operator to implement optional parameters in your application deployment by specifying the associated CRDs in your ***deploy.yaml*** file. For example, you can configure the [Kubernetes liveness, readiness and startup probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/). Visit the [Open Liberty Operator user guide](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1.adoc#configuration) to find all of the supported optional CRDs.
+
+To configure the Kubernetes liveness, readiness and startup probes by using the Open Liberty Operator, specify the ***probes*** in your ***deploy.yaml*** file. The ***startup*** probe verifies whether deployed application is fully initialized before the liveness probe takes over. Then, the ***liveness*** probe determines whether the application is running and the ***readiness*** probe determines whether the application is ready to process requests. For more information about application health checks, see the [Checking the health of microservices on Kubernetes](https://openliberty.io/guides/kubernetes-microprofile-health.html) guide.
+
+Replace the ***deploy.yaml*** configuration file.
+
+> To open the deploy.yaml file in your IDE, select
+> ***File*** > ***Open*** > guide-openliberty-operator-openshift/start/deploy.yaml, or click the following button
+
+::openFile{path="/home/project/guide-openliberty-operator-openshift/start/deploy.yaml"}
+
+
+
+```yaml
+apiVersion: apps.openliberty.io/v1
+kind: OpenLibertyApplication
+metadata:
+  name: system
+  labels:
+    name: system
+spec:
+  applicationImage: guide/system-imagestream:1.0-SNAPSHOT
+  pullPolicy: Always
+  service:
+    port: 9443
+  expose: true
+  env:
+    - name: WLP_LOGGING_MESSAGE_FORMAT
+      value: "json"
+    - name: WLP_LOGGING_MESSAGE_SOURCE
+      value: "message,trace,accessLog,ffdc,audit"
+  probes:
+    startup:
+      failureThreshold: 12
+      httpGet:
+        path: /health/started
+        port: 9443
+        scheme: HTTPS
+      initialDelaySeconds: 30
+      periodSeconds: 2
+      timeoutSeconds: 10
+    liveness:
+      failureThreshold: 12
+      httpGet:
+        path: /health/live
+        port: 9443
+        scheme: HTTPS
+      initialDelaySeconds: 30
+      periodSeconds: 2
+      timeoutSeconds: 10
+    readiness:
+      failureThreshold: 12
+      httpGet:
+        path: /health/ready
+        port: 9443
+        scheme: HTTPS
+      initialDelaySeconds: 30
+      periodSeconds: 2
+      timeoutSeconds: 10
+```
+
+
+
+The ***/health/started***, ***/health/live***, and ***/health/ready*** health check endpoints are already created for you. 
+
+
+Run the following commands to update the **applicationImage** with the **pullSecret** and deploy the **system** microservice with the new configuration:
+```bash
+sed -i 's=guide/system-imagestream:1.0-SNAPSHOT='"$SN_ICR_NAMESPACE"'/system-imagestream:1.0-SNAPSHOT\n  pullSecret: icr=g' deploy.yaml
+oc apply -f deploy.yaml
+```
+Run the following command to check status of the pods:
+```bash
+oc describe pods | grep health
+```
+
+Look for the following output to confirm that the health checks are successfully applied and working:
+
+```
+Liveness:   http-get http://:9080/health/live delay=30s timeout=10s period=2s #success=1 #failure=12
+Readiness:  http-get http://:9080/health/ready delay=30s timeout=10s period=2s #success=1 #failure=12
+Startup:    http-get http://:9080/health/started delay=30s timeout=10s period=2s #success=1 #failure=12
+```
+
+Run the following command to get the URL:
+```bash
+echo https://`oc get routes system -o jsonpath='{.spec.host}'`/system/properties
+```
+
+Then, hold the **CTRL** key and click on the URL in the terminal to visit the microservice.
+
+::page{title="Tearing down the environment"}
+
+
+When you no longer need your deployed microservice, you can delete all resources by running the following commands:
 
 ```bash
-cp /home/project/guide-microprofile-config-profile/finish/deploy.yaml /home/project/guide-microprofile-config-profile/start
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"${SN_ICR_NAMESPACE}"'/system:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
-sed -i 's=query:1.0-SNAPSHOT=us.icr.io/'"${SN_ICR_NAMESPACE}"'/query:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
-```
-
-If you want to override another property, you can specify it in the ***env*** sections of the ***deploy.yaml*** file. For example, set the ***CONTEXT_ROOT*** environment variable in the ***system*** deployment and the ***SYSTEM_CONTEXTROOT*** environment variable in the ***query*** deployment.
-
-After the images and the secret are ready, you can deploy the microservices to your production environment with Kubernetes.
-
-```bash
-kubectl apply -f deploy.yaml
-```
-When the apps are deployed, run the following command to check the status of your pods:
-```bash
-kubectl get pods
-```
-
-You'll see an output similar to the following example if all the pods are healthy and running:
-
-```
-----
-NAME                     READY   STATUS    RESTARTS   AGE
-query-7b7b6db4b6-cqtqx   1/1     Running   0          4s
-system-bc85bc8dc-rw5pb   1/1     Running   0          5s
-----
-```
-
-To access the exposed **query** microservice, the service must be port-forwarded. Run the following command to set up port forwarding to access the **query** service:
-
-```bash
-kubectl port-forward svc/query 9448
-```
-
-Open another command-line session and access the microservice by running the following command:
-```bash
-curl -k -s "https://localhost:9448/query/systems/system.${SN_ICR_NAMESPACE}.svc" | jq
-```
-
-You'll see an output similar to the following example:
-
-```
-{
-  "hostname": "system.sn-labs-username.svc",
-  "java.version": "11.0.23",
-  "os.name": "Linux"
-}
-```
-
-After trying out the microservice, press **CTRL+C** in the command line session where you ran the `kubectl port-forward` command to stop the port forwarding, and then delete all resources by running the following commands:
-```bash
-cd /home/project/guide-microprofile-config-profile/start
-kubectl delete -f deploy.yaml
-kubectl delete secret sys-app-credentials
-docker image prune -a -f
+oc delete -f deploy.yaml
+oc delete imagestream.image.openshift.io/system-imagestream
+oc delete bc system-buildconfig
 ```
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just learned how to use the MicroProfile Config's configuration profile feature to configure your application for multiple CI/CD environments.
+You just deployed a microservice running in Open Liberty to OpenShift 4 and configured the Kubernetes liveness, readiness and startup probes by using the Open Liberty Operator.
 
-
-Feel free to try one of the related guides. They demonstrate new technologies that you can learn to expand on what you built in this guide.
 
 
 ### Clean up your environment
@@ -509,31 +476,32 @@ Feel free to try one of the related guides. They demonstrate new technologies th
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-microprofile-config-profile*** project by running the following commands:
+Delete the ***guide-openliberty-operator-openshift*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-microprofile-config-profile
+rm -fr guide-openliberty-operator-openshift
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Externalizing%20environment-specific%20microservice%20configuration%20for%20CI/CD&guide-id=cloud-hosted-guide-microprofile-config-profile)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Deploying%20a%20microservice%20to%20OpenShift%204%20using%20Open%20Liberty%20Operator&guide-id=cloud-hosted-guide-openliberty-operator-openshift)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-config-profile/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-config-profile/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-openliberty-operator-openshift/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-openliberty-operator-openshift/pulls)
 
 
 
 ### Where to next?
 
-* [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html)
-* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Deploying microservices to OpenShift 3](https://openliberty.io/guides/cloud-openshift.html)
+* [Deploying microservices to OpenShift 4 using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html)
+* [Deploying microservices to an OKD cluster using Minishift](https://openliberty.io/guides/okd.html)
 
 
 ### Log out of the session
