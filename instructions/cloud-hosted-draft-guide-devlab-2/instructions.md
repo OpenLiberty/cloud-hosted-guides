@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Deploying a microservice to OpenShift 4 using Open Liberty Operator guide!"}
+::page{title="Welcome to the Building fault-tolerant microservices with the @Fallback annotation guide!"}
 
-Explore how to deploy a microservice to Red Hat OpenShift 4 using Open Liberty Operator.
+You'll explore how to manage the impact of failures using MicroProfile Fault Tolerance by adding fallback behavior to microservice dependencies.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,17 +14,18 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 ::page{title="What you'll learn"}
 
-You will learn how to deploy a cloud-native application with a microservice to Red Hat OpenShift 4 by using the Open Liberty Operator. 
+You will learn how to use MicroProfile (MP) Fault Tolerance to build resilient microservices that reduce the impact from failure and ensure continued operation of services.
 
-[OpenShift](https://www.openshift.com/) is a Kubernetes-based platform with added functions. It streamlines the DevOps process by providing an intuitive development pipeline. It also provides integration with multiple tools to make the deployment and management of cloud applications easier. You can learn more about Kubernetes by checking out the [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html) guide.
+MP Fault Tolerance provides a simple and flexible solution to build fault-tolerant microservices. Fault tolerance leverages different strategies to guide the execution and result of logic. As stated in the [MicroProfile website](https://microprofile.io/project/eclipse/microprofile-fault-tolerance), retry policies, bulkheads, and circuit breakers are popular concepts in this area. They dictate whether and when executions take place, and fallbacks offer an alternative result when an execution does not complete successfully.
 
-[Kubernetes operators](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/#operators-in-kubernetes) provide an easy way to automate the management and updating of applications by abstracting away some of the details of cloud application management. To learn more about operators, check out this [Operators tech topic article](https://www.openshift.com/learn/topics/operators). 
+The application that you will be working with is an ***inventory*** service, which collects, stores, and returns the system properties. It uses the ***system*** service to retrieve the system properties for a particular host. You will add fault tolerance to the ***inventory*** service so that it reacts accordingly when the ***system*** service is unavailable.
 
-The application in this guide consists of one microservice, ***system***. The system microservice returns the JVM system properties of its host.
+You will use the ***@Fallback*** annotations from the MicroProfile Fault Tolerance specification to define criteria for when to provide an alternative solution for a failed execution.
 
-You will deploy the ***system*** microservice by using the Open Liberty Operator. The [Open Liberty Operator](https://github.com/OpenLiberty/open-liberty-operator) provides a method of packaging, deploying, and managing Open Liberty applications on Kubernetes-based clusters. The Open Liberty Operator watches Open Liberty resources and creates various Kubernetes resources, including ***Deployments***, ***Services***, and ***Routes***, depending on the configurations. The Operator then continuously compares the current state of the resources with the desired state of application deployment and reconciles them when necessary.
+You will also see the application metrics for the fault tolerance methods that are automatically enabled when you add the MicroProfile Metrics feature to your Open Liberty.
 
 
 
@@ -39,11 +40,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-openliberty-operator-openshift.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-fallback.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-openliberty-operator-openshift.git
-cd guide-openliberty-operator-openshift
+git clone https://github.com/openliberty/guide-microprofile-fallback.git
+cd guide-microprofile-fallback
 ```
 
 
@@ -52,422 +53,466 @@ The ***start*** directory contains the starting project that you will build upon
 The ***finish*** directory contains the finished project that you will build.
 
 
-::page{title="Installing the Operator"}
+### Try what you'll build
 
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-A project is created for you to use in this exercise. Run the following command to see your project name:
-
-```bash
-oc projects
-```
-
-In this Skill Network enviornment, the Open Liberty Operator is already installed by the administrator. If you like to learn how to install the Open Liberty Operator, you can learn from the [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators) guide or the Open Liberty Operator [document](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1.adoc#operator-installation).
-
-Run the following command to view all the supported API resources that are available through the Open Liberty Operator:
+To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
 
 ```bash
-oc api-resources --api-group=apps.openliberty.io
+cd finish
+./mvnw liberty:run
 ```
 
-Look for the following output, which shows the [custom resource definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRDs) that can be used by the Open Liberty Operator:
+After you see the following message, your Liberty instance is ready:
 
 ```
-NAME                      SHORTNAMES         APIVERSION               NAMESPACED   KIND
-openlibertyapplications   olapp,olapps       apps.openliberty.io/v1   true         OpenLibertyApplication
-openlibertydumps          oldump,oldumps     apps.openliberty.io/v1   true         OpenLibertyDump
-openlibertytraces         oltrace,oltraces   apps.openliberty.io/v1   true         OpenLibertyTrace
+The defaultServer server is ready to run a smarter planet.
 ```
 
-Each CRD defines a kind of object that can be used, which is specified in the previous example by the ***KIND*** value. The ***SHORTNAME*** value specifies alternative names that you can substitute in the configuration to refer to an object kind. For example, you can refer to the ***OpenLibertyApplication*** object kind by one of its specified shortnames, such as ***olapps***. 
 
-The ***openlibertyapplications*** CRD defines a set of configurations for deploying an Open Liberty-based application, including the application image, number of instances, and storage settings. The Open Liberty Operator watches for changes to instances of the ***OpenLibertyApplication*** object kind and creates Kubernetes resources that are based on the configuration that is defined in the CRD.
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. To access the ***inventory*** service with a localhost hostname, run the following curl command:
+```bash
+curl -s http://localhost:9080/inventory/systems/localhost | jq
+```
+
+You see the system properties for this host. When you run this curl command, some of these system properties, such as the OS name and user name, are automatically stored in the inventory.
 
 
-::page{title="Deploying the system microservice to OpenShift"}
+Update the ***CustomConfigSource*** configuration file. Change the ***io_openliberty_guides_system_inMaintenance*** property from ***false*** to ***true*** and save the file.
 
-To deploy the ***system*** microservice, you must first package the microservice, then create and run an OpenShift build to produce runnable container images of the packaged microservice.
+> To open the CustomConfigSource.json file in your IDE, select 
+> ***File*** > ***Open*** > guide-microprofile-fallback/finish/resources/CustomConfigSource.json, or click the following button
 
-### Packaging the microservice
+::openFile{path="/home/project/guide-microprofile-fallback/finish/resources/CustomConfigSource.json"}
 
-Ensure that you are in the ***start*** directory and run the following command to package the ***system*** microservice:
+```
+{"config_ordinal":500,
+"io_openliberty_guides_system_inMaintenance":true}
+```
 
+
+You do not need to restart the Liberty instance. Next, run the following curl command:
+```bash
+curl -s http://localhost:9080/inventory/systems/localhost | jq
+```
+
+The fallback mechanism is triggered because the **system** service is now in maintenance. You see the cached properties for this localhost.
+
+When you are done checking out the application, go to the ***CustomConfigSource.json*** file again.
+
+
+Update the ***CustomConfigSource*** configuration file. Change the ***io_openliberty_guides_system_inMaintenance*** property from ***true*** to ***false*** to set this condition back to its original value.
+
+> To open the CustomConfigSource.json file in your IDE, select 
+> ***File*** > ***Open*** > guide-microprofile-fallback/finish/resources/CustomConfigSource.json, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-fallback/finish/resources/CustomConfigSource.json"}
+
+```
+{"config_ordinal":500,
+"io_openliberty_guides_system_inMaintenance":false}
+```
+
+After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
-cd /home/project/guide-openliberty-operator-openshift/start
-./mvnw clean package
+./mvnw liberty:stop
 ```
 
-### Building and pushing the image
 
-Create a build template to configure how to build your container image.
+::page{title="Enabling fault tolerance"}
 
-Create the ***build.yaml*** template file in the ***start*** directory.
+
+To begin, run the following command to navigate to the ***start*** directory:
+```bash
+cd /home/project/guide-microprofile-fallback/start
+```
+
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+
+```bash
+./mvnw liberty:dev
+```
+
+After you see the following message, your Liberty instance is ready in dev mode:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+
+The MicroProfile Fault Tolerance API is included in the MicroProfile dependency that is specified in your ***pom.xml*** file. Look for the dependency with the ***microprofile*** artifact ID. This dependency provides a library that allows you to use fault tolerance policies in your microservices.
+
+You can also find the ***mpFaultTolerance*** feature in your ***src/main/liberty/config/server.xml*** configuration file, which turns on MicroProfile Fault Tolerance capabilities in Open Liberty.
+
+To easily work through this guide, the two provided microservices are set up to run on the same Liberty instance. To simulate the availability of the services and then to enable fault tolerance, dynamic configuration with MicroProfile Configuration is used so that you can easily take one service or the other down for maintenance. If you want to learn more about setting up dynamic configuration, see [Configuring microservices](https://openliberty.io/guides/microprofile-config.html).
+
+The following two steps set up the dynamic configuration on the ***system*** service and its client. You can move on to the next section, which adds the fallback mechanism on the ***inventory*** service.
+
+First, the ***src/main/java/io/openliberty/guides/system/SystemResource.java*** file has the ***isInMaintenance()*** condition, which determines that the system properties are returned only if you set the ***io_openliberty_guides_system_inMaintenance*** configuration property to ***false*** in the ***CustomConfigSource*** file. Otherwise, the service returns a ***Status.SERVICE_UNAVAILABLE*** message, which makes it unavailable.
+
+Next, the ***src/main/java/io/openliberty/guides/inventory/client/SystemClient.java*** file makes a request to the ***system*** service through the MicroProfile Rest Client API. If you want to learn more about MicroProfile Rest Client, you can follow the [Consuming RESTful services with template interfaces](https://openliberty.io/guides/microprofile-rest-client.html) guide. The ***system*** service as described in the ***SystemResource.java*** file may return a ***Status.SERVICE_UNAVAILABLE*** message, which is a 503 status code. This code indicates that the Liberty instance being called is unable to handle the request because of a temporary overload or scheduled maintenance, which would likely be alleviated after some delay. To simulate that the system is unavailable, an ***IOException*** is thrown.
+
+The ***InventoryManager*** class calls the ***getProperties()*** method in the ***SystemClient.java*** class. You will look into the ***InventoryManager*** class in more detail in the next section.
+
+
+
+
+
+
+
+### Adding the @Fallback annotation
+
+The ***inventory*** service is now able to recognize that the ***system*** service was taken down for maintenance. An IOException is thrown to simulate the ***system*** service is unavailable. Now, set a fallback method to deal with this failure.
+
+
+Replace the ***InventoryManager*** class.
+
+> To open the InventoryManager.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-fallback/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-fallback/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
+
+
+
+```java
+package io.openliberty.guides.inventory;
+
+import java.io.IOException;
+import java.net.UnknownHostException;
+import java.util.Properties;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import jakarta.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.faulttolerance.Fallback;
+import io.openliberty.guides.inventory.model.InventoryList;
+import io.openliberty.guides.inventory.model.SystemData;
+
+@ApplicationScoped
+public class InventoryManager {
+
+    private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
+    private InventoryUtils invUtils = new InventoryUtils();
+
+    @Fallback(fallbackMethod = "fallbackForGet",
+            applyOn = {IOException.class},
+            skipOn = {UnknownHostException.class})
+    public Properties get(String hostname) throws IOException {
+        return invUtils.getProperties(hostname);
+    }
+
+    public Properties fallbackForGet(String hostname) {
+        Properties properties = findHost(hostname);
+        if (properties == null) {
+            Properties msgProp = new Properties();
+            msgProp.setProperty(hostname,
+                    "System is not found in the inventory or system is in maintenance");
+            return msgProp;
+        }
+        return properties;
+    }
+
+    public void add(String hostname, Properties systemProps) {
+        Properties props = new Properties();
+
+        String osName = systemProps.getProperty("os.name");
+        if (osName == null) {
+            return;
+        }
+
+        props.setProperty("os.name", systemProps.getProperty("os.name"));
+        props.setProperty("user.name", systemProps.getProperty("user.name"));
+
+        SystemData system = new SystemData(hostname, props);
+        if (!systems.contains(system)) {
+            systems.add(system);
+        }
+    }
+
+    public InventoryList list() {
+        return new InventoryList(systems);
+    }
+
+    private Properties findHost(String hostname) {
+        for (SystemData system : systems) {
+            if (system.getHostname().equals(hostname)) {
+                return system.getProperties();
+            }
+        }
+        return null;
+    }
+}
+```
+
+
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+
+
+The ***@Fallback*** annotation dictates a method to call when the original method encounters a failed execution. In this example, use the ***fallbackForGet()*** method.
+
+The ***@Fallback*** annotation provides two parameters, ***applyOn*** and ***skipOn***, which allow you to configure which exceptions trigger a fallback and which exceptions do not, respectively. In this example, the ***get()*** method throws ***IOException*** when the system service is unavailable, and throws ***UnknownHostException*** when the system service cannot be found on the specified host. The ***fallbackForGet()*** method can handle the first case, but not the second.
+
+The ***fallbackForGet()*** method, which is the designated fallback method for the original ***get()*** method, checks to see if the system's properties exist in the inventory. If the system properties entry is not found in the inventory, the method prints out a warning message in the browser. Otherwise, this method returns the cached property values from the inventory.
+
+You successfully set up your microservice to have fault tolerance capability.
+
+
+::page{title="Enabling metrics for the fault tolerance methods"}
+
+
+MicroProfile Fault Tolerance integrates with MicroProfile Metrics to provide metrics for the annotated fault tolerance methods. When both the ***mpFaultTolerance*** and the ***mpMetrics*** features are included in the ***server.xml*** configuration file, the ***@Fallback*** fault tolerance annotation provides metrics that count the following things: the total number of annotated method invocations, the total number of failed annotated method invocations, and the total number of the fallback method calls.
+
+The ***mpMetrics*** feature requires SSL and the configuration is provided for you. The ***quickStartSecurity*** configuration element provides basic security to secure the Liberty. When you go to the ***/metrics*** endpoint, use the credentials that are defined in the Liberty's configuration to log in to view the data for the fault tolerance methods.
+
+You can learn more about MicroProfile Metrics in the [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html) guide. You can also learn more about the MicroProfile Fault Tolerance and MicroProfile Metrics integration in the [MicroProfile Fault Tolerance specification](https://github.com/eclipse/microprofile-fault-tolerance/releases).
+
+
+::page{title="Running the application"}
+
+You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+
+
+When the Liberty instance is running, run the following curl command:
+```bash
+curl -s http://localhost:9080/inventory/systems/localhost | jq
+```
+
+You receive the system properties of your local JVM from the **inventory** service.
+
+Next, run the following curl command which accesses the **system** service, to retrieve the system properties for the specific localhost:
+```bash
+curl -s http://localhost:9080/system/properties | jq
+```
+
+Notice that the results from the two URLs are identical because the **inventory** service gets its results from calling the **system** service.
+
+To see the application metrics, run the following curl commmand. This command will Log in using **admin** user, and you will have to enter **adminpwd** as the password.
+```bash
+curl -k -u admin https://localhost:9443/metrics?scope=base | grep ft_
+```
+
+See the following sample outputs for the **@Fallback** annotated method and the fallback method before a fallback occurs:
+
+```
+# TYPE ft_invocations_total counter
+ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
+ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 0
+ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
+ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
+```
+
+You can test the fault tolerance mechanism of your microservices by dynamically changing the ***io_openliberty_guides_system_inMaintenance*** property value to ***true*** in the ***resources/CustomConfigSource.json*** file, which puts the ***system*** service in maintenance.
+
+
+Update the configuration file. Change the ***io_openliberty_guides_system_inMaintenance*** property from ***false*** to ***true*** and save the file.
+
+> To open the CustomConfigSource.json file in your IDE, select 
+> ***File*** > ***Open*** > guide-microprofile-fallback/start/resources/CustomConfigSource.json, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-fallback/start/resources/CustomConfigSource.json"}
+
+```
+{"config_ordinal":500,
+"io_openliberty_guides_system_inMaintenance":true}
+```
+
+
+
+
+After saving the file, run the following curl command to view the cached version of the properties:
+```bash
+curl -s http://localhost:9080/inventory/systems/localhost | jq
+```
+
+The **fallbackForGet()** method, which is the designated fallback method, is called when the **system** service is not available. The cached system properties contain only the OS name and user name key and value pairs.
+
+
+To see that the ***system*** service is down, run the following curl command:
+```bash
+curl -I http://localhost:9080/system/properties
+```
+
+You see that the service displays a 503 HTTP response code.
+
+
+Run the following curl command again and enter ***adminpwd*** as the password:
+```bash
+curl -k -u admin https://localhost:9443/metrics?scope=base | grep ft_
+```
+
+See the following sample outputs for the ***@Fallback*** annotated method and the fallback method after a fallback occurs:
+
+```
+# TYPE ft_invocations_total counter
+ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
+ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
+ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
+ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
+```
+
+
+From the output, the ***base_ft_invocations_total{fallback="notApplied",*** ***method="io.openliberty.guides.inventory.InventoryManager.get",*** ***result="valueReturned"}*** data shows that the ***get()*** method was called once without triggering a fallback method. The ***base_ft_invocations_total{fallback="applied",*** ***method="io.openliberty.guides.inventory.InventoryManager.get",*** ***result="valueReturned"}*** data indicates that the ***get()*** method was called once and the fallback ***fallbackForGet()*** method was triggered.
+
+
+Update the configuration file. After you finish, change the ***io_openliberty_guides_system_inMaintenance*** property value back to ***false*** in the ***resources/CustomConfigSource.json*** file.
+
+> To open the CustomConfigSource.json file in your IDE, select 
+> ***File*** > ***Open*** > guide-microprofile-fallback/start/resources/CustomConfigSource.json, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-fallback/start/resources/CustomConfigSource.json"}
+
+```
+{"config_ordinal":500,
+"io_openliberty_guides_system_inMaintenance":false}
+```
+
+
+::page{title="Testing the application"}
+
+You can test your application manually, but automated tests ensure code quality because they trigger a failure whenever a code change introduces a defect. JUnit and the JAX-RS Client API provide a simple environment for you to write tests.
+
+Create the ***FaultToleranceIT*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-openliberty-operator-openshift/start/build.yaml
+touch /home/project/guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
 ```
 
 
-> Then, to open the build.yaml file in your IDE, select
-> ***File*** > ***Open*** > guide-openliberty-operator-openshift/start/build.yaml, or click the following button
+> Then, to open the FaultToleranceIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java, or click the following button
 
-::openFile{path="/home/project/guide-openliberty-operator-openshift/start/build.yaml"}
-
-
-
-```yaml
-apiVersion: template.openshift.io/v1
-kind: Template
-metadata:
-  name: "build-template"
-  annotations:
-    description: "Build template for the system service"
-    tags: "build"
-objects:
-  - apiVersion: v1
-    kind: ImageStream
-    metadata:
-      name: "system-imagestream"
-      labels:
-        name: "system"
-  - apiVersion: v1
-    kind: BuildConfig
-    metadata:
-      name: "system-buildconfig"
-      labels:
-        name: "system"
-    spec:
-      source:
-        type: Binary
-      strategy:
-        type: Docker
-      output:
-        to:
-          kind: ImageStreamTag
-          name: "system-imagestream:1.0-SNAPSHOT"
-```
-
-
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
-
-
-The ***build.yaml*** template includes two objects. The ***ImageStream*** object provides an abstraction from the image in the image registry, which allows you to reference and tag the image. The image registry is the integrated internal OpenShift Container Registry.
-
-The ***BuildConfig*** object defines a single build definition and any triggers that kickstart the build. The ***source*** spec defines the build input. In this case, the build inputs are your ***binary*** (local) files, which are streamed to OpenShift for the build. The uploaded files need to include the packaged ***WAR*** application binaries, which is why you needed to run the Maven commands. The template specifies a ***Docker*** strategy build, which invokes the ***docker build*** command, and creates a runnable container image of the microservice from the build input.
-
-Run the following command to create the objects for the ***system*** microservice:
-
-```bash
-oc process -f build.yaml | oc create -f -
-```
-
-Next, run the following command to view the newly created ***ImageStream*** objects and the build configurations for the microservice:
-
-```bash
-oc get all -l name=system
-```
-
-Look for the following similar resources:
-
-```
-NAME                                                TYPE     FROM     LATEST
-buildconfig.build.openshift.io/system-buildconfig   Docker   Binary   0
-
-NAME                                                IMAGE REPOSITORY                                                                   TAGS           UPDATED
-imagestream.image.openshift.io/system-imagestream   default-route-openshift-image-registry.apps-crc.testing/guide/system-imagestream
-```   
-
-Ensure that you are in the ***start*** directory and trigger the build by running the following command:
-
-```bash
-oc start-build system-buildconfig --from-dir=system/.
-```
-
-The local ***system*** directory is uploaded to OpenShift to be built into the Docker image. Run the following command to list the build and track its status:
-
-```bash
-oc get builds
-```
-
-Look for the output that is similar to the following example:
-
-```
-NAME                    TYPE     FROM             STATUS     STARTED
-system-buildconfig-1    Docker   Binary@f24cb58   Running    45 seconds ago
-```
-
-You might need to wait some time until the build is complete. To check whether the build is complete, run the following command to view the build log until the ***Push successful*** message appears:
-
-```bash
-oc logs build/system-buildconfig-1
-```
-
-### Checking the image
-
-During the build process, the image associated with the ***ImageStream*** object that you created earlier was pushed to the image registry and tagged. Run the following command to view the newly updated ***ImageStream*** object:
-
-```bash
-oc get imagestreams
-```
-
-Run the following command to get more details on the newly pushed image within the stream:
-
-```bash
-oc describe imagestream/system-imagestream
-```
-
-The following example shows part of the ***system-imagestream*** output:
-
-```
-Name:               system-imagestream
-Namespace:          guide
-Created:            2 minutes ago
-Labels:             name=system
-Annotations:        <none>
-Image Repository:   default-route-openshift-image-registry.apps-crc.testing/guide/system-imagestream
-Image Lookup:       local=false
-Unique Images:      1
-Tags:               1
-
-...
-```
-
-Now you're ready to deploy the image.
-
-### Deploying the image
-
-You can configure the specifics of the Open Liberty Operator-controlled deployment with a YAML configuration file.
-
-Create the ***deploy.yaml*** configuration file in the ***start*** directory.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-openliberty-operator-openshift/start/deploy.yaml
-```
-
-
-> Then, to open the deploy.yaml file in your IDE, select
-> ***File*** > ***Open*** > guide-openliberty-operator-openshift/start/deploy.yaml, or click the following button
-
-::openFile{path="/home/project/guide-openliberty-operator-openshift/start/deploy.yaml"}
+::openFile{path="/home/project/guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java"}
 
 
 
-```yaml
-apiVersion: apps.openliberty.io/v1
-kind: OpenLibertyApplication
-metadata:
-  name: system
-  labels:
-    name: system
-spec:
-  applicationImage: guide/system-imagestream:1.0-SNAPSHOT
-  pullPolicy: Always
-  service:
-    port: 9443
-  expose: true
-  env:
-    - name: WLP_LOGGING_MESSAGE_FORMAT
-      value: "json"
-    - name: WLP_LOGGING_MESSAGE_SOURCE
-      value: "message,trace,accessLog,ffdc,audit"
+```java
+package it.io.openliberty.guides.faulttolerance;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.Response;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import it.io.openliberty.guides.utils.TestUtils;
+
+public class FaultToleranceIT {
+
+    private Client client;
+    private Response response;
+
+    @BeforeEach
+    public void setup() {
+        client = ClientBuilder.newClient();
+    }
+
+    @AfterEach
+    public void teardown() {
+        response.close();
+        client.close();
+    }
+
+    @Test
+    public void testFallbackForGet() throws InterruptedException {
+        response = TestUtils.getResponse(client,
+                                         TestUtils.INVENTORY_LOCALHOST_URL);
+        assertResponse(TestUtils.baseUrl, response);
+        JsonObject obj = response.readEntity(JsonObject.class);
+        int propertiesSize = obj.size();
+        TestUtils.changeSystemProperty(TestUtils.SYSTEM_MAINTENANCE_FALSE,
+                                       TestUtils.SYSTEM_MAINTENANCE_TRUE);
+        Thread.sleep(3000);
+        response = TestUtils.getResponse(client,
+                                         TestUtils.INVENTORY_LOCALHOST_URL);
+        assertResponse(TestUtils.baseUrl, response);
+        obj = response.readEntity(JsonObject.class);
+        int propertiesSizeFallBack = obj.size();
+        assertTrue(propertiesSize > propertiesSizeFallBack,
+                   "The total number of properties from the @Fallback method "
+                   + "is not smaller than the number from the system service"
+                   +  "as expected.");
+        TestUtils.changeSystemProperty(TestUtils.SYSTEM_MAINTENANCE_TRUE,
+                                       TestUtils.SYSTEM_MAINTENANCE_FALSE);
+        Thread.sleep(3000);
+    }
+
+    @Test
+    public void testFallbackSkipForGet() {
+        response = TestUtils.getResponse(client,
+                   TestUtils.INVENTORY_UNKNOWN_HOST_URL);
+        assertResponse(TestUtils.baseUrl, response, 404);
+        assertTrue(response.readEntity(String.class).contains("error"),
+                   "Incorrect response body from "
+                   + TestUtils.INVENTORY_UNKNOWN_HOST_URL);
+    }
+
+    private void assertResponse(String url, Response response, int statusCode) {
+        assertEquals(statusCode, response.getStatus(),
+                     "Incorrect response code from " + url);
+    }
+
+    private void assertResponse(String url, Response response) {
+        assertResponse(url, response, 200);
+    }
+}
 ```
 
 
 
-The ***deploy.yaml*** file is configured to deploy one ***OpenLibertyApplication*** resource, ***system***, which is controlled by the Open Liberty Operator.
+The ***@BeforeEach*** and ***@AfterEach*** annotations indicate that this method runs either before or after the other test case. These methods are generally used to perform any setup and teardown tasks. In this case, the setup method creates a JAX-RS client, which makes HTTP requests to the ***inventory*** service. This client must also be registered with a JSON-P provider to process JSON resources. The teardown method simply destroys this client instance as well as the HTTP responses.
 
-The ***applicationImage*** parameter defines what container image is deployed as part of the ***OpenLibertyApplication*** CRD. This parameter follows the ***\<project-name\>/\<image-stream-name\>[:tag]*** format. The parameter can also point to an image hosted on an external registry, such as Docker Hub. The ***system*** microservice is configured to use the ***image*** created from the earlier build. 
+The ***testFallbackForGet()*** test case sends a request to the ***inventory*** service to get the systems properties for a hostname before and after the ***system*** service becomes unavailable. Then, it asserts outputs from the two requests to ensure that they are different from each other.
 
-One of the benefits of using ***ImageStream*** objects is that the operator redeploys the application when it detects that a new image is pushed. The ***env*** parameter is used to specify environment variables that are passed to the container at runtime.
+The ***testFallbackSkipForGet()*** test case sends a request to the ***inventory*** service to get the system properties for an incorrect hostname (***unknown***). Then, it confirms that the fallback method has not been called by asserting that the response's status code is ***404*** with an error message in the response body.
 
-Additionally, the microservice includes the ***service*** and ***expose*** parameters. The ***service.port*** parameter specifies which port is exposed by the container, allowing the microservice to be accessed from outside the container. To access the microservice from outside of the cluster, it must be exposed by setting the ***expose*** parameter to ***true***. After you expose the microservice, the Operator automatically creates and configures routes for external access to your microservice.
+The ***@Test*** annotations indicate that the methods automatically execute when your test class runs.
+
+In addition, a few endpoint tests have been included for you to test the basic functionality of the ***inventory*** and ***system*** services. If a test failure occurs, then you might have introduced a bug into the code.
 
 
-Run the following commands to update the **applicationImage** with the **pullSecret** and deploy the **system** microservice with the previously explained configuration:
-```bash
-sed -i 's=guide/system-imagestream:1.0-SNAPSHOT='"$SN_ICR_NAMESPACE"'/system-imagestream:1.0-SNAPSHOT\n  pullSecret: icr=g' deploy.yaml
-oc apply -f deploy.yaml
+### Running the tests
+
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+
+If the tests pass, you see a similar output to the following example:
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.faulttolerance.FaultToleranceIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.517 sec - in it.io.openliberty.guides.faulttolerance.FaultToleranceIT
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.937 sec - in it.io.openliberty.guides.system.SystemEndpointIT
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.396 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+
+Results :
+
+Tests run: 6, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-Next, run the following command to view your newly created ***OpenLibertyApplications*** resources:
+To see if the tests detect a failure, comment out the ***changeSystemProperty()*** methods in the ***FaultToleranceIT.java*** file. Rerun the tests to see that a test failure occurs for the ***testFallbackForGet()*** and ***testFallbackSkipForGet()*** test cases.
 
-```bash
-oc get OpenLibertyApplications
-```
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
 
-You can also replace ***OpenLibertyApplications*** with the shortname ***olapps***.
-
-Look for output that is similar to the following example:
-
-```
-NAME      IMAGE                                    EXPOSED   RECONCILED   AGE
-system    guide/system-imagestream:1.0-SNAPSHOT    true      True         10s
-```
-
-A ***RECONCILED*** state value of ***True*** indicates that the operator was able to successfully process the ***OpenLibertyApplications*** instances. Run the following command to view details of your microservice:
-
-```bash
-oc describe olapps/system
-```
-
-This example shows part of the ***olapps/system*** output:
-
-```
-Name:         system
-Namespace:    guide
-Labels:       app.kubernetes.io/part-of=system
-              name=system
-Annotations:  <none>
-API Version:  apps.openliberty.io/v1
-Kind:         OpenLibertyApplication
-
-...
-```
-
-::page{title="Accessing the microservice"}
-
-To access the exposed ***system*** microservice, run the following command and make note of the ***HOST***:
-
-```bash
-oc get routes
-```
-
-Look for an output that is similar to the following example:
-
-```
-NAME     HOST/PORT                                                     PATH   SERVICES   PORT       TERMINATION   WILDCARD
-system   system-guide.2886795274-80-kota02.environments.katacoda.com          system     9443-tcp                 None
-```
-
-
-Visit the microservice by going to the following URL: 
-***https://[HOST]/system/properties***
-
-Make sure to substitute the appropriate ***[HOST]*** value. For example, using the output from the command above, ***system-guide.2886795274-80-kota02.environments.katacoda.com*** is the ***HOST***. The following example shows this value substituted for ***HOST*** in the URL: ***https://system-guide.2886795274-80-kota02.environments.katacoda.com/system/properties***.
-
-Or, you can run the following command to get the URL:
-```bash
-echo https://`oc get routes system -o jsonpath='{.spec.host}'`/system/properties
-```
-
-Then, hold the **CTRL** key and click on the URL in the terminal to visit the microservice.
-
-When you’re done trying out the microservice, run following command to stop the microservice:
-```bash
-oc delete -f deploy.yaml
-```
-
-::page{title="Specifying optional parameters"}
-
-You can also use the Open Liberty Operator to implement optional parameters in your application deployment by specifying the associated CRDs in your ***deploy.yaml*** file. For example, you can configure the [Kubernetes liveness, readiness and startup probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/). Visit the [Open Liberty Operator user guide](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1.adoc#configuration) to find all of the supported optional CRDs.
-
-To configure the Kubernetes liveness, readiness and startup probes by using the Open Liberty Operator, specify the ***probes*** in your ***deploy.yaml*** file. The ***startup*** probe verifies whether deployed application is fully initialized before the liveness probe takes over. Then, the ***liveness*** probe determines whether the application is running and the ***readiness*** probe determines whether the application is ready to process requests. For more information about application health checks, see the [Checking the health of microservices on Kubernetes](https://openliberty.io/guides/kubernetes-microprofile-health.html) guide.
-
-Replace the ***deploy.yaml*** configuration file.
-
-> To open the deploy.yaml file in your IDE, select
-> ***File*** > ***Open*** > guide-openliberty-operator-openshift/start/deploy.yaml, or click the following button
-
-::openFile{path="/home/project/guide-openliberty-operator-openshift/start/deploy.yaml"}
-
-
-
-```yaml
-apiVersion: apps.openliberty.io/v1
-kind: OpenLibertyApplication
-metadata:
-  name: system
-  labels:
-    name: system
-spec:
-  applicationImage: guide/system-imagestream:1.0-SNAPSHOT
-  pullPolicy: Always
-  service:
-    port: 9443
-  expose: true
-  env:
-    - name: WLP_LOGGING_MESSAGE_FORMAT
-      value: "json"
-    - name: WLP_LOGGING_MESSAGE_SOURCE
-      value: "message,trace,accessLog,ffdc,audit"
-  probes:
-    startup:
-      failureThreshold: 12
-      httpGet:
-        path: /health/started
-        port: 9443
-        scheme: HTTPS
-      initialDelaySeconds: 30
-      periodSeconds: 2
-      timeoutSeconds: 10
-    liveness:
-      failureThreshold: 12
-      httpGet:
-        path: /health/live
-        port: 9443
-        scheme: HTTPS
-      initialDelaySeconds: 30
-      periodSeconds: 2
-      timeoutSeconds: 10
-    readiness:
-      failureThreshold: 12
-      httpGet:
-        path: /health/ready
-        port: 9443
-        scheme: HTTPS
-      initialDelaySeconds: 30
-      periodSeconds: 2
-      timeoutSeconds: 10
-```
-
-
-
-The ***/health/started***, ***/health/live***, and ***/health/ready*** health check endpoints are already created for you. 
-
-
-Run the following commands to update the **applicationImage** with the **pullSecret** and deploy the **system** microservice with the new configuration:
-```bash
-sed -i 's=guide/system-imagestream:1.0-SNAPSHOT='"$SN_ICR_NAMESPACE"'/system-imagestream:1.0-SNAPSHOT\n  pullSecret: icr=g' deploy.yaml
-oc apply -f deploy.yaml
-```
-Run the following command to check status of the pods:
-```bash
-oc describe pods | grep health
-```
-
-Look for the following output to confirm that the health checks are successfully applied and working:
-
-```
-Liveness:   http-get http://:9080/health/live delay=30s timeout=10s period=2s #success=1 #failure=12
-Readiness:  http-get http://:9080/health/ready delay=30s timeout=10s period=2s #success=1 #failure=12
-Startup:    http-get http://:9080/health/started delay=30s timeout=10s period=2s #success=1 #failure=12
-```
-
-Run the following command to get the URL:
-```bash
-echo https://`oc get routes system -o jsonpath='{.spec.host}'`/system/properties
-```
-
-Then, hold the **CTRL** key and click on the URL in the terminal to visit the microservice.
-
-::page{title="Tearing down the environment"}
-
-
-When you no longer need your deployed microservice, you can delete all resources by running the following commands:
-
-```bash
-oc delete -f deploy.yaml
-oc delete imagestream.image.openshift.io/system-imagestream
-oc delete bc system-buildconfig
-```
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just deployed a microservice running in Open Liberty to OpenShift 4 and configured the Kubernetes liveness, readiness and startup probes by using the Open Liberty Operator.
+You just learned how to build a fallback mechanism for a microservice with MicroProfile Fault Tolerance in Open Liberty and wrote a test to validate it.
+
+
+You can try one of the related MicroProfile guides. They demonstrate technologies that you can learn and expand on what you built here.
 
 
 
@@ -476,32 +521,33 @@ You just deployed a microservice running in Open Liberty to OpenShift 4 and conf
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-openliberty-operator-openshift*** project by running the following commands:
+Delete the ***guide-microprofile-fallback*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-openliberty-operator-openshift
+rm -fr guide-microprofile-fallback
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Deploying%20a%20microservice%20to%20OpenShift%204%20using%20Open%20Liberty%20Operator&guide-id=cloud-hosted-guide-openliberty-operator-openshift)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Building%20fault-tolerant%20microservices%20with%20the%20@Fallback%20annotation&guide-id=cloud-hosted-guide-microprofile-fallback)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-openliberty-operator-openshift/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-openliberty-operator-openshift/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-fallback/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-fallback/pulls)
 
 
 
 ### Where to next?
 
-* [Deploying microservices to OpenShift 3](https://openliberty.io/guides/cloud-openshift.html)
-* [Deploying microservices to OpenShift 4 using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html)
-* [Deploying microservices to an OKD cluster using Minishift](https://openliberty.io/guides/okd.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Preventing repeated failed calls to microservices](https://openliberty.io/guides/circuit-breaker.html)
 
 
 ### Log out of the session
