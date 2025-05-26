@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Building a web application with Maven guide!"}
+::page{title="Welcome to the Getting started with Open Liberty guide!"}
 
-Learn how to build and test a simple web application using Maven and Open Liberty.
+Learn how to develop a Java application on Open Liberty with Maven and Docker.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,19 +14,18 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 ::page{title="What you'll learn"}
 
-You will learn how to configure a simple web servlet application using [Maven](https://maven.apache.org/what-is-maven.html) and the [Liberty Maven plugin](https://github.com/OpenLiberty/ci.maven/blob/main/README.md). When you compile and build the application code, Maven downloads and installs Open Liberty. If you run the application, Maven creates an Open Liberty instance and runs the application on it. The application displays a simple web page with a link that, when clicked, calls the servlet to return a simple response of ***Hello! How are you today?***.
+You will learn how to run and update a simple REST microservice on Open Liberty. You will use Maven throughout the guide to build and deploy the microservice as well as to interact with the running Liberty instance.
 
-One benefit of using a build tool like Maven is that you can define the details of the project and any dependencies it has, and Maven automatically downloads and installs the dependencies. Another benefit of using Maven is that it can run repeatable, automated tests on the application. You can, of course, test your application manually by starting a Liberty instance and pointing a web browser at the application URL. However, automated tests are a much better approach because you can easily rerun the same tests each time the application is built. If the tests don't pass after you change the application, the build fails, and you know that you introduced a regression that requires a fix to your code. 
+Open Liberty is an open application framework designed for the cloud. It's small, lightweight, and designed with modern cloud-native application development in mind. It supports the full MicroProfile and Jakarta EE APIs and is composable, meaning that you can use only the features that you need, keeping everything lightweight, which is great for microservices. It also deploys to every major cloud platform, including Docker, Kubernetes, and Cloud Foundry.
 
-Choosing a build tool often comes down to personal or organizational preference, but you might choose to use Maven for several reasons. Maven defines its builds by using XML, which is probably familiar to you already. As a mature, commonly used build tool, Maven probably integrates with whichever IDE you prefer to use. Maven also has an extensive plug-in library that offers various ways to quickly customize your build. Maven can be a good choice if your team is already familiar with it. 
+Maven is an automation build tool that provides an efficient way to develop Java applications. Using Maven, you will build a simple microservice, called ***system***, that collects basic system properties from your laptop and displays them on an endpoint that you can access in your web browser. 
 
-You will create a Maven build definition file that's called a ***pom.xml*** file, which stands for Project Object Model, and use it to build your web application. You will then create a simple, automated test and configure Maven to automatically run the test.
+You'll also explore how to package your application with Open Liberty so that it can be deployed anywhere in one go. You will then make Liberty configuration and code changes and see how they are immediately picked up by a running instance.
 
+Finally, you will package the application along with Liberty's configuration into a Docker image and run that image as a container.
 
-::page{title="Installing Maven"}
 
 
 ::page{title="Getting started"}
@@ -40,11 +39,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-maven-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-getting-started.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-maven-intro.git
-cd guide-maven-intro
+git clone https://github.com/openliberty/guide-getting-started.git
+cd guide-getting-started
 ```
 
 
@@ -52,114 +51,688 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
+You have cloned a Maven project. To learn how to create a Liberty Maven project from scratch and edit your application using the Liberty Tools, see [Developing a cloud-native Java application with Liberty Tools in IntelliJ IDEA](https://openliberty.io/blog/2024/05/31/liberty-project-starter-guide-IntelliJ.html).
 
-### Try what you'll build
+In this IBM Cloud environment, you need to change the user home to ***/home/project*** by running the following command:
+```bash
+sudo usermod -d /home/project theia
+```
 
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-Run the following command to test that Maven Wrapper is installed:
+
+
+::page{title="Building and running the application"}
+
+Your application is configured to be built with Maven. Every Maven-configured project contains a ***pom.xml*** file, which defines the project configuration, dependencies, plug-ins, and so on.
+
+Your ***pom.xml*** file is located in the ***start*** directory and is configured to include the ***liberty-maven-plugin***, which allows you to install applications into Open Liberty and manage the associated Liberty instances.
+
+
+To begin, navigate to the ***start*** directory. Build the ***system*** microservice that is provided and deploy it to Open Liberty by running the Maven ***liberty:run*** goal:
 
 
 ```bash
-./mvnw -v
-```
-
-If Maven Wrapper is installed properly, you see information about the Maven installation similar to the following example:
-
-```
-Apache Maven 3.9.6 (05c21c65bdfed0f71a2f2ada8b84da59348c4c5d)
-Maven home: /Applications/Maven/apache-maven-3.9.6
-Java version: 11.0.12, vendor: International Business Machines Corporation, runtime: /Library/Java/JavaVirtualMachines/ibm-semeru-open-11.jdk/Contents/Home
-Default locale: en_US, platform encoding: UTF-8
-OS name: "mac os x", version: "11.6", arch: "x86_64", family: "mac"
-```
-
-To try out the application, first go to the ***finish*** directory and run Maven with the ***liberty:run*** goal to build the application and deploy it to Open Liberty:
-
-```bash
-cd finish
+cd start
 ./mvnw liberty:run
 ```
 
-After you see the following message, your Liberty instance is ready.
+The Maven command initiates a Maven build, during which the ***target*** directory is created to store all build-related files.
+
+The ***liberty:run*** argument specifies the Open Liberty ***run*** goal, which starts an Open Liberty instance in the foreground. As part of this phase, an Open Liberty runtime is downloaded and installed into the ***target/liberty/wlp*** directory, an instance of Liberty is created and configured in the ***target/liberty/wlp/usr/servers/defaultServer*** directory, and the application is installed into that instance using [loose config](https://www.ibm.com/support/knowledgecenter/en/SSEQTP_liberty/com.ibm.websphere.wlp.doc/ae/rwlp_loose_applications.html).
+
+For more information about the Liberty Maven plug-in, see its [GitHub repository](https://github.com/WASdev/ci.maven).
+
+When the Liberty instance begins starting up, various messages display in your command-line session. Wait for the following message, which indicates that Liberty's startup is complete:
 
 ```
-The guideServer server is ready to run a smarter planet.
+[INFO] [AUDIT] CWWKF0011I: The server defaultServer is ready to run a smarter planet.
 ```
 
 
-Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session. Run the following curl command to view the output of the application: 
+
+Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
+
+
+To access the ***system*** microservice, see the ***http\://localhost:9080/system/properties*** URL, and you see a list of the various system properties of your JVM:
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
 ```bash
-curl -s http://localhost:9080/ServletSample/servlet
+curl -s http://localhost:9080/system/properties | jq
 ```
 
-The servlet returns a simple response of ***Hello! How are you today?***.
 
-After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+```
+{
+    "os.name": "Mac OS X",
+    "java.version": "1.8.0_151",
+    ...
+}
+```
+
+When you need to stop the Liberty instance, press `Ctrl+C` in the command-line session where you ran Liberty, or run the ***liberty:stop*** goal from the ***start*** directory in another command-line session:
+
 
 ```bash
 ./mvnw liberty:stop
 ```
 
 
-::page{title="Creating a simple application"}
+::page{title="Starting and stopping Open Liberty in the background"}
 
-The simple web application that you will build using Maven and Open Liberty is provided for you in the ***start*** directory so that you can focus on learning about Maven. This application uses a standard Maven directory structure, eliminating the need to customize the ***pom.xml*** file so that Maven understands your project layout.
-
-All the application source code, including the Open Liberty ***server.xml*** configuration file, is in the ***src/main/liberty/config*** directory:
-
-```
-    └── src
-        └── main
-           └── java
-           └── resources
-           └── webapp
-           └── liberty
-                  └── config
-```
+Although you can start and stop Liberty in the foreground by using the Maven ***liberty:run*** goal, you can also start and stop the Liberty instance in the background with the Maven ***liberty:start*** and ***liberty:stop*** goals:
 
 
-::page{title="Creating the project POM file"}
-Navigate to the ***start*** directory to begin.
 ```bash
-cd /home/project/guide-maven-intro/start
+./mvnw liberty:start
+./mvnw liberty:stop
 ```
 
-Before you can build the project, define the Maven Project Object Model (POM) file, the ***pom.xml***. 
 
-Create the pom.xml file in the ***start*** directory.
+
+
+::page{title="Updating Liberty's configuration without restarting"}
+
+The Open Liberty Maven plug-in includes a ***dev*** goal that listens for any changes in the project, including application source code or configuration. The Open Liberty instance automatically reloads the configuration without restarting. This goal allows for quicker turnarounds and an improved developer experience.
+
+Stop the Open Liberty instance if it is running, and start it in [dev mode](https://openliberty.io/docs/latest/development-mode.html) by running the ***liberty:dev*** goal in the ***start*** directory:
+
+
+```bash
+./mvnw liberty:dev
+```
+
+
+Dev mode automatically picks up changes that you make to your application and allows you to run tests by pressing the ***enter/return*** key in the active command-line session. When you’re working on your application, rather than rerunning Maven commands, press the ***enter/return*** key to verify your change.
+
+
+As before, you can see that the application is running by going to the ***http\://localhost:9080/system/properties*** URL.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl -s http://localhost:9080/system/properties | jq
+```
+
+
+
+
+Now try updating Liberty's ***server.xml*** configuration file while the instance is running in dev mode. The ***system*** microservice does not currently include health monitoring to report whether the Liberty instance and the microservice that it runs are healthy. You can add health reports with the MicroProfile Health feature, which adds a ***/health*** endpoint to your application. If you try to access this endpoint now at the ***http\://localhost:9080/health/*** URL, you see a 404 error because the ***/health*** endpoint does not yet exist:
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl http://localhost:9080/health/
+```
+
+
+
+```
+Error 404: java.io.FileNotFoundException: SRVE0190E: File not found: /health
+```
+
+To add the MicroProfile Health feature to the Liberty instance, include the ***mpHealth*** feature in the ***server.xml***.
+
+Replace the Liberty ***server.xml*** configuration file.
+
+> To open the server.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-getting-started/start/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-getting-started/start/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="Sample Liberty server">
+    <featureManager>
+        <platform>jakartaee-10.0</platform>
+        <platform>microprofile-7.0</platform>
+        <feature>restfulWS</feature>
+        <feature>jsonp</feature>
+        <feature>jsonb</feature>
+        <feature>cdi</feature>
+        <feature>mpHealth</feature>
+        <feature>mpConfig</feature>
+        <feature>mpMetrics</feature>
+    </featureManager>
+
+    <variable name="http.port" defaultValue="9080"/>
+    <variable name="https.port" defaultValue="9443"/>
+
+    <webApplication location="guide-getting-started.war" contextRoot="/" />
+    
+    <mpMetrics authentication="false"/>
+
+
+    <httpEndpoint host="*" httpPort="${http.port}"
+        httpsPort="${https.port}" id="defaultHttpEndpoint"/>
+
+    <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
+</server>
+```
+
+
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+
+
+After you make the file changes, Open Liberty automatically reloads its configuration. When enabled, the ***mpHealth*** feature automatically adds a ***/health*** endpoint to the application. You can see the instance being updated in the Liberty log displayed in your command-line session:
+
+```
+[INFO] [AUDIT] CWWKG0016I: Starting server configuration update.
+[INFO] [AUDIT] CWWKT0017I: Web application removed (default_host): http://foo:9080/
+[INFO] [AUDIT] CWWKZ0009I: The application io.openliberty.guides.getting-started has stopped successfully.
+[INFO] [AUDIT] CWWKG0017I: The server configuration was successfully updated in 0.284 seconds.
+[INFO] [AUDIT] CWWKT0016I: Web application available (default_host): http://foo:9080/health/
+[INFO] [AUDIT] CWWKF0012I: The server installed the following features: [mpHealth-4.0].
+[INFO] [AUDIT] CWWKF0008I: Feature update completed in 0.285 seconds.
+[INFO] [AUDIT] CWWKT0016I: Web application available (default_host): http://foo:9080/
+[INFO] [AUDIT] CWWKZ0003I: The application io.openliberty.guides.getting-started updated in 0.173 seconds.
+```
+
+
+Try to access the ***/health*** endpoint again by visiting the ***http\://localhost:9080/health*** URL. You see the following JSON:
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl -s http://localhost:9080/health | jq
+```
+
+
+
+```
+{
+    "status":"UP",
+    "checks":[]
+}
+```
+
+Now you can verify whether your Liberty instance is up and running.
+
+
+
+::page{title="Updating the source code without restarting Liberty"}
+
+The RESTful application that contains your ***system*** microservice runs in a Liberty instance from its ***.class*** file and other artifacts. Open Liberty automatically monitors these artifacts, and whenever they are updated, it updates the running instance without the need for the instance to be restarted.
+
+Look at your ***pom.xml*** file.
+
+
+Try updating the source code while Liberty is running in dev mode. At the moment, the ***/health*** endpoint reports whether the Liberty instance is running, but the endpoint doesn't provide any details on the microservices that are running inside of the instance.
+
+MicroProfile Health offers health checks for both readiness and liveness. A readiness check allows third-party services, such as Kubernetes, to know if the microservice is ready to process requests. A liveness check allows third-party services to determine if the microservice is running.
+
+Create the ***SystemReadinessCheck*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-maven-intro/start/pom.xml
+touch /home/project/guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
 ```
 
 
-> Then, to open the pom.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-maven-intro/start/pom.xml, or click the following button
+> Then, to open the SystemReadinessCheck.java file in your IDE, select
+> ***File*** > ***Open*** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java, or click the following button
 
-::openFile{path="/home/project/guide-maven-intro/start/pom.xml"}
+::openFile{path="/home/project/guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java"}
+
+
+
+```java
+package io.openliberty.sample.system;
+
+import jakarta.enterprise.context.ApplicationScoped;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.health.Readiness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Readiness
+@ApplicationScoped
+public class SystemReadinessCheck implements HealthCheck {
+
+    private static final String READINESS_CHECK = SystemResource.class.getSimpleName()
+                                                 + " Readiness Check";
+
+    @Inject
+    @ConfigProperty(name = "io_openliberty_guides_system_inMaintenance")
+    Provider<String> inMaintenance;
+
+    @Override
+    public HealthCheckResponse call() {
+        if (inMaintenance != null && inMaintenance.get().equalsIgnoreCase("true")) {
+            return HealthCheckResponse.down(READINESS_CHECK);
+        }
+        return HealthCheckResponse.up(READINESS_CHECK);
+    }
+
+}
+```
+
+
+
+The ***SystemReadinessCheck*** class verifies that the 
+***system*** microservice is not in maintenance by checking a config property.
+
+Create the ***SystemLivenessCheck*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
+```
+
+
+> Then, to open the SystemLivenessCheck.java file in your IDE, select
+> ***File*** > ***Open*** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java, or click the following button
+
+::openFile{path="/home/project/guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java"}
+
+
+
+```java
+package io.openliberty.sample.system;
+
+import jakarta.enterprise.context.ApplicationScoped;
+
+import java.lang.management.MemoryMXBean;
+import java.lang.management.ManagementFactory;
+
+import org.eclipse.microprofile.health.Liveness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Liveness
+@ApplicationScoped
+public class SystemLivenessCheck implements HealthCheck {
+
+    @Override
+    public HealthCheckResponse call() {
+        MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
+        long memUsed = memBean.getHeapMemoryUsage().getUsed();
+        long memMax = memBean.getHeapMemoryUsage().getMax();
+
+        return HealthCheckResponse.named(
+            SystemResource.class.getSimpleName() + " Liveness Check")
+                                  .status(memUsed < memMax * 0.9).build();
+    }
+
+}
+```
+
+
+
+The ***SystemLivenessCheck*** class reports a status of 
+***DOWN*** if the microservice uses over 90% of the maximum amount of memory.
+
+After you make the file changes, Open Liberty automatically reloads its configuration and the ***system*** application.
+
+The following messages display in your first command-line session:
+
+```
+[INFO] [AUDIT] CWWKT0017I: Web application removed (default_host): http://foo:9080/
+[INFO] [AUDIT] CWWKZ0009I: The application io.openliberty.guides.getting-started has stopped successfully.
+[INFO] [AUDIT] CWWKT0016I: Web application available (default_host): http://foo:9080/
+[INFO] [AUDIT] CWWKZ0003I: The application io.openliberty.guides.getting-started updated in 0.136 seconds.
+```
+
+
+Access the ***/health*** endpoint again by going to the ***http\://localhost:9080/health*** URL. This time you see the overall status of your Liberty instance and the aggregated data of the liveness and readiness checks for the ***system*** microservice:
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl -s http://localhost:9080/health | jq
+```
+
+
+
+```
+{
+  "status": "UP",
+  "checks": [
+    {
+      "name": "SystemResource Liveness Check",
+      "status": "UP",
+      "data": {}
+    },
+    {
+      "name": "SystemResource Readiness Check",
+      "status": "UP",
+      "data": {}
+    }
+  ]
+}
+```
+
+
+
+You can also access the ***/health/ready*** endpoint by going to the ***http\://localhost:9080/health/ready*** URL to view the data from the readiness health check. Similarly, access the ***/health/live*** endpoint by going to the ***http\://localhost:9080/health/live*** URL to view the data from the liveness health check.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl -s http://localhost:9080/health/ready | jq
+```
+
+
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl -s http://localhost:9080/health/live | jq
+```
+
+
+
+Making code changes and recompiling is fast and straightforward. Open Liberty dev mode automatically picks up changes in the ***.class*** files and artifacts, without needing to be restarted. Alternatively, you can run the ***run*** goal and manually repackage or recompile the application by using the Maven ***package*** goal or the Maven ***compile*** goal while Liberty is running. Dev mode was added to further improve the developer experience by minimizing turnaround times.
+
+
+
+::page{title="Checking the Open Liberty logs"}
+
+While Liberty is running in the foreground, it displays various console messages in the command-line session. These messages are also logged to the ***target/liberty/wlp/usr/servers/defaultServer/logs/console.log*** file. You can find the complete Liberty logs in the ***target/liberty/wlp/usr/servers/defaultServer/logs*** directory. The ***console.log*** and ***messages.log*** files are the primary log files that contain console output of the running application and the Liberty instance. More logs are created when runtime errors occur or whenever tracing is enabled. You can find the error logs in the ***ffdc*** directory and the tracing logs in the ***trace.log*** file.
+
+In addition to the log files that are generated automatically, you can enable logging of specific Java packages or classes by using the ***logging*** element:
+
+```
+<logging traceSpecification="<component_1>=<level>:<component_2>=<level>:..."/>
+```
+
+The ***component*** element is a Java package or class, and the ***level*** element is one of the following logging levels: ***off***, ***fatal***, ***severe***, ***warning***, ***audit***, ***info***, ***config***, ***detail***, ***fine***, ***finer***, ***finest***, ***all***.
+
+For more information about logging, see the [Trace log detail levels](https://www.openliberty.io/docs/latest/log-trace-configuration.html#log_details),  [logging element](https://www.openliberty.io/docs/latest/reference/config/logging.html), and [Log and trace configuration](https://www.openliberty.io/docs/latest/log-trace-configuration.html) documentation.
+
+Try enabling detailed logging of the MicroProfile Health feature by adding the ***logging*** element to your configuration file.
+
+Replace the Liberty ***server.xml*** configuration file.
+
+> To open the server.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-getting-started/start/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-getting-started/start/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="Sample Liberty server">
+    <featureManager>
+        <platform>jakartaee-10.0</platform>
+        <platform>microprofile-7.0</platform>
+        <feature>restfulWS</feature>
+        <feature>jsonp</feature>
+        <feature>jsonb</feature>
+        <feature>cdi</feature>
+        <feature>mpHealth</feature>
+        <feature>mpConfig</feature>
+        <feature>mpMetrics</feature>
+    </featureManager>
+
+    <variable name="http.port" defaultValue="9080"/>
+    <variable name="https.port" defaultValue="9443"/>
+
+    <webApplication location="guide-getting-started.war" contextRoot="/" />
+    
+    <mpMetrics authentication="false"/>
+
+    <logging traceSpecification="com.ibm.ws.microprofile.health.*=all" />
+
+    <httpEndpoint host="*" httpPort="${http.port}"
+        httpsPort="${https.port}" id="defaultHttpEndpoint"/>
+
+    <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
+</server>
+```
+
+
+
+After you change the file, Open Liberty automatically reloads its configuration.
+
+Now, when you visit the ***/health*** endpoint, additional traces are logged in the ***trace.log*** file.
+
+```bash
+ls /home/project/guide-getting-started/start/target/liberty/wlp/usr/servers/defaultServer/logs
+```
+
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
+
+
+::page{title="Running the application in a Docker container"}
+
+
+To containerize the application, you need a ***Dockerfile***. This file contains a collection of instructions that define how a Docker image is built, what files are packaged into it, what commands run when the image runs as a container, and other information. You can find a complete ***Dockerfile*** in the ***start*** directory. This ***Dockerfile*** copies the ***.war*** file into a Docker image that contains the Java runtime and a preconfigured Open Liberty runtime.
+
+Run the Maven ***package*** goal from the ***start*** directory so that the ***.war*** file resides in the ***target*** directory.
+
+
+```bash
+./mvnw package
+```
+
+
+
+To build and containerize the application, run the following Docker build command in the ***start*** directory:
+
+```bash
+docker build -t openliberty-getting-started:1.0-SNAPSHOT .
+```
+
+The Docker ***openliberty-getting-started:1.0-SNAPSHOT*** image is also built from the ***Dockerfile***. To verify that the image is built, run the ***docker images*** command to list all local Docker images:
+
+```bash
+docker images
+```
+
+Your image should appear in the list of all Docker images:
+
+```
+REPOSITORY                     TAG             IMAGE ID        CREATED         SIZE
+openliberty-getting-started    1.0-SNAPSHOT    88173351adfa    2 minutes ago   780MB
+```
+
+Next, run the image as a container:
+```bash
+docker run -d --name gettingstarted-app -p 9080:9080 openliberty-getting-started:1.0-SNAPSHOT
+```
+
+There is a bit going on here, so here's a breakdown of the command:
+
+| *Flag* | *Description*
+| ---| ---
+| -d     | Runs the container in the background.
+| --name | Specifies a name for the container.
+| -p     | Maps the container ports to the host ports.
+
+The final argument in the ***docker run*** command is the Docker image name.
+
+Next, run the ***docker ps*** command to verify that your container started:
+```bash
+docker ps
+```
+
+Make sure that your container is running and does not have ***Exited*** as its status:
+
+```
+CONTAINER ID    IMAGE                         CREATED          STATUS           NAMES
+4294a6bdf41b    openliberty-getting-started   9 seconds ago    Up 11 seconds    gettingstarted-app
+```
+
+
+To access the application, go to the ***http\://localhost:9080/system/properties*** URL.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl -s http://localhost:9080/system/properties | jq
+```
+
+
+
+To stop and remove the container, run the following commands:
+```bash
+docker stop gettingstarted-app && docker rm gettingstarted-app
+```
+
+To remove the image, run the following command:
+```bash
+docker rmi openliberty-getting-started:1.0-SNAPSHOT
+```
+
+
+::page{title="Developing the application in a Docker container"}
+
+The Open Liberty Maven plug-in includes a ***devc*** goal that simplifies developing your application in a Docker container by starting dev mode with container support. This goal builds a Docker image, mounts the required directories, binds the required ports, and then runs the application inside of a container. Dev mode also listens for any changes in the application source code or configuration and rebuilds the image and restarts the container as necessary.
+
+Build and run the container by running the devc goal from the ***start*** directory:
+
+
+```bash
+chmod 777 /home/project/guide-getting-started/start/target/liberty/wlp/usr/servers/defaultServer/logs
+./mvnw liberty:devc -DserverStartTimeout=300
+```
+
+When you see the following message, Open Liberty is ready to run in dev mode:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+Open another command-line session and run the ***docker ps*** command to verify that your container started:
+```bash
+docker ps
+```
+
+Your container should be running and have ***Up*** as its status:
+
+```
+CONTAINER ID        IMAGE                                 COMMAND                  CREATED             STATUS                         PORTS                                                                    NAMES
+17af26af0539        guide-getting-started-dev-mode        "/opt/ol/helpers/run…"   3 minutes ago       Up 3 minutes                   0.0.0.0:7777->7777/tcp, 0.0.0.0:9080->9080/tcp, 0.0.0.0:9443->9443/tcp   liberty-dev
+```
+
+
+To access the application, go to the ***http\://localhost:9080/system/properties*** URL. 
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl -s http://localhost:9080/system/properties | jq
+```
+
+
+
+Dev mode automatically picks up changes that you make to your application and allows you to run tests by pressing the ***enter/return*** key in the active command-line session.
+
+Update the ***server.xml*** file to change the context root from ***/*** to ***/dev***.
+
+Replace the Liberty ***server.xml*** configuration file.
+
+> To open the server.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-getting-started/start/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-getting-started/start/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="Sample Liberty server">
+    <featureManager>
+        <platform>jakartaee-10.0</platform>
+        <platform>microprofile-7.0</platform>
+        <feature>restfulWS</feature>
+        <feature>jsonp</feature>
+        <feature>jsonb</feature>
+        <feature>cdi</feature>
+        <feature>mpHealth</feature>
+        <feature>mpConfig</feature>
+        <feature>mpMetrics</feature>
+    </featureManager>
+
+    <variable name="http.port" defaultValue="9080"/>
+    <variable name="https.port" defaultValue="9443"/>
+
+    <webApplication location="guide-getting-started.war" contextRoot="/dev" />
+    <mpMetrics authentication="false"/>
+
+    <logging traceSpecification="com.ibm.ws.microprofile.health.*=all" />
+
+    <httpEndpoint host="*" httpPort="${http.port}"
+        httpsPort="${https.port}" id="defaultHttpEndpoint"/>
+
+    <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
+</server>
+```
+
+
+
+After you make the file changes, Open Liberty automatically reloads its configuration. When you see the following message in your command-line session, Open Liberty is ready to run again:
+
+```
+The server has been restarted.
+************************************************************************
+*    Liberty is running in dev mode.
+```
+
+Update the ***mpData.js*** file to change the ***url*** in the ***getSystemPropertiesRequest*** method to reflect the new context root.
+
+
+Update the mpData.js file.
+
+> From the menu of the IDE, select 
+> ***File*** > ***Open*** > guide-getting-started/start/src/main/webapp/js/mpData.js, or click the following button
+
+::openFile{path="/home/project/guide-getting-started/start/src/main/webapp/js/mpData.js"}
+
+```
+function getSystemPropertiesRequest() {
+    var propToDisplay = ["java.vendor", "java.version", "user.name", "os.name", "wlp.install.dir", "wlp.server.name" ];
+    var url = "http://localhost:9080/dev/system/properties";
+    var req = new XMLHttpRequest();
+    var table = document.getElementById("systemPropertiesTable");
+    ...
+```
+
+Update the ***pom.xml*** file to change the context root from ***/*** to ***/dev*** in the ***maven-failsafe-plugin*** to reflect the new context root when you run functional tests.
+
+Replace the pom.xml file.
+
+> To open the pom.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-getting-started/start/pom.xml, or click the following button
+
+::openFile{path="/home/project/guide-getting-started/start/pom.xml"}
 
 
 
 ```xml
 <?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.openliberty.guides</groupId>
-    <artifactId>ServletSample</artifactId>
-    <packaging>war</packaging>
+    <artifactId>guide-getting-started</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
 
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <!-- Liberty configuration -->
         <liberty.var.http.port>9080</liberty.var.http.port>
         <liberty.var.https.port>9443</liberty.var.https.port>
-        <liberty.var.app.context.root>${project.artifactId}</liberty.var.app.context.root>
     </properties>
 
     <dependencies>
@@ -177,17 +750,29 @@ touch /home/project/guide-maven-intro/start/pom.xml
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
-        <!-- For testing -->
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.14</version>
-            <scope>test</scope>
-        </dependency>
+        <!-- For tests -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>5.12.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>6.2.12.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-json-binding-provider</artifactId>
+            <version>6.2.12.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>jakarta.json</artifactId>
+            <version>2.0.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -195,19 +780,23 @@ touch /home/project/guide-maven-intro/start/pom.xml
     <build>
         <finalName>${project.artifactId}</finalName>
         <plugins>
+            <!-- Enable liberty-maven plugin -->
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.11.3</version>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
                 <version>3.4.0</version>
             </plugin>
             <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.11.3</version>
-                <configuration>
-                    <serverName>guideServer</serverName>
-                </configuration>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.3</version>
             </plugin>
+            <!-- Plugin to run functional tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
@@ -215,7 +804,7 @@ touch /home/project/guide-maven-intro/start/pom.xml
                 <configuration>
                     <systemPropertyVariables>
                         <http.port>${liberty.var.http.port}</http.port>
-                        <war.name>${liberty.var.app.context.root}</war.name>
+                        <context.root>/dev</context.root>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
@@ -225,200 +814,73 @@ touch /home/project/guide-maven-intro/start/pom.xml
 ```
 
 
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
+You can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode to verify your change.
 
 
-The ***pom.xml*** file starts with a root ***project*** element and a ***modelversion*** element, which is always set to ***4.0.0***. 
-
-A typical POM for a Liberty application contains the following sections:
-
-* **Project coordinates**: The identifiers for this application.
-* **Properties** (***properties***): Any properties for the project go here, including compilation details and any values that are referenced during compilation of the Java source code and generating the application.
-* **Dependencies** (***dependencies***): Any Java dependencies that are required for compiling, testing, and running the application are listed here.
-* **Build plugins** (***build***): Maven is modular and each of its capabilities is provided by a separate plugin. This is where you specify which Maven plugins should be used to build this project and any configuration information needed by those plugins.
-
-The project coordinates describe the name and version of the application. The ***artifactId*** gives a name to the web application project, which is used to name the output files that are generated by the build (e.g. the WAR file) and the Open Liberty instance that is created. You'll notice that other fields in the ***pom.xml*** file use variables that are resolved by the ***artifactId*** field. This is so that you can update the name of the sample application, including files generated by Maven, in a single place in the ***pom.xml*** file. The value of the ***packaging*** field is ***war*** so that the project output artifact is a WAR file.
-
-The first four properties in the properties section of the project, just define the encoding (***UTF-8***) and version of Java (***Java 11***) that Maven uses to compile the application source code.
-
-Open Liberty configuration properties provide you with a single place to specify values that are used in multiple places throughout the application. For example, the ***http.port*** value is used in both the Liberty ***server.xml*** configuration file and will be used in the test class that you will add (***EndpointIT.java***) to the application. Because the ***http.port*** value is specified in the ***pom.xml*** file, you can easily change the port number that the Liberty instance runs on without updating the application code in multiple places.
+You can access the application at the ***http\://localhost:9080/dev/system/properties*** URL. Notice that the context root is now ***/dev***.
 
 
-The ***HelloServlet.java*** class depends on ***jakarta.jakartaee-api*** to compile. Maven will download this dependency from the Maven Central repository using the ***groupId***, ***artifactId***, and ***version*** details that you provide here. The dependency is set to ***provided***, which means that the API is in the Liberty runtime and doesn't need to be packaged by the application.
-
-The ***build*** section gives details of the two plugins that Maven uses to build this project.
-
-* The Maven plugin for generating a WAR file as one of the output files.
-* The Liberty Maven plug-in, which allows you to install applications into Open Liberty and manage the associated Liberty instances.
-
-In the ***liberty-maven-plugin*** plug-in section, you can add a ***configuration*** element to specify Open Liberty configuration details. For example, the ***serverName*** field defines the name of the Open Liberty instance that Maven creates. You specified ***guideServer*** as the value for ***serverName***. If the ***serverName*** field is not included, the default value is ***defaultServer***.
-
-
-
-::page{title="Running the application"}
-
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```bash
-./mvnw liberty:dev
+curl -s http://localhost:9080/dev/system/properties | jq
 ```
 
-After you see the following message, your Liberty instance is ready in dev mode:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
 
-Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session. Run the following curl command to view the output of the application: 
+When you are finished, exit dev mode by pressing `Ctrl+C` in the command-line session that the container was started from. Exiting dev mode stops and removes the container. To check that the container was stopped, run the ***docker ps*** command.
+
+
+::page{title="Running the application from a minimal runnable JAR"}
+
+So far, Open Liberty was running out of the ***target/liberty/wlp*** directory, which effectively contains an Open Liberty installation and the deployed application. The final product of the Maven build is a server package for use in a continuous integration pipeline and, ultimately, a production deployment.
+
+Open Liberty supports a number of different server packages. The sample application currently generates a ***usr*** package that contains the Liberty runtime and application to be extracted onto an Open Liberty installation.
+
+Instead of creating a server package, you can generate a runnable JAR file that contains the application along with a Liberty runtime. This JAR file can then be run anywhere and deploy your application and runtime at the same time. To generate a runnable JAR file, override the  ***include*** property: 
+
+
 ```bash
-curl -s http://localhost:9080/ServletSample/servlet
+./mvnw liberty:package -Dinclude=runnable
 ```
 
-The servlet returns a simple response of ***Hello! How are you today?***.
 
-::page{title="Testing the web application"}
 
-One of the benefits of building an application with Maven is that Maven can be configured to run a set of tests. You can write tests for the individual units of code outside of a running Liberty instance (unit tests), or you can write them to call the Liberty instance directly (integration tests). In this example you will create a simple integration test that checks that the web page opens and that the correct response is returned when the link is clicked.
+The packaging type is overridden from the ***usr*** package to the ***runnable*** package. This property then propagates to the ***liberty-maven-plugin*** plug-in, which generates the server package based on the ***openliberty-kernel*** package.
 
-Create the ***EndpointIT*** class.
+When the build completes, you can find the minimal runnable ***guide-getting-started.jar*** file in the ***target*** directory. This JAR file contains only the ***features*** that you explicitly enabled in your ***server.xml*** file. As a result, the generated JAR file is only about 50 MB.
 
-> Run the following touch command in your terminal
+To run the JAR file, first stop the Liberty instance if it's running. Then, navigate to the ***target*** directory and run the ***java -jar*** command:
+
 ```bash
-touch /home/project/guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java  
+java -jar guide-getting-started.jar
 ```
 
 
-> Then, to open the EndpointIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java, or click the following button
-
-::openFile{path="/home/project/guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java"}
+When Liberty starts, go to the ***http\://localhost:9080/dev/system/properties*** URL to access your application that is now running out of the minimal runnable JAR file.
 
 
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
-```java
-package io.openliberty.guides.hello.it;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
-public class EndpointIT {
-    private static String siteURL;
-
-    @BeforeAll
-    public static void init() {
-        String port = System.getProperty("http.port");
-        String war = System.getProperty("war.name");
-        siteURL = "http://localhost:" + port + "/" + war + "/" + "servlet";
-    }
-
-    @Test
-    public void testServlet() throws Exception {
-
-        CloseableHttpClient client = HttpClientBuilder.create().build();
-        HttpGet httpGet = new HttpGet(siteURL);
-        CloseableHttpResponse response = null;
-
-        try {
-            response = client.execute(httpGet);
-
-            int statusCode = response.getStatusLine().getStatusCode();
-            assertEquals(HttpStatus.SC_OK, statusCode, "HTTP GET failed");
-
-            BufferedReader reader = new BufferedReader(new InputStreamReader(
-                                        response.getEntity().getContent()));
-            String line;
-            StringBuffer buffer = new StringBuffer();
-            while ((line = reader.readLine()) != null) {
-                buffer.append(line);
-            }
-            reader.close();
-            assertTrue(buffer.toString().contains("Hello! How are you today?"),
-                "Unexpected response body: " + buffer.toString());
-        } finally {
-            response.close();
-            httpGet.releaseConnection();
-        }
-    }
-}
+```bash
+curl -s http://localhost:9080/dev/system/properties | jq
 ```
 
 
 
-The test class name ends in ***IT*** to indicate that it contains an integration test. 
-
-Maven is configured to run the integration test using the ***maven-failsafe-plugin***. The ***systemPropertyVariables*** section defines some variables that the test class uses. The test code needs to know where to find the application that it is testing. While the port number and context root information can be hardcoded in the test class, it is better to specify it in a single place like the Maven ***pom.xml*** file because this information is also used by other files in the project. The ***systemPropertyVariables*** section passes these details to the Java test program as a series of system properties, resolving the ***http.port*** and ***war.name*** variables.
+You can stop the Liberty instance by pressing `Ctrl+C` in the command-line session that the instance runs in.
 
 
-The following lines in the ***EndpointIT*** test class uses these system variables to build up the URL of the application.
-
-In the test class, after defining how to build the application URL, the ***@Test*** annotation indicates the start of the test method.
-
-In the ***try block*** of the test method, an HTTP ***GET*** request to the URL of the application returns a status code. If the response to the request includes the string ***Hello! How are you today?***, the test passes. If that string is not in the response, the test fails.  The HTTP client then disconnects from the application.
-
-In the ***import*** statements of this test class, you'll notice that the test has some new dependencies. Before the test can be compiled by Maven, you need to update the ***pom.xml*** to include these dependencies.
-
-The Apache ***httpclient*** and ***junit-jupiter-engine*** dependencies are needed to compile and run the integration test ***EndpointIT*** class. The scope for each of the dependencies is set to ***test*** because the libraries are needed only during the Maven build and do not needed to be packaged with the application.
-
-Now, the created WAR file contains the web application, and dev mode can run any integration test classes that it finds. Integration test classes are classes with names that end in ***IT***.
-
-The directory structure of the project should now look like this:
-
-```
-    └── src
-        ├── main
-        │  └── java
-        │  └── resources
-        │  └── webapp
-        │  └── liberty
-        │         └── config
-        └── test
-            └── java
-```
 
 
-### Running the tests
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
-
-You see the following output:
-
-```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running io.openliberty.guides.hello.it.EndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.255 sec - in io.openliberty.guides.hello.it.EndpointIT
-
-Results :
-
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-```
-
-To see whether the test detects a failure, change the ***response string*** in the servlet ***src/main/java/io/openliberty/guides/hello/HelloServlet.java*** so that it doesn't match the string that the test is looking for. Then re-run the tests and check that the test fails.
-
-
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You built and tested a web application project with an Open Liberty instance using Maven.
+You've learned the basics of deploying and updating an application on Open Liberty.
+
 
 
 
@@ -427,31 +889,32 @@ You built and tested a web application project with an Open Liberty instance usi
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-maven-intro*** project by running the following commands:
+Delete the ***guide-getting-started*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-maven-intro
+rm -fr guide-getting-started
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Building%20a%20web%20application%20with%20Maven&guide-id=cloud-hosted-guide-maven-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Getting%20started%20with%20Open%20Liberty&guide-id=cloud-hosted-guide-getting-started)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-maven-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-maven-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-getting-started/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-getting-started/pulls)
 
 
 
 ### Where to next?
 
-* [Creating a multi-module application](https://openliberty.io/guides/maven-multimodules.html)
-* [Building a web application with Gradle](https://openliberty.io/guides/gradle-intro.html)
+* [Building a web application with Maven](https://openliberty.io/guides/maven-intro.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
 
 
 ### Log out of the session
