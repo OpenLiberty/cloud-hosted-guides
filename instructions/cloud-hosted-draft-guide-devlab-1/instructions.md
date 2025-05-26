@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Running GraphQL queries and mutations using a GraphQL client guide!"}
+::page{title="Welcome to the Creating a multi-module application guide!"}
 
-
+You will learn how to build an application with multiple modules with Maven and Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -13,18 +13,21 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-Learn how to use the SmallRye GraphQL client's typesafe interface to query and mutate data from multiple microservices.
+
 
 ::page{title="What you'll learn"}
 
-GraphQL is an open source data query language. You can use a GraphQL service to obtain data from multiple sources, such as APIs, databases, and other services, by sending a single request to a GraphQL service. GraphQL services require less data fetching than REST services, which results in faster application load times and lower data transfer costs. This guide assumes you have a basic understanding of [GraphQL concepts](https://openliberty.io/docs/latest/microprofile-graphql.html). If you're new to GraphQL, you might want to start with the [Optimizing REST queries for microservices with GraphQL](https://openliberty.io/guides/microprofile-graphql.html) guide first.
+A Jakarta Platform, Enterprise Edition (Jakarta EE) application consists of modules that work together as one entity. An enterprise archive (EAR) is a wrapper for a Jakarta EE application, which consists of web archive (WAR) and Java archive (JAR) files. To deploy or distribute the Jakarta EE application into new environments, all the modules and resources must first be packaged into an EAR file.
 
-You'll use the [SmallRye GraphQL client](https://github.com/smallrye/smallrye-graphql#client) to create a ***query*** microservice that will make requests to the ***graphql*** microservice. The ***graphql*** microservice retrieves data from multiple ***system*** microservices and is identical to the one created as part of the [Optimizing REST queries for microservices with GraphQL](https://openliberty.io/guides/microprofile-graphql.html) guide. 
+In this guide, you will learn how to:
 
-![GraphQL client application architecture where multiple system microservices are integrated behind the graphql service](https://raw.githubusercontent.com/OpenLiberty/guide-graphql-client/prod/assets/architecture.png)
+* establish a dependency between a web module and a Java library module,
+* use Maven to package the WAR file and the JAR file into an EAR file so that you can run and test the application on Open Liberty, and
+ use Liberty Maven plug-in to develop a multi-module application in [dev mode](https://openliberty.io/docs/latest/development-mode.html#_run_multi_module_maven_projects_in_dev_mode) without having to prebuild the JAR and WAR files. In dev mode, your changes are automatically picked up by the running Liberty instance.
+
+You will build a unit converter application that converts heights from centimeters into feet and inches. The application will request the user to enter a height value in centimeters. Then, the application processes the input by using functions that are found in the JAR file to return the height value in imperial units.
 
 
-The results of the requests will be displayed at REST endpoints. OpenAPI will be used to help make the requests and display the data. To learn more about OpenAPI, check out the [Documenting RESTful APIs](https://openliberty.io/guides/microprofile-openapi.html) guide.
 
 ::page{title="Getting started"}
 
@@ -37,11 +40,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-graphql-client.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-maven-multimodules.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-graphql-client.git
-cd guide-graphql-client
+git clone https://github.com/openliberty/guide-maven-multimodules.git
+cd guide-maven-multimodules
 ```
 
 
@@ -49,179 +52,100 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
+Access partial implementation of the application from the ***start*** folder. This folder includes a web module in the ***war*** folder, a Java library in the ***jar*** folder, and template files in the ***ear*** folder. However, the Java library and the web module are independent projects, and you will need to complete the following steps to implement the application:
 
-::page{title="Implementing a GraphQL client"}
+1. Add a dependency relationship between the two modules.
+
+2. Assemble the entire application into an EAR file.
+
+3. Aggregate the entire build.
+
+4. Test the multi-module application.
+
+### Try what you'll build
+
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+
+To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application:
+
+
+```bash
+cd finish
+./mvnw install
+```
+
+To deploy your EAR application on Open Liberty, run the Maven ***liberty:run*** goal from the finish directory using the ***-pl*** flag to specify the ***ear*** project. The ***-pl*** flag specifies the project where the Maven goal runs.
+
+
+```bash
+./mvnw -pl ear liberty:run
+```
+
+
+After you see the following message, your Liberty instance is ready:
+
+```
+The defaultServer server is ready to run a smarter planet.
+```
+
+When the Liberty instance is running, click the following button to check out your service at the ***/converter*** endpoint.
+::startApplication{port="9080" display="external" name="Check out the application" route="/converter"}
+
+After you are finished checking out the application, stop the Open Liberty instance by pressing `Ctrl+C` in the command-line session where you ran the Liberty. Alternatively, you can run the ***liberty:stop*** goal using the ***-pl ear*** flag from the ***finish*** directory in another command-line session:
+
+
+```bash
+./mvnw -pl ear liberty:stop
+```
+
+
+::page{title="Adding dependencies between WAR and JAR modules"}
+
+To use a Java library in your web module, you must add a dependency relationship between the two modules.
+
+As you might have noticed, each module has its own ***pom.xml*** file. Each module has its own ***pom.xml*** file because each module is treated as an independent project. You can rebuild, reuse, and reassemble every module on its own.
 
 Navigate to the ***start*** directory to begin.
-
 ```bash
-cd /home/project/guide-graphql-client/start
+cd /home/project/guide-maven-multimodules/start
 ```
 
-The [SmallRye GraphQL client](https://github.com/smallrye/smallrye-graphql#client) is used to implement the GraphQL client service. The SmallRye GraphQL client supports two types of clients: typesafe and dynamic. A typesafe client is easy to use and provides a high-level approach, while a dynamic client provides a more customizable and low-level approach to handle operations and responses. You will implement a typesafe client microservice. 
-
-The typesafe client interface contains a method for each resolver available in the ***graphql*** microservice. The JSON objects returned by the ***graphql*** microservice are converted to Java objects.
-
-Create the ***GraphQlClient*** interface.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/client/GraphQlClient.java
-```
-
-
-> Then, to open the GraphQlClient.java file in your IDE, select
-> ***File*** > ***Open*** > guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/client/GraphQlClient.java, or click the following button
-
-::openFile{path="/home/project/guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/client/GraphQlClient.java"}
-
-
-
-```java
-package io.openliberty.guides.query.client;
-
-import org.eclipse.microprofile.graphql.Query;
-import org.eclipse.microprofile.graphql.Mutation;
-import org.eclipse.microprofile.graphql.Name;
-
-import io.openliberty.guides.graphql.models.SystemInfo;
-import io.openliberty.guides.graphql.models.SystemLoad;
-import io.smallrye.graphql.client.typesafe.api.GraphQLClientApi;
-
-@GraphQLClientApi
-public interface GraphQlClient {
-    @Query
-    SystemInfo system(@Name("hostname") String hostname);
-
-    @Query("systemLoad")
-    SystemLoad[] getSystemLoad(@Name("hostnames") String[] hostnames);
-
-    @Mutation
-    boolean editNote(@Name("hostname") String host, @Name("note") String note);
-
-}
-```
-
-
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
-
-
-The ***GraphQlClient*** interface is annotated with the ***@GraphQlClientApi*** annotation. This annotation denotes that this interface is used to create a typesafe GraphQL client.
-
-Inside the interface, a method header is written for each resolver available in the ***graphql*** microservice. The names of the methods match the names of the resolvers in the GraphQL schema. Resolvers that require input variables have the input variables passed in using the ***@Name*** annotation on the method inputs. The return types of the methods should match those of the GraphQL resolvers.
-
-For example, the ***system()*** method maps to the ***system*** resolver. The resolver returns a ***SystemInfo*** object, which is described by the ***SystemInfo*** class. Thus, the ***system()*** method returns the type ***SystemInfo***.
-
-The name of each resolver is the method name, but it can be overridden with the ***@Query*** or ***@Mutation*** annotations. For example, the name of the method ***getSystemLoad*** is overridden as ***systemLoad***. The GraphQL request that goes over the wire will use the name overridden by the ***@Query*** and ***@Mutation*** annotation. Similarly, the name of the method inputs can be overridden by the ***@Name*** annotation. For example, input ***host*** is overridden as ***hostname*** in the ***editNote()*** method. 
-
-The ***editNote*** ***mutation*** operation has the ***@Mutation*** annotation on it. A ***mutation*** operation allows you to modify data, in this case, it allows you to add and edit a note to the system service. If the ***@Mutation*** annotation were not placed on the method, it would be treated as if it mapped to a ***query*** operation. 
-
-Create the ***QueryResource*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java
-```
-
-
-> Then, to open the QueryResource.java file in your IDE, select
-> ***File*** > ***Open*** > guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java, or click the following button
-
-::openFile{path="/home/project/guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java"}
-
-
-
-```java
-package io.openliberty.guides.query;
-
-import io.openliberty.guides.graphql.models.NoteInfo;
-import io.openliberty.guides.graphql.models.SystemInfo;
-import io.openliberty.guides.graphql.models.SystemLoad;
-import io.openliberty.guides.query.client.GraphQlClient;
-import io.smallrye.graphql.client.typesafe.api.TypesafeGraphQLClientBuilder;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-
-@ApplicationScoped
-@Path("query")
-public class QueryResource {
-
-    private GraphQlClient gc = TypesafeGraphQLClientBuilder.newBuilder()
-                                                   .build(GraphQlClient.class);
-
-    @GET
-    @Path("system/{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public SystemInfo querySystem(@PathParam("hostname") String hostname) {
-        return gc.system(hostname);
-    }
-
-    @GET
-    @Path("systemLoad/{hostnames}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public SystemLoad[] querySystemLoad(@PathParam("hostnames") String hostnames) {
-        String[] hostnameArray = hostnames.split(",");
-        return gc.getSystemLoad(hostnameArray);
-    }
-
-    @POST
-    @Path("mutation/system/note")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response editNote(NoteInfo text) {
-        if (gc.editNote(text.getHostname(), text.getText())) {
-            return Response.ok().build();
-        } else {
-            return Response.serverError().build();
-        }
-    }
-}
-```
-
-
-
-The ***QueryResource*** class uses the ***GraphQlClient*** interface to make requests to the ***graphql*** microservice and display the results. In a real application, you would make requests to an external GraphQL service, and you might do further manipulation of the data after retrieval.
-
-The ***TypesafeGraphQLClientBuilder*** class creates a client object that implements the ***GraphQlClient*** interface and can interact with the ***graphql*** microservice. The ***GraphQlClient*** client can make requests to the URL specified by the ***graphql.server*** variable in the ***server.xml*** file. The client is used in the ***querySystem()***, ***querySystemLoad()***, and ***editNote()*** methods.
-
-Add the SmallRye GraphQL client dependency to the project configuration file.
-
-Replace the Maven project file.
+Replace the war/POM file.
 
 > To open the pom.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-graphql-client/start/query/pom.xml, or click the following button
+> ***File*** > ***Open*** > guide-maven-multimodules/start/war/pom.xml, or click the following button
 
-::openFile{path="/home/project/guide-graphql-client/start/query/pom.xml"}
+::openFile{path="/home/project/guide-maven-multimodules/start/war/pom.xml"}
 
 
 
 ```xml
 <?xml version='1.0' encoding='utf-8'?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+    http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <parent>
+        <groupId>io.openliberty.guides</groupId>
+        <artifactId>guide-maven-multimodules</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.openliberty.guides</groupId>
-    <artifactId>guide-graphql-client-query</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <artifactId>guide-maven-multimodules-war</artifactId>
     <packaging>war</packaging>
+    <version>1.0-SNAPSHOT</version>
+    <name>guide-maven-multimodules-war</name>
+    <url>http://maven.apache.org</url>
 
     <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <!-- Liberty configuration -->
-        <liberty.var.http.port>9084</liberty.var.http.port>
-        <liberty.var.https.port>9447</liberty.var.https.port>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
     </properties>
 
     <dependencies>
@@ -239,36 +163,84 @@ Replace the Maven project file.
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
-        
-        <!-- Required dependencies -->
+
         <dependency>
-           <groupId>io.openliberty.guides</groupId>
-           <artifactId>guide-graphql-client-models</artifactId>
-           <version>1.0-SNAPSHOT</version>
+            <groupId>io.openliberty.guides</groupId>
+            <artifactId>guide-maven-multimodules-jar</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
-        
-        <!-- GraphQL API dependencies -->
+
+    </dependencies>
+
+</project>
+```
+
+
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+
+The added ***dependency*** element is the Java library module that implements the functions that you need for the unit converter.
+
+Although the ***parent/child*** structure is not normally needed for multi-module applications, adding it helps us to better organize all of the projects. This structure allows all of the child projects to make use of the plug-ins that are defined in the parent ***pom.xml*** file, without having to define them again in the child ***pom.xml*** files.
+
+
+::page{title="Assembling multiple modules into an EAR file"}
+
+To deploy the entire application on Open Liberty, first package the application. Use the EAR project to assemble multiple modules into an EAR file.
+
+Navigate to the ***ear*** folder and find a template ***pom.xml*** file.
+Replace the ear/POM file.
+
+> To open the pom.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-maven-multimodules/start/ear/pom.xml, or click the following button
+
+::openFile{path="/home/project/guide-maven-multimodules/start/ear/pom.xml"}
+
+
+
+```xml
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+    http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <parent>
+        <groupId>io.openliberty.guides</groupId>
+        <artifactId>guide-maven-multimodules</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>guide-maven-multimodules-ear</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>ear</packaging>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <!-- Liberty configuration -->
+        <liberty.var.http.port>9080</liberty.var.http.port>
+        <liberty.var.https.port>9443</liberty.var.https.port>
+    </properties>
+
+    <dependencies>
+        <!-- web and jar modules as dependencies -->
         <dependency>
-            <groupId>io.smallrye</groupId>
-            <artifactId>smallrye-graphql-client</artifactId>
-            <version>2.11.0</version>
+            <groupId>io.openliberty.guides</groupId>
+            <artifactId>guide-maven-multimodules-jar</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <type>jar</type>
+            <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>io.smallrye</groupId>
-            <artifactId>smallrye-graphql-client-implementation-vertx</artifactId>
-            <version>2.11.0</version>
+            <groupId>io.openliberty.guides</groupId>
+            <artifactId>guide-maven-multimodules-war</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <type>war</type>
         </dependency>
-        <dependency>
-            <groupId>io.smallrye.stork</groupId>
-            <artifactId>stork-core</artifactId>
-            <version>2.7.3</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>2.0.17</version>
-        </dependency>
-             
+
         <!-- For tests -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -276,80 +248,171 @@ Replace the Maven project file.
             <version>5.12.2</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-client</artifactId>
-            <version>6.2.12.Final</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-json-binding-provider</artifactId>
-            <version>6.2.12.Final</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish</groupId>
-            <artifactId>jakarta.json</artifactId>
-            <version>2.0.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>testcontainers</artifactId>
-            <version>1.21.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>1.21.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>1.7.36</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>
         <finalName>${project.artifactId}</finalName>
         <plugins>
-            <!-- Enable liberty-maven plugin -->
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.11.3</version>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.4.0</version>
+                <artifactId>maven-ear-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <modules>
+                        <webModule>
+                            <groupId>io.openliberty.guides</groupId>
+                            <artifactId>guide-maven-multimodules-war</artifactId>
+                            <uri>/guide-maven-multimodules-war-1.0-SNAPSHOT.war</uri>
+                            <!-- Set custom context root -->
+                            <contextRoot>/converter</contextRoot>
+                        </webModule>
+                    </modules>
+                </configuration>
             </plugin>
+
+            <!-- Since the package type is ear,
+            need to run testCompile to compile the tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.3</version>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
+
+            <!-- Plugin to run integration tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <version>3.5.3</version>
                 <configuration>
                     <systemPropertyVariables>
-                        <http.port>${liberty.var.http.port}</http.port>
+                        <http.port>
+                            ${liberty.var.http.port}
+                        </http.port>
+                        <https.port>
+                            ${liberty.var.https.port}
+                        </https.port>
+                        <cf.context.root>/converter</cf.context.root>
                     </systemPropertyVariables>
                 </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
+```
+
+
+
+Set the ***basic configuration*** for the project and set the ***packaging*** element to ***ear***.
+
+The ***Java library module*** and the ***web module*** were added as dependencies. Specify a type of ***war*** for the web module. If you don’t specify this type for the web module, Maven looks for a JAR file.
+
+The definition and configuration of the ***maven-ear-plugin*** plug-in were added to create an EAR file. Define the ***webModule*** module to be packaged into the EAR file. To customize the context root of the application, set the ***contextRoot*** element to ***/converter*** in the ***webModule***. Otherwise, Maven automatically uses the WAR file ***artifactId*** ID as the context root for the application while generating the ***application.xml*** file.
+
+To deploy and run an EAR application on an Open Liberty instance, you need to provide a Liberty's ***server.xml*** configuration file.
+
+Create the Liberty ***server.xml*** configuration file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-maven-multimodules/start/ear/src/main/liberty/config/server.xml
+```
+
+
+> Then, to open the server.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-maven-multimodules/start/ear/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-maven-multimodules/start/ear/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="Sample Liberty server">
+
+    <featureManager>
+        <platform>jakartaee-10.0</platform>
+        <feature>pages</feature>
+    </featureManager>
+
+    <variable name="http.port" defaultValue="9080" />
+    <variable name="https.port" defaultValue="9443" />
+
+    <httpEndpoint host="*" httpPort="${http.port}"
+        httpsPort="${https.port}" id="defaultHttpEndpoint" />
+
+    <enterpriseApplication id="guide-maven-multimodules-ear"
+        location="guide-maven-multimodules-ear.ear"
+        name="guide-maven-multimodules-ear" />
+
+</server>
+```
+
+
+
+You must configure the ***server.xml*** configuration file with the ***enterpriseApplication*** element to specify the location of your EAR application.
+
+
+::page{title="Aggregating the entire build"}
+
+Because you have multiple modules, aggregate the Maven projects to simplify the build process.
+
+Create a parent ***pom.xml*** file under the ***start*** directory to link all of the child modules together. A template is provided for you.
+
+Replace the start/POM file.
+
+> To open the pom.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-maven-multimodules/start/pom.xml, or click the following button
+
+::openFile{path="/home/project/guide-maven-multimodules/start/pom.xml"}
+
+
+
+```xml
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+    http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>guide-maven-multimodules</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>jar</module>
+        <module>war</module>
+        <module>ear</module>
+    </modules>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-war-plugin</artifactId>
+                    <version>3.4.0</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.14.0</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <!-- Enable liberty-maven plugin -->
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.11.3</version>
             </plugin>
         </plugins>
     </build>
@@ -358,465 +421,251 @@ Replace the Maven project file.
 
 
 
-The ***smallrye-graphql-client*** dependencies provide the classes that you use to interact with a ***graphql*** microservice.
+Set the ***basic configuration*** for the project. Set ***pom*** as the value for the ***packaging*** element of the parent ***pom.xml*** file.
 
-To run the service, you must correctly configure the Liberty.
+In the parent ***pom.xml*** file, list all of the ***modules*** that you want to aggregate for the application.
 
-Replace the Liberty server.xml configuration file.
-
-> To open the server.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-graphql-client/start/query/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-graphql-client/start/query/src/main/liberty/config/server.xml"}
+Adding the ***maven-war-plugin***, ***maven-compiler-plugin***, and ***liberty-maven-plugin*** plug-ins allows each child module to inherit the plug-ins, so that you can use the these to develop the modules.
 
 
+::page{title="Developing the application"}
 
-```xml
-<server description="Query Service">
+You can now develop the application and the different modules together in dev mode by using the Liberty Maven plug-in. To learn more about how to use dev mode with multiple modules, check out the [Documentation](https://github.com/OpenLiberty/ci.maven/blob/main/docs/dev.md#multiple-modules).
 
-  <featureManager>
-    <platform>jakartaee-10.0</platform>
-    <platform>microprofile-7.0</platform>
-    <feature>restfulWS</feature>
-    <feature>cdi</feature>
-    <feature>jsonb</feature>
-    <feature>mpConfig</feature>
-    <feature>mpOpenAPI</feature>
-  </featureManager>
-
-  <variable name="http.port" defaultValue="9084"/>
-  <variable name="https.port" defaultValue="9447"/>
-  <variable name="graphql.server" defaultValue="http://graphql:9082/graphql"/>
-
-  <httpEndpoint host="*" httpPort="${http.port}"
-      httpsPort="${https.port}" id="defaultHttpEndpoint"/>
-
-  <webApplication location="guide-graphql-client-query.war" contextRoot="/"/>
-</server>
+Navigate to the ***start*** directory to begin.
+```bash
+cd /home/project/guide-maven-multimodules/start
 ```
 
-
-
-The ***graphql.server*** variable is defined in the ***server.xml*** file. This variable defines where the GraphQL client makes requests to.
-
-
-::page{title="Building and running the application"}
-
-From the ***start*** directory, run the following commands:
-
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
-./mvnw -pl models install
-./mvnw package
+./mvnw liberty:dev
 ```
 
-The Maven ***install*** goal compiles and packages the object types you created to a ***.jar*** file. This allows them to be used by the ***system*** and ***graphql*** services. The Maven ***package*** goal packages the ***system***, ***graphql***, and ***query*** services to ***.war*** files. 
-
-
-
-Dockerfiles are already set up for you. Build your Docker images with the following commands:
-
-```bash
-docker build -t system:1.0-java11-SNAPSHOT --build-arg JAVA_VERSION=java11 system/.
-docker build -t system:1.0-java17-SNAPSHOT --build-arg JAVA_VERSION=java17 system/.
-docker build -t graphql:1.0-SNAPSHOT graphql/.
-docker build -t query:1.0-SNAPSHOT query/.
-```
-
-Run these Docker images using the provided ***startContainers*** script. The script creates a network for the services to communicate through. It creates the two ***system*** microservices, a ***graphql*** microservice, and a ***query*** microservice that interact with each other.
-
-
-```bash
-./scripts/startContainers.sh
-```
-
-The containers might take some time to become available. 
-
-::page{title="Accessing the application"}
-
-
-
-To access the client service, there are several available REST endpoints that test the API endpoints that you created. 
-
-**Try the query operations**
-
-First, make a GET request to the ***/query/system/{hostname}*** endpoint by the following command. This request retrieves the system properties for the specified ***hostname***.
-
-The ***hostname*** is set to ***system-java11***. You can try out the operations using the hostname ***system-java17*** as well. 
-
-```bash
-curl -s 'http://localhost:9084/query/system/system-java11' | jq
-```
-You can expect a response similar to the following example:
-
+After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
-{
-  "hostname": "system-java11",
-  "java": {
-    "vendor": "IBM Corporation",
-    "version": "11.0.18"
-  },
-  "osArch": "amd64",
-  "osName": "Linux",
-  "osVersion": "5.15.0-67-generic",
-  "systemMetrics": {
-    "heapSize": 536870912,
-    "nonHeapSize": -1,
-    "processors": 2
-  },
-  "username": "default"
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+
+### Updating the Java classes in different modules
+
+Update the ***HeightsBean*** class to use the Java library module that implements the functions that you need for the unit converter.
+
+Navigate to the ***start*** directory.
+
+Replace the ***HeightsBean*** class in the ***war*** directory.
+
+> To open the HeightsBean.java file in your IDE, select
+> ***File*** > ***Open*** > guide-maven-multimodules/start/war/src/main/java/io/openliberty/guides/multimodules/web/HeightsBean.java, or click the following button
+
+::openFile{path="/home/project/guide-maven-multimodules/start/war/src/main/java/io/openliberty/guides/multimodules/web/HeightsBean.java"}
+
+
+
+```java
+package io.openliberty.guides.multimodules.web;
+
+public class HeightsBean implements java.io.Serializable {
+    private String heightCm = null;
+    private String heightFeet = null;
+    private String heightInches = null;
+    private int cm = 0;
+    private int feet = 0;
+    private int inches = 0;
+
+    public HeightsBean() {
+    }
+
+    public String getHeightCm() {
+        return heightCm;
+    }
+
+    public String getHeightFeet() {
+        return heightFeet;
+    }
+
+    public String getHeightInches() {
+        return heightInches;
+    }
+
+    public void setHeightCm(String heightcm) {
+        this.heightCm = heightcm;
+    }
+
+    public void setHeightFeet(String heightfeet) {
+        this.cm = Integer.valueOf(heightCm);
+        this.feet = io.openliberty.guides.multimodules.lib.Converter.getFeet(cm);
+        String result = String.valueOf(feet);
+        this.heightFeet = result;
+    }
+
+    public void setHeightInches(String heightinches) {
+        this.cm = Integer.valueOf(heightCm);
+        this.inches = io.openliberty.guides.multimodules.lib.Converter.getInches(cm);
+        String result = String.valueOf(inches);
+        this.heightInches = result;
+    }
+
 }
 ```
 
 
 
-You can retrieve the information about the resource usage of any number of system services by making a GET request at ***/query/systemLoad/{hostnames}*** endpoint. 
-The ***hostnames*** are set to ***system-java11,system-java17***.
+The ***getFeet(cm)*** invocation was added to the ***setHeightFeet*** method to convert a measurement into feet.
 
-```bash
-curl -s 'http://localhost:9084/query/systemLoad/system-java11,system-java17' | jq
-```
+The ***getInches(cm)*** invocation was added to the ***setHeightInches*** method to convert a measurement into inches.
 
-You can expect the following response is similar to the following example:
+Click the following button to check out the running application at the ***/converter*** endpoint:
+::startApplication{port="9080" display="external" name="Check out the application" route="/converter"}
 
+Now try updating the converter so that it converts heights correctly, rather than returning 0.
 
-```
-[
-  {
-    "hostname": "system-java11",
-    "loadData": {
-      "heapUsed": 30090920,
-      "loadAverage": 0.08,
-      "nonHeapUsed": 87825316
-    }
-  },
-  {
-    "hostname": "system-java17",
-    "loadData": {
-      "heapUsed": 39842888,
-      "loadAverage": 0.08,
-      "nonHeapUsed": 93098960
-    }
-  }
-]
-```
+Replace the ***Converter*** class in the ***jar*** directory.
 
+> To open the Converter.java file in your IDE, select
+> ***File*** > ***Open*** > guide-maven-multimodules/start/jar/src/main/java/io/openliberty/guides/multimodules/lib/Converter.java, or click the following button
 
-**Try the mutation operation**
-
-You can also make POST requests to add a note to a system service at the ***/query/mutation/system/note*** endpoint.
-To add a note to the system service running on Java 8, run the following command:
-
-```bash
-curl -i -X 'POST' 'http://localhost:9084/query/mutation/system/note' -H 'Content-Type: application/json' -d '{"hostname": "system-java11","text": "I am trying out GraphQL on Open Liberty!"}'
-```
-
-You will recieve a `200` response code, similar to below, if the request is processed succesfully. 
-
-```
-HTTP/1.1 200 OK
-Content-Language: en-US
-Content-Length: 0
-Date: Fri, 21 Apr 2023 14:17:47 GMT
-```
-
-You can see the note you added to the system service at the ***GET /query/system/{hostname}*** endpoint.
-
-::page{title="Tearing down the environment"}
-
-When you're done checking out the application, run the following script to stop the application:
-
-
-```bash
-./scripts/stopContainers.sh
-```
-
-::page{title="Testing the application"}
-
-Although you can test your application manually, you should rely on automated tests. In this section, you'll create integration tests using Testcontainers to verify that the basic operations you implemented function correctly. 
-
-First, create a RESTful client interface for the ***query*** microservice.
-
-Create the ***QueryResourceClient.java*** interface.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceClient.java
-```
-
-
-> Then, to open the QueryResourceClient.java file in your IDE, select
-> ***File*** > ***Open*** > guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceClient.java, or click the following button
-
-::openFile{path="/home/project/guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceClient.java"}
+::openFile{path="/home/project/guide-maven-multimodules/start/jar/src/main/java/io/openliberty/guides/multimodules/lib/Converter.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.query;
+package io.openliberty.guides.multimodules.lib;
 
-import java.util.List;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
+public class Converter {
 
-import io.openliberty.guides.graphql.models.SystemInfo;
-import io.openliberty.guides.graphql.models.SystemLoad;
-import io.openliberty.guides.graphql.models.NoteInfo;
+    public static int getFeet(int cm) {
+        int feet = (int) (cm / 30.48);
+        return feet;
+    }
 
-@ApplicationScoped
-@Path("query")
-public interface QueryResourceClient {
+    public static int getInches(int cm) {
+        double feet = cm / 30.48;
+        int inches = (int) (cm / 2.54) - ((int) feet * 12);
+        return inches;
+    }
 
-    @GET
-    @Path("system/{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    SystemInfo querySystem(@PathParam("hostname") String hostname);
+    public static int sum(int a, int b) {
+        return a + b;
+    }
 
-    @GET
-    @Path("systemLoad/{hostnames}")
-    @Produces(MediaType.APPLICATION_JSON)
-    List<SystemLoad> querySystemLoad(@PathParam("hostnames") String hostnames);
+    public static int diff(int a, int b) {
+        return a - b;
+    }
 
-    @POST
-    @Path("mutation/system/note")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    Response editNote(NoteInfo text);
+    public static int product(int a, int b) {
+        return a * b;
+    }
+
+    public static int quotient(int a, int b) {
+        return a / b;
+    }
+
 }
 ```
 
 
 
-This interface declares ***querySystem()***, ***querySystemLoad()***, and ***editNote()*** methods for accessing each of the endpoints that are set up to access the ***query*** microservice.
+Change the ***getFeet*** method so that it converts from centimeters to feet, and the ***getInches*** method so that it converts from centimeters to inches. Update the ***sum***, ***diff***, ***product***, and ***quotient*** functions so that they add, subtract, multiply, and divide 2 numbers respectively.
 
-Create the test container class that accesses the ***query*** image that you built in previous section.
+Now check out the application again at the ***/converter*** endpoint:
+::startApplication{port="9080" display="external" name="Check out the application" route="/converter"}
 
-Create the ***LibertyContainer.java*** file.
+Try entering a height in centimeters and see whether it converts correctly.
+
+
+### Testing the multi-module application
+
+To test the multi-module application, add integration tests to the EAR project.
+
+Create the integration test class in the ***ear*** directory.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/LibertyContainer.java
+touch /home/project/guide-maven-multimodules/start/ear/src/test/java/it/io/openliberty/guides/multimodules/IT.java
 ```
 
 
-> Then, to open the LibertyContainer.java file in your IDE, select
-> ***File*** > ***Open*** > guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/LibertyContainer.java, or click the following button
+> Then, to open the IT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-maven-multimodules/start/ear/src/test/java/it/io/openliberty/guides/multimodules/IT.java, or click the following button
 
-::openFile{path="/home/project/guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/LibertyContainer.java"}
+::openFile{path="/home/project/guide-maven-multimodules/start/ear/src/test/java/it/io/openliberty/guides/multimodules/IT.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.query;
-
-import org.jboss.resteasy.client.jaxrs.ResteasyClient;
-import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
-import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
-
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.UriBuilder;
-
-public class LibertyContainer extends GenericContainer<LibertyContainer> {
-
-    static final Logger LOGGER = LoggerFactory.getLogger(LibertyContainer.class);
-    private String baseURL;
-
-    public LibertyContainer(final String dockerImageName) {
-        super(dockerImageName);
-        waitingFor(Wait.forLogMessage("^.*CWWKF0011I.*$", 1));
-        this.addExposedPorts(9084);
-        return;
-    }
-
-    public <T> T createRestClient(Class<T> clazz) {
-        String urlPath = getBaseURL();
-        ClientBuilder builder = ResteasyClientBuilder.newBuilder();
-        ResteasyClient client = (ResteasyClient) builder.build();
-        ResteasyWebTarget target = client.target(UriBuilder.fromPath(urlPath));
-        return target.proxy(clazz);
-    }
-
-    public String getBaseURL() throws IllegalStateException {
-        if (baseURL != null) {
-            return baseURL;
-        }
-        if (!this.isRunning()) {
-            throw new IllegalStateException(
-                "Container must be running to determine hostname and port");
-        }
-        baseURL =  "http://" + this.getContainerIpAddress()
-            + ":" + this.getFirstMappedPort();
-        System.out.println("TEST: " + baseURL);
-        return baseURL;
-    }
-}
-```
-
-
-
-The ***createRestClient()*** method creates a REST client instance with the ***QueryResourceClient*** interface. The ***getBaseURL()*** method constructs the URL that can access the ***query*** image.
-
-Now, create your integration test cases.
-
-Create the ***QueryResourceIT.java*** file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceIT.java
-```
-
-
-> Then, to open the QueryResourceIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceIT.java, or click the following button
-
-::openFile{path="/home/project/guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceIT.java"}
-
-
-
-```java
-package it.io.openliberty.guides.query;
+package it.io.openliberty.guides.multimodules;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Order;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.List;
-import jakarta.ws.rs.core.Response;
-import io.openliberty.guides.graphql.models.NoteInfo;
-import io.openliberty.guides.graphql.models.SystemLoad;
-import io.openliberty.guides.graphql.models.SystemLoadData;
-import io.openliberty.guides.graphql.models.SystemInfo;
+public class IT {
+    String port = System.getProperty("http.port");
+    String war = "converter";
+    String urlBase = "http://localhost:" + port + "/" + war + "/";
 
-@Testcontainers
-@TestMethodOrder(OrderAnnotation.class)
-public class QueryResourceIT {
-
-    private static Logger logger = LoggerFactory.getLogger(QueryResourceIT.class);
-    private static String system8ImageName = "system:1.0-java11-SNAPSHOT";
-    private static String queryImageName = "query:1.0-SNAPSHOT";
-    private static String graphqlImageName = "graphql:1.0-SNAPSHOT";
-
-    public static QueryResourceClient client;
-    public static Network network = Network.newNetwork();
-
-    @Container
-    public static GenericContainer<?> systemContainer
-        = new GenericContainer<>(system8ImageName)
-              .withNetwork(network)
-              .withExposedPorts(9080)
-              .withNetworkAliases("system-java11")
-              .withLogConsumer(new Slf4jLogConsumer(logger));
-
-    @Container
-    public static LibertyContainer graphqlContainer
-        = new LibertyContainer(graphqlImageName)
-              .withNetwork(network)
-              .withExposedPorts(9082)
-              .withNetworkAliases("graphql")
-              .withLogConsumer(new Slf4jLogConsumer(logger));
-
-    @Container
-    public static LibertyContainer libertyContainer
-        = new LibertyContainer(queryImageName)
-              .withNetwork(network)
-              .withExposedPorts(9084)
-              .withLogConsumer(new Slf4jLogConsumer(logger));
-
-    @BeforeAll
-    public static void setupTestClass() throws Exception {
-        System.out.println("TEST: Starting Liberty Container setup");
-        client = libertyContainer.createRestClient(QueryResourceClient.class);
+    @Test
+    public void testIndexPage() throws Exception {
+        String url = this.urlBase;
+        HttpURLConnection con = testRequestHelper(url, "GET");
+        assertEquals(200, con.getResponseCode(), "Incorrect response code from " + url);
+        assertTrue(testBufferHelper(con).contains("Enter the height in centimeters"),
+                        "Incorrect response from " + url);
     }
 
     @Test
-    @Order(1)
-    public void testGetSystem() {
-        System.out.println("TEST: Testing get system /system/system-java11");
-        SystemInfo systemInfo = client.querySystem("system-java11");
-        assertEquals(systemInfo.getHostname(), "system-java11");
-        assertNotNull(systemInfo.getOsVersion(), "osVersion is null");
-        assertNotNull(systemInfo.getJava(), "java is null");
-        assertNotNull(systemInfo.getSystemMetrics(), "systemMetrics is null");
+    public void testHeightsPage() throws Exception {
+        String url = this.urlBase + "heights.jsp?heightCm=10";
+        HttpURLConnection con = testRequestHelper(url, "POST");
+        assertTrue(testBufferHelper(con).contains("3        inches"),
+                        "Incorrect response from " + url);
     }
 
-    @Test
-    @Order(2)
-    public void testGetSystemLoad() {
-        System.out.println("TEST: Testing get system load /systemLoad/system-java11");
-        List<SystemLoad> systemLoad = client.querySystemLoad("system-java11");
-        assertEquals(systemLoad.get(0).getHostname(), "system-java11");
-        SystemLoadData systemLoadData = systemLoad.get(0).getLoadData();
-        assertNotNull(systemLoadData.getLoadAverage(), "loadAverage is null");
-        assertNotNull(systemLoadData.getHeapUsed(), "headUsed is null");
-        assertNotNull(systemLoadData.getNonHeapUsed(), "nonHeapUsed is null");
+    private HttpURLConnection testRequestHelper(String url, String method)
+                    throws Exception {
+        URL obj = new URL(url);
+        HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+        con.setRequestMethod(method);
+        return con;
     }
 
-    @Test
-    @Order(3)
-    public void testEditNote() {
-        System.out.println("TEST: Testing editing note /mutation/system/note");
-        NoteInfo note = new NoteInfo();
-        note.setHostname("system-java11");
-        note.setText("I am trying out GraphQL on Open Liberty!");
-        Response response = client.editNote(note);
-        assertEquals(200, response.getStatus(), "Incorrect response code");
-        SystemInfo systemInfo = client.querySystem("system-java11");
-        assertEquals(systemInfo.getNote(), "I am trying out GraphQL on Open Liberty!");
+    private String testBufferHelper(HttpURLConnection con) throws Exception {
+        BufferedReader in = new BufferedReader(
+                        new InputStreamReader(con.getInputStream()));
+        String inputLine;
+        StringBuffer response = new StringBuffer();
+        while ((inputLine = in.readLine()) != null) {
+            response.append(inputLine);
+        }
+        in.close();
+        return response.toString();
     }
+
 }
 ```
 
 
 
-Define the ***systemContainer*** test container to start up the ***system-java11*** image, the ***graphqlContainer*** test container to start up the ***graphql*** image, and the ***libertyContainer*** test container to start up the ***query*** image. Make sure that the containers use the same network.
+The ***testIndexPage*** tests to check that you can access the landing page.
 
-The ***@Testcontainers*** annotation finds all fields that are annotated with the ***@Container*** annotation and calls their container lifecycle methods. The ***static*** function declaration on each container indicates that this container will be started only once before any test method is executed and stopped after the last test method is executed.
+The ***testHeightsPage*** tests to check that the application can process the input value and calculate the result correctly.
 
-The ***testGetSystem()*** verifies the ***/query/system/{hostname}*** endpoint with ***hostname*** set to ***system-java11***.
-
-The ***testGetSystemLoad()*** verifies the ***/query/systemLoad/{hostnames}*** endpoint with ***hostnames*** set to ***system-java11***.
-
-The ***testEditNote()*** verifies the mutation operation at the ***/query/mutation/system/note*** endpoint.
-
-
-The required ***dependencies*** are already added to the ***pom.xml*** Maven configuration file for you, including JUnit5, JBoss RESTEasy client, Glassfish JSON, Testcontainers, and Log4J libraries.
-
-To enable running the integration test by the Maven ***verify*** goal, the ***maven-failsafe-plugin*** plugin is also required.
 
 ### Running the tests
 
-You can run the Maven ***verify*** goal, which compiles the java files, starts the containers, runs the tests, and then stops the containers.
-
-
-```bash
-cd /home/project/guide-graphql-client/start
-export TESTCONTAINERS_RYUK_DISABLED=true
-./mvnw verify
-```
+Because you started Open Liberty in dev mode, press the *enter/return* key to run the tests.
 
 You will see the following output:
 
@@ -824,21 +673,39 @@ You will see the following output:
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.query.QueryResourceIT
-...
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 11.694 s - in it.io.openliberty.guides.query.QueryResourceIT
+Running it.io.openliberty.guides.multimodules.IT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.712 sec - in it.io.openliberty.guides.multimodules.IT
 
 Results :
 
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+
 ```
+
+
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the Liberty.
+
+
+::page{title="Building the multi-module application"}
+
+You have aggregated and developed the application. Now, you can run the Maven ***install*** goal from the ***start*** directory to build all your modules. This command creates a JAR file in the ***jar/target*** directory, a WAR file in the ***war/target*** directory, and an EAR file that contains the WAR file in the ***ear/target*** directory.
+
+Run the following commands to navigate to the start directory and build the entire application:
+```bash
+cd /home/project/guide-maven-multimodules/start
+./mvnw install
+```
+
+Because the modules are independent, you can re-build them individually by running the Maven ***install*** goal from the corresponding ***start*** directory for each module.
+
+Or, run `./mvnw -pl <child project> install` from the start directory.
 
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just learnt how to use a GraphQL client to run GraphQL queries and mutations!
+You built and tested a multi-module Java application for unit conversion with Maven on Open Liberty.
 
 
 
@@ -848,30 +715,30 @@ You just learnt how to use a GraphQL client to run GraphQL queries and mutations
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-graphql-client*** project by running the following commands:
+Delete the ***guide-maven-multimodules*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-graphql-client
+rm -fr guide-maven-multimodules
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Running%20GraphQL%20queries%20and%20mutations%20using%20a%20GraphQL%20client&guide-id=cloud-hosted-guide-graphql-client)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20multi-module%20application&guide-id=cloud-hosted-guide-maven-multimodules)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-graphql-client/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-graphql-client/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-maven-multimodules/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-maven-multimodules/pulls)
 
 
 
 ### Where to next?
 
-* [Optimizing REST queries for microservices with GraphQL](https://openliberty.io/guides/microprofile-graphql.html)
+* [Building a web application with Maven](https://openliberty.io/guides/maven-intro.html)
 
 
 ### Log out of the session
