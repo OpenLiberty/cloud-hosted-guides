@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Externalizing environment-specific microservice configuration for CI/CD guide!"}
+::page{title="Welcome to the Accessing and persisting data in microservices using Java Persistence API (JPA) guide!"}
 
-Learn how to create environment-specific configurations for microservices by using MicroProfile Config configuration profiles for easy management and portable deployments throughout the CI/CD lifecycle.
+Learn how to use Java Persistence API (JPA) to access and persist data to a database for your microservices.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -15,18 +15,16 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 ::page{title="What you'll learn"}
 
-Managing configurations for microservices can be challenging, especially when configurations require adjustments across various stages of the software development and delivery lifecycle. The MicroProfile Config configuration profile feature, also known as the [Config Profile](https://download.eclipse.org/microprofile/microprofile-config-3.0/microprofile-config-spec-3.0.html#configprofile), is a direct solution to this challenge. It simplifies the management of microservice configurations across diverse environments - from development to production and throughout the  continuous integration/continuous delivery (CI/CD) pipeline. By externalizing and tailoring configuration properties to each environment, the CI/CD process becomes more seamless, so you can concentrate on perfecting your application code and capabilities.
+You will learn how to use the Java Persistence API (JPA) to map Java objects to relational database tables and perform create, read, update and delete (CRUD) operations on the data in your microservices. 
 
-You'll learn how to provide environment-specific configurations by using the MicroProfile Config configuration profile feature. You'll work with the MicroProfile Config API to create configuration profiles that use profile-specific configuration properties and configuration sources.
+JPA is a Jakarta EE specification for representing relational database table data as Plain Old Java Objects (POJO). JPA simplifies object-relational mapping (ORM) by using annotations to map Java objects to tables in a relational database. In addition to providing an efficient API for performing CRUD operations, JPA also reduces the burden of having to write JDBC and SQL code when performing database operations and takes care of database vendor-specific differences. This capability allows you to focus on the business logic of your application instead of wasting time implementing repetitive CRUD logic.
 
-This guide builds on the [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html) guide and the [Configuring microservices](https://openliberty.io/guides/microprofile-config.html) guide. If you are not familiar with externalizing the configuration of microservices, it will be helpful to read the [External configuration of microservices](https://openliberty.io/docs/latest/external-configuration.html) document and complete the aforementioned guides before you proceed.
+The application that you will be working with is an event manager, which is composed of a UI and an event microservice for creating, retrieving, updating, and deleting events. In this guide, you will be focused on the event microservice. The event microservice consists of a JPA entity class whose fields will be persisted to a database. The database logic is implemented in a Data Access Object (DAO) to isolate the database operations from the rest of the service. This DAO accesses and persists JPA entities to the database and can be injected and consumed by other components in the microservice. An Embedded Derby database is used as a data store for all the events.
 
-The application that you will work with is a ***query*** service, which fetches information about the running JVM from a ***system*** microservice. You'll use configuration profiles to externalize and manage the configurations across the development, testing, and production environments.
-
-![System and query services DevOps](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-config-profile/prod/assets/system-query-devops.png)
-
+You will use JPA annotations to define an entity class whose fields are persisted to the database. The interaction between your service and the database is mediated by the persistence context that is managed by an entity manager. In a Jakarta EE environment, you can use an application-managed entity manager or a container-managed entity manager. In this guide, you will use a container-managed entity manager that is injected into the DAO so Liberty manages the opening and closing of the entity manager for you. 
 
 
 ::page{title="Getting started"}
@@ -40,11 +38,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-config-profile.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-jpa-intro.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-microprofile-config-profile.git
-cd guide-microprofile-config-profile
+git clone https://github.com/openliberty/guide-jpa-intro.git
+cd guide-jpa-intro
 ```
 
 
@@ -52,456 +50,735 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-::page{title="Creating a configuration profile for the dev environment"}
+### Try what you'll build
 
-The dev environment is used to test, experiment, debug, and refine your code, ensuring an application's functional readiness before progressing to subsequent stages in a software development and delivery lifecycle.
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+
+To try out the application, run the following commands to navigate to the ***finish*** directory and deploy the ***frontendUI*** service to Open Liberty:
+
+
+```bash
+cd finish
+./mvnw -pl frontendUI liberty:run
+```
+
+Open another command-line session and run the following commands to navigate to the ***finish*** directory and deploy the ***backendServices*** to Open Liberty:
+```bash
+cd /home/project/guide-jpa-intro/finish
+./mvnw -pl backendServices liberty:run
+```
+
+
+After you see the following message in both command-line sessions, both your services are ready.
+
+```
+The defaultServer server is ready to run a smarter planet.
+```
+
+Click the following button to view the Event Manager application:
+::startApplication{port="9090" display="external" name="Visit Event Manager application" route="/"}
+The event application does not display any events because no events are stored in the database. Go ahead and click ***Create Event***, located in the left navigation bar. After entering an event name, location and event date set in the future, click ***Submit*** to persist your event entity to the database. The event is now stored in the database and is visible in the list of current events.
+
+Notice that if you stop the Open Liberty instance and then restart it, the events created are still displayed in the list of current events. Ensure you are in the ***finish*** directory and run the following Maven goals to stop and then restart the instance:
+```bash
+cd /home/project/guide-jpa-intro/finish
+./mvnw -pl backendServices liberty:stop
+./mvnw -pl backendServices liberty:run
+```
+
+
+The events created are still displayed in the list of current events. The ***Update*** action link located beside each event allows you to make modifications to the persisted entity and the ***Delete*** action link allows you to remove entities from the database.
+
+After you are finished checking out the application, stop the Open Liberty instances by pressing `Ctrl+C` in the command-line sessions where you ran the ***backendServices*** and ***frontendUI*** services. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another command-line session for the ***frontendUI*** and ***backendServices*** services:
+```bash
+cd /home/project/guide-jpa-intro/finish
+./mvnw -pl frontendUI liberty:stop
+./mvnw -pl backendServices liberty:stop
+```
+
+
+
+::page{title="Defining a JPA entity class"}
 
 Navigate to the ***start*** directory to begin.
 
-The starting Java project, which you can find in the ***start*** directory, is a multi-module Maven project comprised of the ***system*** and ***query*** microservices. Each microservice is in its own corresponding directory, ***system*** and ***query***.
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
 
-
-
-The ***system*** microservice contains the three Maven build profiles: ***dev***, ***test***, and ***prod***, in which the ***dev*** profile is set as the default. Each build profile defines properties for a particular deployment configuration that the microservice uses.
-
-The MicroProfile Config configuration profile feature supplies configurations for different environments when only a single profile is active. The active profile is set using the ***mp.config.profile*** property. You can set it in any of the [configuration sources](https://openliberty.io/docs/latest/external-configuration.html#default) and it is read once during application startup. When a profile is active, its associated configuration properties are used. For the ***query*** service, the ***mp.config.profile*** property is set to ***dev*** in its Maven ***pom.xml***. This Liberty configuration variable indicates to the runtime that ***dev*** is the active configuration profile.
-
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
-
-Open a command-line session and run the following commands to navigate to the ***system*** directory and start the ***system*** service in the ***dev*** environment:
-
+Run the following commands to start the ***frontendUI*** service in dev mode:
 ```bash
-./mvnw -pl system liberty:dev
+cd /home/project/guide-jpa-intro/start
+./mvnw -pl frontendUI liberty:dev
 ```
 
-Open another command-line session and run the following commands to navigate to the ***query*** directory and start the ***query*** service in the ***dev*** environment:
-
+Open another command-line session and run the following commands to start the ***backendServices*** in dev mode:
 ```bash
-./mvnw -pl query liberty:dev
+cd /home/project/guide-jpa-intro/start
+./mvnw -pl backendServices liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
-**************************************************
-*     Liberty is running in dev mode.
+**************************************************************
+*    Liberty is running in dev mode.
 ```
 
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+Dev mode holds your command line to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
+To store Java objects in a database, you must define a JPA entity class. A JPA entity is a Java object whose non-transient and non-static fields will be persisted to the database. Any Plain Old Java Object (POJO) class can be designated as a JPA entity. However, the class must be annotated with the ***@Entity*** annotation, must not be declared final and must have a public or protected non-argument constructor. JPA maps an entity type to a database table and persisted instances will be represented as rows in the table.
 
-In the dev environment, the ***dev*** configuration profile is set in the ***system/pom.xml*** file as the configuration profile to use for running the ***system*** service. The ***system*** service runs on HTTP port ***9081*** and HTTPS port ***9444*** using the context root ***system/dev***. It uses a basic user registry with username ***alice*** and password ***alicepwd*** for resource authorization. Note that the ***basicRegistry*** element is a simple registry configuration for learning purposes. For more information on user registries, see the [User registries documentation](https://openliberty.io/docs/latest/user-registries-application-security.html).
+The ***Event*** class is a data model that represents events in the event microservice and is annotated with JPA annotations.
 
-Click the following button to check out the ***query*** service:
-
-::startApplication{port="9085" display="external" name="Check out the query service" route="/query/systems/localhost"}
-
-
-The ***query*** service returns the message: ***{"fail":"Failed to reach the client localhost."}***. This is because the current ***query*** service uses the default properties in the ***query/src/main/resources/META-INF/microprofile-config.properties*** file to access the ***system*** service.
-
-For proper communication with the development ***system*** service, the ***query*** service uses properties in the ***dev*** configuration profile.
-
-![System service running in development environment](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-config-profile/prod/assets/system-query-devops-development.png)
-
-
-There are two ways to define configuration properties that are associated with your configuration profile. The first is as individual configuration properties associated with a configuration profile that can be specified in any kind of MicroProfile configuration source. The second is through default ***microprofile-config.properties*** configuration files embedded in your application that can be associated with different configuration profiles. The former allows for flexibility in defining profile-specific configuration properties in the best configuration sources for your needs while the latter enables default profiles of configuration properties to be provided in your application.
-
-### Creating profile-specific configuration properties
-
-This approach involves directly associating individual configuration properties with a configuration profile. To define a configuration property for a particular config profile, use the ***%\<config_profile_id\>.\<property_name\>=\<value\>*** syntax, where ***\<config_profile_id\>*** is the unique identifier for the configuration profile and ***\<property_name\>*** is the name of the property that you want to set.
-
-Replace the ***microprofile-config.properties*** file.
-
-> To open the microprofile-config.properties file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties"}
-
-
-
-```
-system.httpsPort=9443
-system.user=admin
-system.password=adminpwd
-system.contextRoot=system
-
-%dev.system.httpsPort=9444
-%dev.system.user=alice
-%dev.system.password=alicepwd
-%dev.system.contextRoot=system/dev
-```
-
-
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
-
-
-
-Configure the ***%dev.**** properties in the ***microprofile-config.properties*** file based on the values from the ***dev*** profile of the ***system*** service.
-
-Because the active profile is set to ***dev***, each ***%dev.**** property overrides the value of the plain non-profile-specific property. For example, in this case, the ***%dev.system.httpsPort*** property overrides the ***system.httpsPort*** property and the value is resolved to ***9444***.
-
-Because you are running the ***query*** service in dev mode, the changes that you made are automatically picked up.
-
-Click the following button to try out the application:
-
-::startApplication{port="9085" display="external" name="Try out the application" route="/query/systems/localhost"}
-
-You can see the current OS and Java version in JSON format.
-
-
-### Creating profile-specific ***microprofile-config.properties*** configuration files
-
-Creating profile-specific ***microprofile-config.properties*** configuration files is a structured way to provide and manage more extensive sets of default configurations. You can create a configuration file for each configuration profile in the ***META-INF*** folder on the classpath of your application by using the ***microprofile-config-\<config_profile_id\>*** naming convention, where ***\<config_profile_id\>*** is the unique identifier for a configuration profile. After you create the file, you can add your configuration properties to it with the standard ***\<property_name\>=\<value\>*** syntax.
-
-Open another command-line session.
-
-Create the ***microprofile-config-dev.properties*** file.
+Create the ***Event*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-dev.properties
+touch /home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/models/Event.java
 ```
 
 
-> Then, to open the microprofile-config-dev.properties file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-dev.properties, or click the following button
+> Then, to open the Event.java file in your IDE, select
+> ***File*** > ***Open*** > guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/models/Event.java, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-dev.properties"}
-
-
-
-```
-system.httpsPort=9444
-system.user=alice
-system.password=alicepwd
-system.contextRoot=system/dev
-```
-
-
-
-
-Define the ***system.**** properties in the ***microprofile-config-dev.properties*** file based on the values from the ***dev*** profile of the ***system*** service.
-
-Replace the ***microprofile-config.properties*** file.
-
-> To open the microprofile-config.properties file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties"}
-
-
-
-```
-system.httpsPort=9443
-system.user=admin
-system.password=adminpwd
-system.contextRoot=system
-
-```
-
-
-
-
-Remove the ***%dev.**** properties from the ***microprofile-config.properties*** file.
-
-Because the active profile is set to ***dev***, any ***system.**** properties specified in the ***microprofile-config-dev.properties*** file take precedence over the ***system.**** property values in the ***microprofile-config.properties*** file.
-
-Now, click the following button to try out the application again:
-
-::startApplication{port="9085" display="external" name="Try out the application" route="/query/systems/localhost"}
-
-You can see the current OS and Java version in JSON format.
-
-When you are done checking out the application in ***dev*** environment, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***query*** services.
-
-::page{title="Creating a configuration profile for the test environment"}
-
-In CI/CD, the test environment is where integration tests ensure the readiness and quality of an application. A good testing configuration not only ensures smooth operations but also aligns the environment closely with potential production settings.
-
-![System service running in testing environment](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-config-profile/prod/assets/system-query-devops-testing.png)
-
-
-Create the ***microprofile-config-test.properties*** file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-test.properties
-```
-
-
-> Then, to open the microprofile-config-test.properties file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-test.properties, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-test.properties"}
-
-
-
-```
-system.httpsPort=9445
-system.user=bob
-system.password=bobpwd
-system.contextRoot=system/test
-```
-
-
-
-
-Define the ***system.**** properties in the ***microprofile-config-test.properties*** file based on the values from the ***test*** profile of the ***system*** service.
-
-Create the ***QueryEndpointIT*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-microprofile-config-profile/start/query/src/test/java/it/io/openliberty/guides/query/QueryEndpointIT.java
-```
-
-
-> Then, to open the QueryEndpointIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-config-profile/start/query/src/test/java/it/io/openliberty/guides/query/QueryEndpointIT.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/test/java/it/io/openliberty/guides/query/QueryEndpointIT.java"}
+::openFile{path="/home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/models/Event.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.query;
+package io.openliberty.guides.event.models;
+
+import java.io.Serializable;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.Column;
+import jakarta.persistence.GenerationType;
+
+@Entity
+@Table(name = "Event")
+@NamedQuery(name = "Event.findAll", query = "SELECT e FROM Event e")
+@NamedQuery(name = "Event.findEvent", query = "SELECT e FROM Event e WHERE "
+    + "e.name = :name AND e.location = :location AND e.time = :time")
+public class Event implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Id
+    @Column(name = "eventId")
+    private int id;
+
+    @Column(name = "eventLocation")
+    private String location;
+    @Column(name = "eventTime")
+    private String time;
+    @Column(name = "eventName")
+    private String name;
+
+    public Event() {
+    }
+
+    public Event(String name, String location, String time) {
+        this.name = name;
+        this.location = location;
+        this.time = time;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public String getTime() {
+        return time;
+    }
+
+    public void setTime(String time) {
+        this.time = time;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + id;
+        result = prime * result + ((location == null) ? 0 : location.hashCode());
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result
+                 + (int) (serialVersionUID ^ (serialVersionUID >>> 32));
+        result = prime * result + ((time == null) ? 0 : time.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        Event other = (Event) obj;
+        if (location == null) {
+            if (other.location != null) {
+                return false;
+            }
+        } else if (!location.equals(other.location)) {
+            return false;
+        }
+        if (time == null) {
+            if (other.time != null) {
+                return false;
+            }
+        } else if (!time.equals(other.time)) {
+            return false;
+        }
+        if (name == null) {
+            if (other.name != null) {
+                return false;
+            }
+        } else if (!name.equals(other.name)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return "Event [name=" + name + ", location=" + location + ", time=" + time
+                + "]";
+    }
+}
+
+```
+
+
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
+
+The following table breaks down the new annotations:
+
+| *Annotation*    | *Description*
+| ---| ---
+| ***@Entity*** | Declares the class as an entity
+| ***@Table***  | Specifies details of the table such as name 
+| ***@NamedQuery*** | Specifies a predefined database query that is run by an ***EntityManager*** instance.
+| ***@Id***       |  Declares the primary key of the entity
+| ***@GeneratedValue***    | Specifies the strategy used for generating the value of the primary key. The ***strategy = GenerationType.AUTO*** code indicates that the generation strategy is automatically selected
+| ***@Column***    | Specifies that the field is mapped to a column in the database table. The ***name*** attribute is optional and indicates the name of the column in the table
+
+
+::page{title="Configuring JPA"}
+
+The ***persistence.xml*** file is a configuration file that defines a persistence unit. The persistence unit specifies configuration information for the entity manager.
+
+Create the configuration file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-jpa-intro/start/backendServices/src/main/resources/META-INF/persistence.xml
+```
+
+
+> Then, to open the persistence.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-jpa-intro/start/backendServices/src/main/resources/META-INF/persistence.xml, or click the following button
+
+::openFile{path="/home/project/guide-jpa-intro/start/backendServices/src/main/resources/META-INF/persistence.xml"}
+
+
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.2"
+    xmlns="http://xmlns.jcp.org/xml/ns/persistence" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence 
+                        http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd">
+    <persistence-unit name="jpa-unit" transaction-type="JTA">
+        <jta-data-source>jdbc/eventjpadatasource</jta-data-source>
+        <properties>
+            <property name="jakarta.persistence.schema-generation.database.action"
+                      value="create"/>
+            <property name="jakarta.persistence.schema-generation.scripts.action"
+                      value="create"/>
+            <property name="jakarta.persistence.schema-generation.scripts.create-target"
+                      value="createDDL.ddl"/>
+        </properties>
+    </persistence-unit>
+</persistence>
+```
+
+
+
+The persistence unit is defined by the ***persistence-unit*** XML element. The ***name*** attribute is required and is used to identify the persistent unit when using the ***@PersistenceContext*** annotation to inject the entity manager later in this guide. The ***transaction-type="JTA"*** attribute specifies to use Java Transaction API (JTA) transaction management. Because of using a container-managed entity manager, JTA transactions must be used. 
+
+A JTA transaction type requires a JTA data source to be provided. The ***jta-data-source*** element specifies the Java Naming and Directory Interface (JNDI) name of the data source that is used. The ***data source*** has already been configured for you in the ***backendServices/src/main/liberty/config/server.xml*** file. This data source configuration is where the Java Database Connectivity (JDBC) connection is defined along with some database vendor-specific properties.
+
+
+The ***jakarta.persistence.schema-generation*** properties are used here so that you aren't required to manually create a database table to run this sample application. To learn more about the JPA schema generation and available properties, see [Schema Generation, Section 9.4 of the JPA Specification](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html#a12917)
+
+
+::page{title="Performing CRUD operations using JPA"}
+
+The CRUD operations are defined in the DAO. To perform these operations by using JPA, you need an ***EventDao*** class. 
+
+Create the ***EventDao*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/dao/EventDao.java
+```
+
+
+> Then, to open the EventDao.java file in your IDE, select
+> ***File*** > ***Open*** > guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/dao/EventDao.java, or click the following button
+
+::openFile{path="/home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/dao/EventDao.java"}
+
+
+
+```java
+package io.openliberty.guides.event.dao;
+
+import java.util.List;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
+import io.openliberty.guides.event.models.Event;
+
+import jakarta.enterprise.context.RequestScoped;
+
+@RequestScoped
+public class EventDao {
+
+    @PersistenceContext(name = "jpa-unit")
+    private EntityManager em;
+
+    public void createEvent(Event event) {
+        em.persist(event);
+    }
+
+    public Event readEvent(int eventId) {
+        return em.find(Event.class, eventId);
+    }
+
+    public void updateEvent(Event event) {
+        em.merge(event);
+    }
+
+    public void deleteEvent(Event event) {
+        em.remove(event);
+    }
+
+    public List<Event> readAllEvents() {
+        return em.createNamedQuery("Event.findAll", Event.class).getResultList();
+    }
+
+    public List<Event> findEvent(String name, String location, String time) {
+        return em.createNamedQuery("Event.findEvent", Event.class)
+            .setParameter("name", name)
+            .setParameter("location", location)
+            .setParameter("time", time).getResultList();
+    }
+}
+```
+
+
+
+To use the entity manager at runtime, inject it into the CDI bean through the ***@PersistenceContext*** annotation. The entity manager interacts with the persistence context. Every ***EntityManager*** instance is associated with a persistence context. The persistence context manages a set of entities and is aware of the different states that an entity can have. The persistence context synchronizes with the database when a transaction commits.
+
+The ***EventDao*** class has a method for each CRUD operation, so let's break them down:
+
+* The ***createEvent()*** method persists an instance of the ***Event*** entity class to the data store by calling the ***persist()*** method on an ***EntityManager*** instance. The entity instance becomes managed and changes to it will be tracked by the entity manager.
+
+* The ***readEvent()*** method returns an instance of the ***Event*** entity class with the specified primary key by calling the ***find()*** method on an ***EntityManager*** instance. If the event instance is found, it is returned in a managed state, but, if the event instance is not found, ***null*** is returned.
+
+* The ***readAllEvents()*** method demonstrates an alternative way to retrieve event objects from the database. This method returns a list of instances of the ***Event*** entity class by using the ***Event.findAll*** query specified in the ***@NamedQuery*** annotation on the ***Event*** class. Similarly, the ***findEvent()*** method uses the ***Event.findEvent*** named query to find an event with the given name, location and time. 
+
+
+* The ***updateEvent()*** method creates a managed instance of a detached entity instance. The entity manager automatically tracks all managed entity objects in its persistence context for changes and synchronizes them with the database. However, if an entity becomes detached, you must merge that entity into the persistence context by calling the ***merge()*** method so that changes to loaded fields of the detached entity are tracked.
+
+* The ***deleteEvent()*** method removes an instance of the ***Event*** entity class from the database by calling the ***remove()*** method on an ***EntityManager*** instance. The state of the entity is changed to removed and is removed from the database upon transaction commit. 
+
+The DAO is injected into the ***backendServices/src/main/java/io/openliberty/guides/event/resources/EventResource.java*** class and used to access and persist data. The ***@Transactional*** annotation is used in the ***EventResource*** class to declaratively control the transaction boundaries on the ***@RequestScoped*** CDI bean. This ensures that the methods run within the boundaries of an active global transaction, which is why it is not necessary to explicitly begin, commit or rollback transactions. At the end of the transactional method invocation, the transaction commits and the persistence context flushes any changes to Event entity instances it is managing to the database.
+
+
+
+::page{title="Configuring the Derby driver and the Liberty Maven plugin"}
+
+To use a Derby database, you need to download its libraries and store them to the Liberty shared resources directory. Configure the Liberty Maven plug-in in the ***pom.xml*** file of the ***backendServices*** service.
+
+Replace the ***backendServices/pom.xml*** configuration file.
+
+> To open the pom.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-jpa-intro/start/backendServices/pom.xml, or click the following button
+
+::openFile{path="/home/project/guide-jpa-intro/start/backendServices/pom.xml"}
+
+
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>backendServices</artifactId>
+    <packaging>war</packaging>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <!-- Liberty configuration -->
+        <backend.service.http.port>5050</backend.service.http.port>
+        <backend.service.https.port>5051</backend.service.https.port>
+    </properties>
+
+    <dependencies>
+        <!-- Provided dependencies -->
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-web-api</artifactId>
+            <version>10.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>7.0</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <!-- For tests -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>5.12.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>6.2.12.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-json-binding-provider</artifactId>
+            <version>6.2.12.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>jakarta.json</artifactId>
+            <version>2.0.1</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- Derby from https://mvnrepository.com/artifact/org.apache.derby/derby -->
+        <dependency>
+            <groupId>org.apache.derby</groupId>
+            <artifactId>derby</artifactId>
+            <version>10.17.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.derby</groupId>
+            <artifactId>derbyshared</artifactId>
+            <version>10.17.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.derby</groupId>
+            <artifactId>derbytools</artifactId>
+            <version>10.17.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.4.0</version>
+            </plugin>
+            <!-- Enable liberty-maven plugin -->
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.11.3</version>
+                <configuration>
+                    <copyDependencies>
+                        <location>${project.build.directory}/liberty/wlp/usr/shared/resources</location>
+                        <dependency>
+                            <groupId>org.apache.derby</groupId>
+                            <artifactId>derby</artifactId>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.apache.derby</groupId>
+                            <artifactId>derbyshared</artifactId>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.apache.derby</groupId>
+                            <artifactId>derbytools</artifactId>
+                        </dependency>
+                    </copyDependencies>
+                </configuration>
+            </plugin>
+            <!-- Plugin to run unit tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.3</version>
+            </plugin>
+            <!-- Plugin to run integration tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.5.3</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <backend.http.port>${backend.service.http.port}</backend.http.port>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+
+
+
+This configuration adds three required Derby dependencies to the ***dependencies*** configuration so Maven can download the Derby libraries locally. The ***copyDependencies*** configuration instructs the Liberty Maven plug-in to copy the Derby libraries to the Liberty shared resources directory that is specified through the ***location*** configuration, and is referenced in the ***derbyJDBCLib*** ***library*** configuration of the ***server.xml*** file.
+
+In the terminal where you started the ***backendServices*** microservice, type ***r*** and press the ***enter/return*** key to restart the Liberty instance and pick up the Derby libraries.
+
+
+
+::page{title="Running the application"}
+
+After you see the following message, your Liberty instance is ready in dev mode:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+
+Click the following button to view the Event Manager application:
+::startApplication{port="9090" display="external" name="Visit Event Manager application" route="/"}
+
+Click ***Create Event*** in the left navigation bar to create events that are persisted to the database. After you create an event, it is available to view, update, and delete in the ***Current Events*** section.
+
+
+::page{title="Testing the application"}
+
+Create the ***EventEntityIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-jpa-intro/start/backendServices/src/test/java/it/io/openliberty/guides/event/EventEntityIT.java 
+```
+
+
+> Then, to open the EventEntityIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-jpa-intro/start/backendServices/src/test/java/it/io/openliberty/guides/event/EventEntityIT.java, or click the following button
+
+::openFile{path="/home/project/guide-jpa-intro/start/backendServices/src/test/java/it/io/openliberty/guides/event/EventEntityIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.event;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import java.util.HashMap;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.Form;
+import jakarta.ws.rs.core.Response.Status;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import io.openliberty.guides.event.models.Event;
 
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.Response;
+public class EventEntityIT extends EventIT {
 
-public class QueryEndpointIT {
+    private static final String JSONFIELD_LOCATION = "location";
+    private static final String JSONFIELD_NAME = "name";
+    private static final String JSONFIELD_TIME = "time";
+    private static final String EVENT_TIME = "12:00 PM, January 1 2018";
+    private static final String EVENT_LOCATION = "IBM";
+    private static final String EVENT_NAME = "JPA Guide";
+    private static final String UPDATE_EVENT_TIME = "12:00 PM, February 1 2018";
+    private static final String UPDATE_EVENT_LOCATION = "IBM Updated";
+    private static final String UPDATE_EVENT_NAME = "JPA Guide Updated";
 
-    private static String port = System.getProperty("http.port");
-    private static String baseUrl = "http://localhost:" + port + "/query";
-    private static String systemHost = System.getProperty("system.host");
+    private static final int NO_CONTENT_CODE = Status.NO_CONTENT.getStatusCode();
+    private static final int NOT_FOUND_CODE = Status.NOT_FOUND.getStatusCode();
 
-    private static Client client;
+    @BeforeAll
+    public static void oneTimeSetup() {
+        port = System.getProperty("backend.http.port");
+        baseUrl = "http://localhost:" + port + "/";
+    }
 
     @BeforeEach
     public void setup() {
+        form = new Form();
         client = ClientBuilder.newClient();
+
+        eventForm = new HashMap<String, String>();
+
+        eventForm.put(JSONFIELD_NAME, EVENT_NAME);
+        eventForm.put(JSONFIELD_LOCATION, EVENT_LOCATION);
+        eventForm.put(JSONFIELD_TIME, EVENT_TIME);
+    }
+
+    @Test
+    public void testInvalidRead() {
+        assertEquals(true, getIndividualEvent(-1).isEmpty(),
+          "Reading an event that does not exist should return an empty list");
+    }
+
+    @Test
+    public void testInvalidDelete() {
+        int deleteResponse = deleteRequest(-1);
+        assertEquals(NOT_FOUND_CODE, deleteResponse,
+          "Trying to delete an event that does not exist should return the "
+          + "HTTP response code " + NOT_FOUND_CODE);
+    }
+
+    @Test
+    public void testInvalidUpdate() {
+        int updateResponse = updateRequest(eventForm, -1);
+        assertEquals(NOT_FOUND_CODE, updateResponse,
+          "Trying to update an event that does not exist should return the "
+          + "HTTP response code " + NOT_FOUND_CODE);
+    }
+
+    @Test
+    public void testReadIndividualEvent() {
+        int postResponse = postRequest(eventForm);
+        assertEquals(NO_CONTENT_CODE, postResponse,
+          "Creating an event should return the HTTP reponse code " + NO_CONTENT_CODE);
+
+        Event e = new Event(EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
+        JsonObject event = findEvent(e);
+        event = getIndividualEvent(event.getInt("id"));
+        assertData(event, EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
+
+        int deleteResponse = deleteRequest(event.getInt("id"));
+        assertEquals(NO_CONTENT_CODE, deleteResponse,
+          "Deleting an event should return the HTTP response code " + NO_CONTENT_CODE);
+    }
+
+    @Test
+    public void testCRUD() {
+        int eventCount = getRequest().size();
+        int postResponse = postRequest(eventForm);
+        assertEquals(NO_CONTENT_CODE, postResponse,
+          "Creating an event should return the HTTP reponse code " + NO_CONTENT_CODE);
+
+        Event e = new Event(EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
+        JsonObject event = findEvent(e);
+        assertData(event, EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
+
+        eventForm.put(JSONFIELD_NAME, UPDATE_EVENT_NAME);
+        eventForm.put(JSONFIELD_LOCATION, UPDATE_EVENT_LOCATION);
+        eventForm.put(JSONFIELD_TIME, UPDATE_EVENT_TIME);
+        int updateResponse = updateRequest(eventForm, event.getInt("id"));
+        assertEquals(NO_CONTENT_CODE, updateResponse,
+          "Updating an event should return the HTTP response code " + NO_CONTENT_CODE);
+
+        e = new Event(UPDATE_EVENT_NAME, UPDATE_EVENT_LOCATION, UPDATE_EVENT_TIME);
+        event = findEvent(e);
+        assertData(event, UPDATE_EVENT_NAME, UPDATE_EVENT_LOCATION, UPDATE_EVENT_TIME);
+
+        int deleteResponse = deleteRequest(event.getInt("id"));
+        assertEquals(NO_CONTENT_CODE, deleteResponse,
+          "Deleting an event should return the HTTP response code " + NO_CONTENT_CODE);
+        assertEquals(eventCount, getRequest().size(),
+          "Total number of events stored should be the same after testing "
+          + "CRUD operations.");
     }
 
     @AfterEach
     public void teardown() {
+        response.close();
         client.close();
     }
 
-    @Test
-    public void testQuerySystem() {
-
-        Response response = this.getResponse(baseUrl + "/systems/" + systemHost);
-        this.assertResponse(baseUrl, response);
-
-        JsonObject jsonObj = response.readEntity(JsonObject.class);
-        assertNotNull(jsonObj.getString("os.name"), "os.name is null");
-        assertNotNull(jsonObj.getString("java.version"), "java.version is null");
-
-        response.close();
-    }
-
-    @Test
-    public void testUnknownHost() {
-        Response response = this.getResponse(baseUrl + "/systems/unknown");
-        this.assertResponse(baseUrl, response);
-
-        JsonObject json = response.readEntity(JsonObject.class);
-        assertEquals("Failed to reach the client unknown.", json.getString("fail"),
-            "Fail message is wrong.");
-        response.close();
-    }
-
-    private Response getResponse(String url) {
-        return client.target(url).request().get();
-    }
-
-    private void assertResponse(String url, Response response) {
-        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
-    }
-
 }
 ```
 
 
 
-Implement endpoint tests to test the basic functionality of the ***query*** microservice. If a test failure occurs, you might have introduced a bug into the code.
+The ***testInvalidRead()***, ***testInvalidDelete()*** and ***testInvalidUpdate()*** methods use a primary key that is not in the database to test reading, updating and deleting an event that does not exist, respectively.
 
-See the following descriptions of test cases:
+The ***testReadIndividualEvent()*** method persists a test event to the database and retrieves the event object from the database using the primary key of the entity.
 
-* ***testQuerySystem()*** verifies the ***/query/systems/{hostname}*** endpoint.
+The ***testCRUD()*** method creates a test event and persists it to the database. The event object is then retrieved from the database to verify that the test event was actually persisted. Next, the name, location, and time of the test event are updated. The event object is retrieved from the database to verify that the updated event is stored. Finally, the updated test event is deleted and one final check is done to ensure that the updated test event is no longer stored in the database.
 
-* ***testUnknownHost()*** verifies that an unknown host or a host that does not expose their JVM system properties is correctly handled with a fail message.
+### Running the tests
 
-### Running the tests in the test environment
-
-Now, navigate to the ***start*** directory.
-
-
-
-Test the application under the ***test*** environment by running the following script that contains different Maven goals to ***build***, ***start***, ***test***, and ***stop*** the services.
-
-```bash
-cd /home/project/guide-microprofile-config-profile/start
-./scripts/testApp.sh
-```
-
-If the tests pass, you see output similar to the following example:
+Since you started Open Liberty in dev mode, press the ***enter/return*** key in the command-line session where you started the ***backendServices*** service to run the tests for the ***backendServices***.
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.539 s - in it.io.openliberty.guides.system.SystemEndpointIT
+Running it.io.openliberty.guides.event.EventEntityIT
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.703 sec - in it.io.openliberty.guides.event.EventEntityIT
 
-Results:
+Results :
 
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-
-...
-
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.query.QueryEndpointIT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.706 s - in it.io.openliberty.guides.query.QueryEndpointIT
-
-Results:
-
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
-
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0 
 ```
 
-::page{title="Next steps"}
+When you are done checking out the services, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the ***frontendUI*** and ***backendServices*** services.
 
-Deploying the application to a Kubernetes environment using the Open Liberty Operator is an optional learning step in this guide.
-
-To further explore deploying microservices using Kubernetes and the Open Liberty Operator, you can read the following guides:
-
- [Deploying a microservice to Kubernetes using Open Liberty Operator](https://openliberty.io/guides/openliberty-operator-intro.html)
- [Deploying a microservice to OpenShift 4 using Open Liberty Operator](https://openliberty.io/guides/openliberty-operator-openshift.html)
-
-A secure production environment is essential for application security. In the previous sections, you learned how to use the MicroProfile Config API to externalize credentials and other properties for accessing the ***system*** service. This strategy makes the application more adaptable to different environments without the need to change code and rebuild your application.
-
-In the this section, you'll learn how to use Kubernetes secrets to provide the credentials and how to pass them to the ***query*** service by using MicroProfile Config.
-
-### Deploying the application in the prod environment with Kubernetes
-
-
-
-
-
-
-Before deploying, create the Dockerfile files for both ***system*** and ***query*** microservices. Then, build their ***.war*** files and Docker images in the ***start*** directory.
-
-```bash
-cp /home/project/guide-microprofile-config-profile/finish/system/Dockerfile /home/project/guide-microprofile-config-profile/start/system
-cp /home/project/guide-microprofile-config-profile/finish/query/Dockerfile /home/project/guide-microprofile-config-profile/start/query
-cd /home/project/guide-microprofile-config-profile/start
-./mvnw -P prod clean package
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t query:1.0-SNAPSHOT query/.
-```
-
-The Maven ***clean*** and ***package*** goals can clean the ***target*** directories and build the ***.war*** application files from scratch. The ***microprofile-config-dev.properties*** and ***microprofile-config-test.properties*** files of the ***query*** microservice are excluded from the ***prod*** build. The default ***microprofile-config.properties*** file is automatically applied.
-
-The Docker ***build*** command packages the ***.war*** files of the ***system*** and ***query*** microservices with their default configuration into your Docker images.
-
-After building the images, push your images to the container registry on IBM Cloud with the following commands:
-
-```bash
-docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
-docker tag query:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/query:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/query:1.0-SNAPSHOT
-```
-
-And, you can create a Kubernetes secret for storing sensitive data such as credentials.
-
-```bash
-kubectl create secret generic sys-app-credentials \
-        --from-literal username=$USERNAME \
-        --from-literal password=password
-```
-
-For more information about managing secrets, see the [Managing Secrets using kubectl](https://kubernetes.io/docs/tasks/configmap-secret/managing-secret-using-kubectl) documentation.
-
-Finally, write up the ***deploy.yaml*** deployment file to configure the deployment of the ***system*** and ***query*** microservices by using the Open Liberty Operator. The ***sys-app-credentials*** Kubernetes secrets set the environment variables ***DEFAULT_USERNAME*** and ***DEFAULT_PASSWORD*** for the ***system*** microservice, and ***SYSTEM_USER*** and ***SYSTEM_PASSWORD*** for the ***query*** microservice.
-
-```bash
-cp /home/project/guide-microprofile-config-profile/finish/deploy.yaml /home/project/guide-microprofile-config-profile/start
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"${SN_ICR_NAMESPACE}"'/system:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
-sed -i 's=query:1.0-SNAPSHOT=us.icr.io/'"${SN_ICR_NAMESPACE}"'/query:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
-```
-
-If you want to override another property, you can specify it in the ***env*** sections of the ***deploy.yaml*** file. For example, set the ***CONTEXT_ROOT*** environment variable in the ***system*** deployment and the ***SYSTEM_CONTEXTROOT*** environment variable in the ***query*** deployment.
-
-After the images and the secret are ready, you can deploy the microservices to your production environment with Kubernetes.
-
-```bash
-kubectl apply -f deploy.yaml
-```
-When the apps are deployed, run the following command to check the status of your pods:
-```bash
-kubectl get pods
-```
-
-You'll see an output similar to the following example if all the pods are healthy and running:
-
-```
-----
-NAME                     READY   STATUS    RESTARTS   AGE
-query-7b7b6db4b6-cqtqx   1/1     Running   0          4s
-system-bc85bc8dc-rw5pb   1/1     Running   0          5s
-----
-```
-
-To access the exposed **query** microservice, the service must be port-forwarded. Run the following command to set up port forwarding to access the **query** service:
-
-```bash
-kubectl port-forward svc/query 9448
-```
-
-Open another command-line session and access the microservice by running the following command:
-```bash
-curl -k -s "https://localhost:9448/query/systems/system.${SN_ICR_NAMESPACE}.svc" | jq
-```
-
-You'll see an output similar to the following example:
-
-```
-{
-  "hostname": "system.sn-labs-username.svc",
-  "java.version": "11.0.23",
-  "os.name": "Linux"
-}
-```
-
-After trying out the microservice, press **CTRL+C** in the command line session where you ran the `kubectl port-forward` command to stop the port forwarding, and then delete all resources by running the following commands:
-```bash
-cd /home/project/guide-microprofile-config-profile/start
-kubectl delete -f deploy.yaml
-kubectl delete secret sys-app-credentials
-docker image prune -a -f
-```
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just learned how to use the MicroProfile Config's configuration profile feature to configure your application for multiple CI/CD environments.
+You learned how to map Java objects to database tables by defining a JPA entity class whose instances are represented as rows in the table. You have injected a container-managed entity manager into a DAO and learned how to perform CRUD operations in your microservice in Open Liberty.
 
 
-Feel free to try one of the related guides. They demonstrate new technologies that you can learn to expand on what you built in this guide.
 
 
 ### Clean up your environment
@@ -509,31 +786,30 @@ Feel free to try one of the related guides. They demonstrate new technologies th
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-microprofile-config-profile*** project by running the following commands:
+Delete the ***guide-jpa-intro*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-microprofile-config-profile
+rm -fr guide-jpa-intro
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Externalizing%20environment-specific%20microservice%20configuration%20for%20CI/CD&guide-id=cloud-hosted-guide-microprofile-config-profile)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Accessing%20and%20persisting%20data%20in%20microservices%20using%20Java%20Persistence%20API%20(JPA)&guide-id=cloud-hosted-guide-jpa-intro)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-config-profile/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-config-profile/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-jpa-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-jpa-intro/pulls)
 
 
 
 ### Where to next?
 
-* [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html)
-* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 
 
 ### Log out of the session
