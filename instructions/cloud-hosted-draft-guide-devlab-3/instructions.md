@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Integrating RESTful services with a reactive system guide!"}
+::page{title="Welcome to the Testing reactive Java microservices guide!"}
 
-Learn how to integrate RESTful Java microservices with a reactive system by using MicroProfile Reactive Messaging.
+Learn how to test reactive Java microservices in true-to-production environments using Testcontainers.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,18 +14,18 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 ::page{title="What you'll learn"}
 
-You will learn how to integrate RESTful Java microservices with a reactive system by using MicroProfile Reactive Messaging. RESTful Java microservices don't use reactive concepts, so you will learn how to bridge the gap between the two using the RxJava library. In this guide, you will modify two microservices in an application so that when a user hits the RESTful endpoint, the microservice generates producer events.
+You will learn how to write integration tests for reactive Java microservices and to run the tests in true-to-production environments by using containers with [Testcontainers](https://java.testcontainers.org/) and JUnit. Testcontainers tests your containerized application from outside the container so that you are testing the exact same image that runs in production. The reactive application in this guide sends and receives messages between services by using an external message broker, [Apache Kafka](https://kafka.apache.org/). Using an external message broker enables asynchronous communications between services so that requests are non-blocking and decoupled from responses. You can learn more about reactive Java services that use an external message broker to manage communications in the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
-The application in this guide consists of two microservices, ***system*** and ***inventory***. The following diagram illustrates the application:
-
-![Reactive system inventory](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging-rest-integration/prod/assets/reactive-messaging-system-inventory-rest.png)
+![Reactive system inventory application](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-service-testing/prod/assets/reactive-messaging-system-inventory.png)
 
 
-Every 15 seconds, the ***system*** microservice calculates and publishes events that contain its current average system load. The ***inventory*** microservice subscribes to that information so that it can keep an updated list of all the systems and their current system loads. The current inventory of systems can be accessed via the ***/systems*** REST endpoint.
+*True-to-production integration testing with Testcontainers*
 
-You will update the ***inventory*** microservice to subscribe to a ***PUT*** request response. This ***PUT*** request response accepts a specific system property in the request body, queries that system property on the ***system*** microservice, and provides the response. You will also update the ***system*** microservice to handle receiving and sending events that are produced by the new endpoint. You will configure new channels to handle the events that are sent and received by the new endpoint. To learn more about how the reactive Java services that are used in this guide work, check out the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
+Tests sometimes pass during the development and testing stages of an application's lifecycle but then fail in production because of differences between your development and production environments. While you can create mock objects and custom setups to minimize differences between environments, it is difficult to mimic a production system for an application that uses an external messaging system. Testcontainers addresses this problem by enabling the testing of applications in the same Docker containers that you’ll use in production. As a result, your environment remains the same throughout the application’s lifecycle – from development, through testing, and into production. You can learn more about Testcontainers in the [Building true-to-production integration tests with Testcontainers](https://openliberty.io/guides/testcontainers.html) guide.
+
 
 ::page{title="Getting started"}
 
@@ -38,11 +38,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-reactive-messaging-rest-integration.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-reactive-service-testing.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-microprofile-reactive-messaging-rest-integration.git
-cd guide-microprofile-reactive-messaging-rest-integration
+git clone https://github.com/openliberty/guide-reactive-service-testing.git
+cd guide-reactive-service-testing
 ```
 
 
@@ -50,430 +50,692 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-::page{title="Adding a REST endpoint that produces events"}
-
-
-
-To begin, run the following command to navigate to the ***start*** directory:
+In this IBM Cloud environment, you need to change the user home to ***/home/project*** by running the following command:
 ```bash
-cd /home/project/guide-microprofile-reactive-messaging-rest-integration/start
+sudo usermod -d /home/project theia
 ```
 
 
-The ***inventory*** microservice records and stores the average system load information from all of the connected system microservices. However, the ***inventory*** microservice does not contain an accessible REST endpoint to control the sending or receiving of reactive messages. Add the ***/data*** RESTful endpoint to the ***inventory*** service by replacing the ***InventoryResource*** class with an updated version of the class.
+### Try what you'll build
 
-Replace the ***InventoryResource*** class.
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-> To open the InventoryResource.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-reactive-messaging-rest-integration/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-reactive-messaging-rest-integration/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java"}
-
-
-
-```java
-package io.openliberty.guides.inventory;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-
-import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.eclipse.microprofile.reactive.messaging.Outgoing;
-import org.reactivestreams.Publisher;
-
-import io.openliberty.guides.models.PropertyMessage;
-import io.openliberty.guides.models.SystemLoad;
-import io.reactivex.rxjava3.core.BackpressureStrategy;
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.FlowableEmitter;
-
-
-@ApplicationScoped
-@Path("/inventory")
-public class InventoryResource {
-
-    private static Logger logger = Logger.getLogger(InventoryResource.class.getName());
-    private FlowableEmitter<String> propertyNameEmitter;
-
-    @Inject
-    private InventoryManager manager;
-
-    @GET
-    @Path("/systems")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getSystems() {
-        List<Properties> systems = manager.getSystems()
-                                          .values()
-                                          .stream()
-                                          .collect(Collectors.toList());
-        return Response.status(Response.Status.OK)
-                       .entity(systems)
-                       .build();
-    }
-
-    @GET
-    @Path("/systems/{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getSystem(@PathParam("hostname") String hostname) {
-        Optional<Properties> system = manager.getSystem(hostname);
-        if (system.isPresent()) {
-            return Response.status(Response.Status.OK)
-                           .entity(system)
-                           .build();
-        }
-        return Response.status(Response.Status.NOT_FOUND)
-                       .entity("hostname does not exist.")
-                       .build();
-    }
-
-    @PUT
-    @Path("/data")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.TEXT_PLAIN)
-    public Response updateSystemProperty(String propertyName) {
-        logger.info("updateSystemProperty: " + propertyName);
-        propertyNameEmitter.onNext(propertyName);
-        return Response
-                 .status(Response.Status.OK)
-                 .entity("Request successful for the " + propertyName + " property\n")
-                 .build();
-    }
-
-    @DELETE
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response resetSystems() {
-        manager.resetSystems();
-        return Response.status(Response.Status.OK)
-                       .build();
-    }
-
-    @Incoming("systemLoad")
-    public void updateStatus(SystemLoad sl)  {
-        String hostname = sl.hostname;
-        if (manager.getSystem(hostname).isPresent()) {
-            manager.updateCpuStatus(hostname, sl.loadAverage);
-            logger.info("Host " + hostname + " was updated: " + sl);
-        } else {
-            manager.addSystem(hostname, sl.loadAverage);
-            logger.info("Host " + hostname + " was added: " + sl);
-        }
-    }
-
-    @Incoming("addSystemProperty")
-    public void getPropertyMessage(PropertyMessage pm)  {
-        logger.info("getPropertyMessage: " + pm);
-        String hostId = pm.hostname;
-        if (manager.getSystem(hostId).isPresent()) {
-            manager.updatePropertyMessage(hostId, pm.key, pm.value);
-            logger.info("Host " + hostId + " was updated: " + pm);
-        } else {
-            manager.addSystem(hostId, pm.key, pm.value);
-            logger.info("Host " + hostId + " was added: " + pm);
-        }
-    }
-
-    @Outgoing("requestSystemProperty")
-    public Publisher<String> sendPropertyName() {
-        Flowable<String> flowable = Flowable.<String>create(emitter ->
-            this.propertyNameEmitter = emitter, BackpressureStrategy.BUFFER);
-        return flowable;
-    }
-}
-```
-
-
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
-
-
-The ***updateSystemProperty()*** method creates the ***/data*** endpoint that accepts ***PUT*** requests with a system property name in the request body. The ***propertyNameEmitter*** variable is an RxJava ***Emitter*** interface that sends the property name request to the event stream, which is Apache Kafka in this case.
-
-The ***sendPropertyName()*** method contains the ***Flowable.create()*** RxJava method, which associates the emitter to a publisher that is responsible for publishing events to the event stream. The publisher in this example is then connected to the ***@Outgoing("requestSystemProperty")*** channel, which you will configure later in the guide. MicroProfile Reactive Messaging takes care of assigning the publisher to the channel.
-
-The ***Flowable.create()*** method also allows the configuration of a ***BackpressureStrategy*** object, which controls what the publisher does if the emitted events can't be consumed by the subscriber. In this example, the publisher used the ***BackpressureStrategy.BUFFER*** strategy. With this strategy, the publisher can buffer events until the subscriber can consume them.
-
-When the ***inventory*** service receives a request, it adds the system property name from the request body to the ***propertyNameEmitter*** ***FlowableEmitter*** interface. The property name sent to the emitter is then sent to the publisher. The publisher sends the event to the event channel by using the configured ***BackpressureStrategy*** object when necessary.
-
-::page{title="Adding an event processor to a reactive service"}
-
-The ***system*** microservice is the producer of the messages that are published to the Kafka messaging system as a stream of events. Every 15 seconds, the ***system*** microservice publishes events that contain its calculation of the average system load, which is its CPU usage, for the last minute. Replace the ***SystemService*** class to add message processing of the system property request from the ***inventory*** microservice and publish it to the Kafka messaging system.
-
-Replace the ***SystemService*** class.
-
-> To open the SystemService.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-reactive-messaging-rest-integration/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-reactive-messaging-rest-integration/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
-
-
-
-```java
-package io.openliberty.guides.system;
-
-import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
-
-import jakarta.enterprise.context.ApplicationScoped;
-
-import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.eclipse.microprofile.reactive.messaging.Outgoing;
-import org.reactivestreams.Publisher;
-
-import io.openliberty.guides.models.PropertyMessage;
-import io.openliberty.guides.models.SystemLoad;
-import io.reactivex.rxjava3.core.Flowable;
-
-@ApplicationScoped
-public class SystemService {
-
-    private static Logger logger = Logger.getLogger(SystemService.class.getName());
-
-    private static final OperatingSystemMXBean OS_MEAN =
-            ManagementFactory.getOperatingSystemMXBean();
-    private static String hostname = null;
-
-    private static String getHostname() {
-        if (hostname == null) {
-            try {
-                return InetAddress.getLocalHost().getHostName();
-            } catch (UnknownHostException e) {
-                return System.getenv("HOSTNAME");
-            }
-        }
-        return hostname;
-    }
-
-    @Outgoing("systemLoad")
-    public Publisher<SystemLoad> sendSystemLoad() {
-        return Flowable.interval(15, TimeUnit.SECONDS)
-                       .map((interval -> new SystemLoad(getHostname(),
-                             OS_MEAN.getSystemLoadAverage())));
-    }
-
-    @Incoming("propertyRequest")
-    @Outgoing("propertyResponse")
-    public PropertyMessage sendProperty(String propertyName) {
-        logger.info("sendProperty: " + propertyName);
-        if (propertyName == null || propertyName.isEmpty()) {
-            logger.warning(propertyName == null ? "Null" : "An empty string"
-                + " is not System property.");
-            return null;
-        }
-        return new PropertyMessage(getHostname(),
-                       propertyName,
-                       System.getProperty(propertyName, "unknown"));
-    }
-}
-```
-
-
-
-A new method that is named ***sendProperty()*** receives a system property name from the ***inventory*** microservice over the ***@Incoming("propertyRequest")*** channel. The method calculates the requested property in real time and publishes it back to Kafka over the ***@Outgoing("propertyResponse")*** channel. In this scenario, the ***sendProperty()*** method acts as a processor. Next, you'll configure the channels that you need.
-
-::page{title="Configuring the MicroProfile Reactive Messaging connectors for Kafka"}
-
-
-The ***system*** and ***inventory*** microservices each have a MicroProfile Config property file in which the properties of their incoming and outgoing channels are defined. These properties include the names of channels, the topics in the Kafka messaging system, and the associated message serializers and deserializers. To complete the message loop created in the previous sections, four channels must be added and configured.
-
-Replace the inventory/microprofile-config.properties file.
-
-> To open the microprofile-config.properties file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-reactive-messaging-rest-integration/start/inventory/src/main/resources/META-INF/microprofile-config.properties, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-reactive-messaging-rest-integration/start/inventory/src/main/resources/META-INF/microprofile-config.properties"}
-
-
-
-```
-mp.messaging.connector.liberty-kafka.bootstrap.servers=kafka:9092
-
-mp.messaging.incoming.systemLoad.connector=liberty-kafka
-mp.messaging.incoming.systemLoad.topic=system.load
-mp.messaging.incoming.systemLoad.key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
-mp.messaging.incoming.systemLoad.value.deserializer=io.openliberty.guides.models.SystemLoad$SystemLoadDeserializer
-mp.messaging.incoming.systemLoad.group.id=system-load-status
-
-mp.messaging.incoming.addSystemProperty.connector=liberty-kafka
-mp.messaging.incoming.addSystemProperty.topic=add.system.property
-mp.messaging.incoming.addSystemProperty.key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
-mp.messaging.incoming.addSystemProperty.value.deserializer=io.openliberty.guides.models.PropertyMessage$PropertyMessageDeserializer
-mp.messaging.incoming.addSystemProperty.group.id=sys-property
-
-mp.messaging.outgoing.requestSystemProperty.connector=liberty-kafka
-mp.messaging.outgoing.requestSystemProperty.topic=request.system.property
-mp.messaging.outgoing.requestSystemProperty.key.serializer=org.apache.kafka.common.serialization.StringSerializer
-mp.messaging.outgoing.requestSystemProperty.value.serializer=org.apache.kafka.common.serialization.StringSerializer
-```
-
-
-
-The newly created RESTful endpoint requires two new channels that move the requested messages between the ***system*** and ***inventory*** microservices. The ***inventory*** microservice ***microprofile-config.properties*** file now has two new channels, ***requestSystemProperty*** and ***addSystemProperty***. The ***requestSystemProperty*** channel handles sending the system property request, and the ***addSystemProperty*** channel handles receiving the system property response.
-
-Replace the system/microprofile-config.properties file.
-
-> To open the microprofile-config.properties file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-reactive-messaging-rest-integration/start/system/src/main/resources/META-INF/microprofile-config.properties, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-reactive-messaging-rest-integration/start/system/src/main/resources/META-INF/microprofile-config.properties"}
-
-
-
-```
-mp.messaging.connector.liberty-kafka.bootstrap.servers=kafka:9092
-
-mp.messaging.outgoing.systemLoad.connector=liberty-kafka
-mp.messaging.outgoing.systemLoad.topic=system.load
-mp.messaging.outgoing.systemLoad.key.serializer=org.apache.kafka.common.serialization.StringSerializer
-mp.messaging.outgoing.systemLoad.value.serializer=io.openliberty.guides.models.SystemLoad$SystemLoadSerializer
-
-mp.messaging.outgoing.propertyResponse.connector=liberty-kafka
-mp.messaging.outgoing.propertyResponse.topic=add.system.property
-mp.messaging.outgoing.propertyResponse.key.serializer=org.apache.kafka.common.serialization.StringSerializer
-mp.messaging.outgoing.propertyResponse.value.serializer=io.openliberty.guides.models.PropertyMessage$PropertyMessageSerializer
-
-mp.messaging.incoming.propertyRequest.connector=liberty-kafka
-mp.messaging.incoming.propertyRequest.topic=request.system.property
-mp.messaging.incoming.propertyRequest.key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
-mp.messaging.incoming.propertyRequest.value.deserializer=org.apache.kafka.common.serialization.StringDeserializer
-mp.messaging.incoming.propertyRequest.group.id=property-name
-```
-
-
-
-Replace the ***system*** microservice ***microprofile-config.properties*** file to add the two new ***propertyRequest*** and ***propertyResponse*** channels. The ***propertyRequest*** channel handles receiving the property request, and the ***propertyResponse*** channel handles sending the property response.
-
-::page{title="Building and running the application"}
-
-Build the ***system*** and ***inventory*** microservices using Maven and then run them in Docker containers.
-
-Start your Docker environment. Dockerfiles are provided for you to use.
-
-To build the application, run the Maven ***install*** and ***package*** goals from the command line in the ***start*** directory:
+To try out the tests, go to the ***finish*** directory and run the following Maven goal to install the ***models*** artifact to the local Maven repository:
 
 
 ```bash
 ./mvnw -pl models install
-./mvnw package
 ```
 
-
-
-Run the following commands to containerize the microservices:
-
-```bash
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-```
-
-Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It also creates containers for Kafka and the microservices in the project. For simplicity, the script starts one instance of the ***system*** service.
+Next, navigate to the ***finish*** directory and run the following Maven goal to build the ***system*** microservice and run the integration tests on an Open Liberty server in a container:
 
 
 ```bash
-./scripts/startContainers.sh
+export TESTCONTAINERS_RYUK_DISABLED=true
+./mvnw -pl system verify
 ```
 
-::page{title="Testing the application"}
+You will see the following output:
 
-The application might take some time to become available. After the application is up and running, you can access it by making a GET request to the ***/systems*** endpoint of the ***inventory*** service.
+```
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 52.46 s - in it.io.openliberty.guides.system.SystemServiceIT
+
+ Results:
+
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 
 
-Run the following curl command to confirm that the ***inventory*** microservice is up and running.
+ --- failsafe:3.2.5:verify (verify) @ system ---
+ ------------------------------------------------------------------------
+ BUILD SUCCESS
+ ------------------------------------------------------------------------
+ Total time:  57.710 s
+ Finished at: 2024-02-01T08:48:15-08:00
+ ------------------------------------------------------------------------
+```
+
+This command might take some time to run the first time because the dependencies and the Docker image for Open Liberty must download. If you run the same command again, it will be faster.
+
+You can also try out the ***inventory*** integration tests by repeating the same commands in the ***finish/inventory*** directory.
+
+
+::page{title="Testing with the Kafka consumer client"}
+
+
+
+
+
+
+Navigate to the ***start*** directory to begin.
 ```bash
-curl -s http://localhost:9085/health | jq
+cd /home/project/guide-reactive-service-testing/start
 ```
 
-When both the liveness and readiness health checks are up, run the following curl command to access the  ***inventory*** microservice:
+The example reactive application consists of the ***system*** and ***inventory*** microservices. The ***system*** microservice produces messages to the Kafka message broker, and the ***inventory*** microservice consumes messages from the Kafka message broker. You will write integration tests to see how you can use the Kafka consumer and producer client APIs to test each service. Kafka test containers, Testcontainers, and JUnit are already included as required test dependencies in your Maven ***pom.xml*** files for the ***system*** and ***inventory*** microservices.
+
+The ***start*** directory contains three directories: the ***system*** microservice directory, the ***inventory*** microservice directory, and the ***models*** directory. The ***models*** directory contains the model class that defines the structure of the system load data that is used in the application. Run the following Maven goal to install the packaged ***models*** artifact to the local Maven repository so it can be used later by the ***system*** and ***inventory*** microservices:
+
+
 ```bash
-curl -s http://localhost:9085/inventory/systems | jq
+./mvnw -pl models install
 ```
 
-You see the CPU ***systemLoad*** property for all the systems:
+### Launching the system microservice in dev mode with container support
+
+Start the microservices in dev mode by running the following command to launch a Kafka instance that replicates the production environment. The ***startKafka*** script launches a local Kafka container. It also establishes a ***reactive-app*** network that allows the ***system*** and ***inventory*** microservices to connect to the Kafka message broker.
+
+
+```bash
+./scripts/startKafka.sh
+```
+
+Navigate to the ***start*** directory.
+
+```bash
+cd /home/project/guide-reactive-service-testing/start
+```
+
+In this IBM Cloud environment, you must first create the ***logs*** directory by running the following commands:
+```bash
+mkdir -p /home/project/guide-reactive-service-testing/start/system/target/liberty/wlp/usr/servers/defaultServer/logs
+chmod 777 /home/project/guide-reactive-service-testing/start/system/target/liberty/wlp/usr/servers/defaultServer/logs
+```
+
+To launch the ***system*** microservice in dev mode with container support, configure the container by specifying the options within the ***\<containerRunOpts\>*** element to connect to the ***reactive-app*** network and expose the container port.
+
+Run the following goal to start the ***system*** microservice in dev mode with container support:
+
+
+```bash
+export TESTCONTAINERS_RYUK_DISABLED=true
+./mvnw -pl system liberty:devc
+```
+
+For more information about disabling Ryuk, see the [Testcontainers custom configuration](https://java.testcontainers.org/features/configuration/#disabling-ryuk) document.
+
+After you see the following message, your Liberty instance is ready in dev mode:
+
 
 ```
-{
-   "hostname":"30bec2b63a96",   
-   "systemLoad":1.44
+**************************************************************
+*    Liberty is running in dev mode.
+*    ...    
+*    Liberty container port information:
+*        Internal container HTTP port [ 9083 ] is mapped to container host port [ 9083 ] <
+*   ...     
+```
+
+[Dev mode](https://openliberty.io/docs/latest/development-mode.html) holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+
+The ***system*** microservice actively seeks a Kafka topic for message push operations. After the Kafka service starts, the ***system*** microservice connects to the Kafka message broker by using the ***mp.messaging.connector.liberty-kafka.bootstrap.servers*** property. When you run your application in dev mode with container support, the running ***system*** container exposes its service on the ***9083*** port for testing purposes.
+
+### Testing the system microservice
+
+Now you can start writing the test by using Testcontainers.
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+
+Create the ***SystemServiceIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java
+```
+
+
+> Then, to open the SystemServiceIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java, or click the following button
+
+::openFile{path="/home/project/guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.system;
+
+import java.net.Socket;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.Properties;
+import java.nio.file.Paths;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.containers.Network;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.images.builder.ImageFromDockerfile;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.utility.DockerImageName;
+
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.serialization.StringDeserializer;
+
+import io.openliberty.guides.models.SystemLoad;
+import io.openliberty.guides.models.SystemLoad.SystemLoadDeserializer;
+
+@Testcontainers
+public class SystemServiceIT {
+
+    private static Logger logger = LoggerFactory.getLogger(SystemServiceIT.class);
+    private static Network network = Network.newNetwork();
+
+    public static KafkaConsumer<String, SystemLoad> consumer;
+
+    private static ImageFromDockerfile systemImage =
+        new ImageFromDockerfile("system:1.0-SNAPSHOT")
+            .withDockerfile(Paths.get("./Dockerfile"));
+
+    private static KafkaContainer kafkaContainer = new KafkaContainer(
+        DockerImageName.parse("confluentinc/cp-kafka:latest"))
+            .withListener(() -> "kafka:19092")
+            .withNetwork(network);
+
+    private static GenericContainer<?> systemContainer =
+        new GenericContainer(systemImage)
+            .withNetwork(network)
+            .withExposedPorts(9083)
+            .waitingFor(Wait.forHttp("/health/ready").forPort(9083))
+            .withStartupTimeout(Duration.ofMinutes(3))
+            .withLogConsumer(new Slf4jLogConsumer(logger))
+            .dependsOn(kafkaContainer);
+
+    private static boolean isServiceRunning(String host, int port) {
+        try {
+            Socket socket = new Socket(host, port);
+            socket.close();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @BeforeAll
+    public static void startContainers() {
+        if (isServiceRunning("localhost", 9083)) {
+            System.out.println("Testing with mvn liberty:devc");
+        } else {
+            kafkaContainer.start();
+            systemContainer.withEnv(
+                "mp.messaging.connector.liberty-kafka.bootstrap.servers",
+                "kafka:19092");
+            systemContainer.start();
+            System.out.println("Testing with mvn verify");
+        }
+    }
+
+    @BeforeEach
+    public void createKafkaConsumer() {
+        Properties consumerProps = new Properties();
+        if (isServiceRunning("localhost", 9083)) {
+            consumerProps.put(
+                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                "localhost:9094");
+        } else {
+            consumerProps.put(
+                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                kafkaContainer.getBootstrapServers());
+        }
+        consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "system-load-status");
+        consumerProps.put(
+            ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
+            StringDeserializer.class.getName());
+        consumerProps.put(
+            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+            SystemLoadDeserializer.class.getName());
+        consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        consumer = new KafkaConsumer<String, SystemLoad>(consumerProps);
+        consumer.subscribe(Collections.singletonList("system.load"));
+    }
+
+    @AfterAll
+    public static void stopContainers() {
+        systemContainer.stop();
+        kafkaContainer.stop();
+        if (network != null) {
+            network.close();
+        }
+    }
+
+    @AfterEach
+    public void closeKafkaConsumer() {
+        consumer.close();
+    }
+
+    @Test
+    public void testCpuStatus() {
+        ConsumerRecords<String, SystemLoad> records =
+            consumer.poll(Duration.ofMillis(30 * 1000));
+        System.out.println("Polled " + records.count() + " records from Kafka:");
+
+        for (ConsumerRecord<String, SystemLoad> record : records) {
+            SystemLoad sl = record.value();
+            System.out.println(sl);
+            assertNotNull(sl.hostname);
+            assertNotNull(sl.loadAverage);
+        }
+        consumer.commitAsync();
+    }
 }
 ```
 
 
-You can revisit the ***inventory*** service after a while by running the following curl command:
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
+
+
+
+
+Construct the ***systemImage*** by using the ***ImageFromDockerfile*** class, which allows Testcontainers to build the Docker image from a Dockerfile during the test run time. For instance, the provided Dockerfile at the specified ***./Dockerfile*** paths is used to generate the ***system:1.0-SNAPSHOT*** image.
+
+Use the ***kafkaContainer*** class to instantiate the ***kafkaContainer*** test container, initiating the ***confluentinc/cp-kafka:latest*** Docker image. Similarly, use the ***GenericContainer*** class to create the ***systemContainer*** test container, starting the ***system:1.0-SNAPSHOT*** Docker image.
+ 
+The ***withListener()*** is configured to ***kafka:19092***, as the containerized ***system*** microservice functions as an additional producer. Therefore, the Kafka container needs to set up a listener to accommodate this requirement. For more information about using an additional consumer or producer with a Kafka container, see the [Testcontainers Kafka documentation](https://java.testcontainers.org/modules/kafka/)
+
+Because containers are isolated by default, facilitating communication between the ***kafkaContainer*** and the ***systemContainer*** requires placing them on the same ***network***. The ***dependsOn()*** method is used to indicate that the ***system*** microservice container starts only after ensuring the readiness of the Kafka container. 
+
+Before you start the ***systemContainer***, you must override the ***mp.messaging.connector.liberty-kafka.bootstrap.servers*** property with ***kafka:19092*** by using the ***withEnv()*** method. This step creates a listener in the Kafka container that is configured to handle an additional producer.
+
+The test uses the ***KafkaConsumer*** client API, configuring the consumer to use the ***BOOTSTRAP_SERVERS_CONFIG*** property with the Kafka broker address if a local ***system*** microservice container is present. In the absence of a local service container, it uses the ***getBootstrapServers()*** method to obtain the broker address from the Kafka test container. Then, the consumer is set up to consume messages from the ***system.load*** topic within the ***Kafka*** container.
+
+To consume messages from a stream, the messages need to be deserialized from bytes. Kafka has its own default deserializer, but a custom deserializer is provided for you. The deserializer is configured by the ***VALUE_DESERIALIZER_CLASS_CONFIG*** property and is implemented in the ***SystemLoad*** class. To learn more about Kafka APIs and their usage, see the [official Kafka Documentation](https://kafka.apache.org/documentation/#api).
+
+The running ***system*** microservice container produces messages to the ***systemLoad*** Kafka topic, as denoted by the ***@Outgoing*** annotation. The ***testCpuStatus()*** test method uses the ***consumer.poll()*** method from the ***KafkaConsumer*** client API to retrieve a record from Kafka every 3 seconds within a specified timeout limit. This record is produced by the system service. Then, the method uses ***Assertions*** to verify that the polled record aligns with the expected record.
+
+### Running the tests
+
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+
+You will see the following output:
+
+```
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 25.674 s - in it.io.openliberty.guides.system.SystemServiceIT
+
+ Results:
+
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+
+ Integration tests finished.
+```
+
+After you are finished running tests, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server.
+
+
+If you aren't running in dev mode, you can run the tests by running the following command:
+
+
 ```bash
-curl -s http://localhost:9085/inventory/systems | jq
+./mvnw -pl system clean verify
 ```
 
-Notice the value of the ***systemLoad*** property for the systems is changed.
+You will see the following output:
 
-Make a ***PUT*** request on the ***http://localhost:9085/inventory/data*** URL to add the value of a particular system property to the set of existing properties. For example, run the following ***curl*** command:
+```
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 50.63 s - in it.io.openliberty.guides.system.SystemServiceIT
+
+ Results:
+
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+
+
+ --- failsafe:3.2.5:verify (verify) @ system ---
+ ------------------------------------------------------------------------
+ BUILD SUCCESS
+ ------------------------------------------------------------------------
+ Total time:  55.636 s
+ Finished at: 2024-01-31T11:33:40-08:00
+ ------------------------------------------------------------------------
+```
+
+
+::page{title="Testing with the Kafka producer client"}
+
+The ***inventory*** microservice is tested in the same way as the ***system*** microservice. The only difference is that the ***inventory*** microservice consumes messages, which means that tests are written to use the Kafka producer client.
+
+### Launching the inventory microservice in dev mode with container
+
+Navigate to the ***start*** directory.
+
+```bash
+cd /home/project/guide-reactive-service-testing/start
+```
+
+First, create the ***logs*** directory by running the following commands:
+```bash
+mkdir -p /home/project/guide-reactive-service-testing/start/inventory/target/liberty/wlp/usr/servers/defaultServer/logs
+chmod 777 /home/project/guide-reactive-service-testing/start/inventory/target/liberty/wlp/usr/servers/defaultServer/logs
+```
+
+Run the following goal to start the ***inventory*** microservice in dev mode with container support:
 
 
 ```bash
-curl -X PUT -d "os.name" http://localhost:9085/inventory/data --header "Content-Type:text/plain"
+./mvnw -pl inventory liberty:devc
 ```
 
-In this example, the ***PUT*** request with the ***os.name*** system property in the request body on the ***http://localhost:9085/inventory/data*** URL adds the ***os.name*** system property for your system.
+### Building a test REST client
 
-You see the following output:
+Create a REST client interface to access the ***inventory*** microservice.
 
-```
-Request successful for the os.name property
-```
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-The ***system*** service is available so the request to the service is successful and returns a ***200*** response code.
+Create the ***InventoryResourceClient*** class.
 
-
-You can revisit the ***inventory*** service by running the following curl command:
+> Run the following touch command in your terminal
 ```bash
-curl -s http://localhost:9085/inventory/systems | jq
+touch /home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java
 ```
 
-Notice that the ***os.name*** system property value is now included with the previous values:
 
-```
-{
-   "hostname":"30bec2b63a96",
-   "os.name":"Linux",
-   "systemLoad":1.44
+> Then, to open the InventoryResourceClient.java file in your IDE, select
+> ***File*** > ***Open*** > guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java, or click the following button
+
+::openFile{path="/home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java"}
+
+
+
+```java
+package it.io.openliberty.guides.inventory;
+
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+@Path("/inventory")
+public interface InventoryResourceClient {
+
+    @GET
+    @Path("/systems")
+    @Produces(MediaType.APPLICATION_JSON)
+    Response getSystems();
+
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    Response resetSystems();
+
 }
 ```
 
-::page{title="Tearing down the environment"}
 
-Run the following script to stop the application:
+
+The ***InventoryResourceClient*** interface declares the ***getSystems()*** and ***resetSystems()*** methods for accessing the corresponding endpoints within the ***inventory*** microservice.
+
+
+### Testing the inventory microservice
+
+Now you can start writing the test by using Testcontainers.
+
+Create the ***InventoryServiceIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java
+```
+
+
+> Then, to open the InventoryServiceIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java, or click the following button
+
+::openFile{path="/home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.inventory;
+
+import java.util.List;
+import java.net.Socket;
+import java.time.Duration;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.math.BigDecimal;
+import java.nio.file.Paths;
+import java.util.Properties;
+
+import jakarta.ws.rs.core.GenericType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.client.ClientBuilder;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Assertions;
+import org.testcontainers.containers.Network;
+import org.testcontainers.utility.DockerImageName;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.images.builder.ImageFromDockerfile;
+import org.apache.kafka.common.serialization.StringSerializer;
+import org.jboss.resteasy.client.jaxrs.ResteasyClient;
+import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+
+import io.openliberty.guides.models.SystemLoad;
+import io.openliberty.guides.models.SystemLoad.SystemLoadSerializer;
+
+
+@Testcontainers
+public class InventoryServiceIT {
+
+    private static Logger logger = LoggerFactory.getLogger(InventoryServiceIT.class);
+
+    public static InventoryResourceClient client;
+
+    private static Network network = Network.newNetwork();
+    public static KafkaProducer<String, SystemLoad> producer;
+    private static ImageFromDockerfile inventoryImage =
+        new ImageFromDockerfile("inventory:1.0-SNAPSHOT")
+            .withDockerfile(Paths.get("./Dockerfile"));
+
+    private static KafkaContainer kafkaContainer = new KafkaContainer(
+        DockerImageName.parse("confluentinc/cp-kafka:latest"))
+            .withListener(() -> "kafka:19092")
+            .withNetwork(network);
+
+    private static GenericContainer<?> inventoryContainer =
+        new GenericContainer(inventoryImage)
+            .withNetwork(network)
+            .withExposedPorts(9085)
+            .waitingFor(Wait.forHttp("/health/ready").forPort(9085))
+            .withStartupTimeout(Duration.ofMinutes(3))
+            .withLogConsumer(new Slf4jLogConsumer(logger))
+            .dependsOn(kafkaContainer);
+
+    private static InventoryResourceClient createRestClient(String urlPath) {
+        ClientBuilder builder = ResteasyClientBuilder.newBuilder();
+        ResteasyClient client = (ResteasyClient) builder.build();
+        ResteasyWebTarget target = client.target(UriBuilder.fromPath(urlPath));
+        return target.proxy(InventoryResourceClient.class);
+    }
+
+    private static boolean isServiceRunning(String host, int port) {
+        try {
+            Socket socket = new Socket(host, port);
+            socket.close();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @BeforeAll
+    public static void startContainers() {
+
+        String urlPath;
+        if (isServiceRunning("localhost", 9085)) {
+            System.out.println("Testing with mvn liberty:devc");
+            urlPath = "http://localhost:9085";
+        } else {
+            System.out.println("Testing with mvn verify");
+            kafkaContainer.start();
+            inventoryContainer.withEnv(
+                "mp.messaging.connector.liberty-kafka.bootstrap.servers",
+                "kafka:19092");
+            inventoryContainer.start();
+            urlPath = "http://"
+                + inventoryContainer.getHost()
+                + ":" + inventoryContainer.getFirstMappedPort();
+        }
+
+        System.out.println("Creating REST client with: " + urlPath);
+        client = createRestClient(urlPath);
+    }
+
+    @BeforeEach
+    public void createKafkaProducer() {
+        Properties producerProps = new Properties();
+        if (isServiceRunning("localhost", 9085)) {
+            producerProps.put(
+                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                "localhost:9094");
+        } else {
+            producerProps.put(
+                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                kafkaContainer.getBootstrapServers());
+        }
+
+        producerProps.put(
+            ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+            StringSerializer.class.getName());
+        producerProps.put(
+            ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+            SystemLoadSerializer.class.getName());
+
+        producer = new KafkaProducer<String, SystemLoad>(producerProps);
+    }
+
+    @AfterAll
+    public static void stopContainers() {
+        client.resetSystems();
+        inventoryContainer.stop();
+        kafkaContainer.stop();
+        if (network != null) {
+            network.close();
+        }
+    }
+
+    @AfterEach
+    public void closeKafkaProducer() {
+        producer.close();
+    }
+
+    @Test
+    public void testCpuUsage() throws InterruptedException {
+        SystemLoad sl = new SystemLoad("localhost", 1.1);
+        producer.send(new ProducerRecord<String, SystemLoad>("system.load", sl));
+        Thread.sleep(5000);
+        Response response = client.getSystems();
+        Assertions.assertEquals(200, response.getStatus(), "Response should be 200");
+        List<Properties> systems =
+            response.readEntity(new GenericType<List<Properties>>() { });
+        assertEquals(systems.size(), 1);
+        for (Properties system : systems) {
+            assertEquals(sl.hostname, system.get("hostname"),
+                "Hostname doesn't match!");
+            BigDecimal systemLoad = (BigDecimal) system.get("systemLoad");
+            assertEquals(sl.loadAverage, systemLoad.doubleValue(),
+                "CPU load doesn't match!");
+        }
+    }
+}
+```
+
+
+
+
+
+The ***InventoryServiceIT*** class uses the ***KafkaProducer*** client API to generate messages in the test environment, which are then consumed by the ***inventory*** microservice container.
+
+Similar to ***system*** microservice testing, the configuration of the producer ***BOOTSTRAP_SERVERS_CONFIG*** property depends on whether a local ***inventory*** microservice container is detected. In addition, the producer is configured with a custom serializer provided in the ***SystemLoad*** class.
+
+The ***testCpuUsage*** test method uses the ***producer.send()*** method, using the ***KafkaProducer*** client API, to generate the ***Systemload*** message. Then, it uses ***Assertions*** to verify that the response from the ***inventory*** microservice aligns with the expected outcome.
+
+### Running the tests
+
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+
+You will see the following output:
+
+```
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 32.564 s - in it.io.openliberty.guides.inventory.InventoryServiceIT
+
+ Results:
+
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+
+ Integration tests finished.
+```
+
+After you are finished running tests, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server.
+
+If you aren't running in dev mode, you can run the tests by running the following command:
 
 
 ```bash
-./scripts/stopContainers.sh
+./mvnw -pl inventory clean verify
 ```
 
-::page{title="Running multiple system instances"}
+You will see the following output:
+
+```
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 53.22 s - in it.io.openliberty.guides.inventory.InventoryServiceIT
+
+ Results:
+
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 
 
-This application has only one instance of the ***system*** service. The ***inventory*** service collects system properties of all ***system*** services in the application. As an exercise, start multiple ***system*** services to see how the application handles it. When you start the ***system*** instances, you must provide a unique ***group.id*** through the ***MP_MESSAGING_INCOMING_PROPERTYREQUEST_GROUP_ID*** environment variable.
+ --- failsafe:3.2.5:verify (verify) @ inventory ---
+ ------------------------------------------------------------------------
+ BUILD SUCCESS
+ ------------------------------------------------------------------------
+ Total time:  58.789 s
+ Finished at: 2024-01-31T11:40:43-08:00
+ ------------------------------------------------------------------------
+```
+
+
+When you're finished trying out the microservice, you can stop the local Kafka container by running the following command from the ***start*** directory:
+
+
+```bash
+cd /home/project/guide-reactive-service-testing/start
+./scripts/stopKafka.sh
+```
+
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You successfully integrated a RESTful microservice with a reactive system by using MicroProfile Reactive Messaging.
+You just tested two reactive Java microservices using Testcontainers.
 
 
 
@@ -482,31 +744,34 @@ You successfully integrated a RESTful microservice with a reactive system by usi
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-microprofile-reactive-messaging-rest-integration*** project by running the following commands:
+Delete the ***guide-reactive-service-testing*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-microprofile-reactive-messaging-rest-integration
+rm -fr guide-reactive-service-testing
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Integrating%20RESTful%20services%20with%20a%20reactive%20system&guide-id=cloud-hosted-guide-microprofile-reactive-messaging-rest-integration)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Testing%20reactive%20Java%20microservices&guide-id=cloud-hosted-guide-reactive-service-testing)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging-rest-integration/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging-rest-integration/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-reactive-service-testing/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-reactive-service-testing/pulls)
 
 
 
 ### Where to next?
 
-* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
 * [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
+* [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html)
+
+**Learn more about Testcontainers**
+* [Visit the official Testcontainers website](https://testcontainers.com/)
 
 
 ### Log out of the session
