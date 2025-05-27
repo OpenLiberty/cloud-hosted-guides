@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Building a web application with Maven guide!"}
+::page{title="Welcome to the Providing metrics from a microservice guide!"}
 
-Learn how to build and test a simple web application using Maven and Open Liberty.
+You'll explore how to provide system and application metrics from a microservice with MicroProfile Metrics.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -17,17 +17,13 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You will learn how to configure a simple web servlet application using [Maven](https://maven.apache.org/what-is-maven.html) and the [Liberty Maven plugin](https://github.com/OpenLiberty/ci.maven/blob/main/README.md). When you compile and build the application code, Maven downloads and installs Open Liberty. If you run the application, Maven creates an Open Liberty instance and runs the application on it. The application displays a simple web page with a link that, when clicked, calls the servlet to return a simple response of ***Hello! How are you today?***.
+You will learn how to use MicroProfile Metrics to provide metrics from a microservice. You can monitor metrics to determine the performance and health of a service. You can also use them to pinpoint issues, collect data for capacity planning, or to decide when to scale a service to run with more or fewer resources.
 
-One benefit of using a build tool like Maven is that you can define the details of the project and any dependencies it has, and Maven automatically downloads and installs the dependencies. Another benefit of using Maven is that it can run repeatable, automated tests on the application. You can, of course, test your application manually by starting a Liberty instance and pointing a web browser at the application URL. However, automated tests are a much better approach because you can easily rerun the same tests each time the application is built. If the tests don't pass after you change the application, the build fails, and you know that you introduced a regression that requires a fix to your code. 
+The application that you will work with is an ***inventory*** service that stores information about various systems. The ***inventory*** service communicates with the ***system*** service on a particular host to retrieve its system properties when necessary.
 
-Choosing a build tool often comes down to personal or organizational preference, but you might choose to use Maven for several reasons. Maven defines its builds by using XML, which is probably familiar to you already. As a mature, commonly used build tool, Maven probably integrates with whichever IDE you prefer to use. Maven also has an extensive plug-in library that offers various ways to quickly customize your build. Maven can be a good choice if your team is already familiar with it. 
+You will use annotations provided by MicroProfile Metrics to instrument the ***inventory*** service to provide application-level metrics data. You will add counter, gauge, and timer metrics to the service.
 
-You will create a Maven build definition file that's called a ***pom.xml*** file, which stands for Project Object Model, and use it to build your web application. You will then create a simple, automated test and configure Maven to automatically run the test.
-
-
-::page{title="Installing Maven"}
-
+You will also check well-known REST endpoints that are defined by MicroProfile Metrics to review the metrics data collected. Monitoring agents can access these endpoints to collect metrics.
 
 ::page{title="Getting started"}
 
@@ -40,11 +36,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-maven-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-metrics.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-maven-intro.git
-cd guide-maven-intro
+git clone https://github.com/openliberty/guide-microprofile-metrics.git
+cd guide-microprofile-metrics
 ```
 
 
@@ -56,42 +52,128 @@ The ***finish*** directory contains the finished project that you will build.
 ### Try what you'll build
 
 The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-Run the following command to test that Maven Wrapper is installed:
 
-
-```bash
-./mvnw -v
-```
-
-If Maven Wrapper is installed properly, you see information about the Maven installation similar to the following example:
-
-```
-Apache Maven 3.9.6 (05c21c65bdfed0f71a2f2ada8b84da59348c4c5d)
-Maven home: /Applications/Maven/apache-maven-3.9.6
-Java version: 11.0.12, vendor: International Business Machines Corporation, runtime: /Library/Java/JavaVirtualMachines/ibm-semeru-open-11.jdk/Contents/Home
-Default locale: en_US, platform encoding: UTF-8
-OS name: "mac os x", version: "11.6", arch: "x86_64", family: "mac"
-```
-
-To try out the application, first go to the ***finish*** directory and run Maven with the ***liberty:run*** goal to build the application and deploy it to Open Liberty:
+To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
 
 ```bash
+cd finish
 ./mvnw liberty:run
 ```
 
-After you see the following message, your Liberty instance is ready.
+After you see the following message, your Liberty instance is ready:
 
 ```
-The guideServer server is ready to run a smarter planet.
+The defaultServer server is ready to run a smarter planet.
 ```
 
 
-Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session. Run the following curl command to view the output of the application: 
+Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
+
+Run the following curl command to access the **inventory** service. Because you just started the application, the inventory is empty. 
 ```bash
-curl -s http://localhost:9080/ServletSample/servlet
+curl -s http://localhost:9080/inventory/systems | jq
 ```
 
-The servlet returns a simple response of ***Hello! How are you today?***.
+Run the following curl command to add the ***localhost*** into the inventory.
+```bash
+curl -s http://localhost:9080/inventory/systems/localhost | jq
+```
+
+Access the ***inventory*** service at the ***http://localhost:9080/inventory/systems*** URL at least once so that application metrics are collected. Otherwise, the metrics do not appear.
+
+Next, run the following curl command to visit the MicroProfile Metrics endpoint by the ***admin*** user with ***adminpwd*** as the password.  You can see both the system and application metrics in a text format.
+```bash
+curl -k --user admin:adminpwd https://localhost:9443/metrics
+```
+
+To see only the application metrics, run the following curl command:
+```bash
+curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=application
+```
+
+See the following sample outputs for the ***@Timed***, ***@Gauge***, and ***@Counted*** metrics:
+
+```
+# TYPE inventoryProcessingTime_seconds_max gauge
+inventoryProcessingTime_seconds_max{method="list",mp_scope="application",} 3.0375E-5
+inventoryProcessingTime_seconds_max{method="get",mp_scope="application",} 0.1997325
+# HELP inventoryProcessingTime_seconds Time needed to process the inventory
+# TYPE inventoryProcessingTime_seconds summary
+inventoryProcessingTime_seconds{method="list",mp_scope="application",quantile="0.5",} 0.0
+inventoryProcessingTime_seconds{method="list",mp_scope="application",quantile="0.75",} 0.0
+...
+inventoryProcessingTime_seconds_count{method="list",mp_scope="application",} 2.0
+inventoryProcessingTime_seconds_sum{method="list",mp_scope="application",} 3.6792E-5
+inventoryProcessingTime_seconds{method="get",mp_scope="application",quantile="0.5",} 0.0
+inventoryProcessingTime_seconds{method="get",mp_scope="application",quantile="0.75",} 0.0
+...
+inventoryProcessingTime_seconds_count{method="get",mp_scope="application",} 1.0
+inventoryProcessingTime_seconds_sum{method="get",mp_scope="application",} 0.1997325
+...
+# HELP inventoryAddingTime_seconds_max Time needed to add system properties to the inventory
+# TYPE inventoryAddingTime_seconds_max gauge
+inventoryAddingTime_seconds_max{mp_scope="application",} 3.1E-5
+# HELP inventoryAddingTime_seconds Time needed to add system properties to the inventory
+# TYPE inventoryAddingTime_seconds summary
+inventoryAddingTime_seconds{mp_scope="application",quantile="0.5",} 0.0
+inventoryAddingTime_seconds{mp_scope="application",quantile="0.75",} 0.0
+...
+inventoryAddingTime_seconds_count{mp_scope="application",} 1.0
+inventoryAddingTime_seconds_sum{mp_scope="application",} 3.1E-5
+...
+```
+
+```
+# HELP inventorySizeGauge Number of systems in the inventory
+# TYPE inventorySizeGauge gauge
+inventorySizeGauge{mp_scope="application",} 1.0
+```
+
+```
+# HELP inventoryAccessCount_total Number of times the list of systems method is requested
+# TYPE inventoryAccessCount_total counter
+inventoryAccessCount_total{mp_scope="application",} 2.0
+```
+
+
+To see only the system metrics, run the following curl command:
+```bash
+curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=base
+```
+
+See the following sample output:
+
+```
+# HELP jvm_uptime_seconds Displays the time from the start of the Java virtual machine in seconds.
+# TYPE jvm_uptime_seconds gauge
+jvm_uptime_seconds{mp_scope="base",} 730.705
+```
+```
+# HELP classloader_loadedClasses_count Displays the number of classes that are currently loaded in the Java virtual machine.
+# TYPE classloader_loadedClasses_count gauge
+classloader_loadedClasses_count{mp_scope="base",} 13033.0
+```
+
+
+To see only the vendor metrics, run the following curl command:
+```bash
+curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=vendor
+```
+
+See the following sample output:
+
+```
+# HELP threadpool_size The size of the thread pool.
+# TYPE threadpool_size gauge
+threadpool_size{mp_scope="vendor",pool="Default_Executor",} 24.0
+```
+```
+# HELP servlet_request_total The number of visits to this servlet ... the start of the server.
+# TYPE servlet_request_total counter
+servlet_request_total{mp_scope="vendor",servlet="guide_microprofile_metrics_io_openliberty_guides_system_SystemApplication",} 1.0
+servlet_request_total{mp_scope="vendor",servlet="guide_microprofile_metrics_io_openliberty_guides_inventory_InventoryApplication",} 3.0
+servlet_request_total{mp_scope="vendor",servlet="io_openliberty_microprofile_metrics_5_0_private_internal_PrivateMetricsRESTProxyServlet",} 3.0
+```
 
 After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
@@ -100,161 +182,14 @@ After you are finished checking out the application, stop the Liberty instance b
 ```
 
 
-::page{title="Creating a simple application"}
-
-The simple web application that you will build using Maven and Open Liberty is provided for you in the ***start*** directory so that you can focus on learning about Maven. This application uses a standard Maven directory structure, eliminating the need to customize the ***pom.xml*** file so that Maven understands your project layout.
-
-All the application source code, including the Open Liberty ***server.xml*** configuration file, is in the ***src/main/liberty/config*** directory:
-
-```
-    └── src
-        └── main
-           └── java
-           └── resources
-           └── webapp
-           └── liberty
-                  └── config
-```
+::page{title="Adding MicroProfile Metrics to the inventory service"}
 
 
-::page{title="Creating the project POM file"}
-Navigate to the ***start*** directory to begin.
+
+To begin, run the following command to navigate to the **start** directory:
 ```bash
-cd /home/project/guide-maven-intro/start
+cd /home/project/guide-microprofile-metrics/start
 ```
-
-Before you can build the project, define the Maven Project Object Model (POM) file, the ***pom.xml***. 
-
-Create the pom.xml file in the ***start*** directory.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-maven-intro/start/pom.xml
-```
-
-
-> Then, to open the pom.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-maven-intro/start/pom.xml, or click the following button
-
-::openFile{path="/home/project/guide-maven-intro/start/pom.xml"}
-
-
-
-```xml
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>ServletSample</artifactId>
-    <packaging>war</packaging>
-    <version>1.0-SNAPSHOT</version>
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <!-- Liberty configuration -->
-        <liberty.var.http.port>9080</liberty.var.http.port>
-        <liberty.var.https.port>9443</liberty.var.https.port>
-        <liberty.var.app.context.root>${project.artifactId}</liberty.var.app.context.root>
-    </properties>
-
-    <dependencies>
-        <!-- Provided dependencies -->
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>10.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>7.0</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-        <!-- For testing -->
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.14</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.12.2</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.4.0</version>
-            </plugin>
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.11.3</version>
-                <configuration>
-                    <serverName>guideServer</serverName>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.3</version>
-                <configuration>
-                    <systemPropertyVariables>
-                        <http.port>${liberty.var.http.port}</http.port>
-                        <war.name>${liberty.var.app.context.root}</war.name>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-</project>
-```
-
-
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
-
-
-The ***pom.xml*** file starts with a root ***project*** element and a ***modelversion*** element, which is always set to ***4.0.0***. 
-
-A typical POM for a Liberty application contains the following sections:
-
-* **Project coordinates**: The identifiers for this application.
-* **Properties** (***properties***): Any properties for the project go here, including compilation details and any values that are referenced during compilation of the Java source code and generating the application.
-* **Dependencies** (***dependencies***): Any Java dependencies that are required for compiling, testing, and running the application are listed here.
-* **Build plugins** (***build***): Maven is modular and each of its capabilities is provided by a separate plugin. This is where you specify which Maven plugins should be used to build this project and any configuration information needed by those plugins.
-
-The project coordinates describe the name and version of the application. The ***artifactId*** gives a name to the web application project, which is used to name the output files that are generated by the build (e.g. the WAR file) and the Open Liberty instance that is created. You'll notice that other fields in the ***pom.xml*** file use variables that are resolved by the ***artifactId*** field. This is so that you can update the name of the sample application, including files generated by Maven, in a single place in the ***pom.xml*** file. The value of the ***packaging*** field is ***war*** so that the project output artifact is a WAR file.
-
-The first four properties in the properties section of the project, just define the encoding (***UTF-8***) and version of Java (***Java 11***) that Maven uses to compile the application source code.
-
-Open Liberty configuration properties provide you with a single place to specify values that are used in multiple places throughout the application. For example, the ***http.port*** value is used in both the Liberty ***server.xml*** configuration file and will be used in the test class that you will add (***EndpointIT.java***) to the application. Because the ***http.port*** value is specified in the ***pom.xml*** file, you can easily change the port number that the Liberty instance runs on without updating the application code in multiple places.
-
-
-The ***HelloServlet.java*** class depends on ***jakarta.jakartaee-api*** to compile. Maven will download this dependency from the Maven Central repository using the ***groupId***, ***artifactId***, and ***version*** details that you provide here. The dependency is set to ***provided***, which means that the API is in the Liberty runtime and doesn't need to be packaged by the application.
-
-The ***build*** section gives details of the two plugins that Maven uses to build this project.
-
-* The Maven plugin for generating a WAR file as one of the output files.
-* The Liberty Maven plug-in, which allows you to install applications into Open Liberty and manage the associated Liberty instances.
-
-In the ***liberty-maven-plugin*** plug-in section, you can add a ***configuration*** element to specify Open Liberty configuration details. For example, the ***serverName*** field defines the name of the Open Liberty instance that Maven creates. You specified ***guideServer*** as the value for ***serverName***. If the ***serverName*** field is not included, the default value is ***defaultServer***.
-
-
-
-::page{title="Running the application"}
 
 When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
@@ -271,154 +206,481 @@ After you see the following message, your Liberty instance is ready in dev mode:
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
+The MicroProfile Metrics API is included in the MicroProfile dependency specified by your ***pom.xml*** file. Look for the dependency with the ***microprofile*** artifact ID. This dependency provides a library that allows you to use the MicroProfile Metrics API in your code to provide metrics from your microservices.
 
-Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session. Run the following curl command to view the output of the application: 
-```bash
-curl -s http://localhost:9080/ServletSample/servlet
+Replace the Liberty ***server.xml*** configuration file.
+
+> To open the server.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-metrics/start/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-metrics/start/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="Sample Liberty server">
+
+  <featureManager>
+    <platform>jakartaee-10.0</platform>
+    <platform>microprofile-7.0</platform>
+    <feature>restfulWS</feature>
+    <feature>jsonp</feature>
+    <feature>jsonb</feature>
+    <feature>cdi</feature>
+    <feature>mpConfig</feature>
+   <feature>mpMetrics</feature>
+   <feature>mpRestClient</feature>
+ </featureManager>
+
+  <variable name="http.port" defaultValue="9080"/>
+  <variable name="https.port" defaultValue="9443"/>
+
+  <applicationManager autoExpand="true" />
+  <quickStartSecurity userName="admin" userPassword="adminpwd"/>
+  <httpEndpoint host="*" httpPort="${http.port}"
+      httpsPort="${https.port}" id="defaultHttpEndpoint"/>
+  <webApplication location="guide-microprofile-metrics.war" contextRoot="/"/>
+</server>
 ```
 
-The servlet returns a simple response of ***Hello! How are you today?***.
 
-::page{title="Testing the web application"}
-
-One of the benefits of building an application with Maven is that Maven can be configured to run a set of tests. You can write tests for the individual units of code outside of a running Liberty instance (unit tests), or you can write them to call the Liberty instance directly (integration tests). In this example you will create a simple integration test that checks that the web page opens and that the correct response is returned when the link is clicked.
-
-Create the ***EndpointIT*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java  
-```
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
-> Then, to open the EndpointIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java, or click the following button
+The ***mpMetrics*** feature enables MicroProfile Metrics support in Open Liberty. Note that this feature requires SSL and the configuration has been provided for you.
 
-::openFile{path="/home/project/guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java"}
+The ***quickStartSecurity*** configuration element provides basic security to secure the Liberty. When you visit the ***/metrics*** endpoint, use the credentials defined in the Liberty's configuration to log in and view the data.
+
+
+### Adding the annotations
+
+Replace the ***InventoryManager*** class.
+
+> To open the InventoryManager.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-metrics/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-metrics/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
 
 
 
 ```java
-package io.openliberty.guides.hello.it;
+package io.openliberty.guides.inventory;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Properties;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import jakarta.enterprise.context.ApplicationScoped;
 
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.eclipse.microprofile.metrics.MetricUnits;
+import org.eclipse.microprofile.metrics.annotation.Counted;
+import org.eclipse.microprofile.metrics.annotation.Gauge;
+import org.eclipse.microprofile.metrics.annotation.Timed;
 
-public class EndpointIT {
-    private static String siteURL;
+import io.openliberty.guides.inventory.model.InventoryList;
+import io.openliberty.guides.inventory.model.SystemData;
 
-    @BeforeAll
-    public static void init() {
-        String port = System.getProperty("http.port");
-        String war = System.getProperty("war.name");
-        siteURL = "http://localhost:" + port + "/" + war + "/" + "servlet";
+@ApplicationScoped
+public class InventoryManager {
+
+  private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
+  private InventoryUtils invUtils = new InventoryUtils();
+
+  @Timed(name = "inventoryProcessingTime",
+         tags = {"method=get"},
+         absolute = true,
+         description = "Time needed to process the inventory")
+  public Properties get(String hostname) {
+    return invUtils.getProperties(hostname);
+  }
+
+  @Timed(name = "inventoryAddingTime",
+    absolute = true,
+    description = "Time needed to add system properties to the inventory")
+  public void add(String hostname, Properties systemProps) {
+    Properties props = new Properties();
+    props.setProperty("os.name", systemProps.getProperty("os.name"));
+    props.setProperty("user.name", systemProps.getProperty("user.name"));
+
+    SystemData host = new SystemData(hostname, props);
+    if (!systems.contains(host)) {
+      systems.add(host);
     }
+  }
 
-    @Test
-    public void testServlet() throws Exception {
+  @Timed(name = "inventoryProcessingTime",
+         tags = {"method=list"},
+         absolute = true,
+         description = "Time needed to process the inventory")
+  @Counted(name = "inventoryAccessCount",
+           absolute = true,
+           description = "Number of times the list of systems method is requested")
+  public InventoryList list() {
+    return new InventoryList(systems);
+  }
 
-        CloseableHttpClient client = HttpClientBuilder.create().build();
-        HttpGet httpGet = new HttpGet(siteURL);
-        CloseableHttpResponse response = null;
-
-        try {
-            response = client.execute(httpGet);
-
-            int statusCode = response.getStatusLine().getStatusCode();
-            assertEquals(HttpStatus.SC_OK, statusCode, "HTTP GET failed");
-
-            BufferedReader reader = new BufferedReader(new InputStreamReader(
-                                        response.getEntity().getContent()));
-            String line;
-            StringBuffer buffer = new StringBuffer();
-            while ((line = reader.readLine()) != null) {
-                buffer.append(line);
-            }
-            reader.close();
-            assertTrue(buffer.toString().contains("Hello! How are you today?"),
-                "Unexpected response body: " + buffer.toString());
-        } finally {
-            response.close();
-            httpGet.releaseConnection();
-        }
-    }
+  @Gauge(unit = MetricUnits.NONE,
+         name = "inventorySizeGauge",
+         absolute = true,
+         description = "Number of systems in the inventory")
+  public int getTotal() {
+    return systems.size();
+  }
 }
 ```
 
 
 
-The test class name ends in ***IT*** to indicate that it contains an integration test. 
+Apply the ***@Timed*** annotation to the ***get()*** method,
+and apply the ***@Timed*** annotation to the ***list()*** method.
 
-Maven is configured to run the integration test using the ***maven-failsafe-plugin***. The ***systemPropertyVariables*** section defines some variables that the test class uses. The test code needs to know where to find the application that it is testing. While the port number and context root information can be hardcoded in the test class, it is better to specify it in a single place like the Maven ***pom.xml*** file because this information is also used by other files in the project. The ***systemPropertyVariables*** section passes these details to the Java test program as a series of system properties, resolving the ***http.port*** and ***war.name*** variables.
+This annotation has these metadata fields:
+
+|***name*** | Optional. Use this field to name the metric.
+| ---| ---
+|***tags*** | Optional. Use this field to add tags to the metric with the same ***name***.
+|***absolute*** | Optional. Use this field to determine whether the metric name is the exact name that is specified in the ***name*** field or that is specified with the package prefix.
+|***description*** | Optional. Use this field to describe the purpose of the metric.
+
+The ***@Timed*** annotation tracks how frequently the method is invoked and how long it takes for each invocation of the method to complete. Both the ***get()*** and ***list()*** methods are annotated with the ***@Timed*** metric and have the same ***inventoryProcessingTime*** name. The ***method=get*** and ***method=list*** tags add a dimension that uniquely identifies the collected metric data from the inventory processing time in getting the system properties.
+
+* The ***method=get*** tag identifies the ***inventoryProcessingTime*** metric that measures the elapsed time to get the system properties when you call the ***system*** service.
+* The ***method=list*** tag identifies the ***inventoryProcessingTime*** metric that measures the elapsed time for the ***inventory*** service to list all of the system properties in the inventory.
+
+The tags allow you to query the metrics together or separately based on the functionality of the monitoring tool of your choice. The ***inventoryProcessingTime*** metrics for example could be queried to display an aggregate time of both tagged metrics or individual times.
+
+Apply the ***@Timed*** annotation to the ***add()*** method to track how frequently the method is invoked and how long it takes for each invocation of the method to complete.
+
+Apply the ***@Counted*** annotation to the ***list()*** method to count how many times the ***http://localhost:9080/inventory/systems*** URL is accessed monotonically, which is counting up sequentially.
+
+Apply the ***@Gauge*** annotation to the ***getTotal()*** method to track the number of systems that are stored in the inventory. When the value of the gauge is retrieved, the underlying ***getTotal()*** method is called to return the size of the inventory. Note the additional metadata field:
+
+| ***unit*** | Set the unit of the metric. If it is ***MetricUnits.NONE***, the metric name is used without appending the unit name, no scaling is applied.
+| ---| ---
+
+Additional information about these annotations, relevant metadata fields, and more are available at
+the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/latest/reference/javadoc/microprofile-6.1-javadoc.html?class=org/eclipse/microprofile/metrics/annotation/package-summary.html&package=allclasses-frame.html&path=microprofile-6.1-javadoc/org/eclipse/microprofile/metrics/annotation/package-summary.html).
 
 
-The following lines in the ***EndpointIT*** test class uses these system variables to build up the URL of the application.
+::page{title="Enabling vendor metrics for the microservices"}
 
-In the test class, after defining how to build the application URL, the ***@Test*** annotation indicates the start of the test method.
 
-In the ***try block*** of the test method, an HTTP ***GET*** request to the URL of the application returns a status code. If the response to the request includes the string ***Hello! How are you today?***, the test passes. If that string is not in the response, the test fails.  The HTTP client then disconnects from the application.
+MicroProfile Metrics API implementers can provide vendor metrics in the same forms as the base and application metrics do. Open Liberty as a vendor supplies server component metrics when the ***mpMetrics*** feature is enabled in the ***server.xml*** configuration file.
 
-In the ***import*** statements of this test class, you'll notice that the test has some new dependencies. Before the test can be compiled by Maven, you need to update the ***pom.xml*** to include these dependencies.
+You can see the vendor-only metrics in the ***metrics?scope=vendor*** endpoint. You see metrics from the runtime components, such as Web Application, ThreadPool and Session Management. Note that these metrics are specific to the Liberty instance. Different vendors may provide other metrics. Visit the [Metrics reference list](https://openliberty.io/docs/ref/general/#metrics-list.html) for more information.
 
-The Apache ***httpclient*** and ***junit-jupiter-engine*** dependencies are needed to compile and run the integration test ***EndpointIT*** class. The scope for each of the dependencies is set to ***test*** because the libraries are needed only during the Maven build and do not needed to be packaged with the application.
 
-Now, the created WAR file contains the web application, and dev mode can run any integration test classes that it finds. Integration test classes are classes with names that end in ***IT***.
+::page{title="Building and running the application"}
 
-The directory structure of the project should now look like this:
+The Open Liberty instance was started in dev mode at the beginning of the guide and all the changes were automatically picked up.
 
+
+Run the following curl command to review all the metrics that are enabled through MicroProfile Metrics. You see only the system and vendor metrics because the Liberty instance just started, and the ***inventory*** service has not been accessed.
+```bash
+curl -k --user admin:adminpwd https://localhost:9443/metrics
 ```
-    └── src
-        ├── main
-        │  └── java
-        │  └── resources
-        │  └── webapp
-        │  └── liberty
-        │         └── config
-        └── test
-            └── java
+
+Next, run the following curl command to access the **inventory** service:
+```bash
+curl -s http://localhost:9080/inventory/systems | jq
 ```
+
+Rerun the following curl command to access the all metrics:
+```bash
+curl -k --user admin:adminpwd https://localhost:9443/metrics
+```
+
+or access only the application metrics by running following curl command:
+```bash
+curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=application
+```
+
+You can see the system metrics by running following curl command:
+```bash
+curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=base
+```
+
+as well as see the vendor metrics by running following curl command:
+```bash
+curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=vendor
+```
+
+
+
+::page{title="Testing the metrics"}
+
+You can test your application manually, but automated tests ensure code quality because they trigger a failure whenever a code change introduces a defect. JUnit and the Jakarta Restful Web Services Client API provide a simple environment for you to write tests.
+
+Create the ***MetricsIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-metrics/start/src/test/java/it/io/openliberty/guides/metrics/MetricsIT.java
+```
+
+
+> Then, to open the MetricsIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-metrics/start/src/test/java/it/io/openliberty/guides/metrics/MetricsIT.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-metrics/start/src/test/java/it/io/openliberty/guides/metrics/MetricsIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.metrics;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.security.KeyStore;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+
+@TestMethodOrder(OrderAnnotation.class)
+public class MetricsIT {
+
+  private static final String KEYSTORE_PATH = System.getProperty("user.dir")
+                              + "/target/liberty/wlp/usr/servers/"
+                              + "defaultServer/resources/security/key.p12";
+  private static final String SYSTEM_ENV_PATH =  System.getProperty("user.dir")
+                              + "/target/liberty/wlp/usr/servers/"
+                              + "defaultServer/server.env";
+
+  private static String httpPort;
+  private static String httpsPort;
+  private static String baseHttpUrl;
+  private static String baseHttpsUrl;
+  private static KeyStore keystore;
+
+  private List<String> metrics;
+  private Client client;
+
+  private final String INVENTORY_HOSTS = "inventory/systems";
+  private final String INVENTORY_HOSTNAME = "inventory/systems/localhost";
+  private final String METRICS_APPLICATION = "metrics?scope=application";
+
+  @BeforeAll
+  public static void oneTimeSetup() throws Exception {
+    httpPort = System.getProperty("http.port");
+    httpsPort = System.getProperty("https.port");
+    baseHttpUrl = "http://localhost:" + httpPort + "/";
+    baseHttpsUrl = "https://localhost:" + httpsPort + "/";
+    loadKeystore();
+  }
+
+  private static void loadKeystore() throws Exception {
+    Properties sysEnv = new Properties();
+    sysEnv.load(new FileInputStream(SYSTEM_ENV_PATH));
+    char[] password = sysEnv.getProperty("keystore_password").toCharArray();
+    keystore = KeyStore.getInstance("PKCS12");
+    keystore.load(new FileInputStream(KEYSTORE_PATH), password);
+  }
+
+  @BeforeEach
+  public void setup() {
+    client = ClientBuilder.newBuilder().trustStore(keystore).build();
+  }
+
+  @AfterEach
+  public void teardown() {
+    client.close();
+  }
+
+  @Test
+  @Order(1)
+  public void testPropertiesRequestTimeMetric() {
+    connectToEndpoint(baseHttpUrl + INVENTORY_HOSTNAME);
+    metrics = getMetrics();
+    for (String metric : metrics) {
+      if (metric.startsWith(
+          "application_inventoryProcessingTime_rate_per_second")) {
+        float seconds = Float.parseFloat(metric.split(" ")[1]);
+        assertTrue(4 > seconds);
+      }
+    }
+  }
+
+  @Test
+  @Order(2)
+  public void testInventoryAccessCountMetric() {
+    metrics = getMetrics();
+    Map<String, Integer> accessCountsBefore = getIntMetrics(metrics,
+            "application_inventoryAccessCount_total");
+    connectToEndpoint(baseHttpUrl + INVENTORY_HOSTS);
+    metrics = getMetrics();
+    Map<String, Integer> accessCountsAfter = getIntMetrics(metrics,
+            "application_inventoryAccessCount_total");
+    for (String key : accessCountsBefore.keySet()) {
+      Integer accessCountBefore = accessCountsBefore.get(key);
+      Integer accessCountAfter = accessCountsAfter.get(key);
+      assertTrue(accessCountAfter > accessCountBefore);
+    }
+  }
+
+  @Test
+  @Order(3)
+  public void testInventorySizeGaugeMetric() {
+    metrics = getMetrics();
+    Map<String, Integer> inventorySizeGauges = getIntMetrics(metrics,
+            "application_inventorySizeGauge");
+    for (Integer value : inventorySizeGauges.values()) {
+      assertTrue(1 <= value);
+    }
+  }
+
+  @Test
+  @Order(4)
+  public void testPropertiesAddTimeMetric() {
+    connectToEndpoint(baseHttpUrl + INVENTORY_HOSTNAME);
+    metrics = getMetrics();
+    boolean checkMetric = false;
+    for (String metric : metrics) {
+      if (metric.startsWith(
+          "inventoryAddingTime_seconds_count")) {
+            checkMetric = true;
+      }
+    }
+    assertTrue(checkMetric);
+  }
+
+  public void connectToEndpoint(String url) {
+    Response response = this.getResponse(url);
+    this.assertResponse(url, response);
+    response.close();
+  }
+
+  private List<String> getMetrics() {
+    String usernameAndPassword = "admin" + ":" + "adminpwd";
+    String authorizationHeaderValue = "Basic "
+        + java.util.Base64.getEncoder()
+                          .encodeToString(usernameAndPassword.getBytes());
+    Response metricsResponse = client.target(baseHttpsUrl + METRICS_APPLICATION)
+                                     .request(MediaType.TEXT_PLAIN)
+                                     .header("Authorization",
+                                         authorizationHeaderValue)
+                                     .get();
+
+    BufferedReader br = new BufferedReader(new InputStreamReader((InputStream)
+    metricsResponse.getEntity()));
+    List<String> result = new ArrayList<String>();
+    try {
+      String input;
+      while ((input = br.readLine()) != null) {
+        result.add(input);
+      }
+      br.close();
+    } catch (IOException e) {
+      e.printStackTrace();
+      fail();
+    }
+
+    metricsResponse.close();
+    return result;
+  }
+
+  private Response getResponse(String url) {
+    return client.target(url).request().get();
+  }
+
+  private void assertResponse(String url, Response response) {
+    assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+  }
+
+  private Map<String, Integer> getIntMetrics(List<String> metrics, String metricName) {
+    Map<String, Integer> output = new HashMap<String, Integer>();
+    for (String metric : metrics) {
+      if (metric.startsWith(metricName)) {
+        String[] mSplit = metric.split(" ");
+        String key = mSplit[0];
+        Integer value = Integer.parseInt(mSplit[mSplit.length - 1]);
+        output.put(key, value);
+      }
+    }
+    return output;
+  }
+}
+```
+
+
+
+
+* The ***testPropertiesRequestTimeMetric()*** test case validates the ***@Timed*** metric. The test case sends a request to the ***http://localhost:9080/inventory/systems/localhost*** URL to access the ***inventory*** service, which adds the ***localhost*** host to the inventory. Next, the test case makes a connection to the ***https://localhost:9443/metrics?scope=application*** URL to retrieve application metrics as plain text. Then, it asserts whether the time that is needed to retrieve the system properties for localhost is less than 4 seconds.
+
+* The ***testInventoryAccessCountMetric()*** test case validates the ***@Counted*** metric. The test case obtains metric data before and after a request to the ***http://localhost:9080/inventory/systems*** URL. It then asserts that the metric was increased after the URL was accessed.
+
+* The ***testInventorySizeGaugeMetric()*** test case validates the ***@Gauge*** metric. The test case first ensures that the localhost is in the inventory, then looks for the ***@Gauge*** metric and asserts that the inventory size is greater or equal to 1.
+
+* The ***testPropertiesAddTimeMetric()*** test case validates the ***@Timed*** metric. The test case sends a request to the ***http://localhost:9080/inventory/systems/localhost*** URL to access the ***inventory*** service, which adds the ***localhost*** host to the inventory. Next, the test case makes a connection to the ***https://localhost:9443/metrics?scope=application*** URL to retrieve application metrics as plain text. Then, it looks for the ***@Timed*** metric and asserts true if the metric exists.
+
+The ***oneTimeSetup()*** method retrieves the port number for the Liberty and builds a base URL string to set up the tests. Apply the ***@BeforeAll*** annotation to this method to run it before any of the test cases.
+
+The ***setup()*** method creates a JAX-RS client that makes HTTP requests to the ***inventory*** service. The ***teardown()*** method destroys this client instance. Apply the ***@BeforeEach*** annotation so that a method runs before a test case and apply the ***@AfterEach*** annotation so that a method runs after a test case. Apply these annotations to methods that are generally used to perform any setup and teardown tasks before and after a test.
+
+To force these test cases to run in a particular order, annotate your ***MetricsIT*** test class with the ***@TestMethodOrder(OrderAnnotation.class)*** annotation. ***OrderAnnotation.class*** runs test methods in numerical order, according to the values specified in the ***@Order*** annotation. You can also create a custom ***MethodOrderer*** class or use built-in ***MethodOrderer*** implementations, such as ***OrderAnnotation.class***, ***Alphanumeric.class***, or ***Random.class***. Label your test cases with the ***@Test*** annotation so that they automatically run when your test class runs.
+
+In addition, the endpoint tests ***src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java*** and ***src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java*** are provided for you to test the basic functionality of the ***inventory*** and ***system*** services. If a test failure occurs, then you might have introduced a bug into the code.
 
 
 ### Running the tests
 
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
-
-You see the following output:
+Because you started Open Liberty in dev mode at the start of the guide, press the ***enter/return*** key to run the tests and see the following output:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running io.openliberty.guides.hello.it.EndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.255 sec - in io.openliberty.guides.hello.it.EndpointIT
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.4 sec - in it.io.openliberty.guides.system.SystemEndpointIT
+Running it.io.openliberty.guides.metrics.MetricsIT
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.476 sec - in it.io.openliberty.guides.metrics.MetricsIT
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+[WARNING ] Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
+Could not send Message.
+[err] The specified host is unknown.
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.264 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
 
 Results :
 
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 8, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-To see whether the test detects a failure, change the ***response string*** in the servlet ***src/main/java/io/openliberty/guides/hello/HelloServlet.java*** so that it doesn't match the string that the test is looking for. Then re-run the tests and check that the test fails.
+The warning and error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the ***testUnknownHost()*** test from the ***InventoryEndpointIT*** integration test.
 
+To determine whether the tests detect a failure, go to the ***MetricsIT.java*** file and change any of the assertions in the test methods. Then re-run the tests to see a test failure occur.
 
 When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
+
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You built and tested a web application project with an Open Liberty instance using Maven.
+You learned how to enable system, application and vendor metrics for microservices by using MicroProfile Metrics
 
+and wrote tests to validate them in Open Liberty.
 
 
 ### Clean up your environment
@@ -426,31 +688,32 @@ You built and tested a web application project with an Open Liberty instance usi
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-maven-intro*** project by running the following commands:
+Delete the ***guide-microprofile-metrics*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-maven-intro
+rm -fr guide-microprofile-metrics
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Building%20a%20web%20application%20with%20Maven&guide-id=cloud-hosted-guide-maven-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Providing%20metrics%20from%20a%20microservice&guide-id=cloud-hosted-guide-microprofile-metrics)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-maven-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-maven-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-metrics/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-metrics/pulls)
 
 
 
 ### Where to next?
 
-* [Creating a multi-module application](https://openliberty.io/guides/maven-multimodules.html)
-* [Building a web application with Gradle](https://openliberty.io/guides/gradle-intro.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 
 
 ### Log out of the session
