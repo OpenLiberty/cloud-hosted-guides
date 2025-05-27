@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Consuming RESTful services asynchronously with template interfaces guide!"}
+::page{title="Welcome to the Enabling distributed tracing in microservices with OpenTelemetry and Jaeger guide!"}
 
-Learn how to use MicroProfile Rest Client to invoke RESTful microservices asynchronously over HTTP.
+Distributed tracing helps teams keep track of requests between microservices. MicroProfile Telemetry adopts OpenTelemetry tracing, so you can observe requests across your distributed systems.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,26 +14,21 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 ::page{title="What you'll learn"}
 
-You will learn how to build a MicroProfile Rest Client to access remote RESTful services using asynchronous method calls. You'll update the template interface for a MicroProfile Rest Client to use the ***CompletionStage*** return type. The template interface maps to the remote service that you want to call. A ***CompletionStage*** interface allows you to work with the result of your remote service call asynchronously.
+The complexity of microservices architecture can make it more difficult to understand how services depend on or affect each other and to identify sources of latency or inaccuracies.
 
-*What is asynchronous programming?*
+One way to increase the observability of an application is by emitting traces. [OpenTelemetry](https://opentelemetry.io/) is a set of APIs, SDKs, tooling, and integrations designed to create and manage telemetry data such as traces, metrics, and logs. MicroProfile Telemetry adopts OpenTelemetry so your Java applications can benefit from both manual and automatic traces.
 
-Imagine asynchronous programming as a restaurant. After you're seated, a waiter takes your order. Then, you must wait a few minutes for your food to be prepared. While your food is being prepared, your waiter may take more orders or serve other tables. After your food is ready, your waiter brings out the food to your table. However, in a synchronous model, the waiter must wait for your food to be prepared before serving any other customers. This method blocks other customers from placing orders or receiving their food.
+Traces represent requests, which can contain multiple operations or spans. Each span comprises a name, time-related data, log messages, and metadata that describe what occurred during a transaction. Spans are associated with a context, which identifies the request within which the span occurred. Developers can then follow a single request between services through a potentially complex distributed system. Exporters send the data that MicroProfile Telemetry collects to Jaeger so you can visualize and monitor the generated spans.
 
-You can perform lengthy operations, such as input/output (I/O), without blocking with asynchronous methods. The I/O operation can occur in the background and a callback notifies the caller to continue its computation when the original request is complete. As a result, the original thread frees up so it can handle other work rather than wait for the I/O to complete. Revisiting the restaurant analogy, food is prepared asynchronously in the kitchen and your waiter is freed up to attend to other tables.
+The diagram shows multiple services, which is where distributed tracing is valuable. However, for simplicity, in this guide, you'll configure only the ***system*** and ***inventory*** services to use [Jaeger](https://www.jaegertracing.io/) for distributed tracing with MicroProfile Telemetry. You'll run these services in two separate JVMs made of two Open Liberty instances to demonstrate tracing in a distributed environment.
 
-In the context of REST clients, HTTP request calls can be time consuming. The network might be slow, or maybe the upstream service is overwhelmed and can't respond quickly. These lengthy operations can block the execution of your thread when it's in use and prevent other work from being completed.
-
-The application in this guide consists of three microservices, ***system***, ***inventory***, and ***query***. Every 15 seconds the ***system*** microservice calculates and publishes an event that contains its average system load. The ***inventory*** microservice subscribes to that information so that it can keep an updated list of all the systems and their current system loads. 
-
-![Reactive Inventory System](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-rest-client-async/prod/assets/QueryService.png)
+![Application architecture](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/architecture_diagram.png)
 
 
-The microservice that you will modify is the ***query*** service. It communicates with the ***inventory*** service to determine which system has the highest system load and which system has the lowest system load. 
 
-The ***system*** and ***inventory*** microservices use MicroProfile Reactive Messaging to send and receive the system load events. If you want to learn more about reactive messaging, see the [Creating Reactive Java Microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
 ::page{title="Getting started"}
 
@@ -46,11 +41,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-rest-client-async.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-telemetry-jaeger.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-microprofile-rest-client-async.git
-cd guide-microprofile-rest-client-async
+git clone https://github.com/openliberty/guide-microprofile-telemetry-jaeger.git
+cd guide-microprofile-telemetry-jaeger
 ```
 
 
@@ -58,488 +53,645 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-::page{title="Updating the template interface of a REST client to use asynchronous methods"}
+### Try what you'll build
 
-
-To begin, run the following command to navigate to the ***start*** directory:
+Run the following `docker` command to start the Jaeger server:
 ```bash
-cd /home/project/guide-microprofile-rest-client-async/start
+docker run -d --name jaeger \
+  -e COLLECTOR_ZIPKIN_HOST_PORT=:9411 \
+  -e COLLECTOR_OTLP_ENABLED=true \
+  -p 6831:6831/udp \
+  -p 6832:6832/udp \
+  -p 5778:5778 \
+  -p 16686:16686 \
+  -p 4317:4317 \
+  -p 4318:4318 \
+  -p 14250:14250 \
+  -p 14268:14268 \
+  -p 14269:14269 \
+  -p 9411:9411 \
+  jaegertracing/all-in-one:1.46
 ```
 
-The ***query*** service uses a MicroProfile Rest Client to access the ***inventory*** service. You will update the methods in the template interface for this client to be asynchronous.
+You can find information about the Jaeger server and instructions for starting the all-in-one executable file in the [Jaeger documentation](https://www.jaegertracing.io/docs/1.46/getting-started/#all-in-one).
 
-Replace the ***InventoryClient*** interface.
+Before you proceed, make sure that your Jaeger server is up and running. Click the following button to visit the Jaeger service:
 
-> To open the InventoryClient.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-rest-client-async/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java, or click the following button
+::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
 
-::openFile{path="/home/project/guide-microprofile-rest-client-async/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java"}
-
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
 
-```java
-package io.openliberty.guides.query.client;
 
-import java.util.List;
-import java.util.Properties;
-import java.util.concurrent.CompletionStage;
+Navigate to the ***finish*** directory. Run the following Maven goal to build the ***system*** service and deploy it to Open Liberty:
+```bash
+cd /home/project/guide-microprofile-telemetry-jaeger/finish
+./mvnw -pl system liberty:run
+```
 
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
+Open another command-line session and navigate to the ***finish*** directory again. Run the following Maven goal to build the ***inventory*** service and deploy it to Open Liberty:
+```bash
+cd /home/project/guide-microprofile-telemetry-jaeger/finish
+./mvnw -pl inventory liberty:run
+```
 
-import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
-@Path("/inventory")
-@RegisterRestClient(configKey = "InventoryClient", baseUri = "http://localhost:9085")
-public interface InventoryClient extends AutoCloseable {
+After you see the following message in both command-line sessions, both of your services are ready:
 
-    @GET
-    @Path("/systems")
-    @Produces(MediaType.APPLICATION_JSON)
-    List<String> getSystems();
+```
+The defaultServer server is ready to run a smarter planet.
+```
 
-    @GET
-    @Path("/systems/{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    CompletionStage<Properties> getSystem(
-        @PathParam("hostname") String hostname);
 
-}
+Open another command-line session and run the following curl command from the terminal:
+```bash
+curl -s http://localhost:9081/inventory/systems/localhost | jq
+```
+
+When you visit this endpoint, you make two GET HTTP requests, one to the ***system*** service and another to the ***inventory*** service. Both of these requests are configured to be traced, so a new trace is recorded in Jaeger. To view the traces, click the following button to visit the Jaeger service:
+
+::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
+
+You can view the traces for the ***system*** or ***inventory*** services under the **Search** tab. If you see only the **jaeger-query** option in the drop-down menu, wait a little longer and refresh the page to see the application services.
+
+Select the services in the **Select A Service** menu and click the **Find Traces** button at the end of the section. You will see the following result:
+
+![Get traces for the inventory service](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_service_spans.png)
+
+
+
+The trace has five spans, four from the ***inventory*** service and one from the ***system*** service. Click the trace to view its details. Under **Service & Operation**, you see the spans in this trace. You can inspect each span by clicking it to reveal more detailed information, such as the times that a request was received and a response was sent.
+
+![Inventory details spans](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_details_spans.png)
+
+
+
+After you’re finished reviewing the application, stop the Open Liberty instances by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***inventory*** services. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
+
+
+```bash
+cd /home/project/guide-microprofile-telemetry-jaeger/finish
+./mvnw -pl system liberty:stop
+./mvnw -pl inventory liberty:stop
+```
+
+::page{title="Building the application "}
+
+You need to start the services to see basic traces appear in Jaeger.
+
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
+
+Open a command-line session and navigate to the ***start*** directory. Run the following Maven goal to start the ***system*** service in dev mode:
+
+
+```bash
+cd /home/project/guide-microprofile-telemetry-jaeger/start
+./mvnw -pl system liberty:dev
+```
+
+Open a command-line session and navigate to the ***start*** directory again. Run the following Maven goal to start the ***inventory*** service in dev mode:
+
+
+```bash
+cd /home/project/guide-microprofile-telemetry-jaeger/start
+./mvnw -pl inventory liberty:dev
+```
+
+After you see the following message, your Liberty instance is ready in dev mode:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+
+
+When the runtime instances start, you can find the ***system*** service by running the following curl command:
+```bash
+curl -s http://localhost:9080/system/properties | jq
+```
+
+and the ***inventory*** service by running the following curl command:
+```bash
+curl -s http://localhost:9081/inventory/systems | jq
+```
+
+::page{title="Enabling Telemetry implementation "}
+
+Navigate to the ***start*** directory to begin.
+
+MicroProfile Telemetry allows you to observe traces without modifying the source code in your Jakarta RESTful applications. You can enable the ***mpTelemetry*** feature in the ***server.xml*** configuration file.
+
+Replace the ***server.xml*** file of the system service:
+
+> To open the server.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-telemetry-jaeger/start/system/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/system/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="system service">
+
+    <featureManager>
+        <platform>jakartaee-10.0</platform>
+        <platform>microprofile-7.0</platform>
+        <feature>cdi</feature>
+        <feature>jsonb</feature>
+        <feature>jsonp</feature>
+        <feature>restfulWS</feature>
+        <feature>mpTelemetry</feature>
+    </featureManager>
+
+    <httpEndpoint httpPort="${http.port}"
+                  httpsPort="${https.port}"
+                  id="defaultHttpEndpoint" host="*" />
+
+    <webApplication location="guide-microprofile-telemetry-jaeger-system.war"
+                    contextRoot="/" />
+
+</server>
 ```
 
 
 Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
-The changes involve the ***getSystem*** method. Change the return type to ***CompletionStage\<Properties\>*** to make the method asynchronous. The method now has the return type of ***CompletionStage\<Properties\>*** so you aren't able to directly manipulate the ***Properties*** inner type. As you will see in the next section, you're able to indirectly use the ***Properties*** by chaining callbacks.
+The ***mpTelemetry*** feature is now enabled in the ***server.xml*** of the ***system*** service.
 
-::page{title="Updating a REST resource to asynchronously handle HTTP requests"}
+Replace the ***server.xml*** file of the inventory service:
 
-To reduce the processing time, you will update the ***/query/systemLoad*** endpoint to asynchronously send the requests. Multiple client requests will be sent synchronously in a loop. The asynchronous calls do not block the program so the endpoint needs to ensure that all calls are completed and all returned data is processed before proceeding.
+> To open the server.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/liberty/config/server.xml, or click the following button
 
-Replace the ***QueryResource*** class.
-
-> To open the QueryResource.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-rest-client-async/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-rest-client-async/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java"}
+::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main/liberty/config/server.xml"}
 
 
 
-```java
-package io.openliberty.guides.query;
+```xml
+<server description="inventory service">
 
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+    <featureManager>
+        <platform>jakartaee-10.0</platform>
+        <platform>microprofile-7.0</platform>
+        <feature>cdi</feature>
+        <feature>jsonb</feature>
+        <feature>jsonp</feature>
+        <feature>restfulWS</feature>
+        <feature>mpConfig</feature>
+        <feature>mpTelemetry</feature>
+    </featureManager>
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
+    <httpEndpoint httpPort="${http.port}"
+                  httpsPort="${https.port}"
+                  id="defaultHttpEndpoint" host="*" />
 
-import org.eclipse.microprofile.rest.client.inject.RestClient;
+    <webApplication location="guide-microprofile-telemetry-jaeger-inventory.war"
+                    contextRoot="/">
+    </webApplication>
 
-import io.openliberty.guides.query.client.InventoryClient;
-
-@ApplicationScoped
-@Path("/query")
-public class QueryResource {
-
-    @Inject
-    @RestClient
-    private InventoryClient inventoryClient;
-
-    @GET
-    @Path("/systemLoad")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Map<String, Properties> systemLoad() {
-        List<String> systems = inventoryClient.getSystems();
-        CountDownLatch remainingSystems = new CountDownLatch(systems.size());
-        final Holder systemLoads = new Holder();
-
-        for (String system : systems) {
-            inventoryClient.getSystem(system)
-                           .thenAcceptAsync(p -> {
-                                if (p != null) {
-                                    systemLoads.updateValues(p);
-                                }
-                                remainingSystems.countDown();
-                           })
-                           .exceptionally(ex -> {
-                                ex.printStackTrace();
-                                remainingSystems.countDown();
-                                return null;
-                           });
-        }
-
-        try {
-            remainingSystems.await(30, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        return systemLoads.getValues();
-    }
-
-    private class Holder {
-        private volatile Map<String, Properties> values;
-
-        Holder() {
-            this.values = new ConcurrentHashMap<String, Properties>();
-            init();
-        }
-
-        public Map<String, Properties> getValues() {
-            return this.values;
-        }
-
-        public void updateValues(Properties p) {
-            final BigDecimal load = (BigDecimal) p.get("systemLoad");
-
-            this.values.computeIfPresent("lowest", (key, curr_val) -> {
-                BigDecimal lowest = (BigDecimal) curr_val.get("systemLoad");
-                return load.compareTo(lowest) < 0 ? p : curr_val;
-            });
-            this.values.computeIfPresent("highest", (key, curr_val) -> {
-                BigDecimal highest = (BigDecimal) curr_val.get("systemLoad");
-                return load.compareTo(highest) > 0 ? p : curr_val;
-            });
-        }
-
-        private void init() {
-            this.values.put("highest", new Properties());
-            this.values.put("lowest", new Properties());
-            this.values.get("highest").put("hostname", "temp_max");
-            this.values.get("lowest").put("hostname", "temp_min");
-            this.values.get("highest").put(
-                "systemLoad", new BigDecimal(Double.MIN_VALUE));
-            this.values.get("lowest").put(
-                "systemLoad", new BigDecimal(Double.MAX_VALUE));
-        }
-    }
-}
+</server>
 ```
 
 
 
-First, the ***systemLoad*** endpoint first gets all the hostnames by calling ***getSystems()***. In the ***getSystem()*** method, multiple requests are sent asynchronously to the ***inventory*** service for each hostname. When the requests return, the ***thenAcceptAsync()*** method processes the returned data with the ***CompletionStage\<Properties\>*** interface.
-
-The ***CompletionStage\<Properties\>*** interface represents a unit of computation. After a computation is complete, it can either be finished or it can be chained with more ***CompletionStage\<Properties\>*** interfaces using the ***thenAcceptAsync()*** method. Exceptions are handled in a callback that is provided to the ***exceptionally()*** method, which behaves like a catch block. When you return a ***CompletionStage\<Properties\>*** type in the resource, it doesn’t necessarily mean that the computation completed and the response was built. JAX-RS responds to the caller after the computation completes.
-
-In the ***systemLoad()*** method a ***CountDownLatch*** object is used to track asynchronous requests. The ***countDown()*** method is called whenever a request is complete. When the ***CountDownLatch*** is at zero, it indicates that all asynchronous requests are complete. By using the ***await()*** method of the ***CountDownLatch***, the program waits for all the asynchronous requests to be complete. When all asynchronous requests are complete, the program resumes execution with all required data processed. 
-
-A ***Holder*** class is used to wrap a variable called ***values*** that has the ***volatile*** keyword. The ***values*** variable is instantiated as a ***ConcurrentHashMap*** object. Together, the ***volatile*** keyword and ***ConcurrentHashMap*** type allow the ***Holder*** class to store system information and safely access it asynchronously from multiple threads.
+The ***mpTelemetry*** feature is now enabled in the ***server.xml*** of the ***inventory*** service.
 
 
-::page{title="Building and running the application"}
+By default, MicroProfile Telemetry tracing is off. To enable any tracing aspects, specify the ***otel*** properties in the MicroProfile configuration file. 
 
-You will build and run the ***system***, ***inventory***, and ***query*** microservices in Docker containers. You can learn more about containerizing microservices with Docker in the [Containerizing microservices](https://openliberty.io/guides/containerize.html) guide.
-
-Start your Docker environment. Dockerfiles are provided for you to use.
-
-To build the application, run the Maven ***install*** and ***package*** goals from the command-line session in the ***start*** directory:
-
-
-```bash
-./mvnw -pl models install
-./mvnw package
-```
-
-
-
-Run the following commands to containerize the microservices:
-
-```bash
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-docker build -t query:1.0-SNAPSHOT query/.
-```
-
-Next, use the provided ***startContainers*** script to start the application in Docker containers. The script creates containers for Kafka and all of the microservices in the project, in addition to a network for the containers to communicate with each other. The script also creates three instances of the ***system*** microservice. 
-
-
-```bash
-./scripts/startContainers.sh
-```
-
-
-The services might take several minutes to become available. Run the following curl command to confirm that the ***inventory*** microservice is up and running.
-```bash
-curl -s http://localhost:9085/health | jq
-```
-
-You can access the application by making requests to the ***query/systemLoad*** endpoint by running the following curl command:
-```bash
-curl -s http://localhost:9080/query/systemLoad | jq
-```
-
-When the service is ready, you see an output similar to the following example which was formatted for readability. 
-
-```
-{
-    "highest": {
-        "hostname" : "8841bd7d6fcd",
-        "systemLoad" : 6.96
-    },
-    "lowest": {
-        "hostname" : "37140ec44c9b",
-        "systemLoad" : 6.4
-    }
-}
-```
-
-Switching to an asynchronous programming model freed up the thread that handles requests to the ***inventory*** service. While requests process, the thread can handle other work or requests. In the ***/query/systemLoad*** endpoint, multiple systems are read and compared at once.
-
-When you are done checking out the application, run the following script to stop the application:
-
-
-```bash
-./scripts/stopContainers.sh
-```
-
-
-::page{title="Testing the query microservice"}
-
-You will create an endpoint test to test the basic functionality of the ***query*** microservice. If a test failure occurs, then you might have introduced a bug into the code.
-
-Create the ***QueryServiceIT*** class.
+Create the ***microprofile-config.properties*** file of the system service:
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-microprofile-rest-client-async/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java
+touch /home/project/guide-microprofile-telemetry-jaeger/start/system/src/main/resources/META-INF/microprofile-config.properties
 ```
 
 
-> Then, to open the QueryServiceIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-rest-client-async/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java, or click the following button
+> Then, to open the microprofile-config.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-telemetry-jaeger/start/system/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-rest-client-async/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java"}
+::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/system/src/main/resources/META-INF/microprofile-config.properties"}
+
+
+
+```
+otel.service.name=system
+otel.sdk.disabled=false
+otel.metrics.exporter=none
+otel.logs.exporter=none
+```
+
+
+
+The MicroProfile properties file sets the ***otel.service.name*** property with the ***system*** service name, sets the ***otel.sdk.disabled*** property to ***false*** to enable tracing, sets the ***otel.metrics.exporter*** property to ***none*** to disable metrics, and sets the ***otel.logs.exporter*** property to ***none*** to disable exporting logs.
+
+
+Replace the ***microprofile-config.properties*** file of the inventory service:
+
+> To open the microprofile-config.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main/resources/META-INF/microprofile-config.properties"}
+
+
+
+```
+io.openliberty.guides.inventory.client.SystemClient/mp-rest/url=http://localhost:9080/system
+otel.service.name=inventory
+otel.sdk.disabled=false
+otel.metrics.exporter=none
+otel.logs.exporter=none
+```
+
+
+
+Similarly, specify the ***otel*** properties for the ***inventory*** service.
+
+For more information about these and other Telemetry properties, see the [MicroProfile Config properties for MicroProfile Telemetry](https://openliberty.io/docs/latest/reference/microprofile-config-properties.html#telemetry) documentation.
+
+
+To run the ***system*** and ***inventory*** services, run the following curl command:
+```bash
+curl -s http://localhost:9081/inventory/systems/localhost | jq
+```
+
+To view the traces, click the following button to visit the Jaeger service:
+
+::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
+
+You can view the traces for the ***system*** or ***inventory*** services under the **Search** tab. Select the services in the **Select A Service** menu and click the **Find Traces** button at the end of the section. You'll see the result as:
+
+![Default spans](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/default_spans.png)
+
+
+
+Verify that there are two spans from the ***inventory*** service and one span from the ***system*** service. Click the trace to view its details.
+
+![Details default spans](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/details_default_spans.png)
+
+
+::page{title="Enabling explicit distributed tracing"}
+
+Automatic instrumentation only instruments Jakarta RESTful web services and MicroProfile REST clients. To get further spans on other operations, such as database calls, you can add manual instrumentation to the source code.
+
+### Enabling OpenTelemetry APIs
+
+The MicroProfile Telemetry feature has been enabled to trace all REST endpoints by default in the previous section. To further control and customize traces, use the ***@WithSpan*** annotation to enable particular methods. You can also inject a ***Tracer*** object to create and customize spans.
+
+Replace the ***server.xml*** file of the inventory service:
+
+> To open the server.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="inventory service">
+
+    <featureManager>
+        <platform>jakartaee-10.0</platform>
+        <platform>microprofile-7.0</platform>
+        <feature>cdi</feature>
+        <feature>jsonb</feature>
+        <feature>jsonp</feature>
+        <feature>restfulWS</feature>
+        <feature>mpConfig</feature>
+        <feature>mpTelemetry</feature>
+    </featureManager>
+
+    <httpEndpoint httpPort="${http.port}"
+                  httpsPort="${https.port}"
+                  id="defaultHttpEndpoint" host="*" />
+
+    <webApplication location="guide-microprofile-telemetry-jaeger-inventory.war"
+                    contextRoot="/">
+        <!-- enable visibility to third party apis -->
+        <classloader apiTypeVisibility="+third-party"/>
+    </webApplication>
+
+</server>
+```
+
+
+
+The OpenTelemetry APIs are exposed as third-party APIs in Open Liberty. To add the visibility of OpenTelemetry APIs to the application, add ***third-party*** to the types of API packages that this class loader supports. Instead of explicitly configuring a list of API packages that includes ***third-party***, set the ***+third-party*** value to the ***apiTypeVisibility*** attribute in the ***classLoader*** configuration. This configuration adds ***third-party*** to the default list of API package types that are supported.
+
+
+### Enabling tracing in Jakarta CDI beans
+
+You can trace your Jakarta CDI beans by annotating their methods with a ***@WithSpan*** annotation.
+
+Replace the ***InventoryManager*** class:
+
+> To open the InventoryManager.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.query;
 
-import java.nio.file.Paths;
-import java.time.Duration;
-import java.util.Map;
+package io.openliberty.guides.inventory;
+
+import java.util.ArrayList;
 import java.util.Properties;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.mockserver.client.MockServerClient;
-import org.mockserver.model.HttpRequest;
-import org.mockserver.model.HttpResponse;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
+import io.opentelemetry.instrumentation.annotations.SpanAttribute;
 
-import org.testcontainers.containers.Network;
-import org.testcontainers.containers.KafkaContainer;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.MockServerContainer;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.images.builder.ImageFromDockerfile;
-import org.testcontainers.utility.DockerImageName;
-import org.jboss.resteasy.client.jaxrs.ResteasyClient;
-import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
-import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import io.openliberty.guides.inventory.client.SystemClient;
+import io.openliberty.guides.inventory.model.InventoryList;
+import io.openliberty.guides.inventory.model.SystemData;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import java.util.List;
+import java.util.Collections;
 
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.UriBuilder;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-public class QueryServiceIT {
+@ApplicationScoped
+public class InventoryManager {
 
-    private static Logger logger = LoggerFactory.getLogger(QueryServiceIT.class);
+    @Inject
+    @ConfigProperty(name = "system.http.port")
+    private int SYSTEM_PORT;
 
-    public static QueryResourceClient client;
+    private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
+    private SystemClient systemClient = new SystemClient();
 
-    private static Network network = Network.newNetwork();
-
-    private static String testHost1 =
-        "{"
-            + "\"hostname\" : \"testHost1\","
-            + "\"systemLoad\" : 1.23"
-        + "}";
-    private static String testHost2 =
-        "{"
-            + "\"hostname\" : \"testHost2\","
-            + "\"systemLoad\" : 3.21"
-        + "}";
-    private static String testHost3 =
-        "{"
-            + "\"hostname\" : \"testHost3\","
-            + "\"systemLoad\" : 2.13"
-        + "}";
-
-    private static ImageFromDockerfile queryImage =
-        new ImageFromDockerfile("query:1.0-SNAPSHOT")
-            .withDockerfile(Paths.get("./Dockerfile"));
-
-    public static final DockerImageName MOCKSERVER_IMAGE = DockerImageName
-        .parse("mockserver/mockserver")
-        .withTag("mockserver-"
-                 + MockServerClient.class.getPackage().getImplementationVersion());
-
-    public static MockServerContainer mockServer =
-        new MockServerContainer(MOCKSERVER_IMAGE)
-            .withNetworkAliases("mock-server")
-            .withNetwork(network);
-
-    public static MockServerClient mockClient;
-
-    private static KafkaContainer kafkaContainer =
-        new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:latest"))
-            .withListener(() -> "kafka:19092")
-            .withNetwork(network);
-
-    private static GenericContainer<?> queryContainer =
-        new GenericContainer(queryImage)
-            .withNetwork(network)
-            .withExposedPorts(9080)
-            .waitingFor(Wait.forHttp("/health/ready"))
-            .withStartupTimeout(Duration.ofMinutes(3))
-            .withLogConsumer(new Slf4jLogConsumer(logger))
-            .dependsOn(kafkaContainer);
-
-    private static QueryResourceClient createRestClient(String urlPath) {
-        ClientBuilder builder = ResteasyClientBuilder.newBuilder();
-        ResteasyClient client = (ResteasyClient) builder.build();
-        ResteasyWebTarget target = client.target(UriBuilder.fromPath(urlPath));
-        return target.proxy(QueryResourceClient.class);
+    public Properties get(String hostname) {
+        systemClient.init(hostname, SYSTEM_PORT);
+        Properties properties = systemClient.getProperties();
+        return properties;
     }
 
-    @BeforeAll
-    public static void startContainers() {
-        mockServer.start();
-        mockClient = new MockServerClient(
-            mockServer.getHost(),
-            mockServer.getServerPort());
-
-        kafkaContainer.start();
-
-        queryContainer.withEnv(
-            "InventoryClient/mp-rest/uri",
-            "http://mock-server:" + MockServerContainer.PORT);
-        queryContainer.start();
-
-        client = createRestClient("http://"
-            + queryContainer.getHost()
-            + ":" + queryContainer.getFirstMappedPort());
-    }
-    @BeforeEach
-    public void setup() throws InterruptedException {
-        mockClient.when(HttpRequest.request()
-                        .withMethod("GET")
-                        .withPath("/inventory/systems"))
-                    .respond(HttpResponse.response()
-                        .withStatusCode(200)
-                        .withBody("[\"testHost1\","
-                                + "\"testHost2\","
-                                + "\"testHost3\"]")
-                        .withHeader("Content-Type", "application/json"));
-
-        mockClient.when(HttpRequest.request()
-                        .withMethod("GET")
-                        .withPath("/inventory/systems/testHost1"))
-                    .respond(HttpResponse.response()
-                        .withStatusCode(200)
-                        .withBody(testHost1)
-                        .withHeader("Content-Type", "application/json"));
-
-        mockClient.when(HttpRequest.request()
-                        .withMethod("GET")
-                        .withPath("/inventory/systems/testHost2"))
-                    .respond(HttpResponse.response()
-                        .withStatusCode(200)
-                        .withBody(testHost2)
-                        .withHeader("Content-Type", "application/json"));
-
-        mockClient.when(HttpRequest.request()
-                        .withMethod("GET")
-                        .withPath("/inventory/systems/testHost3"))
-                    .respond(HttpResponse.response()
-                        .withStatusCode(200)
-                        .withBody(testHost3)
-                        .withHeader("Content-Type", "application/json"));
+    @WithSpan
+    public InventoryList list() {
+        return new InventoryList(systems);
     }
 
-    @AfterAll
-    public static void stopContainers() {
-        queryContainer.stop();
-        kafkaContainer.stop();
-        mockServer.stop();
-        network.close();
+    @WithSpan("Inventory Manager Add")
+    public void add(@SpanAttribute("hostname") String host,
+                    Properties systemProps) {
+        Properties props = new Properties();
+        props.setProperty("os.name", systemProps.getProperty("os.name"));
+        props.setProperty("user.name", systemProps.getProperty("user.name"));
+        SystemData system = new SystemData(host, props);
+        if (!systems.contains(system)) {
+            systems.add(system);
+        }
     }
 
-    @Test
-    public void testLoads() {
-        Map<String, Properties> response = client.systemLoad();
-
-        assertEquals(
-            "testHost2",
-            response.get("highest").get("hostname"),
-            "Returned highest system load incorrect"
-        );
-        assertEquals(
-            "testHost1",
-            response.get("lowest").get("hostname"),
-            "Returned lowest system load incorrect"
-        );
+    int clear() {
+        int propertiesClearedCount = systems.size();
+        systems.clear();
+        return propertiesClearedCount;
     }
 }
+
 ```
 
 
-The ***testLoads()*** test case verifies that the ***query*** service can calculate the highest and lowest system loads. 
+
+The ***list()*** and ***add()*** methods are annotated with the ***@WithSpan*** annotation, which can accept an optional parameter that functions as the span name. In this example, the default span name assigned to the ***list()*** method is automatically generated through the instrumentation. You can also specify a custom span name. For example, ***Inventory Manager Add*** is specified as the span name for the ***add()*** method. The OpenTelemetry instrumentation provides a new span for each method. You can now collect and trace the spans across different services. 
+
+Optionally, you can include parameters and their values in the span by using the ***@SpanAttribute*** annotation. For example, the ***@SpanAttribute*** annotation specifies ***hostname*** as the attribute name for the ***host*** parameter , which helps trace the parameter within the ***add*** span.
+
+To learn more about how to use OpenTelemetry annotations to instrument code, see the [OpenTelemetry Annotations](https://opentelemetry.io/docs/instrumentation/java/automatic/annotations/) documentation.
 
 
+
+Now, you can check out the traces that are generated by the ***@WithSpan*** annotation. Run the following curl command:
+```bash
+curl -s http://localhost:9081/inventory/systems | jq
+```
+
+and click the following button to visit the Jaeger service:
+
+::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
+
+Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result as:
+
+![Inventory Manager span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_manager_span.png)
+
+
+
+Verify that there are two spans from the ***inventory*** service. Click the trace to view its details. You'll see the ***InventoryManager.list*** span that is created by the ***@WithSpan*** annotation.
+
+![Inventory Manager list span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_manager_list_span.png)
+
+
+
+To check out the information generated by the ***@SpanAttribute*** annotation, run the following curl command:
+```bash
+curl -s http://localhost:9081/inventory/systems/localhost | jq
+```
+
+Click the following button to visit the Jaeger service:
+
+::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
+
+
+Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You will see the following result:
+
+![Get traces for the inventory service](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_service_4_spans.png)
+
+
+
+Verify that there are three spans from the ***inventory*** service and one span from the ***system*** service. Click the trace to view its details.
+
+![Inventory details spans](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_details_4_spans.png)
+
+
+
+Click the ***Inventory Manager Add*** span and its ***Tags***. You can see the ***hostname*** tag with the ***localhost*** value that is created by the ***@SpanAttribute*** annotation.
+
+![Inventory Manager add span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_manager_add_span.png)
+
+
+
+### Injecting a custom Tracer object
+
+The MicroProfile Telemetry specification makes the underlying OpenTelemetry Tracer instance available. The configured Tracer is accessed by injecting it into a bean. You can use it to instrument your code to create traces.
+
+Replace the ***InventoryResource*** class:
+
+> To open the InventoryResource.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java"}
+
+
+
+```java
+package io.openliberty.guides.inventory;
+
+import java.util.Properties;
+
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.context.Scope;
+
+import io.openliberty.guides.inventory.model.InventoryList;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+@RequestScoped
+@Path("/systems")
+public class InventoryResource {
+
+    @Inject
+    private InventoryManager manager;
+
+    @Inject
+    private Tracer tracer;
+
+    @GET
+    @Path("/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getPropertiesForHost(@PathParam("hostname") String hostname) {
+        Span getPropertiesSpan = tracer.spanBuilder("GettingProperties").startSpan();
+        Properties props = null;
+        try (Scope scope = getPropertiesSpan.makeCurrent()) {
+            props = manager.get(hostname);
+            if (props == null) {
+                getPropertiesSpan.addEvent("Cannot get properties");
+                return Response.status(Response.Status.NOT_FOUND)
+                         .entity("{ \"error\" : \"Unknown hostname or the system "
+                               + "service may not be running on " + hostname + "\" }")
+                         .build();
+            }
+            getPropertiesSpan.addEvent("Received properties");
+            manager.add(hostname, props);
+        } finally {
+            getPropertiesSpan.end();
+        }
+        return Response.ok(props).build();
+
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public InventoryList listContents() {
+        return manager.list();
+    }
+
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response clearContents() {
+        int cleared = manager.clear();
+
+        if (cleared == 0) {
+            return Response.status(Response.Status.NOT_MODIFIED)
+                           .build();
+        }
+        return Response.status(Response.Status.OK)
+                       .build();
+    }
+}
+
+```
+
+
+
+To access the Tracer, the ***@Inject*** annotation from the Contexts and Dependency Injections API injects the Tracer into a bean. 
+
+Before the ***InventoryManager*** calls the ***system*** service, it creates and starts a span called the ***GettingProperties*** by using the ***spanBuilder()*** and ***startSpan()*** Tracer APIs.
+
+When you start a span, you must also end it by calling ***end()*** on the span. If you don't end a span, it won't be recorded at all and won't show up in Jaeger. This code ensures that ***end()*** is always called by including it in a ***finally*** block.
+
+After you start the span, make it current with the ***makeCurrent()*** call. Making a span current means that any new spans created in the same thread, either automatically by Open Liberty or manually by calling the API, will use this span as their parent span.
+
+The ***makeCurrent()*** call returns a ***Scope***. Make sure to always close the ***Scope***, which stops the span from being current and makes the previous span current again. Use a ***try-with-resources*** block, which automatically closes the ***Scope*** at the end of the block.
+
+Use the ***addEvent()*** Span API to create an event when the properties are received and an event when it fails to get the properties from the ***system*** service. Use the ***end()*** Span API to mark the ***GettingProperties*** span as completed.
+
+
+
+To check out the traces that contain the ***GettingProperties*** span, run the following curl command:
+```bash
+curl -s http://localhost:9081/inventory/systems/localhost | jq
+```
+
+Click the following button to visit the Jaeger service:
+
+::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
+
+Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result:
+
+![Get traces for the inventory service](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_service_spans.png)
+
+
+
+Verify that there are four spans from the ***inventory*** service and one span from the ***system*** service. Click the trace to view its details. You'll see the ***GettingProperties*** span.
+
+![Inventory details spans](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_details_spans.png)
+
+
+
+To check out the event adding to the ***GettingProperties*** span, run the following curl command:
+```bash
+curl -s http://localhost:9081/inventory/systems/unknown | jq
+```
+
+Click the following button to visit the Jaeger service:
+
+::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
+
+Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You will see the following result:
+
+![Get traces for unknown hostname](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_service_unknown_spans.png)
+
+
+
+There are two spans from the ***inventory*** service. Click the trace to view its details. You'll see the ***GettingProperties*** span. Click the ***GettingProperties*** span and its ***Logs***. You can see the ***Cannot get properties*** message.
+
+![Logs at GettingProperties span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/logs_at_gettingProperties.png)
+
+
+
+To learn more about how to use OpenTelemetry APIs to instrument code, see the [OpenTelemetry Manual Instrumentation](https://opentelemetry.io/docs/instrumentation/java/manual/) documentation.
+
+
+::page{title="Testing the application "}
+
+Manually verify the traces by inspecting them on the Jaeger server. You will find some tests included to test the basic functionality of the services. If any of the tests fail, you might have introduced a bug into the code.
 
 ### Running the tests
 
+Since you started Open Liberty in dev mode, run the tests for the ***system*** and ***inventory*** services by pressing the ***enter/return*** key in the command-line sessions where you started the services.
 
-Run the following commands to navigate to the ***start*** directory and verify that the tests pass by using the Maven ***verify*** goal:
+When you are done checking out the services, exit dev mode by pressing `Ctrl+C` in the shell sessions where you ran the ***system*** and ***inventory*** services.
+
+
+Finally, stop the ***Jaeger*** service that you started in the previous step.
 ```bash
-export TESTCONTAINERS_RYUK_DISABLED=true
-cd /home/project/guide-microprofile-rest-client-async/start
-./mvnw -pl query verify
+docker stop jaeger
+docker rm jaeger
 ```
 
-For more information about disabling Ryuk, see the [Testcontainers custom configuratio](https://java.testcontainers.org/features/configuration/#disabling-ryuk) document.
-
-The tests might take a few minutes to complete. When the tests succeed, you see output similar to the following example:
-
-```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.query.QueryServiceIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 32.123 s - in it.io.openliberty.guides.query.QueryServiceIT
-
-Results:
-
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-```
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You have just modified an application to make asynchronous HTTP requests using Open Liberty and MicroProfile Rest Client.
+You just used MicroProfile Telemetry in Open Liberty to customize how and which traces are delivered to Jaeger.
 
+
+Try out one of the related MicroProfile guides. These guides demonstrate more technologies that you can learn to expand on what you built in this guide.
 
 
 ### Clean up your environment
@@ -547,31 +699,32 @@ You have just modified an application to make asynchronous HTTP requests using O
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-microprofile-rest-client-async*** project by running the following commands:
+Delete the ***guide-microprofile-telemetry-jaeger*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-microprofile-rest-client-async
+rm -fr guide-microprofile-telemetry-jaeger
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20RESTful%20services%20asynchronously%20with%20template%20interfaces&guide-id=cloud-hosted-guide-microprofile-rest-client-async)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Enabling%20distributed%20tracing%20in%20microservices%20with%20OpenTelemetry%20and%20Jaeger&guide-id=cloud-hosted-guide-microprofile-telemetry-jaeger)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-rest-client-async/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-rest-client-async/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-telemetry-jaeger/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-telemetry-jaeger/pulls)
 
 
 
 ### Where to next?
 
-* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
-* [Consuming RESTful services using the reactive JAX-RS client](https://openliberty.io/guides/reactive-rest-client.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html)
+* [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
 
 
 ### Log out of the session
