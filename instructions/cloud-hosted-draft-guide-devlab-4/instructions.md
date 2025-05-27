@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Persisting data with MongoDB guide!"}
+::page{title="Welcome to the Streaming updates to a client using Server-Sent Events guide!"}
 
-Learn how to persist data in your microservices to MongoDB, a document-oriented NoSQL database.
+Learn how to stream updates from a MicroProfile Reactive Messaging service to a front-end client by using Server-Sent Events (SSE).
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,26 +14,28 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 ::page{title="What you'll learn"}
 
-You will learn how to use MongoDB to build and test a simple microservice that manages the members of a crew. The microservice will respond to ***POST***, ***GET***, ***PUT***, and ***DELETE*** requests that manipulate the database.
+You will learn how to stream messages from a MicroProfile Reactive Messaging service to a front-end client by using Server-Sent Events (SSE).
 
-The crew members will be stored in MongoDB as documents in the following JSON format:
+MicroProfile Reactive Messaging provides an easy way for Java services to send requests to other Java services, and asynchronously receive and process the responses as a stream of events. SSE provides a framework to stream the data in these events to a browser client.
 
-```
-{
-  "_id": {
-    "$oid": "5dee6b079503234323db2ebc"
-  },
-  "Name": "Member1",
-  "Rank": "Captain",
-  "CrewID": "000001"
-}
-```
+### What is SSE?
 
-This microservice connects to MongoDB by using Transport Layer Security (TLS) and injects a ***MongoDatabase*** instance into the service with a Contexts and Dependency Injection (CDI) producer. Additionally, MicroProfile Config is used to easily configure the MongoDB driver.
+Server-Sent Events is an API that allows clients to subscribe to a stream of events that is pushed from a server. First, the client makes a connection with the server over HTTP. The server continuously pushes events to the client as long as the connection persists. SSE differs from traditional HTTP requests, which use one request for one response. SSE also differs from Web Sockets in that SSE is unidirectional from the server to the client, and Web Sockets allow for bidirectional communication.
 
-For more information about CDI and MicroProfile Config, see the guides on [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html) and [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html).
+For example, an application that provides real-time stock quotes might use SSE to push price updates from the server to the browser as soon as the server receives them. Such an application wouldn't need Web Sockets because the data travels in only one direction, and polling the server by using HTTP requests wouldn't provide real-time updates.
+
+The application that you will build in this guide consists of a ***frontend*** service, a ***bff*** (backend for frontend) service, and three instances of a ***system*** service. The ***system*** services periodically publish messages that contain their hostname and current system load. The ***bff*** service receives the messages from the ***system*** services and pushes the contents as SSE to a JavaScript client in the ***frontend*** service. This client uses the events to update a table in the UI that displays each system's hostname and its periodically updating load. The following diagram depicts the application that is used in this guide:
+
+![SSE Diagram](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-messaging-sse/prod/assets/SSE_Diagram.png)
+
+
+In this guide, you will set up the ***bff*** service by creating an endpoint that clients can use to subscribe to events. You will also enable the service to read from the reactive messaging channel and push the contents to subscribers via SSE. After that, you will configure the Kafka connectors to allow the ***bff*** service to receive messages from the ***system*** services. Finally, you will configure the client in the ***frontend*** service to subscribe to these events, consume them, and display them in the UI.
+
+To learn more about the reactive Java services that are used in this guide, check out the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
+
 
 
 ::page{title="Getting started"}
@@ -47,11 +49,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-mongodb-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-reactive-messaging-sse.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-mongodb-intro.git
-cd guide-mongodb-intro
+git clone https://github.com/openliberty/guide-reactive-messaging-sse.git
+cd guide-reactive-messaging-sse
 ```
 
 
@@ -60,190 +62,92 @@ The ***start*** directory contains the starting project that you will build upon
 The ***finish*** directory contains the finished project that you will build.
 
 
-### Setting up MongoDB
 
-This guide uses Docker to run an instance of MongoDB. A multi-stage Dockerfile is provided for you. This Dockerfile uses the ***mongo*** image as the base image of the final stage and gathers the required configuration files. The resulting ***mongo*** image runs in a Docker container, and you must set up a new database for the microservice. Lastly, the truststore that's generated in the Docker image is copied from the container and placed into the Open Liberty configuration.
+::page{title="Setting up SSE in the bff service"}
 
-You can find more details and configuration options on the [MongoDB website](https://docs.mongodb.com/manual/reference/configuration-options/). For more information about the ***mongo*** image, see [mongo](https://hub.docker.com/_/mongo) in Docker Hub.
+In this section, you will create a REST API for SSE in the ***bff*** service. When a client makes a request to this endpoint, the initial connection between the client and server is established and the client is subscribed to receive events that are pushed from the server. Later in this guide, the client in the ***frontend*** service uses this endpoint to subscribe to the events that are pushed from the ***bff*** service.
 
-**Running MongoDB in a Docker container**
-
-Run the following commands to use the Dockerfile to build the image, run the image in a Docker container, and map port ***27017*** from the container to your host machine:
-
-```bash
-sed -i 's=latest=7.0.15-rc1=g' assets/Dockerfile
-```
-
-```bash
-docker build -t mongo-sample -f assets/Dockerfile .
-docker run --name mongo-guide -p 27017:27017 -d mongo-sample
-```
-
-**Adding the truststore to the Open Liberty configuration**
-
-The truststore that's created in the container needs to be added to the Open Liberty configuration so that the Liberty can trust the certificate that MongoDB presents when they connect. Run the following command to copy the ***truststore.p12*** file from the container to the ***start*** and ***finish*** directories:
-
-
-```bash
-docker cp \
-  mongo-guide:/home/mongodb/certs/truststore.p12 \
-  start/src/main/liberty/config/resources/security
-docker cp \
-  mongo-guide:/home/mongodb/certs/truststore.p12 \
-  finish/src/main/liberty/config/resources/security
-```
-
-
-### Try what you'll build
-
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-
-To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
-
-```bash
-cd finish
-./mvnw liberty:run
-```
-
-After you see the following message, your Liberty instance is ready:
-
-```
-The defaultServer server is ready to run a smarter planet.
-```
-
-
-You can now check out the service by clicking the following button:
-
-::startApplication{port="9080" display="external" name="Launch application" route="/mongo"}
-
-After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
-
-```bash
-./mvnw liberty:stop
-```
-
-
-::page{title="Providing a MongoDatabase"}
+Additionally, you will enable the ***bff*** service to read messages from the incoming stream and push the contents as events to subscribers via SSE.
 
 Navigate to the ***start*** directory to begin.
 
-```bash
-cd /home/project/guide-mongodb-intro/start
-```
-
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
-
-```bash
-./mvnw liberty:dev
-```
-
-After you see the following message, your Liberty instance is ready in dev mode:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
-
-With a CDI producer, you can easily provide a ***MongoDatabase*** to your microservice.
-
-Create the ***MongoProducer*** class.
+Create the BFFResource class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/mongo/MongoProducer.java
+touch /home/project/guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java
 ```
 
 
-> Then, to open the MongoProducer.java file in your IDE, select
-> ***File*** > ***Open*** > guide-mongodb-intro/start/src/main/java/io/openliberty/guides/mongo/MongoProducer.java, or click the following button
+> Then, to open the BFFResource.java file in your IDE, select
+> ***File*** > ***Open*** > guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java, or click the following button
 
-::openFile{path="/home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/mongo/MongoProducer.java"}
+::openFile{path="/home/project/guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java"}
 
 
 
 ```java
-package io.openliberty.guides.mongo;
+package io.openliberty.guides.bff;
 
-import java.util.Collections;
+import io.openliberty.guides.models.SystemLoad;
 
-import javax.net.ssl.SSLContext;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
-import com.ibm.websphere.crypto.PasswordUtil;
-import com.ibm.websphere.ssl.JSSEHelper;
-import com.ibm.websphere.ssl.SSLException;
-import com.mongodb.ConnectionString;
-import com.mongodb.MongoClientSettings;
-import com.mongodb.MongoCredential;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoDatabase;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.inject.Disposes;
-import jakarta.enterprise.inject.Produces;
-import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.sse.OutboundSseEvent;
+import jakarta.ws.rs.sse.Sse;
+import jakarta.ws.rs.sse.SseBroadcaster;
+import jakarta.ws.rs.sse.SseEventSink;
+import java.util.logging.Logger;
 
 @ApplicationScoped
-public class MongoProducer {
+@Path("/sse")
+public class BFFResource {
 
-    @Inject
-    @ConfigProperty(name = "mongo.hostname", defaultValue = "localhost")
-    String hostname;
+    private Logger logger = Logger.getLogger(BFFResource.class.getName());
 
-    @Inject
-    @ConfigProperty(name = "mongo.port", defaultValue = "27017")
-    int port;
+    private Sse sse;
+    private SseBroadcaster broadcaster;
 
-    @Inject
-    @ConfigProperty(name = "mongo.dbname", defaultValue = "testdb")
-    String dbName;
+    @GET
+    @Path("/")
+    @Produces(MediaType.SERVER_SENT_EVENTS)
+    public void subscribeToSystem(
+        @Context SseEventSink sink,
+        @Context Sse sse
+        ) {
 
-    @Inject
-    @ConfigProperty(name = "mongo.user")
-    String user;
+        if (this.sse == null || this.broadcaster == null) {
+            this.sse = sse;
+            this.broadcaster = sse.newBroadcaster();
+        }
 
-    @Inject
-    @ConfigProperty(name = "mongo.pass.encoded")
-    String encodedPass;
-
-    @Produces
-    public MongoClient createMongo() throws SSLException {
-        String password = PasswordUtil.passwordDecode(encodedPass);
-        MongoCredential creds = MongoCredential.createCredential(
-                user,
-                dbName,
-                password.toCharArray()
-        );
-
-        SSLContext sslContext = JSSEHelper.getInstance().getSSLContext(
-                "outboundSSLContext",
-                Collections.emptyMap(),
-                null
-        );
-
-        return MongoClients.create(MongoClientSettings.builder()
-                   .applyConnectionString(
-                       new ConnectionString("mongodb://" + hostname + ":" + port))
-                   .credential(creds)
-                   .applyToSslSettings(builder -> {
-                       builder.enabled(true);
-                       builder.context(sslContext); })
-                   .build());
+        this.broadcaster.register(sink);
+        logger.info("New sink registered to broadcaster.");
     }
 
-    @Produces
-    public MongoDatabase createDB(
-            MongoClient client) {
-        return client.getDatabase(dbName);
+    private void broadcastData(String name, Object data) {
+        if (broadcaster != null) {
+            OutboundSseEvent event = sse.newEventBuilder()
+                                        .name(name)
+                                        .data(data.getClass(), data)
+                                        .mediaType(MediaType.APPLICATION_JSON_TYPE)
+                                        .build();
+            broadcaster.broadcast(event);
+        } else {
+            logger.info("Unable to send SSE. Broadcaster context is not set up.");
+        }
     }
 
-    public void close(
-            @Disposes MongoClient toClose) {
-        toClose.close();
+    @Incoming("systemLoad")
+    public void getSystemLoadMessage(SystemLoad sl)  {
+        logger.info("Message received from system.load topic. " + sl.toString());
+        broadcastData("systemLoad", sl);
     }
 }
 ```
@@ -252,770 +156,196 @@ public class MongoProducer {
 Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
+### Creating the SSE API endpoint
+
+The ***subscribeToSystem()*** method allows clients to subscribe to events via an HTTP ***GET*** request to the ***/bff/sse/*** endpoint. The ***@Produces(MediaType.SERVER_SENT_EVENTS)*** annotation sets the ***Content-Type*** in the response header to ***text/event-stream***. This content type indicates that client requests that are made to this endpoint are to receive Server-Sent Events. Additionally, the method parameters take in an instance of the ***SseEventSink*** class and the ***Sse*** class, both of which are injected using the ***@Context*** annotation. First, the method checks if the ***sse*** and ***broadcaster*** instance variables are assigned. If these variables aren't assigned, the ***sse*** variable is obtained from the ***@Context*** injection and the ***broadcaster*** variable is obtained by using the ***Sse.newBroadcaster()*** method. Then, the ***register()*** method is called to register the ***SseEventSink*** instance to the ***SseBroadcaster*** instance to subscribe to events.
+
+For more information about these interfaces, see the Javadocs for [OutboundSseEvent](https://openliberty.io/docs/latest/reference/javadoc/liberty-jakartaee10-javadoc.html?path=liberty-jakartaee10-javadoc/jakarta/ws/rs/sse/OutboundSseEvent.html) and [OutboundSseEvent.Builder](https://openliberty.io/docs/latest/reference/javadoc/liberty-jakartaee10-javadoc.html?path=liberty-jakartaee10-javadoc/jakarta/ws/rs/sse/OutboundSseEvent.Builder.html).
+
+### Reading from the reactive messaging channel
+
+The ***getSystemLoadMessage()*** method receives the message that contains the hostname and the average system load. The ***@Incoming("systemLoad")*** annotation indicates that the method retrieves the message by connecting to the ***systemLoad*** channel in Kafka, which you configure in the next section.
+
+Each time a message is received, the ***getSystemLoadMessage()*** method is called, and the hostname and system load contained in that message are broadcasted in an event to all subscribers.
+
+### Broadcasting events
+
+Broadcasting events is handled in the ***broadcastData()*** method. First, it checks whether the ***broadcaster*** value is ***null***. The ***broadcaster*** value must include at least one subscriber or there's no client to send the event to. If the ***broadcaster*** value is specified, the ***OutboundSseEvent*** interface is created by using the ***Sse.newEventBuilder()*** method, where the ***name*** of the event, the ***data*** it contains, and the ***mediaType*** are set. The ***OutboundSseEvent*** interface is then broadcasted, or sent to all registered sinks, by invoking the ***SseBroadcaster.broadcast()*** method.
 
 
-
-The values from the ***microprofile-config.properties*** file are injected into the ***MongoProducer*** class. The ***MongoProducer*** class requires the following methods for the ***MongoClient***:
-
-* The ***createMongo()*** producer method returns an instance of ***MongoClient***. In this method, the username, database name, and decoded password are passed into the ***MongoCredential.createCredential()*** method to get an instance of ***MongoCredential***. The ***JSSEHelper*** gets the ***SSLContext*** from the ***outboundSSLContext*** in the ***server.xml*** configuration file. Then, a ***MongoClient*** instance is created.
-
-* The ***createDB()*** producer method returns an instance of ***MongoDatabase*** that depends on the ***MongoClient***. This method injects the ***MongoClient*** in its parameters and passes the database name into the ***MongoClient.getDatabase()*** method to get a ***MongoDatabase*** instance.
-
-* The ***close()*** method is a clean-up function for the ***MongoClient*** that closes the connection to the ***MongoDatabase*** instance.
+You just set up an endpoint in the ***bff*** service that the client in the ***frontend*** service can use to subscribe to events. You also enabled the service to read from the reactive messaging channel and broadcast the information as events to subscribers via SSE.
 
 
+::page{title="Configuring the Kafka connector for the bff service"}
 
-::page{title="Implementing the Create, Retrieve, Update, and Delete operations"}
+A complete ***system*** service is provided for you in the ***start/system*** directory. The ***system*** service is the producer of the messages that are published to the Kafka messaging system. The periodically published messages contain the system's hostname and a calculation of the average system load (its CPU usage) for the last minute.
 
-You are going to implement the basic create, retrieve, update, and delete (CRUD) operations in the ***CrewService*** class. The ***com.mongodb.client*** and ***com.mongodb.client.result*** packages are used to help implement these operations for the microservice. For more information about these packages, see the [com.mongodb.client](https://mongodb.github.io/mongo-java-driver/5.2.1/apidocs/mongodb-driver-sync/com/mongodb/client/package-summary.html) and [com.mongodb.client.result](https://mongodb.github.io/mongo-java-driver/5.2.1/apidocs/mongodb-driver-core/com/mongodb/client/result/package-summary.html) Javadoc. For more information about creating a RESTful service with JAX-RS, JSON-B, and Open Liberty, see the guide on [Creating a RESTful web serivce](https://openliberty.io/guides/rest-intro.html).
+Configure the Kafka connector in the ***bff*** service to receive the messages from the ***system*** service.
 
-Create the ***CrewService*** class.
+Create the microprofile-config.properties file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/application/CrewService.java
-```
-
-
-> Then, to open the CrewService.java file in your IDE, select
-> ***File*** > ***Open*** > guide-mongodb-intro/start/src/main/java/io/openliberty/guides/application/CrewService.java, or click the following button
-
-::openFile{path="/home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/application/CrewService.java"}
-
-
-
-```java
-package io.openliberty.guides.application;
-
-import java.util.Set;
-
-import java.io.StringWriter;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonArrayBuilder;
-import jakarta.json.Json;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-
-import jakarta.validation.Validator;
-import jakarta.validation.ConstraintViolation;
-
-import com.mongodb.client.FindIterable;
-import org.bson.Document;
-import org.bson.types.ObjectId;
-
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.result.DeleteResult;
-import com.mongodb.client.result.UpdateResult;
-
-import org.eclipse.microprofile.openapi.annotations.Operation;
-import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
-
-@Path("/crew")
-@ApplicationScoped
-public class CrewService {
-
-    @Inject
-    MongoDatabase db;
-
-    @Inject
-    Validator validator;
-
-    private JsonArray getViolations(CrewMember crewMember) {
-        Set<ConstraintViolation<CrewMember>> violations = validator.validate(
-                crewMember);
-
-        JsonArrayBuilder messages = Json.createArrayBuilder();
-
-        for (ConstraintViolation<CrewMember> v : violations) {
-            messages.add(v.getMessage());
-        }
-
-        return messages.build();
-    }
-
-    @POST
-    @Path("/")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @APIResponses({
-        @APIResponse(
-            responseCode = "200",
-            description = "Successfully added crew member."),
-        @APIResponse(
-            responseCode = "400",
-            description = "Invalid crew member configuration.") })
-    @Operation(summary = "Add a new crew member to the database.")
-    public Response add(CrewMember crewMember) {
-        JsonArray violations = getViolations(crewMember);
-
-        if (!violations.isEmpty()) {
-            return Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity(violations.toString())
-                    .build();
-        }
-
-        MongoCollection<Document> crew = db.getCollection("Crew");
-
-        Document newCrewMember = new Document();
-        newCrewMember.put("Name", crewMember.getName());
-        newCrewMember.put("Rank", crewMember.getRank());
-        newCrewMember.put("CrewID", crewMember.getCrewID());
-
-        crew.insertOne(newCrewMember);
-
-        return Response
-            .status(Response.Status.OK)
-            .entity(newCrewMember.toJson())
-            .build();
-    }
-
-    @GET
-    @Path("/")
-    @Produces(MediaType.APPLICATION_JSON)
-    @APIResponses({
-        @APIResponse(
-            responseCode = "200",
-            description = "Successfully listed the crew members."),
-        @APIResponse(
-            responseCode = "500",
-            description = "Failed to list the crew members.") })
-    @Operation(summary = "List the crew members from the database.")
-    public Response retrieve() {
-        StringWriter sb = new StringWriter();
-
-        try {
-            MongoCollection<Document> crew = db.getCollection("Crew");
-            sb.append("[");
-            boolean first = true;
-            FindIterable<Document> docs = crew.find();
-            for (Document d : docs) {
-                if (!first) {
-                    sb.append(",");
-                } else {
-                    first = false;
-                }
-                sb.append(d.toJson());
-            }
-            sb.append("]");
-        } catch (Exception e) {
-            e.printStackTrace(System.out);
-            return Response
-                .status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity("[\"Unable to list crew members!\"]")
-                .build();
-        }
-
-        return Response
-            .status(Response.Status.OK)
-            .entity(sb.toString())
-            .build();
-    }
-
-    @PUT
-    @Path("/{id}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @APIResponses({
-        @APIResponse(
-            responseCode = "200",
-            description = "Successfully updated crew member."),
-        @APIResponse(
-            responseCode = "400",
-            description = "Invalid object id or crew member configuration."),
-        @APIResponse(
-            responseCode = "404",
-            description = "Crew member object id was not found.") })
-    @Operation(summary = "Update a crew member in the database.")
-    public Response update(CrewMember crewMember,
-        @Parameter(
-            description = "Object id of the crew member to update.",
-            required = true
-        )
-        @PathParam("id") String id) {
-
-        JsonArray violations = getViolations(crewMember);
-
-        if (!violations.isEmpty()) {
-            return Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity(violations.toString())
-                    .build();
-        }
-
-        ObjectId oid;
-
-        try {
-            oid = new ObjectId(id);
-        } catch (Exception e) {
-            return Response
-                .status(Response.Status.BAD_REQUEST)
-                .entity("[\"Invalid object id!\"]")
-                .build();
-        }
-
-        MongoCollection<Document> crew = db.getCollection("Crew");
-
-        Document query = new Document("_id", oid);
-
-        Document newCrewMember = new Document();
-        newCrewMember.put("Name", crewMember.getName());
-        newCrewMember.put("Rank", crewMember.getRank());
-        newCrewMember.put("CrewID", crewMember.getCrewID());
-
-        UpdateResult updateResult = crew.replaceOne(query, newCrewMember);
-
-        if (updateResult.getMatchedCount() == 0) {
-            return Response
-                .status(Response.Status.NOT_FOUND)
-                .entity("[\"_id was not found!\"]")
-                .build();
-        }
-
-        newCrewMember.put("_id", oid);
-
-        return Response
-            .status(Response.Status.OK)
-            .entity(newCrewMember.toJson())
-            .build();
-    }
-
-    @DELETE
-    @Path("/{id}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @APIResponses({
-        @APIResponse(
-            responseCode = "200",
-            description = "Successfully deleted crew member."),
-        @APIResponse(
-            responseCode = "400",
-            description = "Invalid object id."),
-        @APIResponse(
-            responseCode = "404",
-            description = "Crew member object id was not found.") })
-    @Operation(summary = "Delete a crew member from the database.")
-    public Response remove(
-        @Parameter(
-            description = "Object id of the crew member to delete.",
-            required = true
-        )
-        @PathParam("id") String id) {
-
-        ObjectId oid;
-
-        try {
-            oid = new ObjectId(id);
-        } catch (Exception e) {
-            return Response
-                .status(Response.Status.BAD_REQUEST)
-                .entity("[\"Invalid object id!\"]")
-                .build();
-        }
-
-        MongoCollection<Document> crew = db.getCollection("Crew");
-
-        Document query = new Document("_id", oid);
-
-        DeleteResult deleteResult = crew.deleteOne(query);
-
-        if (deleteResult.getDeletedCount() == 0) {
-            return Response
-                .status(Response.Status.NOT_FOUND)
-                .entity("[\"_id was not found!\"]")
-                .build();
-        }
-
-        return Response
-            .status(Response.Status.OK)
-            .entity(query.toJson())
-            .build();
-    }
-}
-```
-
-
-
-
-In this class, a ***Validator*** is used to validate a ***CrewMember*** before the database is updated. The CDI producer is used to inject a ***MongoDatabase*** into the CrewService class.
-
-
-**Implementing the Create operation**
-
-The ***add()*** method handles the implementation of the create operation. An instance of ***MongoCollection*** is retrieved with the ***MongoDatabase.getCollection()*** method. The ***Document*** type parameter specifies that the ***Document*** type is used to store data in the ***MongoCollection***. Each crew member is converted into a ***Document***, and the ***MongoCollection.insertOne()*** method inserts a new crew member document.
-
-
-**Implementing the Retrieve operation**
-
-The ***retrieve()*** method handles the implementation of the retrieve operation. The ***Crew*** collection is retrieved with the ***MongoDatabase.getCollection()*** method. Then, the ***MongoCollection.find()*** method retrieves a ***FindIterable*** object. This object is iterable for all the crew members documents in the collection, so each crew member document is concatenated into a String array and returned.
-
-
-**Implementing the Update operation**
-
-The ***update()*** method handles the implementation of the update operation. After the ***Crew*** collection is retrieved, a document is created with the specified object ***id*** and is used to query the collection. Next, a new crew member ***Document*** is created with the updated configuration. The ***MongoCollection.replaceOne()*** method is called with the query and new crew member document. This method updates all of the matching queries with the new document. Because the object ***id*** is unique in the ***Crew*** collection, only one document is updated. The ***MongoCollection.replaceOne()*** method also returns an ***UpdateResult*** instance, which determines how many documents matched the query. If there are zero matches, then the object ***id*** doesn't exist.
-
-
-**Implementing the Delete operation**
-
-The ***remove()*** method handles the implementation of the delete operation. After the ***Crew*** collection is retrieved, a ***Document*** is created with the specified object ***id*** and is used to query the collection. Because the object ***id*** is unique in the ***Crew*** collection, only one document is deleted. After the document is deleted, the ***MongoCollection.deleteOne()*** method returns a ***DeleteResult*** instance, which determines how many documents were deleted. If zero documents were deleted, then the object ***id*** doesn't exist.
-
-
-
-::page{title="Configuring the MongoDB driver and the Liberty"}
-
-MicroProfile Config makes configuring the MongoDB driver simple because all of the configuration can be set in one place and injected into the CDI producer.
-
-Create the configuration file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-mongodb-intro/start/src/main/resources/META-INF/microprofile-config.properties
+touch /home/project/guide-reactive-messaging-sse/start/bff/src/main/resources/META-INF/microprofile-config.properties
 ```
 
 
 > Then, to open the microprofile-config.properties file in your IDE, select
-> ***File*** > ***Open*** > guide-mongodb-intro/start/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+> ***File*** > ***Open*** > guide-reactive-messaging-sse/start/bff/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
-::openFile{path="/home/project/guide-mongodb-intro/start/src/main/resources/META-INF/microprofile-config.properties"}
+::openFile{path="/home/project/guide-reactive-messaging-sse/start/bff/src/main/resources/META-INF/microprofile-config.properties"}
 
 
 
 ```
-mongo.hostname=localhost
-mongo.port=27017
-mongo.dbname=testdb
-mongo.user=sampleUser
-mongo.pass.encoded={aes}APtt+/vYxxPa0jE1rhmZue9wBm3JGqFK3JR4oJdSDGWM1wLr1ckvqkqKjSB2Voty8g==
+mp.messaging.connector.liberty-kafka.bootstrap.servers=kafka:9092
+
+mp.messaging.incoming.systemLoad.connector=liberty-kafka
+mp.messaging.incoming.systemLoad.topic=system.load
+mp.messaging.incoming.systemLoad.key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
+mp.messaging.incoming.systemLoad.value.deserializer=io.openliberty.guides.models.SystemLoad$SystemLoadDeserializer
+mp.messaging.incoming.systemLoad.group.id=bff
 ```
 
 
 
-Values such as the hostname, port, and database name for the running MongoDB instance are set in this file. The user’s username and password are also set here. For added security, the password was encoded by using the [securityUtility encode command](https://openliberty.io/docs/latest/reference/command/securityUtility-encode.html).
-
-To create a CDI producer for MongoDB and connect over TLS, the Open Liberty needs to be correctly configured.
-
-Replace the Liberty ***server.xml*** configuration file.
-
-> To open the server.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-mongodb-intro/start/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-mongodb-intro/start/src/main/liberty/config/server.xml"}
+The ***bff*** service uses an incoming connector to receive messages through the ***systemLoad*** channel. The messages are then published by the ***system*** service to the ***system.load***  topic in the Kafka message broker. The ***key.deserializer*** and ***value.deserializer*** properties define how to deserialize the messages. The ***group.id*** property defines a unique name for the consumer group. All of these properties are required by the [Apache Kafka Consumer Configs](https://kafka.apache.org/documentation/#consumerconfigs) documentation.
 
 
 
-```xml
-<server description="Sample Liberty server">
-    <featureManager>
-        <platform>jakartaee-10.0</platform>
-        <platform>microprofile-7.0</platform>
-        <feature>beanValidation</feature>
-        <feature>cdi</feature>
-        <feature>jsonb</feature>
-        <feature>passwordUtilities-1.1</feature>
-        <feature>restfulWS</feature>
-        <feature>ssl-1.0</feature>
-        <feature>mpConfig</feature>
-        <feature>mpOpenAPI</feature>
-    </featureManager>
+::page{title="Configuring the frontend service to subscribe to and consume events"}
 
-    <variable name="http.port" defaultValue="9080"/>
-    <variable name="https.port" defaultValue="9443"/>
-    <variable name="app.context.root" defaultValue="/mongo"/>
+In this section, you will configure the client in the ***frontend*** service to subscribe to events and display their contents in a table in the UI.
 
-    <httpEndpoint
-        host="*" 
-        httpPort="${http.port}" 
-        httpsPort="${https.port}" 
-        id="defaultHttpEndpoint"
-    />
+The front-end UI is a table where each row contains the hostname and load of one of the three ***system*** services. The HTML and styling for the UI is provided for you but you must populate the table with information that is received from the Server-Sent Events.
 
-    <webApplication 
-        location="guide-mongodb-intro.war" 
-        contextRoot="${app.context.root}"
-    />
-    <keyStore
-        id="outboundTrustStore" 
-        location="${server.output.dir}/resources/security/truststore.p12"
-        password="mongodb"
-        type="PKCS12" 
-    />
-    <ssl 
-        id="outboundSSLContext" 
-        keyStoreRef="defaultKeyStore" 
-        trustStoreRef="outboundTrustStore" 
-        sslProtocol="TLS" 
-    />
-</server>
-```
-
-
-
-The features that are required to create the CDI producer for MongoDB are [Contexts and Dependency Injection](https://openliberty.io/docs/latest/reference/feature/cdi.html) (***cdi***), [Secure Socket Layer](https://openliberty.io/docs/latest/reference/feature/ssl.html) (***ssl***), [MicroProfile Config](https://openliberty.io/docs/latest/reference/feature/mpConfig.html) (***mpConfig***), and [Password Utilities](https://openliberty.io/docs/latest/reference/feature/passwordUtilities.html) (***passwordUtilities***). These features are specified in the ***featureManager*** element. The Secure Socket Layer (SSL) context is configured in the ***server.xml*** configuration file so that the application can connect to MongoDB with TLS. The ***keyStore*** element points to the ***truststore.p12*** keystore file that was created in one of the previous sections. The ***ssl*** element specifies the ***defaultKeyStore*** as the keystore and ***outboundTrustStore*** as the truststore.
-
-After you replace the ***server.xml*** file, the Open Liberty configuration is automatically reloaded.
-
-
-::page{title="Running the application"}
-
-You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
-
-
-Wait until you see a message similar to the following example:
-
-```
-CWWKZ0001I: Application guide-mongodb-intro started in 5.715 seconds.
-```
-
-Click the following button to see the OpenAPI user interface (UI) that provides API documentation and a client to test the API endpoints that you create:
-
-::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
-
-**Try the Create operation**
-
-From the OpenAPI UI, test the create operation at the ***POST /api/crew*** endpoint by using the following code as the request body:
-
-```
-{
-  "name": "Member1",
-  "rank": "Officer",
-  "crewID": "000001"
-}
-```
-
-This request creates a new document in the ***Crew*** collection with a name of ***Member1***, rank of ***Officer***, and crew ID of ***000001***.
-
-You'll receive a response that contains the JSON object of the new crew member, as shown in the following example:
-```
-{
-  "Name": "Member1",
-  "Rank": "Officer",
-  "CrewID": "000001",
-  "_id": {
-    "$oid": "<<ID>>"
-  }
-}
-```
-
-
-
-The ***\<\<ID\>\>*** that you receive is a unique identifier in the collection. Save this value for future commands.
-
-**Try the Retrieve operation**
-
-From the OpenAPI UI, test the read operation at the ***GET /api/crew*** endpoint. This request gets all crew member documents from the collection.
-
-You'll receive a response that contains an array of all the members in your crew. The response might include crew members that were created in the **Try what you’ll build** section of this guide:
-```
-[
-  {
-    "_id": {
-      "$oid": "<<ID>>"
-    },
-    "Name": "Member1",
-    "Rank": "Officer",
-    "CrewID": "000001"
-  }
-]
-```
-
-
-**Try the Update operation**
-
-
-From the OpenAPI UI, test the update operation at the ***PUT /api/crew/{id}*** endpoint, where the ***{id}*** parameter is the ***\<\<ID\>\>*** that you saved from the create operation. Use the following code as the request body:
-
-```
-{
-  "name": "Member1",
-  "rank": "Captain",
-  "crewID": "000001"
-}
-```
-
-This request updates the rank of the crew member that you created from ***Officer*** to ***Captain***.
-
-You'll receive a response that contains the JSON object of the updated crew member, as shown in the following example:
-
-```
-{
-  "Name": "Member1",
-  "Rank": "Captain",
-  "CrewID": "000001",
-  "_id": {
-    "$oid": "<<ID>>"
-  }
-}
-```
-
-
-**Try the Delete operation**
-
-
-From the OpenAPI UI, test the delete operation at the ***DELETE/api/crew/{id}*** endpoint, where the ***{id}*** parameter is the ***\<\<ID\>\>*** that you saved from the create operation. This request removes the document that contains the specified crew member object ***id*** from the collection.
-
-You'll receive a response that contains the object ***id*** of the deleted crew member, as shown in the following example:
-
-```
-{
-  "_id": {
-    "$oid": "<<ID>>"
-  }
-}
-```
-
-
-Now, you can check out the microservice that you created by clicking the following button:
-
-::startApplication{port="9080" display="external" name="Launch application" route="/mongo"}
-
-
-
-::page{title="Testing the application"}
-
-Next, you'll create integration tests to ensure that the basic operations you implemented function correctly.
-
-Create the ***CrewServiceIT*** class.
+Create the index.js file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-mongodb-intro/start/src/test/java/it/io/openliberty/guides/application/CrewServiceIT.java
+touch /home/project/guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js
 ```
 
 
-> Then, to open the CrewServiceIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-mongodb-intro/start/src/test/java/it/io/openliberty/guides/application/CrewServiceIT.java, or click the following button
+> Then, to open the index.js file in your IDE, select
+> ***File*** > ***Open*** > guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js, or click the following button
 
-::openFile{path="/home/project/guide-mongodb-intro/start/src/test/java/it/io/openliberty/guides/application/CrewServiceIT.java"}
+::openFile{path="/home/project/guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js"}
 
 
 
-```java
-package it.io.openliberty.guides.application;
+```javascript
+function initSSE() {
+    var source = new EventSource('http://localhost:9084/bff/sse', { withCredentials: true });
+    source.addEventListener(
+        'systemLoad',
+        systemLoadHandler
+    );
+}
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.io.StringReader;
-import java.util.ArrayList;
-
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.TestMethodOrder;
-
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonArrayBuilder;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonObjectBuilder;
-import jakarta.json.JsonReader;
-import jakarta.json.JsonValue;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.client.Entity;
-
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class CrewServiceIT {
-
-    private static Client client;
-    private static JsonArray testData;
-    private static String rootURL;
-    private static ArrayList<String> testIDs = new ArrayList<>(2);
-
-    @BeforeAll
-    public static void setup() {
-        client = ClientBuilder.newClient();
-
-        String port = System.getProperty("app.http.port");
-        String context = System.getProperty("app.context.root");
-        rootURL = "http://localhost:" + port + context;
-
-        JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
-        JsonObjectBuilder jsonBuilder = Json.createObjectBuilder();
-        jsonBuilder.add("name", "Member1");
-        jsonBuilder.add("crewID", "000001");
-        jsonBuilder.add("rank", "Captain");
-        arrayBuilder.add(jsonBuilder.build());
-        jsonBuilder = Json.createObjectBuilder();
-        jsonBuilder.add("name", "Member2");
-        jsonBuilder.add("crewID", "000002");
-        jsonBuilder.add("rank", "Engineer");
-        arrayBuilder.add(jsonBuilder.build());
-        testData = arrayBuilder.build();
-    }
-
-    @AfterAll
-    public static void teardown() {
-        client.close();
-    }
-
-    @Test
-    @Order(1)
-    public void testAddCrewMember() {
-        System.out.println("   === Adding " + testData.size()
-                + " crew members to the database. ===");
-
-        for (int i = 0; i < testData.size(); i++) {
-            JsonObject member = (JsonObject) testData.get(i);
-            String url = rootURL + "/api/crew";
-            Response response = client.target(url).request().post(Entity.json(member));
-            this.assertResponse(url, response);
-
-            JsonObject newMember = response.readEntity(JsonObject.class);
-            testIDs.add(newMember.getJsonObject("_id").getString("$oid"));
-
-            response.close();
-        }
-        System.out.println("      === Done. ===");
-    }
-
-    @Test
-    @Order(2)
-    public void testUpdateCrewMember() {
-        System.out.println("   === Updating crew member with id " + testIDs.get(0)
-                + ". ===");
-
-        JsonObject oldMember = (JsonObject) testData.get(0);
-
-        JsonObjectBuilder newMember = Json.createObjectBuilder();
-        newMember.add("name", oldMember.get("name"));
-        newMember.add("crewID", oldMember.get("crewID"));
-        newMember.add("rank", "Officer");
-
-        String url = rootURL + "/api/crew/" + testIDs.get(0);
-        Response response = client.target(url).request()
-                .put(Entity.json(newMember.build()));
-
-        this.assertResponse(url, response);
-
-        System.out.println("      === Done. ===");
-    }
-
-    @Test
-    @Order(3)
-    public void testGetCrewMembers() {
-        System.out.println("   === Listing crew members from the database. ===");
-
-        String url = rootURL + "/api/crew";
-        Response response = client.target(url).request().get();
-
-        this.assertResponse(url, response);
-
-        String responseText = response.readEntity(String.class);
-        JsonReader reader = Json.createReader(new StringReader(responseText));
-        JsonArray crew = reader.readArray();
-        reader.close();
-
-        int testMemberCount = 0;
-        for (JsonValue value : crew) {
-            JsonObject member = (JsonObject) value;
-            String id = member.getJsonObject("_id").getString("$oid");
-            if (testIDs.contains(id)) {
-                testMemberCount++;
-            }
-        }
-
-        assertEquals(testIDs.size(), testMemberCount,
-                "Incorrect number of testing members.");
-
-        System.out.println("      === Done. There are " + crew.size()
-                + " crew members. ===");
-
-        response.close();
-    }
-
-    @Test
-    @Order(4)
-    public void testDeleteCrewMember() {
-        System.out.println("   === Removing " + testIDs.size()
-                + " crew members from the database. ===");
-
-        for (String id : testIDs) {
-            String url = rootURL + "/api/crew/" + id;
-            Response response = client.target(url).request().delete();
-            this.assertResponse(url, response);
-            response.close();
-        }
-
-        System.out.println("      === Done. ===");
-    }
-
-    private void assertResponse(String url, Response response) {
-        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+function systemLoadHandler(event) {
+    var system = JSON.parse(event.data);
+    if (document.getElementById(system.hostname)) {
+        document.getElementById(system.hostname).cells[1].innerHTML =
+                                        system.loadAverage.toFixed(2);
+    } else {
+        var tableRow = document.createElement('tr');
+        tableRow.id = system.hostname;
+        tableRow.innerHTML = '<td>' + system.hostname + '</td><td>'
+                             + system.loadAverage.toFixed(2) + '</td>';
+        document.getElementById('sysPropertiesTableBody').appendChild(tableRow);
     }
 }
+
+
 ```
 
 
 
-The test methods are annotated with the ***@Test*** annotation.
+### Subscribing to SSE
 
-The following test cases are included in this class:
+The ***initSSE()*** method is called when the page first loads. This method subscribes the client to the SSE by creating a new instance of the ***EventSource*** interface and specifying the ***http://localhost:9084/bff/sse*** URL in the parameters. To connect to the server, the ***EventSource*** interface makes a ***GET*** request to this endpoint with a request header of ***Accept: text/event-stream***.
 
-* ***testAddCrewMember()*** verifies that new members are correctly added to the database.
-
-* ***testUpdateCrewMember()*** verifies that a crew member's information is correctly updated.
-
-* ***testGetCrewMembers()*** verifies that a list of crew members is returned by the microservice API.
-
-* ***testDeleteCrewMember()*** verifies that the crew members are correctly removed from the database.
-
-### Running the tests
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
-
-You'll see the following output:
-
+In this IBM cloud environment, you need to update the ***EventSource*** URL with the ***bff*** service domain instead of ***localhost***. Run the following command:
+```bash
+BFF_DOMAIN=${USERNAME}-9084.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+sed -i 's=http://localhost:9084='"https://$BFF_DOMAIN"'=g' /home/project/guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js
 ```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.application.CrewServiceIT
-   === Adding 2 crew members to the database. ===
-      === Done. ===
-   === Updating crew member with id 5df8e0a004ccc019976c7d0a. ===
-      === Done. ===
-   === Listing crew members from the database. ===
-      === Done. There are 2 crew members. ===
-   === Removing 2 crew members from the database. ===
-      === Done. ===
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.411 s - in it.io.openliberty.guides.application.CrewServiceIT
-Results:
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+
+
+
+Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
+
+Because this request comes from ***localhost:9080*** and is made to ***localhost:9084***, it must follow the Cross-Origin Resource Sharing (CORS) specification to avoid being blocked by the browser. To enable CORS for the client, set the ***withCredentials*** configuration element to true in the parameters of the ***EventSource*** interface. CORS is already enabled for you in the ***bff*** service. To learn more about CORS, check out the [CORS guide](https://openliberty.io/guides/cors.html).
+
+
+### Consuming the SSE
+
+The ***EventSource.addEventListener()*** method is called to add an event listener. This event listener listens for events with the name of ***systemLoad***. The ***systemLoadHandler()*** function is set as the handler function, and each time an event is received, this function is called. The ***systemLoadHandler()*** function will take the event object and parse the event's data property from a JSON string into a JavaScript object. The contents of this object are used to update the table with the system hostname and load. If a system is already present in the table, the load is updated, otherwise a new row is added for the system.
+
+
+::page{title="Building and running the application"}
+
+To build the application, navigate to the ***start*** directory and run the following Maven ***install*** and ***package*** goals from the command line:
+
+```bash
+cd /home/project/guide-reactive-messaging-sse/start
+./mvnw -pl models install
+./mvnw package
 ```
+
+
+Run the following commands to containerize the ***frontend***, ***bff***, and ***system*** services:
+
+```bash
+docker build -t frontend:1.0-SNAPSHOT frontend/.
+docker build -t bff:1.0-SNAPSHOT bff/.
+docker build -t system:1.0-SNAPSHOT system/.
+```
+
+Next, use the following ***startContainers.sh*** script to start the application in Docker containers:
+
+
+
+```bash
+./scripts/startContainers.sh
+```
+
+This script creates a network for the containers to communicate with each other. It also creates containers for Kafka, the ***frontend*** service, the ***bff*** service , and three instances of the ***system*** service.
+
+
+The application might take some time to get ready. Run the following command to confirm that the ***bff*** microservice is up and running:
+```bash
+curl -s http://localhost:9084/health | jq
+```
+
+Once your application is up and running, use the following command to get the URL. Open your browser and check out your ***front*** service by going to the URL that the command returns.
+```bash
+echo https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+```
+
+The latest version of most modern web browsers supports Server-Sent Events. The exception is Internet Explorer, which does not support SSE. When you visit the URL, look for a table similar to the following example:
+
+![System table](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-messaging-sse/prod/assets/system_table.png)
+
+
+The table contains three rows, one for each of the running ***system*** containers. If you can see the loads updating, you know that your ***bff*** service is successfully receiving messages and broadcasting them as SSE to the client in the ***frontend*** service.
+
 
 ::page{title="Tearing down the environment"}
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
+Run the following script to stop the application:
 
-Then, run the following commands to stop and remove the ***mongo-guide*** container and to remove the ***mongo-sample*** and ***mongo*** images.
 
 ```bash
-docker stop mongo-guide
-docker rm mongo-guide
-docker rmi mongo-sample
+./scripts/stopContainers.sh
 ```
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You've successfully accessed and persisted data to a MongoDB database from a Java microservice using Contexts and Dependency Injection (CDI) and MicroProfile Config with Open Liberty.
+You developed an application that subscribes to Server-Sent Events by using MicroProfile Reactive Messaging, Open Liberty, and Kafka.
 
 
 
@@ -1024,36 +354,41 @@ You've successfully accessed and persisted data to a MongoDB database from a Jav
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-mongodb-intro*** project by running the following commands:
+Delete the ***guide-reactive-messaging-sse*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-mongodb-intro
+rm -fr guide-reactive-messaging-sse
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Persisting%20data%20with%20MongoDB&guide-id=cloud-hosted-guide-mongodb-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Streaming%20updates%20to%20a%20client%20using%20Server-Sent%20Events&guide-id=cloud-hosted-guide-reactive-messaging-sse)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-mongodb-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-mongodb-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-reactive-messaging-sse/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-reactive-messaging-sse/pulls)
 
 
 
 ### Where to next?
 
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
+* [Acknowledging messages using MicroProfile Reactive Messaging](https://openliberty.io/guides/microprofile-reactive-messaging-acknowledgment.html)
+* [Integrating RESTful services with a reactive system](https://openliberty.io/guides/microprofile-reactive-messaging-rest-integration.html)
+* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
+* [Containerizing microservices](https://openliberty.io/guides/containerize.html)
 
 **Learn more about MicroProfile**
 * [See the MicroProfile specs](https://microprofile.io/)
 * [View the MicroProfile API](https://openliberty.io/docs/ref/microprofile)
+* [View the MicroProfile Reactive Messaging Specification](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/microprofile-reactive-messaging-spec.html#_microprofile_reactive_messaging)
+* [View the JAX-RS Server-Sent Events API](https://openliberty.io/docs/ref/javaee/8/#package=javax/ws/rs/sse/package-frame.html&class=javax/ws/rs/sse/package-summary.html)
+* [View the Server-Sent Events HTML Specification](https://html.spec.whatwg.org/multipage/server-sent-events.html)
 
 
 ### Log out of the session
