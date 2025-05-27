@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Deploying a microservice to OpenShift 4 using Open Liberty Operator guide!"}
+::page{title="Welcome to the Integrating RESTful services with a reactive system guide!"}
 
-Explore how to deploy a microservice to Red Hat OpenShift 4 using Open Liberty Operator.
+Learn how to integrate RESTful Java microservices with a reactive system by using MicroProfile Reactive Messaging.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -16,17 +16,16 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You will learn how to deploy a cloud-native application with a microservice to Red Hat OpenShift 4 by using the Open Liberty Operator. 
+You will learn how to integrate RESTful Java microservices with a reactive system by using MicroProfile Reactive Messaging. RESTful Java microservices don't use reactive concepts, so you will learn how to bridge the gap between the two using the RxJava library. In this guide, you will modify two microservices in an application so that when a user hits the RESTful endpoint, the microservice generates producer events.
 
-[OpenShift](https://www.openshift.com/) is a Kubernetes-based platform with added functions. It streamlines the DevOps process by providing an intuitive development pipeline. It also provides integration with multiple tools to make the deployment and management of cloud applications easier. You can learn more about Kubernetes by checking out the [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html) guide.
+The application in this guide consists of two microservices, ***system*** and ***inventory***. The following diagram illustrates the application:
 
-[Kubernetes operators](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/#operators-in-kubernetes) provide an easy way to automate the management and updating of applications by abstracting away some of the details of cloud application management. To learn more about operators, check out this [Operators tech topic article](https://www.openshift.com/learn/topics/operators). 
-
-The application in this guide consists of one microservice, ***system***. The system microservice returns the JVM system properties of its host.
-
-You will deploy the ***system*** microservice by using the Open Liberty Operator. The [Open Liberty Operator](https://github.com/OpenLiberty/open-liberty-operator) provides a method of packaging, deploying, and managing Open Liberty applications on Kubernetes-based clusters. The Open Liberty Operator watches Open Liberty resources and creates various Kubernetes resources, including ***Deployments***, ***Services***, and ***Routes***, depending on the configurations. The Operator then continuously compares the current state of the resources with the desired state of application deployment and reconciles them when necessary.
+![Reactive system inventory](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging-rest-integration/prod/assets/reactive-messaging-system-inventory-rest.png)
 
 
+Every 15 seconds, the ***system*** microservice calculates and publishes events that contain its current average system load. The ***inventory*** microservice subscribes to that information so that it can keep an updated list of all the systems and their current system loads. The current inventory of systems can be accessed via the ***/systems*** REST endpoint.
+
+You will update the ***inventory*** microservice to subscribe to a ***PUT*** request response. This ***PUT*** request response accepts a specific system property in the request body, queries that system property on the ***system*** microservice, and provides the response. You will also update the ***system*** microservice to handle receiving and sending events that are produced by the new endpoint. You will configure new channels to handle the events that are sent and received by the new endpoint. To learn more about how the reactive Java services that are used in this guide work, check out the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
 ::page{title="Getting started"}
 
@@ -39,11 +38,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-openliberty-operator-openshift.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-reactive-messaging-rest-integration.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-openliberty-operator-openshift.git
-cd guide-openliberty-operator-openshift
+git clone https://github.com/openliberty/guide-microprofile-reactive-messaging-rest-integration.git
+cd guide-microprofile-reactive-messaging-rest-integration
 ```
 
 
@@ -51,423 +50,430 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
+::page{title="Adding a REST endpoint that produces events"}
 
-::page{title="Installing the Operator"}
 
 
-A project is created for you to use in this exercise. Run the following command to see your project name:
+To begin, run the following command to navigate to the ***start*** directory:
+```bash
+cd /home/project/guide-microprofile-reactive-messaging-rest-integration/start
+```
+
+
+The ***inventory*** microservice records and stores the average system load information from all of the connected system microservices. However, the ***inventory*** microservice does not contain an accessible REST endpoint to control the sending or receiving of reactive messages. Add the ***/data*** RESTful endpoint to the ***inventory*** service by replacing the ***InventoryResource*** class with an updated version of the class.
+
+Replace the ***InventoryResource*** class.
+
+> To open the InventoryResource.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-reactive-messaging-rest-integration/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-reactive-messaging-rest-integration/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java"}
+
+
+
+```java
+package io.openliberty.guides.inventory;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.eclipse.microprofile.reactive.messaging.Outgoing;
+import org.reactivestreams.Publisher;
+
+import io.openliberty.guides.models.PropertyMessage;
+import io.openliberty.guides.models.SystemLoad;
+import io.reactivex.rxjava3.core.BackpressureStrategy;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.FlowableEmitter;
+
+
+@ApplicationScoped
+@Path("/inventory")
+public class InventoryResource {
+
+    private static Logger logger = Logger.getLogger(InventoryResource.class.getName());
+    private FlowableEmitter<String> propertyNameEmitter;
+
+    @Inject
+    private InventoryManager manager;
+
+    @GET
+    @Path("/systems")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getSystems() {
+        List<Properties> systems = manager.getSystems()
+                                          .values()
+                                          .stream()
+                                          .collect(Collectors.toList());
+        return Response.status(Response.Status.OK)
+                       .entity(systems)
+                       .build();
+    }
+
+    @GET
+    @Path("/systems/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getSystem(@PathParam("hostname") String hostname) {
+        Optional<Properties> system = manager.getSystem(hostname);
+        if (system.isPresent()) {
+            return Response.status(Response.Status.OK)
+                           .entity(system)
+                           .build();
+        }
+        return Response.status(Response.Status.NOT_FOUND)
+                       .entity("hostname does not exist.")
+                       .build();
+    }
+
+    @PUT
+    @Path("/data")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.TEXT_PLAIN)
+    public Response updateSystemProperty(String propertyName) {
+        logger.info("updateSystemProperty: " + propertyName);
+        propertyNameEmitter.onNext(propertyName);
+        return Response
+                 .status(Response.Status.OK)
+                 .entity("Request successful for the " + propertyName + " property\n")
+                 .build();
+    }
+
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response resetSystems() {
+        manager.resetSystems();
+        return Response.status(Response.Status.OK)
+                       .build();
+    }
+
+    @Incoming("systemLoad")
+    public void updateStatus(SystemLoad sl)  {
+        String hostname = sl.hostname;
+        if (manager.getSystem(hostname).isPresent()) {
+            manager.updateCpuStatus(hostname, sl.loadAverage);
+            logger.info("Host " + hostname + " was updated: " + sl);
+        } else {
+            manager.addSystem(hostname, sl.loadAverage);
+            logger.info("Host " + hostname + " was added: " + sl);
+        }
+    }
+
+    @Incoming("addSystemProperty")
+    public void getPropertyMessage(PropertyMessage pm)  {
+        logger.info("getPropertyMessage: " + pm);
+        String hostId = pm.hostname;
+        if (manager.getSystem(hostId).isPresent()) {
+            manager.updatePropertyMessage(hostId, pm.key, pm.value);
+            logger.info("Host " + hostId + " was updated: " + pm);
+        } else {
+            manager.addSystem(hostId, pm.key, pm.value);
+            logger.info("Host " + hostId + " was added: " + pm);
+        }
+    }
+
+    @Outgoing("requestSystemProperty")
+    public Publisher<String> sendPropertyName() {
+        Flowable<String> flowable = Flowable.<String>create(emitter ->
+            this.propertyNameEmitter = emitter, BackpressureStrategy.BUFFER);
+        return flowable;
+    }
+}
+```
+
+
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+
+
+The ***updateSystemProperty()*** method creates the ***/data*** endpoint that accepts ***PUT*** requests with a system property name in the request body. The ***propertyNameEmitter*** variable is an RxJava ***Emitter*** interface that sends the property name request to the event stream, which is Apache Kafka in this case.
+
+The ***sendPropertyName()*** method contains the ***Flowable.create()*** RxJava method, which associates the emitter to a publisher that is responsible for publishing events to the event stream. The publisher in this example is then connected to the ***@Outgoing("requestSystemProperty")*** channel, which you will configure later in the guide. MicroProfile Reactive Messaging takes care of assigning the publisher to the channel.
+
+The ***Flowable.create()*** method also allows the configuration of a ***BackpressureStrategy*** object, which controls what the publisher does if the emitted events can't be consumed by the subscriber. In this example, the publisher used the ***BackpressureStrategy.BUFFER*** strategy. With this strategy, the publisher can buffer events until the subscriber can consume them.
+
+When the ***inventory*** service receives a request, it adds the system property name from the request body to the ***propertyNameEmitter*** ***FlowableEmitter*** interface. The property name sent to the emitter is then sent to the publisher. The publisher sends the event to the event channel by using the configured ***BackpressureStrategy*** object when necessary.
+
+::page{title="Adding an event processor to a reactive service"}
+
+The ***system*** microservice is the producer of the messages that are published to the Kafka messaging system as a stream of events. Every 15 seconds, the ***system*** microservice publishes events that contain its calculation of the average system load, which is its CPU usage, for the last minute. Replace the ***SystemService*** class to add message processing of the system property request from the ***inventory*** microservice and publish it to the Kafka messaging system.
+
+Replace the ***SystemService*** class.
+
+> To open the SystemService.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-reactive-messaging-rest-integration/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-reactive-messaging-rest-integration/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
+
+
+
+```java
+package io.openliberty.guides.system;
+
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
+
+import jakarta.enterprise.context.ApplicationScoped;
+
+import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.eclipse.microprofile.reactive.messaging.Outgoing;
+import org.reactivestreams.Publisher;
+
+import io.openliberty.guides.models.PropertyMessage;
+import io.openliberty.guides.models.SystemLoad;
+import io.reactivex.rxjava3.core.Flowable;
+
+@ApplicationScoped
+public class SystemService {
+
+    private static Logger logger = Logger.getLogger(SystemService.class.getName());
+
+    private static final OperatingSystemMXBean OS_MEAN =
+            ManagementFactory.getOperatingSystemMXBean();
+    private static String hostname = null;
+
+    private static String getHostname() {
+        if (hostname == null) {
+            try {
+                return InetAddress.getLocalHost().getHostName();
+            } catch (UnknownHostException e) {
+                return System.getenv("HOSTNAME");
+            }
+        }
+        return hostname;
+    }
+
+    @Outgoing("systemLoad")
+    public Publisher<SystemLoad> sendSystemLoad() {
+        return Flowable.interval(15, TimeUnit.SECONDS)
+                       .map((interval -> new SystemLoad(getHostname(),
+                             OS_MEAN.getSystemLoadAverage())));
+    }
+
+    @Incoming("propertyRequest")
+    @Outgoing("propertyResponse")
+    public PropertyMessage sendProperty(String propertyName) {
+        logger.info("sendProperty: " + propertyName);
+        if (propertyName == null || propertyName.isEmpty()) {
+            logger.warning(propertyName == null ? "Null" : "An empty string"
+                + " is not System property.");
+            return null;
+        }
+        return new PropertyMessage(getHostname(),
+                       propertyName,
+                       System.getProperty(propertyName, "unknown"));
+    }
+}
+```
+
+
+
+A new method that is named ***sendProperty()*** receives a system property name from the ***inventory*** microservice over the ***@Incoming("propertyRequest")*** channel. The method calculates the requested property in real time and publishes it back to Kafka over the ***@Outgoing("propertyResponse")*** channel. In this scenario, the ***sendProperty()*** method acts as a processor. Next, you'll configure the channels that you need.
+
+::page{title="Configuring the MicroProfile Reactive Messaging connectors for Kafka"}
+
+
+The ***system*** and ***inventory*** microservices each have a MicroProfile Config property file in which the properties of their incoming and outgoing channels are defined. These properties include the names of channels, the topics in the Kafka messaging system, and the associated message serializers and deserializers. To complete the message loop created in the previous sections, four channels must be added and configured.
+
+Replace the inventory/microprofile-config.properties file.
+
+> To open the microprofile-config.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-reactive-messaging-rest-integration/start/inventory/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-reactive-messaging-rest-integration/start/inventory/src/main/resources/META-INF/microprofile-config.properties"}
+
+
+
+```
+mp.messaging.connector.liberty-kafka.bootstrap.servers=kafka:9092
+
+mp.messaging.incoming.systemLoad.connector=liberty-kafka
+mp.messaging.incoming.systemLoad.topic=system.load
+mp.messaging.incoming.systemLoad.key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
+mp.messaging.incoming.systemLoad.value.deserializer=io.openliberty.guides.models.SystemLoad$SystemLoadDeserializer
+mp.messaging.incoming.systemLoad.group.id=system-load-status
+
+mp.messaging.incoming.addSystemProperty.connector=liberty-kafka
+mp.messaging.incoming.addSystemProperty.topic=add.system.property
+mp.messaging.incoming.addSystemProperty.key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
+mp.messaging.incoming.addSystemProperty.value.deserializer=io.openliberty.guides.models.PropertyMessage$PropertyMessageDeserializer
+mp.messaging.incoming.addSystemProperty.group.id=sys-property
+
+mp.messaging.outgoing.requestSystemProperty.connector=liberty-kafka
+mp.messaging.outgoing.requestSystemProperty.topic=request.system.property
+mp.messaging.outgoing.requestSystemProperty.key.serializer=org.apache.kafka.common.serialization.StringSerializer
+mp.messaging.outgoing.requestSystemProperty.value.serializer=org.apache.kafka.common.serialization.StringSerializer
+```
+
+
+
+The newly created RESTful endpoint requires two new channels that move the requested messages between the ***system*** and ***inventory*** microservices. The ***inventory*** microservice ***microprofile-config.properties*** file now has two new channels, ***requestSystemProperty*** and ***addSystemProperty***. The ***requestSystemProperty*** channel handles sending the system property request, and the ***addSystemProperty*** channel handles receiving the system property response.
+
+Replace the system/microprofile-config.properties file.
+
+> To open the microprofile-config.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-reactive-messaging-rest-integration/start/system/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-reactive-messaging-rest-integration/start/system/src/main/resources/META-INF/microprofile-config.properties"}
+
+
+
+```
+mp.messaging.connector.liberty-kafka.bootstrap.servers=kafka:9092
+
+mp.messaging.outgoing.systemLoad.connector=liberty-kafka
+mp.messaging.outgoing.systemLoad.topic=system.load
+mp.messaging.outgoing.systemLoad.key.serializer=org.apache.kafka.common.serialization.StringSerializer
+mp.messaging.outgoing.systemLoad.value.serializer=io.openliberty.guides.models.SystemLoad$SystemLoadSerializer
+
+mp.messaging.outgoing.propertyResponse.connector=liberty-kafka
+mp.messaging.outgoing.propertyResponse.topic=add.system.property
+mp.messaging.outgoing.propertyResponse.key.serializer=org.apache.kafka.common.serialization.StringSerializer
+mp.messaging.outgoing.propertyResponse.value.serializer=io.openliberty.guides.models.PropertyMessage$PropertyMessageSerializer
+
+mp.messaging.incoming.propertyRequest.connector=liberty-kafka
+mp.messaging.incoming.propertyRequest.topic=request.system.property
+mp.messaging.incoming.propertyRequest.key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
+mp.messaging.incoming.propertyRequest.value.deserializer=org.apache.kafka.common.serialization.StringDeserializer
+mp.messaging.incoming.propertyRequest.group.id=property-name
+```
+
+
+
+Replace the ***system*** microservice ***microprofile-config.properties*** file to add the two new ***propertyRequest*** and ***propertyResponse*** channels. The ***propertyRequest*** channel handles receiving the property request, and the ***propertyResponse*** channel handles sending the property response.
+
+::page{title="Building and running the application"}
+
+Build the ***system*** and ***inventory*** microservices using Maven and then run them in Docker containers.
+
+Start your Docker environment. Dockerfiles are provided for you to use.
+
+To build the application, run the Maven ***install*** and ***package*** goals from the command line in the ***start*** directory:
+
 
 ```bash
-oc projects
+./mvnw -pl models install
+./mvnw package
 ```
 
-In this Skill Network enviornment, the Open Liberty Operator is already installed by the administrator. If you like to learn how to install the Open Liberty Operator, you can learn from the [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators) guide or the Open Liberty Operator [document](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1.adoc#operator-installation).
 
-Run the following command to view all the supported API resources that are available through the Open Liberty Operator:
+
+Run the following commands to containerize the microservices:
 
 ```bash
-oc api-resources --api-group=apps.openliberty.io
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
 ```
 
-Look for the following output, which shows the [custom resource definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRDs) that can be used by the Open Liberty Operator:
-
-```
-NAME                      SHORTNAMES         APIVERSION               NAMESPACED   KIND
-openlibertyapplications   olapp,olapps       apps.openliberty.io/v1   true         OpenLibertyApplication
-openlibertydumps          oldump,oldumps     apps.openliberty.io/v1   true         OpenLibertyDump
-openlibertytraces         oltrace,oltraces   apps.openliberty.io/v1   true         OpenLibertyTrace
-```
-
-Each CRD defines a kind of object that can be used, which is specified in the previous example by the ***KIND*** value. The ***SHORTNAME*** value specifies alternative names that you can substitute in the configuration to refer to an object kind. For example, you can refer to the ***OpenLibertyApplication*** object kind by one of its specified shortnames, such as ***olapps***. 
-
-The ***openlibertyapplications*** CRD defines a set of configurations for deploying an Open Liberty-based application, including the application image, number of instances, and storage settings. The Open Liberty Operator watches for changes to instances of the ***OpenLibertyApplication*** object kind and creates Kubernetes resources that are based on the configuration that is defined in the CRD.
-
-
-::page{title="Deploying the system microservice to OpenShift"}
-
-To deploy the ***system*** microservice, you must first package the microservice, then create and run an OpenShift build to produce runnable container images of the packaged microservice.
-
-### Packaging the microservice
-
-Ensure that you are in the ***start*** directory and run the following command to package the ***system*** microservice:
+Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It also creates containers for Kafka and the microservices in the project. For simplicity, the script starts one instance of the ***system*** service.
 
 
 ```bash
-cd /home/project/guide-openliberty-operator-openshift/start
-./mvnw clean package
+./scripts/startContainers.sh
 ```
 
-### Building and pushing the image
+::page{title="Testing the application"}
 
-Create a build template to configure how to build your container image.
+The application might take some time to become available. After the application is up and running, you can access it by making a GET request to the ***/systems*** endpoint of the ***inventory*** service.
 
-Create the ***build.yaml*** template file in the ***start*** directory.
 
-> Run the following touch command in your terminal
+Run the following curl command to confirm that the ***inventory*** microservice is up and running.
 ```bash
-touch /home/project/guide-openliberty-operator-openshift/start/build.yaml
+curl -s http://localhost:9085/health | jq
+```
+
+When both the liveness and readiness health checks are up, run the following curl command to access the  ***inventory*** microservice:
+```bash
+curl -s http://localhost:9085/inventory/systems | jq
+```
+
+You see the CPU ***systemLoad*** property for all the systems:
+
+```
+{
+   "hostname":"30bec2b63a96",   
+   "systemLoad":1.44
+}
 ```
 
 
-> Then, to open the build.yaml file in your IDE, select
-> ***File*** > ***Open*** > guide-openliberty-operator-openshift/start/build.yaml, or click the following button
-
-::openFile{path="/home/project/guide-openliberty-operator-openshift/start/build.yaml"}
-
-
-
-```yaml
-apiVersion: template.openshift.io/v1
-kind: Template
-metadata:
-  name: "build-template"
-  annotations:
-    description: "Build template for the system service"
-    tags: "build"
-objects:
-  - apiVersion: v1
-    kind: ImageStream
-    metadata:
-      name: "system-imagestream"
-      labels:
-        name: "system"
-  - apiVersion: v1
-    kind: BuildConfig
-    metadata:
-      name: "system-buildconfig"
-      labels:
-        name: "system"
-    spec:
-      source:
-        type: Binary
-      strategy:
-        type: Docker
-      output:
-        to:
-          kind: ImageStreamTag
-          name: "system-imagestream:1.0-SNAPSHOT"
+You can revisit the ***inventory*** service after a while by running the following curl command:
+```bash
+curl -s http://localhost:9085/inventory/systems | jq
 ```
 
+Notice the value of the ***systemLoad*** property for the systems is changed.
 
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Make a ***PUT*** request on the ***http://localhost:9085/inventory/data*** URL to add the value of a particular system property to the set of existing properties. For example, run the following ***curl*** command:
 
-
-The ***build.yaml*** template includes two objects. The ***ImageStream*** object provides an abstraction from the image in the image registry, which allows you to reference and tag the image. The image registry is the integrated internal OpenShift Container Registry.
-
-The ***BuildConfig*** object defines a single build definition and any triggers that kickstart the build. The ***source*** spec defines the build input. In this case, the build inputs are your ***binary*** (local) files, which are streamed to OpenShift for the build. The uploaded files need to include the packaged ***WAR*** application binaries, which is why you needed to run the Maven commands. The template specifies a ***Docker*** strategy build, which invokes the ***docker build*** command, and creates a runnable container image of the microservice from the build input.
-
-Run the following command to create the objects for the ***system*** microservice:
 
 ```bash
-oc process -f build.yaml | oc create -f -
+curl -X PUT -d "os.name" http://localhost:9085/inventory/data --header "Content-Type:text/plain"
 ```
 
-Next, run the following command to view the newly created ***ImageStream*** objects and the build configurations for the microservice:
+In this example, the ***PUT*** request with the ***os.name*** system property in the request body on the ***http://localhost:9085/inventory/data*** URL adds the ***os.name*** system property for your system.
 
+You see the following output:
+
+```
+Request successful for the os.name property
+```
+
+The ***system*** service is available so the request to the service is successful and returns a ***200*** response code.
+
+
+You can revisit the ***inventory*** service by running the following curl command:
 ```bash
-oc get all -l name=system
+curl -s http://localhost:9085/inventory/systems | jq
 ```
 
-Look for the following similar resources:
+Notice that the ***os.name*** system property value is now included with the previous values:
 
 ```
-NAME                                                TYPE     FROM     LATEST
-buildconfig.build.openshift.io/system-buildconfig   Docker   Binary   0
-
-NAME                                                IMAGE REPOSITORY                                                                   TAGS           UPDATED
-imagestream.image.openshift.io/system-imagestream   default-route-openshift-image-registry.apps-crc.testing/guide/system-imagestream
-```   
-
-Ensure that you are in the ***start*** directory and trigger the build by running the following command:
-
-```bash
-oc start-build system-buildconfig --from-dir=system/.
+{
+   "hostname":"30bec2b63a96",
+   "os.name":"Linux",
+   "systemLoad":1.44
+}
 ```
-
-The local ***system*** directory is uploaded to OpenShift to be built into the Docker image. Run the following command to list the build and track its status:
-
-```bash
-oc get builds
-```
-
-Look for the output that is similar to the following example:
-
-```
-NAME                    TYPE     FROM             STATUS     STARTED
-system-buildconfig-1    Docker   Binary@f24cb58   Running    45 seconds ago
-```
-
-You might need to wait some time until the build is complete. To check whether the build is complete, run the following command to view the build log until the ***Push successful*** message appears:
-
-```bash
-oc logs build/system-buildconfig-1
-```
-
-### Checking the image
-
-During the build process, the image associated with the ***ImageStream*** object that you created earlier was pushed to the image registry and tagged. Run the following command to view the newly updated ***ImageStream*** object:
-
-```bash
-oc get imagestreams
-```
-
-Run the following command to get more details on the newly pushed image within the stream:
-
-```bash
-oc describe imagestream/system-imagestream
-```
-
-The following example shows part of the ***system-imagestream*** output:
-
-```
-Name:               system-imagestream
-Namespace:          guide
-Created:            2 minutes ago
-Labels:             name=system
-Annotations:        <none>
-Image Repository:   default-route-openshift-image-registry.apps-crc.testing/guide/system-imagestream
-Image Lookup:       local=false
-Unique Images:      1
-Tags:               1
-
-...
-```
-
-Now you're ready to deploy the image.
-
-### Deploying the image
-
-You can configure the specifics of the Open Liberty Operator-controlled deployment with a YAML configuration file.
-
-Create the ***deploy.yaml*** configuration file in the ***start*** directory.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-openliberty-operator-openshift/start/deploy.yaml
-```
-
-
-> Then, to open the deploy.yaml file in your IDE, select
-> ***File*** > ***Open*** > guide-openliberty-operator-openshift/start/deploy.yaml, or click the following button
-
-::openFile{path="/home/project/guide-openliberty-operator-openshift/start/deploy.yaml"}
-
-
-
-```yaml
-apiVersion: apps.openliberty.io/v1
-kind: OpenLibertyApplication
-metadata:
-  name: system
-  labels:
-    name: system
-spec:
-  applicationImage: guide/system-imagestream:1.0-SNAPSHOT
-  pullPolicy: Always
-  service:
-    port: 9443
-  expose: true
-  env:
-    - name: WLP_LOGGING_MESSAGE_FORMAT
-      value: "json"
-    - name: WLP_LOGGING_MESSAGE_SOURCE
-      value: "message,trace,accessLog,ffdc,audit"
-```
-
-
-
-The ***deploy.yaml*** file is configured to deploy one ***OpenLibertyApplication*** resource, ***system***, which is controlled by the Open Liberty Operator.
-
-The ***applicationImage*** parameter defines what container image is deployed as part of the ***OpenLibertyApplication*** CRD. This parameter follows the ***\<project-name\>/\<image-stream-name\>[:tag]*** format. The parameter can also point to an image hosted on an external registry, such as Docker Hub. The ***system*** microservice is configured to use the ***image*** created from the earlier build. 
-
-One of the benefits of using ***ImageStream*** objects is that the operator redeploys the application when it detects that a new image is pushed. The ***env*** parameter is used to specify environment variables that are passed to the container at runtime.
-
-Additionally, the microservice includes the ***service*** and ***expose*** parameters. The ***service.port*** parameter specifies which port is exposed by the container, allowing the microservice to be accessed from outside the container. To access the microservice from outside of the cluster, it must be exposed by setting the ***expose*** parameter to ***true***. After you expose the microservice, the Operator automatically creates and configures routes for external access to your microservice.
-
-
-Run the following commands to update the **applicationImage** with the **pullSecret** and deploy the **system** microservice with the previously explained configuration:
-```bash
-sed -i 's=guide/system-imagestream:1.0-SNAPSHOT='"$SN_ICR_NAMESPACE"'/system-imagestream:1.0-SNAPSHOT\n  pullSecret: icr=g' deploy.yaml
-oc apply -f deploy.yaml
-```
-
-Next, run the following command to view your newly created ***OpenLibertyApplications*** resources:
-
-```bash
-oc get OpenLibertyApplications
-```
-
-You can also replace ***OpenLibertyApplications*** with the shortname ***olapps***.
-
-Look for output that is similar to the following example:
-
-```
-NAME      IMAGE                                    EXPOSED   RECONCILED   AGE
-system    guide/system-imagestream:1.0-SNAPSHOT    true      True         10s
-```
-
-A ***RECONCILED*** state value of ***True*** indicates that the operator was able to successfully process the ***OpenLibertyApplications*** instances. Run the following command to view details of your microservice:
-
-```bash
-oc describe olapps/system
-```
-
-This example shows part of the ***olapps/system*** output:
-
-```
-Name:         system
-Namespace:    guide
-Labels:       app.kubernetes.io/part-of=system
-              name=system
-Annotations:  <none>
-API Version:  apps.openliberty.io/v1
-Kind:         OpenLibertyApplication
-
-...
-```
-
-::page{title="Accessing the microservice"}
-
-To access the exposed ***system*** microservice, run the following command and make note of the ***HOST***:
-
-```bash
-oc get routes
-```
-
-Look for an output that is similar to the following example:
-
-```
-NAME     HOST/PORT                                                     PATH   SERVICES   PORT       TERMINATION   WILDCARD
-system   system-guide.2886795274-80-kota02.environments.katacoda.com          system     9443-tcp                 None
-```
-
-
-Visit the microservice by going to the following URL: 
-***https://[HOST]/system/properties***
-
-Make sure to substitute the appropriate ***[HOST]*** value. For example, using the output from the command above, ***system-guide.2886795274-80-kota02.environments.katacoda.com*** is the ***HOST***. The following example shows this value substituted for ***HOST*** in the URL: ***https://system-guide.2886795274-80-kota02.environments.katacoda.com/system/properties***.
-
-Or, you can run the following command to get the URL:
-```bash
-echo https://`oc get routes system -o jsonpath='{.spec.host}'`/system/properties
-```
-
-Then, hold the **CTRL** key and click on the URL in the terminal to visit the microservice.
-
-When you’re done trying out the microservice, run following command to stop the microservice:
-```bash
-oc delete -f deploy.yaml
-```
-
-::page{title="Specifying optional parameters"}
-
-You can also use the Open Liberty Operator to implement optional parameters in your application deployment by specifying the associated CRDs in your ***deploy.yaml*** file. For example, you can configure the [Kubernetes liveness, readiness and startup probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/). Visit the [Open Liberty Operator user guide](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1.adoc#configuration) to find all of the supported optional CRDs.
-
-To configure the Kubernetes liveness, readiness and startup probes by using the Open Liberty Operator, specify the ***probes*** in your ***deploy.yaml*** file. The ***startup*** probe verifies whether deployed application is fully initialized before the liveness probe takes over. Then, the ***liveness*** probe determines whether the application is running and the ***readiness*** probe determines whether the application is ready to process requests. For more information about application health checks, see the [Checking the health of microservices on Kubernetes](https://openliberty.io/guides/kubernetes-microprofile-health.html) guide.
-
-Replace the ***deploy.yaml*** configuration file.
-
-> To open the deploy.yaml file in your IDE, select
-> ***File*** > ***Open*** > guide-openliberty-operator-openshift/start/deploy.yaml, or click the following button
-
-::openFile{path="/home/project/guide-openliberty-operator-openshift/start/deploy.yaml"}
-
-
-
-```yaml
-apiVersion: apps.openliberty.io/v1
-kind: OpenLibertyApplication
-metadata:
-  name: system
-  labels:
-    name: system
-spec:
-  applicationImage: guide/system-imagestream:1.0-SNAPSHOT
-  pullPolicy: Always
-  service:
-    port: 9443
-  expose: true
-  env:
-    - name: WLP_LOGGING_MESSAGE_FORMAT
-      value: "json"
-    - name: WLP_LOGGING_MESSAGE_SOURCE
-      value: "message,trace,accessLog,ffdc,audit"
-  probes:
-    startup:
-      failureThreshold: 12
-      httpGet:
-        path: /health/started
-        port: 9443
-        scheme: HTTPS
-      initialDelaySeconds: 30
-      periodSeconds: 2
-      timeoutSeconds: 10
-    liveness:
-      failureThreshold: 12
-      httpGet:
-        path: /health/live
-        port: 9443
-        scheme: HTTPS
-      initialDelaySeconds: 30
-      periodSeconds: 2
-      timeoutSeconds: 10
-    readiness:
-      failureThreshold: 12
-      httpGet:
-        path: /health/ready
-        port: 9443
-        scheme: HTTPS
-      initialDelaySeconds: 30
-      periodSeconds: 2
-      timeoutSeconds: 10
-```
-
-
-
-The ***/health/started***, ***/health/live***, and ***/health/ready*** health check endpoints are already created for you. 
-
-
-Run the following commands to update the **applicationImage** with the **pullSecret** and deploy the **system** microservice with the new configuration:
-```bash
-sed -i 's=guide/system-imagestream:1.0-SNAPSHOT='"$SN_ICR_NAMESPACE"'/system-imagestream:1.0-SNAPSHOT\n  pullSecret: icr=g' deploy.yaml
-oc apply -f deploy.yaml
-```
-Run the following command to check status of the pods:
-```bash
-oc describe pods | grep health
-```
-
-Look for the following output to confirm that the health checks are successfully applied and working:
-
-```
-Liveness:   http-get http://:9080/health/live delay=30s timeout=10s period=2s #success=1 #failure=12
-Readiness:  http-get http://:9080/health/ready delay=30s timeout=10s period=2s #success=1 #failure=12
-Startup:    http-get http://:9080/health/started delay=30s timeout=10s period=2s #success=1 #failure=12
-```
-
-Run the following command to get the URL:
-```bash
-echo https://`oc get routes system -o jsonpath='{.spec.host}'`/system/properties
-```
-
-Then, hold the **CTRL** key and click on the URL in the terminal to visit the microservice.
 
 ::page{title="Tearing down the environment"}
 
+Run the following script to stop the application:
 
-When you no longer need your deployed microservice, you can delete all resources by running the following commands:
 
 ```bash
-oc delete -f deploy.yaml
-oc delete imagestream.image.openshift.io/system-imagestream
-oc delete bc system-buildconfig
+./scripts/stopContainers.sh
 ```
+
+::page{title="Running multiple system instances"}
+
+
+This application has only one instance of the ***system*** service. The ***inventory*** service collects system properties of all ***system*** services in the application. As an exercise, start multiple ***system*** services to see how the application handles it. When you start the ***system*** instances, you must provide a unique ***group.id*** through the ***MP_MESSAGING_INCOMING_PROPERTYREQUEST_GROUP_ID*** environment variable.
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just deployed a microservice running in Open Liberty to OpenShift 4 and configured the Kubernetes liveness, readiness and startup probes by using the Open Liberty Operator.
+You successfully integrated a RESTful microservice with a reactive system by using MicroProfile Reactive Messaging.
 
 
 
@@ -476,32 +482,31 @@ You just deployed a microservice running in Open Liberty to OpenShift 4 and conf
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-openliberty-operator-openshift*** project by running the following commands:
+Delete the ***guide-microprofile-reactive-messaging-rest-integration*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-openliberty-operator-openshift
+rm -fr guide-microprofile-reactive-messaging-rest-integration
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Deploying%20a%20microservice%20to%20OpenShift%204%20using%20Open%20Liberty%20Operator&guide-id=cloud-hosted-guide-openliberty-operator-openshift)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Integrating%20RESTful%20services%20with%20a%20reactive%20system&guide-id=cloud-hosted-guide-microprofile-reactive-messaging-rest-integration)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-openliberty-operator-openshift/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-openliberty-operator-openshift/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging-rest-integration/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging-rest-integration/pulls)
 
 
 
 ### Where to next?
 
-* [Deploying microservices to OpenShift 3](https://openliberty.io/guides/cloud-openshift.html)
-* [Deploying microservices to OpenShift 4 using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html)
-* [Deploying microservices to an OKD cluster using Minishift](https://openliberty.io/guides/okd.html)
+* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
+* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
 
 
 ### Log out of the session
