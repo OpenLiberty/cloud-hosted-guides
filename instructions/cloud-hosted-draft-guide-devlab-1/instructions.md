@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Building a dynamic web application with integrated user interface and backend logic guide!"}
+::page{title="Welcome to the Building true-to-production integration tests with Testcontainers guide!"}
 
-Learn how to build a dynamic web application using Jakarta Faces, Jakarta Contexts and Dependency Injection, and Jakarta Expression Language.
+Learn how to test your microservices with multiple containers by using Testcontainers and JUnit.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,16 +14,20 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 ::page{title="What you'll learn"}
 
-You'll learn how to build a dynamic web application using Jakarta Faces for the user interface (UI), Jakarta Contexts and Dependency Injection (CDI) for managing backend logic, and Jakarta Expression Language (EL) for data binding.
+You'll learn how to write true-to-production integration tests for Java microservices by using [Testcontainers](https://www.testcontainers.org/) and JUnit. You'll learn to set up and configure multiple containers, including the Open Liberty Docker container, to simulate a production-like environment for your tests.
 
-Jakarta Faces is a framework for building component-based web applications that simplifies UI development by managing reusable components, handling user interactions, and binding data to backend logic. It provides built-in lifecycle management, event handling, and server-side validation, reducing the need for manual request processing. Jakarta Faces also includes tag libraries that allows developers define UI components using markup and connect them to backend objects without writing repetitive setup code.
+Sometimes tests might pass in development and testing environments, but fail in production because of the differences in how the application operates across these environments. Fortunately, you can minimize these differences by testing your application with the same Docker containers you use in production. This approach helps to ensure parity across the development, testing, and production environments, enhancing quality and test reliability.
 
-To further streamline development, Jakarta Faces works with CDI to manage backend components. CDI allows beans to be automatically created and injected where needed, making it easier to manage application logic. Jakarta Expression Language enables data binding between the UI and backend, allowing UI components to dynamically display data and trigger backend actions.
+### What is Testcontainers?
 
-The application you will build in this guide is a dynamic web application that displays system load data on demand. Using Jakarta Faces for the UI, you'll create a table to show the system CPU load and heap memory usage. You'll also learn how to use CDI to provide the system load data from a managed bean, and to use Jakarta Expression Language to bind this data to the UI components.
+Testcontainers is an open source library that provides containers as a resource at test time, creating consistent and portable testing environments. This is especially useful for applications that have external resource dependencies such as databases, message queues, or web services. By encapsulating these dependencies in containers, Testcontainers simplifies the configuration process and ensures a uniform testing setup that closely mirrors production environments.
+
+The microservice that you'll be working with is called ***inventory***. The ***inventory*** microservice persists data into a PostgreSQL database and supports create, retrieve, update, and delete (CRUD) operations on the database records. You'll write integration tests for the application by using Testcontainers to run it in Docker containers.
+
+![Inventory microservice](https://raw.githubusercontent.com/OpenLiberty/guide-testcontainers/prod/assets/inventory.png)
+
 
 ::page{title="Getting started"}
 
@@ -36,11 +40,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-jakarta-faces.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-testcontainers.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-jakarta-faces.git
-cd guide-jakarta-faces
+git clone https://github.com/openliberty/guide-testcontainers.git
+cd guide-testcontainers
 ```
 
 
@@ -48,512 +52,821 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
+In this IBM Cloud environment, you need to change the user home to ***/home/project*** by running the following command:
+```bash
+sudo usermod -d /home/project theia
+```
+
 ### Try what you'll build
 
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed. 
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To try out the application, first go to the ***finish*** directory and run Maven with the ***liberty:run*** goal to build the application and deploy it to Open Liberty:
+To try out the test, first go to the ***finish*** directory and run the following Maven goal that builds the application, starts the containers, runs the tests, and then stops the containers:
 
 
 ```bash
-cd finish
-./mvnw liberty:run
+cd /home/project/guide-testcontainers/finish
+export TESTCONTAINERS_RYUK_DISABLED=true
+./mvnw verify
 ```
 
-After you see the following message, your Liberty instance is ready.
+You see the following output:
 
 ```
-The defaultServer server is ready to run a smarter planet.
+ -------------------------------------------------------
+  T E S T S
+ -------------------------------------------------------
+ Running it.io.openliberty.guides.inventory.SystemResourceIT
+ ...
+ Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.118 s - in it.io.openliberty.guides.inventory.SystemResourceIT
+
+ Results:
+
+ Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 ```
 
+::page{title="Writing integration tests using Testcontainers"}
 
-Check out the web application by clicking the following button:
+Use Testcontainers to write integration tests that run in any environment with minimal setup using containers.
 
-::startApplication{port="9080" display="external" name="Launch application" route="/index.xhtml"}
-
-Click the <img src="https://raw.githubusercontent.com/OpenLiberty/guide-jakarta-faces/prod/assets/refresh.png" width="18" height="18" alt="refresh icon"> refresh button, located next to the table title, to update and display the latest system load data in the table.
-
-After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+Navigate to the ***postgres*** directory.
 
 ```bash
-./mvnw liberty:stop
+cd /home/project/guide-testcontainers/postgres
 ```
 
-::page{title="Creating a static Jakarta Faces page"}
 
-Start by creating a page that displays an empty table by using Jakarta Faces to extend standard HTML. The table will display the system load data and serves as the starting point for your application.
-
-Navigate to the ***start*** directory to begin.
+This guide uses Docker to run an instance of the PostgreSQL database for a fast installation and setup. A ***Dockerfile*** file is provided for you. Run the following command to use the Dockerfile to build the image:
 
 ```bash
-cd /home/project/guide-jakarta-faces/start
+docker build -t postgres-sample .
 ```
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+The PostgreSQL database is integral for the ***inventory*** microservice as it handles the persistence of data. Run the following command to start the PostgreSQL database, which runs the ***postgres-sample*** image in a Docker container and maps ***5432*** port from the container to your host machine:
 
 ```bash
-./mvnw liberty:dev
+docker run --name postgres-container --rm -e POSTGRES_PASSWORD=adminpwd -p 5432:5432 -d postgres-sample
 ```
 
-After you see the following message, your Liberty instance is ready in dev mode:
+Retrieve the PostgreSQL container IP address by running the following command:
+
+```bash
+docker inspect -f "{{.NetworkSettings.IPAddress }}" postgres-container
+```
+
+The command returns the PostgreSQL container IP address:
+
+```
+172.17.0.2
+```
+
+Now, navigate to the ***start*** directory to begin.
+
+```bash
+cd /home/project/guide-testcontainers/start
+```
+
+The Liberty Maven plug-in includes a ***devc*** goal that simplifies developing your application in a container by starting [dev mode](https://openliberty.io/docs/latest/development-mode.html#_container_support_for_dev_mode) with container support. This goal builds a Docker image, mounts the required directories, binds the required ports, and then runs the application inside of a container. Dev mode also listens for any changes in the application source code or configuration and rebuilds the image and restarts the container as necessary.
+
+In this IBM Cloud environment, you need to pre-create the ***logs*** directory by running the following commands:
+
+```bash
+mkdir -p /home/project/guide-testcontainers/start/target/liberty/wlp/usr/servers/defaultServer/logs
+chmod 777 /home/project/guide-testcontainers/start/target/liberty/wlp/usr/servers/defaultServer/logs
+```
+
+Build and run the container by running the ***devc*** goal with the PostgreSQL container IP address. If your PostgreSQL container IP address is not ***172.17.0.2***, replace the command with the right IP address.
+
+
+```bash
+./mvnw liberty:devc -DcontainerRunOpts="-e DB_HOSTNAME=172.17.0.2" -DserverStartTimeout=240
+```
+
+Wait a moment for dev mode to start. Some error messages are expected as a result of building the docker image. Although these messages are included on the standard error stream, in this case they are not errors, just logs of the docker build progress. After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
 **************************************************************
 *    Liberty is running in dev mode.
+*    ...
+*    Container network information:
+*        Container name: [ liberty-dev ]
+*        IP address [ 172.17.0.2 ] on container network [ bridge ]
+*    ...
 ```
 
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-Create the index.xhtml file.
+Dev mode holds your command-line session to listen for file changes.
+
+Click the following button to try out the ***inventory*** microservice manually by visiting the ***/openapi/ui*** endpoint. This interface provides a convenient visual way to interact with the APIs and test out their functionalities:
+
+::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
+
+Open another command-line session to continue.
+
+
+
+### Building a REST test client
+
+The REST test client is responsible for sending HTTP requests to an application and handling the responses. It enables accurate verification of the application's behavior by ensuring that it responds correctly to various scenarios and conditions. Using a REST client for testing ensures reliable interaction with the ***inventory*** microservice across various deployment environments: local processes, Docker containers, or containers through Testcontainers.
+
+Begin by creating a REST test client interface for the ***inventory*** microservice.
+
+Create the ***SystemResourceClient*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-jakarta-faces/start/src/main/webapp/index.xhtml
+touch /home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceClient.java
 ```
 
 
-> Then, to open the index.xhtml file in your IDE, select
-> ***File*** > ***Open*** > guide-jakarta-faces/start/src/main/webapp/index.xhtml, or click the following button
+> Then, to open the SystemResourceClient.java file in your IDE, select
+> ***File*** > ***Open*** > guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceClient.java, or click the following button
 
-::openFile{path="/home/project/guide-jakarta-faces/start/src/main/webapp/index.xhtml"}
+::openFile{path="/home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceClient.java"}
 
 
 
-```
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="jakarta.faces.html"
-      xmlns:f="jakarta.faces.core"
-      xmlns:ui="jakarta.faces.facelets">
+```java
+package it.io.openliberty.guides.inventory;
 
-  <h:head>
-    <meta charset="UTF-8" />
-    <title>Open Liberty - Jakarta Faces Example</title>
-    <h:outputStylesheet library="css" name="styles.css" />
-    <link href="favicon.ico" rel="icon" />
-    <link href="favicon.ico" rel="shortcut icon" />
-  </h:head>
-  <h:body>
-    <section id="appIntro">
-      <div id="titleSection">
-        <h1 id="appTitle">Jakarta Faces Example</h1>
-        <div class="line"></div>
-        <div class="headerImage"></div>
-      </div>
+import java.util.List;
 
-      <div class="msSection" id="systemLoads">
-        <div class="headerRow">
-          <div class="headerIcon">
-            <img src="#{resource['img/sysProps.svg']}" />
-          </div>
-          <div class="headerTitleWithButton" id="sysPropTitle">
-            <h2>System Loads</h2>
-          </div>
-        </div>
-        <div class="sectionContent">
-          <h:dataTable id="systemLoadsTable">
-            <h:column>
-              <f:facet name="header">Time</f:facet>
-            </h:column>
-            <h:column>
-              <f:facet name="header">CPU Load (%)</f:facet>
-            </h:column>
-            <h:column>
-              <f:facet name="header">Heap Memory Usage (%)</f:facet>
-            </h:column>
-          </h:dataTable>
-        </div>
-      </div>
-    </section>
-    <ui:include src="/WEB-INF/includes/footer.xhtml" />
-  </h:body>
-</html>
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+
+@ApplicationScoped
+@Path("/systems")
+public interface SystemResourceClient {
+
+    @GET
+    @Path("/")
+    @Produces(MediaType.APPLICATION_JSON)
+    List<SystemData> listContents();
+
+    @GET
+    @Path("/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    SystemData getSystem(
+        @PathParam("hostname") String hostname);
+
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    Response addSystem(
+        @QueryParam("hostname") String hostname,
+        @QueryParam("osName") String osName,
+        @QueryParam("javaVersion") String javaVersion,
+        @QueryParam("heapSize") Long heapSize);
+
+    @PUT
+    @Path("/{hostname}")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    Response updateSystem(
+        @PathParam("hostname") String hostname,
+        @QueryParam("osName") String osName,
+        @QueryParam("javaVersion") String javaVersion,
+        @QueryParam("heapSize") Long heapSize);
+
+    @DELETE
+    @Path("/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    Response removeSystem(
+        @PathParam("hostname") String hostname);
+}
+
 ```
 
 
 Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
+The ***SystemResourceClient*** interface declares the ***listContents()***, ***getSystem()***, ***addSystem()***, ***updateSystem()***, and ***removeSystem()*** methods for accessing the corresponding endpoints within the ***inventory*** microservice.
 
-In the ***index.xhtml*** file, the ***xmlns*** attributes define the XML namespaces for various Jakarta Faces tag libraries. These namespaces allow the page to use Jakarta Faces tags for templating, creating UI components, and enabling core functionality, such as form submissions and data binding. For more information on the various tag libraries and their roles in Jakarta Faces, refer to the [Jakarta Faces Tag Libraries](https://jakarta.ee/learn/docs/jakartaee-tutorial/current/web/faces-facelets/faces-facelets.html#_tag_libraries_supported_by_facelets) and the [VDL Documentation Generator](https://jakarta.ee/specifications/faces/4.0/vdldoc) documentation.
+Next, create the ***SystemData*** data model for testing.
 
-The ***index.xhtml*** file combines standard HTML elements with Jakarta Faces components, providing both static layout and dynamic functionality. Standard HTML elements, like ***div*** and ***section***, structure the page's layout. Jakarta Faces tags offer additional features beyond standard HTML, such as managing UI components, including resources, and binding data. For example, the ***h:outputStylesheet*** tag loads a CSS file for styling, and the ***ui:include*** tag incorporates reusable components, such as the provided ***footer.xhtml*** file, to streamline maintenance and reuse across multiple pages. The ***h:dataTable*** tag is used to display a table.
-
-At this point, the page defines a table that has no data entries. We'll add dynamic content in the following steps.
-
-::page{title="Configuring the Faces Servlet"}
-
-Before you can access the Jakarta Faces page, you need to configure a Faces servlet in your application. This servlet handles all requests for ***.xhtml*** pages and processes them using Jakarta Faces.
-
-Create the web.xml file.
+Create the ***SystemData*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-jakarta-faces/start/src/main/webapp/WEB-INF/web.xml
+touch /home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemData.java
 ```
 
 
-> Then, to open the web.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-jakarta-faces/start/src/main/webapp/WEB-INF/web.xml, or click the following button
+> Then, to open the SystemData.java file in your IDE, select
+> ***File*** > ***Open*** > guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemData.java, or click the following button
 
-::openFile{path="/home/project/guide-jakarta-faces/start/src/main/webapp/WEB-INF/web.xml"}
+::openFile{path="/home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemData.java"}
+
+
+
+```java
+package it.io.openliberty.guides.inventory;
+
+public class SystemData {
+
+    private int id;
+    private String hostname;
+    private String osName;
+    private String javaVersion;
+    private Long heapSize;
+
+    public SystemData() {
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getHostname() {
+        return hostname;
+    }
+
+    public String getOsName() {
+        return osName;
+    }
+
+    public String getJavaVersion() {
+        return javaVersion;
+    }
+
+    public Long getHeapSize() {
+        return heapSize;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public void setHostname(String hostname) {
+        this.hostname = hostname;
+    }
+
+    public void setOsName(String osName) {
+        this.osName = osName;
+    }
+
+    public void setJavaVersion(String javaVersion) {
+        this.javaVersion = javaVersion;
+    }
+
+    public void setHeapSize(Long heapSize) {
+        this.heapSize = heapSize;
+    }
+}
+```
+
+
+
+The ***SystemData*** class contains the ID, hostname, operating system name, Java version, and heap size properties. The various ***get*** and ***set*** methods within this class enable you to view and edit the properties of each system in the inventory.
+
+### Building a test container for Open Liberty
+
+Next, create a custom class that extends Testcontainers' generic container to define specific configurations that suit your application's requirements.
+
+Define a custom ***LibertyContainer*** class, which provides a framework to start and access a containerized version of the Open Liberty application for testing.
+
+Create the ***LibertyContainer*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/LibertyContainer.java
+```
+
+
+> Then, to open the LibertyContainer.java file in your IDE, select
+> ***File*** > ***Open*** > guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/LibertyContainer.java, or click the following button
+
+::openFile{path="/home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/LibertyContainer.java"}
+
+
+
+```java
+package it.io.openliberty.guides.inventory;
+
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.images.builder.ImageFromDockerfile;
+
+public class LibertyContainer extends GenericContainer<LibertyContainer> {
+
+    public LibertyContainer(ImageFromDockerfile image, int httpPort, int httpsPort) {
+
+        super(image);
+        addExposedPorts(httpPort, httpsPort);
+
+        waitingFor(Wait.forLogMessage("^.*CWWKF0011I.*$", 1));
+
+    }
+
+    public String getBaseURL() throws IllegalStateException {
+        return "http://" + getHost() + ":" + getFirstMappedPort();
+    }
+
+}
+```
+
+
+
+The ***LibertyContainer*** class extends the ***GenericContainer*** class from Testcontainers to create a custom container configuration specific to the Open Liberty application.
+
+The ***addExposedPorts()*** method exposes specified ports from the container's perspective, allowing test clients to communicate with services running inside the container. To avoid any port conflicts, Testcontainers assigns random host ports to these exposed container ports. 
+
+By default, the ***Wait.forLogMessage()*** method directs ***LibertyContainer*** to wait for the specific ***CWWKF0011I*** log message that indicates the Liberty instance has started successfully.
+
+The ***getBaseURL()*** method contructs the base URL to access the container.
+
+For more information about Testcontainers APIs and its functionality, refer to the [Testcontainers JavaDocs](https://javadoc.io/doc/org.testcontainers/testcontainers/latest/index.html).
+
+
+### Building test cases
+
+Next, write tests that use the ***SystemResourceClient*** REST client and Testcontainers integration. 
+
+Create the ***SystemResourceIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceIT.java
+```
+
+
+> Then, to open the SystemResourceIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceIT.java, or click the following button
+
+::openFile{path="/home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.inventory;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.net.Socket;
+import java.util.List;
+import java.nio.file.Paths;
+
+import org.jboss.resteasy.client.jaxrs.ResteasyClient;
+import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.images.builder.ImageFromDockerfile;
+
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.UriBuilder;
+
+@TestMethodOrder(OrderAnnotation.class)
+public class SystemResourceIT {
+
+    private static Logger logger = LoggerFactory.getLogger(SystemResourceIT.class);
+
+    private static final String DB_HOST = "postgres";
+    private static final int DB_PORT = 5432;
+    private static final String POSTGRES_PASSWORD = "adminpwd";
+    private static ImageFromDockerfile postgresImage
+        = new ImageFromDockerfile("postgres-sample")
+              .withDockerfile(Paths.get("../postgres/Dockerfile"));
+
+    private static int httpPort = Integer.parseInt(System.getProperty("http.port"));
+    private static int httpsPort = Integer.parseInt(System.getProperty("https.port"));
+    private static String contextRoot = System.getProperty("context.root") + "/api";
+    private static ImageFromDockerfile invImage
+        = new ImageFromDockerfile("inventory:1.0-SNAPSHOT")
+              .withDockerfile(Paths.get("./Dockerfile"));
+
+    private static SystemResourceClient client;
+    private static Network network = Network.newNetwork();
+
+    private static GenericContainer<?> postgresContainer
+        = new GenericContainer<>(postgresImage)
+              .withEnv("POSTGRES_PASSWORD", POSTGRES_PASSWORD)
+              .withNetwork(network)
+              .withExposedPorts(DB_PORT)
+              .withNetworkAliases(DB_HOST)
+              .withLogConsumer(new Slf4jLogConsumer(logger));
+
+    private static LibertyContainer inventoryContainer
+        = new LibertyContainer(invImage, httpPort, httpsPort)
+              .withEnv("DB_HOSTNAME", DB_HOST)
+              .withNetwork(network)
+              .waitingFor(Wait.forHttp("/health/ready").forPort(httpPort))
+              .withLogConsumer(
+                new Slf4jLogConsumer(
+                    LoggerFactory.getLogger(LibertyContainer.class)));
+
+    private static boolean isServiceRunning(String host, int port) {
+        try {
+            Socket socket = new Socket(host, port);
+            socket.close();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private static SystemResourceClient createRestClient(String urlPath) {
+        ClientBuilder builder = ResteasyClientBuilder.newBuilder();
+        ResteasyClient client = (ResteasyClient) builder.build();
+        ResteasyWebTarget target = client.target(UriBuilder.fromPath(urlPath));
+        return target.proxy(SystemResourceClient.class);
+    }
+
+    @BeforeAll
+    public static void setup() throws Exception {
+        String urlPath;
+        if (isServiceRunning("localhost", httpPort)) {
+            logger.info("Testing by dev mode or local Liberty...");
+            if (isServiceRunning("localhost", DB_PORT)) {
+                logger.info("The application is ready to test.");
+                urlPath = "http://localhost:" + httpPort;
+            } else {
+                throw new Exception("Postgres database is not running");
+            }
+        } else {
+            logger.info("Testing by using Testcontainers...");
+            if (isServiceRunning("localhost", DB_PORT)) {
+                throw new Exception(
+                      "Postgres database is running locally. Stop it and retry.");
+            } else {
+                postgresContainer.start();
+                inventoryContainer.start();
+                urlPath = inventoryContainer.getBaseURL();
+            }
+        }
+        urlPath += contextRoot;
+        logger.info("TEST: " + urlPath);
+        client = createRestClient(urlPath);
+    }
+
+    @AfterAll
+    public static void tearDown() {
+        inventoryContainer.stop();
+        postgresContainer.stop();
+        network.close();
+    }
+
+    private void showSystemData(SystemData system) {
+        logger.info("TEST: SystemData > "
+            + system.getId() + ", "
+            + system.getHostname() + ", "
+            + system.getOsName() + ", "
+            + system.getJavaVersion() + ", "
+            + system.getHeapSize());
+    }
+
+    @Test
+    @Order(1)
+    public void testAddSystem() {
+        logger.info("TEST: Testing add a system");
+        client.addSystem("localhost", "linux", "11", Long.valueOf(2048));
+        List<SystemData> systems = client.listContents();
+        assertEquals(1, systems.size());
+        showSystemData(systems.get(0));
+        assertEquals("11", systems.get(0).getJavaVersion());
+        assertEquals(Long.valueOf(2048), systems.get(0).getHeapSize());
+    }
+
+    @Test
+    @Order(2)
+    public void testUpdateSystem() {
+        logger.info("TEST: Testing update a system");
+        client.updateSystem("localhost", "linux", "8", Long.valueOf(1024));
+        SystemData system = client.getSystem("localhost");
+        showSystemData(system);
+        assertEquals("8", system.getJavaVersion());
+        assertEquals(Long.valueOf(1024), system.getHeapSize());
+    }
+
+    @Test
+    @Order(3)
+    public void testRemoveSystem() {
+        logger.info("TEST: Testing remove a system");
+        client.removeSystem("localhost");
+        List<SystemData> systems = client.listContents();
+        assertEquals(0, systems.size());
+    }
+}
+```
+
+
+
+
+
+
+Construct the ***postgresImage*** and ***invImage*** using the ***ImageFromDockerfile*** class, which allows Testcontainers to build Docker images from a Dockerfile during the test runtime. For these instances, the provided Dockerfiles at the specified paths ***../postgres/Dockerfile*** and ***./Dockerfile*** are used to generate the respective ***postgres-sample*** and ***inventory:1.0-SNAPSHOT*** images.
+
+Use ***GenericContainer*** class to create the ***postgresContainer*** test container to start up the ***postgres-sample*** Docker image, and use the ***LibertyContainer*** custom class to create the ***inventoryContainer*** test container to start up the ***inventory:1.0-SNAPSHOT*** Docker image. 
+
+As containers are isolated by default, placing both the ***LibertyContainer*** and the ***postgresContainer*** on the same ***network*** allows them to communicate by using the hostname ***localhost*** and the internal port ***5432***, bypassing the need for an externally mapped port.
+
+The ***waitingFor()*** method here overrides the ***waitingFor()*** method from ***LibertyContainer***. Given that the ***inventory*** service depends on a database service, ensuring that readiness involves more than just the microservice itself. To address this, the ***inventoryContainer*** readiness is determined by checking the ***/health/ready*** health readiness check API, which reflects both the application and database service states. For different container readiness check customizations, see to the [official Testcontainers documentation](https://www.testcontainers.org/features/startup_and_waits/).
+
+The ***LoggerFactory.getLogger()*** and ***withLogConsumer(new Slf4jLogConsumer(Logger))*** methods integrate container logs with the test logs by piping the container output to the specified logger.
+
+The ***createRestClient()*** method creates a REST client instance with the ***SystemResourceClient*** interface.
+
+The ***setup()*** method prepares the test environment. It checks whether the test is running in dev mode or there is a local running Liberty instance, by using the ***isServiceRunning()*** helper. In the case of no running Liberty instance, the test starts the ***postgresContainer*** and ***inventoryContainer*** test containers. Otherwise, it ensures that the Postgres database is running locally.
+
+The ***testAddSystem()*** verifies the ***addSystem*** and ***listContents*** endpoints.
+
+The ***testUpdateSystem()*** verifies the ***updateSystem*** and ***getSystem*** endpoints.
+
+The ***testRemoveSystem()*** verifies the ***removeSystem*** endpoint.
+
+After the tests are executed, the ***tearDown()*** method stops the containers and closes the network.
+
+
+### Setting up logs
+
+Having reliable logs is essential for efficient debugging, as they provide detailed insights into the test execution flow and help pinpoint issues during test failures. Testcontainers' built-in ***Slf4jLogConsumer*** enables integration of container output directly with the JUnit process, enhancing log analysis and simplifying test creation and debugging.
+
+Create the ***log4j.properties*** file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-testcontainers/start/src/test/resources/log4j.properties
+```
+
+
+> Then, to open the log4j.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-testcontainers/start/src/test/resources/log4j.properties, or click the following button
+
+::openFile{path="/home/project/guide-testcontainers/start/src/test/resources/log4j.properties"}
+
+
+
+```
+log4j.rootLogger=INFO, stdout
+
+log4j.appender=org.apache.log4j.ConsoleAppender
+log4j.appender.layout=org.apache.log4j.PatternLayout
+
+log4j.appender.stdout=org.apache.log4j.ConsoleAppender
+log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
+log4j.appender.stdout.layout.ConversionPattern=%r %p %c %x - %m%n
+
+log4j.logger.it.io.openliberty.guides.inventory=DEBUG
+```
+
+
+
+The ***log4j.properties*** file configures the root logger, appenders, and layouts for console output. It sets the logging level to ***DEBUG*** for the ***it.io.openliberty.guides.inventory*** package. This level provides detailed logging information for the specified package, which can be helpful for debugging and understanding test behavior.
+
+
+### Configuring the Maven project
+
+Next, prepare your Maven project for test execution by adding the necessary dependencies for Testcontainers and logging, setting up Maven to copy the PostgreSQL JDBC driver during the build phase, and configuring the Liberty Maven Plugin to handle PostgreSQL dependency.
+
+Replace the ***pom.xml*** file.
+
+> To open the pom.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-testcontainers/start/pom.xml, or click the following button
+
+::openFile{path="/home/project/guide-testcontainers/start/pom.xml"}
 
 
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+<?xml version="1.0" encoding="UTF-8" ?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
-         version="6.0">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-    <context-param>
-        <param-name>jakarta.faces.PROJECT_STAGE</param-name>
-        <param-value>Development</param-value>
-    </context-param>
+    <modelVersion>4.0.0</modelVersion>
 
-    <!-- Faces Servlet Configuration -->
-    <servlet>
-        <servlet-name>Faces Servlet</servlet-name>
-        <servlet-class>jakarta.faces.webapp.FacesServlet</servlet-class>
-        <load-on-startup>1</load-on-startup>
-    </servlet>
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>guide-testcontainers</artifactId>
+    <packaging>war</packaging>
+    <version>1.0-SNAPSHOT</version>
 
-    <!-- Servlet Mapping -->
-    <servlet-mapping>
-        <servlet-name>Faces Servlet</servlet-name>
-        <url-pattern>*.xhtml</url-pattern>
-    </servlet-mapping>
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <liberty.var.http.port>9080</liberty.var.http.port>
+        <liberty.var.https.port>9443</liberty.var.https.port>
+        <liberty.var.context.root>/inventory</liberty.var.context.root>
+    </properties>
 
-</web-app>
+    <dependencies>
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>10.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>7.0</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.7.5</version>
+            <scope>provided</scope>
+        </dependency>
+        
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.12.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>6.2.12.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-json-binding-provider</artifactId>
+            <version>6.2.12.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>jakarta.json</artifactId>
+            <version>2.0.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse</groupId>
+            <artifactId>yasson</artifactId>
+            <version>3.0.4</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>1.21.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-reload4j</artifactId>
+            <version>2.0.17</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.17</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>inventory</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.4.0</version>
+            </plugin>
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <configuration>
+                    <copyDependencies>
+                        <dependencyGroup>
+                            <location>${project.build.directory}/liberty/wlp/usr/shared/resources</location>
+                            <dependency>
+                                <groupId>org.postgresql</groupId>
+                                <artifactId>postgresql</artifactId>
+                            </dependency>
+                        </dependencyGroup>
+                    </copyDependencies>
+                </configuration>
+                <version>3.11.3</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.5.3</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <http.port>${liberty.var.http.port}</http.port>
+                        <https.port>${liberty.var.https.port}</https.port>
+                        <context.root>${liberty.var.context.root}</context.root>
+                    </systemPropertyVariables>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
 ```
 
 
 
-The ***servlet*** element defines the Faces servlet that is responsible for processing requests for Jakarta Faces pages. The ***load-on-startup*** element with a value of ***1*** specifies that the servlet is loaded and initialized first when the application starts.
+Add the required ***dependency*** for Testcontainers and Log4J libraries with ***test*** scope. The ***testcontainers*** dependency offers a general-purpose API for managing container-based test environments. The ***slf4j-reload4j*** and ***slf4j-api*** dependencies enable the Simple Logging Facade for Java (SLF4J) API for trace logging during test execution and facilitates debugging and test performance tracking. 
 
-The ***servlet-mapping*** element specifies which URL patterns are routed to the Faces servlet. In this case, all URLs ending with ***.xhtml*** are mapped to be processed by Jakarta Faces. This ensures that any request for an ***.xhtml*** page is handled by the Faces servlet, which manages the lifecycle of Jakarta Faces components, processes the page, and renders the output. 
+Also, add and configure the ***maven-failsafe-plugin*** plugin, so that the integration test can be run by the Maven ***verify*** command.
 
-By configuring both the servlet and the servlet mapping, you're ensuring that Jakarta Faces pages are properly processed and delivered in response to user requests.
-
-The ***jakarta.faces.PROJECT_STAGE*** context parameter determines the current stage of the application in its development lifecycle. Because it is currently set to ***Development***, you will see additional debugging information, including developer-friendly warning messages such as ***WARNING: Apache MyFaces Core is running in DEVELOPMENT mode.*** For more information about valid values and how to set the ***PROJECT_STAGE*** parameter, see the official [Jakarta Faces ProjectStage documentation](https://jakarta.ee/specifications/faces/4.1/apidocs/jakarta.faces/jakarta/faces/application/projectstage).
-
-In your dev mode console, type ***r*** and press the ***enter/return*** key to restart the Liberty instance so that Liberty reads the configuration changes. When you see the following message, your Liberty instance is ready in dev mode:
+When you started Open Liberty in dev mode, all the changes were automatically picked up. You can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode. You see the following output:
 
 ```
-**************************************************************
-*    Liberty is running in dev mode.
+ -------------------------------------------------------
+  T E S T S
+ -------------------------------------------------------
+ Running it.io.openliberty.guides.inventory.SystemResourceIT
+ it.io.openliberty.guides.inventory.SystemResourceIT  - Testing by dev mode or local Liberty...
+ ...
+ Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.873 s - in it.io.openliberty.guides.inventory.SystemResourceIT
+
+ Results:
+
+ Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 ```
 
 
-Check out the web application that you created by clicking the following button:
 
-::startApplication{port="9080" display="external" name="Launch application" route="/index.xhtml"}
+::page{title="Running tests in a CI/CD pipeline"}
 
-You should see the static page with the system loads table displaying only the headers and no data.
+Running tests in dev mode is useful for local development, but there may be times when you want to test your application in other scenarios, such as in a CI/CD pipeline. For these cases, you can use Testcontainers to run tests against a running Open Liberty instance in a controlled, self-contained environment, ensuring that your tests run consistently regardless of the deployment context.
 
-::page{title="Implementing backend logic with dependency injection"}
+To test outside of dev mode, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the Liberty.
 
-To provide system load data to your web application, you'll create a CDI-managed bean that retrieves information about the system CPU load and memory usage. This bean is accessible from the Jakarta Faces page and supplies the data that is displayed.
+Also, run the following commands to stop the PostgreSQL container that was started in the previous section:
 
-Create the SystemLoadBean class.
-
-> Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-jakarta-faces/start/src/main/java/io/openliberty/guides/bean/SystemLoadBean.java
+docker stop postgres-container
 ```
 
-
-> Then, to open the SystemLoadBean.java file in your IDE, select
-> ***File*** > ***Open*** > guide-jakarta-faces/start/src/main/java/io/openliberty/guides/bean/SystemLoadBean.java, or click the following button
-
-::openFile{path="/home/project/guide-jakarta-faces/start/src/main/java/io/openliberty/guides/bean/SystemLoadBean.java"}
+Now, use the following Maven goal to run the tests from a cold start outside of dev mode:
 
 
-
-```java
-package io.openliberty.guides.bean;
-
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-import java.io.Serializable;
-
-import jakarta.annotation.PostConstruct;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Named;
-
-import com.sun.management.OperatingSystemMXBean;
-
-import io.openliberty.guides.bean.model.SystemLoadData;
-
-@Named("systemLoadBean")
-@ApplicationScoped
-public class SystemLoadBean implements Serializable {
-    private static final long serialVersionUID = 1L;
-
-    private List<SystemLoadData> systemLoads;
-
-    private static final OperatingSystemMXBean OS =
-        (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-
-    private static final MemoryMXBean MEM =
-        ManagementFactory.getMemoryMXBean();
-
-    @PostConstruct
-    public void init() {
-        systemLoads = new ArrayList<>();
-        fetchSystemLoad();
-    }
-
-    public void fetchSystemLoad() {
-        String time = Calendar.getInstance().getTime().toString();
-
-        double cpuLoad = OS.getCpuLoad() * 100;
-
-        long heapMax = MEM.getHeapMemoryUsage().getMax();
-        long heapUsed = MEM.getHeapMemoryUsage().getUsed();
-        double memoryUsage = heapUsed * 100.0 / heapMax;
-
-        SystemLoadData data = new SystemLoadData(time, cpuLoad, memoryUsage);
-
-        systemLoads.add(data);
-    }
-
-    public List<SystemLoadData> getSystemLoads() {
-        return systemLoads;
-    }
-}
-```
-
-
-
-Annotate the ***SystemLoadBean*** class with a ***@Named*** annotation to make it accessible in the Jakarta Faces pages under the ***systemLoadBean*** name. Because the ***SystemLoadBean*** bean is a CDI-managed bean, a scope is necessary. Annotating it with the ***@ApplicationScoped*** annotation indicates that it is initialized once and is shared between all requests while the application runs. To learn more about CDI, see the [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html) guide.
-
-The ***@PostConstruct*** annotation ensures the ***init()*** method runs after the ***SystemLoadBean*** is initialized and dependencies are injected. The ***init()*** method sets up any required resources for the bean's lifecyccle.
-
-The ***fetchSystemLoad()*** method retrieves the current system load and memory usage, then updates the list of system load data.
-
-The ***getSystemLoads()*** method is a getter method for accessing the list of system load data from the Jakarta Faces page.
-
-::page{title="Binding data to the UI with expression language"}
-
-Now that you have implemented the backend logic with CDI, you'll update the Jakarta Faces page to display the dynamic system load data. You'll do this by using Jakarta Expression Language to bind the UI components to the backend data.
-
-Replace the index.xhtml file.
-
-> To open the index.xhtml file in your IDE, select
-> ***File*** > ***Open*** > guide-jakarta-faces/start/src/main/webapp/index.xhtml, or click the following button
-
-::openFile{path="/home/project/guide-jakarta-faces/start/src/main/webapp/index.xhtml"}
-
-
-
-```
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="jakarta.faces.html"
-      xmlns:f="jakarta.faces.core"
-      xmlns:ui="jakarta.faces.facelets">
-  <h:head>
-    <meta charset="UTF-8" />
-    <title>Open Liberty - Jakarta Faces Example</title>
-    <h:outputStylesheet library="css" name="styles.css" />
-    <link href="favicon.ico" rel="icon" />
-    <link href="favicon.ico" rel="shortcut icon" />
-  </h:head>
-  <h:body>
-    <section id="appIntro">
-      <div id="titleSection">
-        <h1 id="appTitle">Jakarta Faces Example</h1>
-        <div class="line"></div>
-        <div class="headerImage"></div>
-      </div>
-
-      <div class="msSection" id="systemLoads">
-        <h:form id="systemLoadForm">
-          <div class="headerRow">
-            <div class="headerIcon">
-              <img src="#{resource['img/sysProps.svg']}" />
-            </div>
-            <div class="headerTitleWithButton" id="sysPropTitle">
-              <h2>System Loads</h2>
-              <h:commandButton id="refreshButton" styleClass="refreshButton" value=""
-                               title="Refresh system load data"
-                               action="#{systemLoadBean.fetchSystemLoad}" >
-                <f:ajax render="systemLoadForm" />
-              </h:commandButton>
-            </div>
-          </div>
-          <div class="sectionContent">
-            <h:dataTable id="systemLoadsTable"
-                         value="#{systemLoadBean.systemLoads}"
-                         var="systemLoadData"
-                         styleClass = "systemLoadsTable"
-                         headerClass = "systemLoadsTableHeader"
-                         rowClasses = "systemLoadsTableOddRow,systemLoadsTableEvenRow">
-              <h:column>
-                <f:facet name="header">Time</f:facet>
-                <h:outputText value="#{systemLoadData.time}" />
-              </h:column>
-
-              <h:column>
-                <f:facet name="header">CPU Load (%)</f:facet>
-                <h:outputText
-                  value="#{systemLoadData.cpuLoad == null ? '-' : systemLoadData.cpuLoad}">
-                  <f:convertNumber pattern="#0.0000000" />
-                </h:outputText>
-              </h:column>
-
-              <h:column>
-                <f:facet name="header">Heap Memory Usage (%)</f:facet>
-                <h:outputText
-                  value="#{systemLoadData.memoryUsage == null ? '-' : systemLoadData.memoryUsage}">
-                  <f:convertNumber pattern="#0.00" />
-                </h:outputText>
-              </h:column>
-            </h:dataTable>
-          </div>
-        </h:form>
-      </div>
-    </section>
-    <ui:include src="/WEB-INF/includes/footer.xhtml" />
-  </h:body>
-</html>
-```
-
-
-
-
-
-The ***index.xhtml*** uses an ***h:commandButton*** tag to create the refresh button. When the button is clicked, the ***#{systemLoadBean.fetchSystemLoad}*** action invokes the ***fetchSystemLoad()*** method using Jakarta Expression Language. This expression references the ***systemLoadBean*** managed bean, triggering the method to update the system load data. The ***f:ajax*** tag ensures that the ***systemLoadForm*** component is re-rendered without requiring a full page reload.
-
-The ***systemLoadsTable*** is populated using the ***h:dataTable*** tag, which iterates over the list of system load data provided by the ***systemLoadBean***. The ***#{systemLoadBean.systemLoads}*** expression calls the ***getSystemLoads()*** method from the managed bean, binding the data to the UI components. If the ***systemLoadBean*** isn't created yet, it is automatically initialized at this point. For each entry, the ***time***, ***cpuLoad***, and ***memoryUsage*** fields are displayed by using the ***h:outputText*** tag. The ***f:convertNumber*** tag formats ***cpuLoad*** to seven decimal places and ***memoryUsage*** to two decimal places.
-
-To format the table, set the ***styleClass***, ***headerClass***, and ***rowClasses*** attributes in the ***h:dataTable*** tag. The style elements are defined in the ***src/main/webapp/resources/css/styles.css*** file.
-
-::page{title="Running the application"}
-
-
-The required ***faces***, ***expressionLanguage***, and ***cdi*** features are enabled for you in the Liberty ***server.xml*** configuration file.
-
-Because you started the Open Liberty in dev mode at the beginning of the guide, all the changes were automatically picked up.
-
-
-Now, you can check out the web application that you created by clicking the following button:
-
-::startApplication{port="9080" display="external" name="Launch application" route="/index.xhtml"}
-
-Click on the <img src="https://raw.githubusercontent.com/OpenLiberty/guide-jakarta-faces/prod/assets/refresh.png" width="18" height="18" alt="refresh icon"> refresh button to trigger an update on the system loads table.
-
-::page{title="Testing the application"}
-
-While you can manually verify the web application by visiting ***http\://localhost:9080/index.xhtml,*** automated tests are a much better approach because they are more reliable and trigger a failure if a breaking change is introduced. You can write unit tests for your CDI bean to ensure that the basic operations you implemented function correctly.
-
-Create the SystemLoadBeanTest class.
-
-> Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-jakarta-faces/start/src/test/java/io/openliberty/guides/bean/SystemLoadBeanTest.java
+export TESTCONTAINERS_RYUK_DISABLED=true
+./mvnw clean verify
 ```
-
-
-> Then, to open the SystemLoadBeanTest.java file in your IDE, select
-> ***File*** > ***Open*** > guide-jakarta-faces/start/src/test/java/io/openliberty/guides/bean/SystemLoadBeanTest.java, or click the following button
-
-::openFile{path="/home/project/guide-jakarta-faces/start/src/test/java/io/openliberty/guides/bean/SystemLoadBeanTest.java"}
-
-
-
-```java
-package io.openliberty.guides.bean;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import io.openliberty.guides.bean.model.SystemLoadData;
-
-public class SystemLoadBeanTest {
-
-    private SystemLoadBean systemLoadBean;
-
-    @BeforeEach
-    public void setUp() {
-        systemLoadBean = new SystemLoadBean();
-        systemLoadBean.init();
-    }
-
-    @Test
-    public void testInitMethod() {
-        assertNotNull(systemLoadBean.getSystemLoads(),
-                      "System loads should not be null after initialization");
-        assertFalse(systemLoadBean.getSystemLoads().isEmpty(),
-                    "System loads should not be empty after initialization");
-    }
-
-    @Test
-    public void testFetchSystemLoad() {
-        int initialSize = systemLoadBean.getSystemLoads().size();
-        systemLoadBean.fetchSystemLoad();
-        int newSize = systemLoadBean.getSystemLoads().size();
-        assertEquals(initialSize + 1, newSize,
-                     "System loads size should increase by 1 after fetching new data");
-    }
-
-    @Test
-    public void testDataIntegrity() {
-        systemLoadBean.fetchSystemLoad();
-        SystemLoadData data = systemLoadBean.getSystemLoads().get(0);
-        assertNotNull(data.getTime(), "Time should not be null");
-        assertNotNull(data.getCpuLoad(), "Recent load should not be null");
-        assertNotNull(data.getMemoryUsage(), "Memory usage should not be null");
-    }
-}
-```
-
-
-
-The ***setUp()*** method is annotated with the ***@BeforeEach*** annotation, indicating that it is run before each test case to ensure a clean state for each test execution. In this case, it creates a new instance of ***SystemLoadBean*** and manually calls the ***init()*** method to initialize the list of system load data before each test.
-
-The ***testInitMethod()*** test case verifies that after initializing ***SystemLoadBean***, the list of system load data is not null and contains at least one entry.
-
-The ***testFetchSystemLoad()*** test case verifies that after calling the ***fetchSystemLoad()*** method, the size of the list of system load data increases by one.
-
-The ***testDataIntegrity()*** test case verifies that each ***SystemLoadData*** entry in the list of system load data contains valid values for ***time***, ***cpuLoad***, and ***memoryUsage***.
-
-### Running the tests
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
 
 You see the following output:
 
 ```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running io.openliberty.guides.bean.SystemLoadBeanTest
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.037 s -- in io.openliberty.guides.bean.SystemLoadBeanTest
+ -------------------------------------------------------
+  T E S T S
+ -------------------------------------------------------
+ Running it.io.openliberty.guides.inventory.SystemResourceIT
+ it.io.openliberty.guides.inventory.SystemResourceIT  - Testing by using Testcontainers...
+ ...
+ tc.postgres-sample:latest  - Creating container for image: postgres-sample:latest
+ tc.postgres-sample:latest  - Container postgres-sample:latest is starting: 7cf2e2c6a505f41877014d08b7688399b3abb9725550e882f1d33db8fa4cff5a
+ tc.postgres-sample:latest  - Container postgres-sample:latest started in PT2.925405S
+ ...
+ tc.inventory:1.0-SNAPSHOT  - Creating container for image: inventory:1.0-SNAPSHOT
+ tc.inventory:1.0-SNAPSHOT  - Container inventory:1.0-SNAPSHOT is starting: 432ac739f377abe957793f358bbb85cc916439283ed2336014cacb585f9992b8
+ tc.inventory:1.0-SNAPSHOT  - Container inventory:1.0-SNAPSHOT started in PT25.784899S
+...
+
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 12.208 s - in it.io.openliberty.guides.inventory.SystemResourceIT
 
 Results:
 
 Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
-
+Notice that the test initiates a new Docker container each for the PostgreSQL database and the ***inventory*** microservice, resulting in a longer test runtime. Despite this, cold start testing benefits from a clean instance per run and ensures consistent results. These tests also automatically hook into existing build pipelines that are set up to run the ***integration-test*** phase.
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just built a dynamic web application on Open Liberty by using Jakarta Faces for the user interface, CDI for managing beans, and Jakarta Expression Language for binding and handling data.
-
+You just tested your microservices with multiple Docker containers using Testcontainers.
 
 
 
@@ -562,30 +875,31 @@ You just built a dynamic web application on Open Liberty by using Jakarta Faces 
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-jakarta-faces*** project by running the following commands:
+Delete the ***guide-testcontainers*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-jakarta-faces
+rm -fr guide-testcontainers
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Building%20a%20dynamic%20web%20application%20with%20integrated%20user%20interface%20and%20backend%20logic&guide-id=cloud-hosted-guide-jakarta-faces)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Building%20true-to-production%20integration%20tests%20with%20Testcontainers&guide-id=cloud-hosted-guide-testcontainers)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-jakarta-faces/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-jakarta-faces/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-testcontainers/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-testcontainers/pulls)
 
 
 
 ### Where to next?
 
-* [Streaming messages between client and server services using gRPC](https://openliberty.io/guides/grpc-intro.html)
+* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
+* [Testing microservices with the Arquillian managed container](https://openliberty.io/guides/arquillian-managed.html)
 
 
 ### Log out of the session
