@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Acknowledging messages using MicroProfile Reactive Messaging guide!"}
+::page{title="Welcome to the Consuming RESTful services with template interfaces guide!"}
 
-Learn how to acknowledge messages by using MicroProfile Reactive Messaging.
+Learn how to use MicroProfile Rest Client to invoke RESTful microservices over HTTP in a type-safe way.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,16 +14,19 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 ::page{title="What you'll learn"}
 
-MicroProfile Reactive Messaging provides a reliable way to handle messages in reactive applications. MicroProfile Reactive Messaging ensures that messages aren't lost by requiring that messages that were delivered to the target server are acknowledged after they are processed. Every message that gets sent out must be acknowledged. This way, any messages that were delivered to the target service but not processed, for example, due to a system failure, can be identified and sent again.
+You will learn how to build a MicroProfile Rest Client to access remote RESTful services. You will create a template interface that maps to the remote service that you want to call. MicroProfile Rest Client automatically generates a client instance based on what is defined and annotated in the template interface. Thus, you don't have to worry about all of the boilerplate code, such as setting up a client class, connecting to the remote server, or invoking the correct URI with the correct parameters.
 
-The application in this guide consists of two microservices, ***system*** and ***inventory***. Every 15 seconds, the ***system*** microservice calculates and publishes events that contain its current average system load. The ***inventory*** microservice subscribes to that information so that it can keep an updated list of all the systems and their current system loads. You can get the current inventory of systems by accessing the ***/systems*** REST endpoint. The following diagram depicts the application that is used in this guide:
+The application that you will be working with is an ***inventory*** service, which fetches and stores the system property information for different hosts. Whenever a request is made to retrieve the system properties of a particular host, the ***inventory*** service will create a client to invoke the ***system*** service on that host. The ***system*** service simulates a remote service in the application.
 
-![Reactive system inventory](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging-acknowledgment/prod/assets/reactive-messaging-system-inventory-rest.png)
+You will instantiate the client and use it in the ***inventory*** service. You can choose from two different approaches, [Context and Dependency Injection (CDI)](https://openliberty.io/docs/latest/cdi-beans.html) with the help of MicroProfile Config or the [RestClientBuilder](https://openliberty.io/blog/2018/01/31/mpRestClient.html) method. In this guide, you will explore both methods to handle scenarios for providing a valid base URL.
 
+ * When the base URL of the remote service is static and known, define the default base URL in the configuration file. Inject the client with a CDI method.
 
-You will explore the acknowledgment strategies that are available with MicroProfile Reactive Messaging, and you'll implement your own manual acknowledgment strategy. To learn more about how the reactive Java services used in this guide work, check out the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
+ * When the base URL is not yet known and needs to be determined during the run time, set the base URL as a variable. Build the client with the more verbose ***RestClientBuilder*** method.
+
 
 ::page{title="Getting started"}
 
@@ -36,11 +39,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-reactive-messaging-acknowledgment.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-rest-client.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-microprofile-reactive-messaging-acknowledgment.git
-cd guide-microprofile-reactive-messaging-acknowledgment
+git clone https://github.com/openliberty/guide-microprofile-rest-client.git
+cd guide-microprofile-rest-client
 ```
 
 
@@ -48,410 +51,599 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-::page{title="Choosing an acknowledgment strategy"}
+### Try what you'll build
 
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-Messages must be acknowledged in reactive applications. Messages are either acknowledged explicitly, or messages are acknowledged implicitly by MicroProfile Reactive Messaging. Acknowledgment for incoming messages is controlled by the ***@Acknowledgment*** annotation in MicroProfile Reactive Messaging. If the ***@Acknowledgment*** annotation isn't explicitly defined, then the default acknowledgment strategy applies, which depends on the method signature. Only methods that receive incoming messages and are annotated with the ***@Incoming*** annotation must acknowledge messages. Methods that are annotated only with the ***@Outgoing*** annotation don't need to acknowledge messages because messages aren't being received and MicroProfile Reactive Messaging requires only that _received_ messages are acknowledged.
+To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
 
-Almost all of the methods in this application that require message acknowledgment are assigned the ***POST_PROCESSING*** strategy by default. If the acknowledgment strategy is set to ***POST_PROCESSING***, then MicroProfile Reactive Messaging acknowledges the message based on whether the annotated method emits data:
-
-* If the method emits data, the incoming message is acknowledged after the outgoing message is acknowledged.
-* If the method doesn't emit data, the incoming message is acknowledged after the method or processing completes.
-
-It’s important that the methods use the ***POST_PROCESSING*** strategy because it fulfills the requirement that a message isn't acknowledged until after the message is fully processed. This processing strategy is beneficial in situations where messages must reliably not get lost. When the ***POST_PROCESSING*** acknowledgment strategy can’t be used, the ***MANUAL*** strategy can be used to fulfill the same requirement. In situations where message acknowledgment reliability isn't important and losing messages is acceptable, the ***PRE_PROCESSING*** strategy might be appropriate.
-
-The only method in the guide that doesn't default to the ***POST_PROCESSING*** strategy is the ***sendProperty()*** method in the ***system*** service. The ***sendProperty()*** method receives property requests from the ***inventory*** service. For each property request, if the property that's being requested is valid, then the method creates and returns a ***PropertyMessage*** object with the value of the property. However, if the ***propertyName*** requested property doesn't exist, the request is ignored and no property response is returned.
-
-A key difference exists between when a property response is returned and when a property response isn't returned. In the case where a property response is returned, the request doesn't finish processing until the response is sent and safely stored by the Kafka broker. Only then is the incoming message acknowledged. However, in the case where the requested property doesn’t exist and a property response isn't returned, the method finishes processing the request message so the message must be acknowledged immediately.
-
-This case where a message either needs to be acknowledged immediately or some time later is one of the situations where the ***MANUAL*** acknowledgment strategy would be beneficial
-
-::page{title="Implementing the MANUAL acknowledgment strategy"}
-
-
-To begin, run the following command to navigate to the ***start*** directory:
 ```bash
-cd /home/project/guide-microprofile-reactive-messaging-acknowledgment/start
+cd finish
+./mvnw liberty:run
 ```
 
-Update the ***SystemService.sendProperty*** method to use the ***MANUAL*** acknowledgment strategy, which fits the method processing requirements better than the default ***PRE_PROCESSING*** strategy.
+After you see the following message, your Liberty instance is ready:
 
-Replace the ***SystemService*** class.
+```
+The defaultServer server is ready to run a smarter planet.
+```
 
-> To open the SystemService.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-reactive-messaging-acknowledgment/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-reactive-messaging-acknowledgment/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
+
+Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
+
+
+The ***system*** microservice simulates a service that returns the system property information for the host. The ***system*** service is accessible at the ***http\://localhost:9080/system/properties*** URL. In this case, ***localhost*** is the host name.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl -s http://localhost:9080/system/properties | jq
+```
+
+
+
+
+The ***inventory*** microservice makes a request to the ***system*** microservice and stores the system property information.  To fetch and store your system information, visit the ***http\://localhost:9080/inventory/systems/localhost*** URL.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl -s http://localhost:9080/inventory/systems/localhost | jq
+```
+
+
+
+
+You can also use the ***http://localhost:9080/inventory/systems/{your-hostname}*** URL. In Windows, MacOS, and Linux, get your fully qualified domain name (FQDN) by entering **hostname** into your command-line. Visit the URL by replacing ***{your-hostname}*** with your FQDN.
+
+
+After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+
+```bash
+./mvnw liberty:stop
+```
+
+::page{title="Writing the RESTful client interface"}
+
+Now, navigate to the ***start*** directory to begin.
+
+```bash
+cd /home/project/guide-microprofile-rest-client/start
+```
+
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+
+```bash
+./mvnw liberty:dev
+```
+
+After you see the following message, your Liberty instance is ready in dev mode:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+
+The MicroProfile Rest Client API is included in the MicroProfile dependency specified by your ***pom.xml*** file. Look for the dependency with the ***microprofile*** artifact ID.
+
+
+This dependency provides a library that is required to implement the MicroProfile Rest Client interface.
+
+The ***mpRestClient*** feature is also enabled in the ***src/main/liberty/config/server.xml*** file. This feature enables your Open Liberty to use MicroProfile Rest Client to invoke RESTful microservices.
+
+
+The code for the ***system*** service in the ***src/main/java/io/openliberty/guides/system*** directory is provided for you. It simulates a remote RESTful service that the ***inventory*** service invokes.
+
+Create a RESTful client interface for the ***system*** service. Write a template interface that maps the API of the remote ***system*** service. The template interface describes the remote service that you want to access. The interface defines the resource to access as a method by mapping its annotations, return type, list of arguments, and exception declarations.
+
+Create the ***SystemClient*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
+```
+
+
+> Then, to open the SystemClient.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java"}
 
 
 
 ```java
-package io.openliberty.guides.system;
+package io.openliberty.guides.inventory.client;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
+import java.util.Properties;
 
-import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.ProcessingException;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 
-import org.eclipse.microprofile.reactive.messaging.Acknowledgment;
-import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.eclipse.microprofile.reactive.messaging.Message;
-import org.eclipse.microprofile.reactive.messaging.Outgoing;
-import org.eclipse.microprofile.reactive.streams.operators.PublisherBuilder;
-import org.eclipse.microprofile.reactive.streams.operators.ReactiveStreams;
-import org.reactivestreams.Publisher;
+import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
+import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
-import io.openliberty.guides.models.PropertyMessage;
-import io.openliberty.guides.models.SystemLoad;
-import io.reactivex.rxjava3.core.Flowable;
+@RegisterRestClient(configKey = "systemClient",
+                     baseUri = "http://localhost:9080/system")
+@RegisterProvider(UnknownUriExceptionMapper.class)
+@Path("/properties")
+public interface SystemClient extends AutoCloseable {
 
-@ApplicationScoped
-public class SystemService {
-
-    private static Logger logger = Logger.getLogger(SystemService.class.getName());
-
-    private static final OperatingSystemMXBean OS_MEAN =
-            ManagementFactory.getOperatingSystemMXBean();
-    private static String hostname = null;
-
-    private static String getHostname() {
-        if (hostname == null) {
-            try {
-                return InetAddress.getLocalHost().getHostName();
-            } catch (UnknownHostException e) {
-                return System.getenv("HOSTNAME");
-            }
-        }
-        return hostname;
-    }
-
-    @Outgoing("systemLoad")
-    public Publisher<SystemLoad> sendSystemLoad() {
-        return Flowable.interval(15, TimeUnit.SECONDS)
-                       .map((interval -> new SystemLoad(getHostname(),
-                             OS_MEAN.getSystemLoadAverage())));
-    }
-
-    @Incoming("propertyRequest")
-    @Outgoing("propertyResponse")
-    @Acknowledgment(Acknowledgment.Strategy.MANUAL)
-    public PublisherBuilder<Message<PropertyMessage>>
-    sendProperty(Message<String> propertyMessage) {
-        String propertyName = propertyMessage.getPayload();
-        String propertyValue = System.getProperty(propertyName, "unknown");
-        logger.info("sendProperty: " + propertyValue);
-        if (propertyName == null
-        || propertyName.isEmpty()
-        || propertyValue == "unknown") {
-            logger.warning("Provided property: "
-            + propertyName + " is not a system property");
-            propertyMessage.ack();
-            return ReactiveStreams.empty();
-        }
-        Message<PropertyMessage> message = Message.of(
-                new PropertyMessage(getHostname(),
-                        propertyName,
-                        propertyValue),
-                propertyMessage::ack
-        );
-        return ReactiveStreams.of(message);
-    }
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  Properties getProperties() throws UnknownUriException, ProcessingException;
 }
 ```
 
 
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-The ***sendProperty()*** method needs to manually acknowledge the incoming messages, so it is annotated with the ***@Acknowledgment(Acknowledgment.Strategy.MANUAL)*** annotation. This annotation sets the method up to expect an incoming message. To meet the requirements of acknowledgment, the method parameter is updated to receive and return a ***Message*** of type ***String***, rather than just a ***String***. Then, the ***propertyName*** is extracted from the ***propertyMessage*** incoming message using the ***getPayload()*** method and checked for validity. One of the following outcomes occurs:
+The MicroProfile Rest Client feature automatically builds and generates a client implementation based on what is defined in the ***SystemClient*** interface. There is no need to set up the client and connect with the remote service.
 
-* If the ***propertyName*** system property isn't valid, the ***ack()*** method acknowledges the incoming message and returns an empty reactive stream using the ***empty()*** method. The processing is complete.
-* If the system property is valid, the method creates a ***Message*** object with the value of the requested system property and sends it to the proper channel. The method acknowledges the incoming message only after the sent message is acknowledged.
+Notice the ***SystemClient*** interface inherits the ***AutoCloseable*** interface. This allows the user to explicitly close the client instance by invoking the ***close()*** method or to implicitly close the client instance using a try-with-resources block. When the client instance is closed, all underlying resources associated with the client instance are cleaned up. Refer to the [MicroProfile Rest Client specification](https://github.com/eclipse/microprofile-rest-client/releases) for more details.
+
+When the ***getProperties()*** method is invoked, the ***SystemClient*** instance sends a GET request to the ***\<baseUrl\>/properties*** endpoint, where ***\<baseUrl\>*** is the default base URL of the ***system*** service. You will see how to configure the base URL in the next section.
+
+The ***@Produces*** annotation specifies the media (MIME) type of the expected response. The default value is ***MediaType.APPLICATION_JSON***.
+
+The ***@RegisterProvider*** annotation tells the framework to register the provider classes to be used when the framework invokes the interface. You can add as many providers as necessary. In the ***SystemClient*** interface, add a response exception mapper as a provider to map the ***404*** response code with the ***UnknownUriException*** exception.
+
+### Handling exceptions through ResponseExceptionMappers
+
+Error handling is an important step to ensure that the application can fail safely. If there is an error response such as ***404 NOT FOUND*** when invoking the remote service, you need to handle it. First, define an exception, and map the exception with the error response code. Then, register the exception mapper in the client interface.
+
+Look at the client interface again, the ***@RegisterProvider*** annotation registers the ***UnknownUriExceptionMapper*** response exception mapper. An exception mapper maps various response codes from the remote service to throwable exceptions.
 
 
-::page{title="Waiting for a message to be acknowledged"}
+Implement the actual exception class and the mapper class to see how this mechanism works.
 
-The ***inventory*** service contains an endpoint that accepts ***PUT*** requests. When a ***PUT*** request that contains a system property is made to the ***inventory*** service, the ***inventory*** service sends a message to the ***system*** service. The message from the ***inventory*** service requests the value of the system property from the system service. Currently, a ***200*** response code is returned without confirming whether the sent message was acknowledged. Replace the ***inventory*** service to return a ***200*** response only after the outgoing message is acknowledged.
+Create the ***UnknownUriException*** class.
 
-Replace the ***InventoryResource*** class.
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
+```
 
-> To open the InventoryResource.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-reactive-messaging-acknowledgment/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-reactive-messaging-acknowledgment/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java"}
+> Then, to open the UnknownUriException.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java"}
+
+
+
+```java
+package io.openliberty.guides.inventory.client;
+
+public class UnknownUriException extends Exception {
+
+  private static final long serialVersionUID = 1L;
+
+  public UnknownUriException() {
+    super();
+  }
+
+  public UnknownUriException(String message) {
+    super(message);
+  }
+}
+```
+
+
+
+Now, link the ***UnknownUriException*** class with the corresponding response code through a ***ResponseExceptionMapper*** mapper class.
+
+Create the ***UnknownUriExceptionMapper*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
+```
+
+
+> Then, to open the UnknownUriExceptionMapper.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java"}
+
+
+
+```java
+package io.openliberty.guides.inventory.client;
+
+import java.util.logging.Logger;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.Provider;
+import org.eclipse.microprofile.rest.client.ext.ResponseExceptionMapper;
+
+@Provider
+public class UnknownUriExceptionMapper
+    implements ResponseExceptionMapper<UnknownUriException> {
+  Logger LOG = Logger.getLogger(UnknownUriExceptionMapper.class.getName());
+
+  @Override
+  public boolean handles(int status, MultivaluedMap<String, Object> headers) {
+    LOG.info("status = " + status);
+    return status == 404;
+  }
+
+  @Override
+  public UnknownUriException toThrowable(Response response) {
+    return new UnknownUriException();
+  }
+}
+```
+
+
+
+The ***handles()*** method inspects the HTTP response code to determine whether an exception is thrown for the specific response, and the ***toThrowable()*** method returns the mapped exception.
+
+::page{title="Injecting the client with dependency injection"}
+
+Now, instantiate the ***SystemClient*** interface and use it in the ***inventory*** service. If you want to connect only with the default host name, you can easily instantiate the ***SystemClient*** with CDI annotations. CDI injection simplifies the process of bootstrapping the client.
+
+First, you need to define the base URL of the ***SystemClient*** instance. Configure the default base URL with the MicroProfile Config feature. This feature is enabled for you in the ***server.xml*** file.
+
+Create the configuration file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-rest-client/start/src/main/resources/META-INF/microprofile-config.properties
+```
+
+
+> Then, to open the microprofile-config.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-rest-client/start/src/main/resources/META-INF/microprofile-config.properties"}
+
+
+
+```
+systemClient/mp-rest/uri=http://localhost:9080/system
+```
+
+
+
+The ***mp-rest/uri*** base URL config property is configured to the default ***http://localhost:9080/system*** URL.
+
+This configuration is automatically picked up by the MicroProfile Config API.
+
+Look at the annotations in the ***SystemClient*** interface again.
+
+
+The ***@RegisterRestClient*** annotation registers the interface as a RESTful client. The runtime creates a CDI managed bean for every interface that is annotated with the ***@RegisterRestClient*** annotation.
+
+The ***configKey*** value in the ***@RegisterRestClient*** annotation replaces the fully-qualified classname of the properties in the ***microprofile-config.properties*** configuration file. For example, the ***\<fully-qualified classname\>/mp-rest/uri*** property becomes ***systemClient/mp-rest/uri***. The benefit of using Config Keys is when multiple client interfaces have the same ***configKey*** value, the interfaces can be configured with a single MP config property.
+
+The ***baseUri*** value can also be set in the ***@RegisterRestClient*** annotation. However, this value will be overridden by the base URI property defined in the ***microprofile-config.properties*** configuration file, which takes precedence. In a production environment, you can use the ***baseUri*** variable to specify a different URI for development and testing purposes.
+
+The ***@RegisterRestClient*** annotation, which is a bean defining annotation implies that the interface is manageable through CDI. You must have this annotation in order to inject the client.
+
+Inject the ***SystemClient*** interface into the ***InventoryManager*** class, which is another CDI managed bean.
+
+Replace the ***InventoryManager*** class.
+
+> To open the InventoryManager.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
 
 
 
 ```java
 package io.openliberty.guides.inventory;
 
+import java.net.ConnectException;
+import java.net.URI;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.Properties;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ProcessingException;
 
-import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.eclipse.microprofile.reactive.messaging.Message;
-import org.eclipse.microprofile.reactive.messaging.Outgoing;
-import org.reactivestreams.Publisher;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.eclipse.microprofile.rest.client.RestClientBuilder;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import io.openliberty.guides.models.PropertyMessage;
-import io.openliberty.guides.models.SystemLoad;
-import io.reactivex.rxjava3.core.BackpressureStrategy;
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.FlowableEmitter;
-
+import io.openliberty.guides.inventory.client.SystemClient;
+import io.openliberty.guides.inventory.client.UnknownUriException;
+import io.openliberty.guides.inventory.client.UnknownUriExceptionMapper;
+import io.openliberty.guides.inventory.model.InventoryList;
+import io.openliberty.guides.inventory.model.SystemData;
 
 @ApplicationScoped
-@Path("/inventory")
-public class InventoryResource {
+public class InventoryManager {
 
-    private static Logger logger = Logger.getLogger(InventoryResource.class.getName());
-    private FlowableEmitter<Message<String>> propertyNameEmitter;
+  private List<SystemData> systems = Collections.synchronizedList(
+                                       new ArrayList<SystemData>());
 
-    @Inject
-    private InventoryManager manager;
+  @Inject
+  @ConfigProperty(name = "http.port")
+  String HTTP_PORT;
 
-    @GET
-    @Path("/systems")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getSystems() {
-        List<Properties> systems = manager.getSystems()
-                                          .values()
-                                          .stream()
-                                          .collect(Collectors.toList());
-        return Response.status(Response.Status.OK)
-                       .entity(systems)
-                       .build();
+  @Inject
+  @RestClient
+  private SystemClient defaultRestClient;
+
+  public Properties get(String hostname) {
+    Properties properties = null;
+    if (hostname.equals("localhost")) {
+      properties = getPropertiesWithDefaultHostName();
+    } else {
+      properties = getPropertiesWithGivenHostName(hostname);
     }
 
-    @GET
-    @Path("/systems/{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getSystem(@PathParam("hostname") String hostname) {
-        Optional<Properties> system = manager.getSystem(hostname);
-        if (system.isPresent()) {
-            return Response.status(Response.Status.OK)
-                           .entity(system)
-                           .build();
-        }
-        return Response.status(Response.Status.NOT_FOUND)
-                       .entity("hostname does not exist.")
-                       .build();
+    return properties;
+  }
+
+  public void add(String hostname, Properties systemProps) {
+    Properties props = new Properties();
+    props.setProperty("os.name", systemProps.getProperty("os.name"));
+    props.setProperty("user.name", systemProps.getProperty("user.name"));
+
+    SystemData host = new SystemData(hostname, props);
+    if (!systems.contains(host)) {
+      systems.add(host);
     }
+  }
 
-    @PUT
-    @Path("/data")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.TEXT_PLAIN)
-    /* This method sends a message and returns a CompletionStage that doesn't
-        complete until the message is acknowledged. */
-    public CompletionStage<Response> updateSystemProperty(String propertyName) {
-        logger.info("updateSystemProperty: " + propertyName);
-        CompletableFuture<Void> result = new CompletableFuture<>();
+  public InventoryList list() {
+    return new InventoryList(systems);
+  }
 
-        Message<String> message = Message.of(
-                propertyName,
-                () -> {
-                    /* This is the ack callback, which runs when the outgoing
-                        message is acknowledged. After the outgoing message is
-                        acknowledged, complete the "result" CompletableFuture. */
-                    result.complete(null);
-                    /* An ack callback must return a CompletionStage that says
-                        when it's complete. Asynchronous processing isn't necessary
-                        so a completed CompletionStage is returned to indicate that
-                        the work here is done. */
-                    return CompletableFuture.completedFuture(null);
-                }
-        );
-
-        propertyNameEmitter.onNext(message);
-        /* Set up what happens when the message is acknowledged and the "result"
-            CompletableFuture is completed. When "result" completes, the Response
-            object is created with the status code and message. */
-        return result.thenApply(a -> Response
-                 .status(Response.Status.OK)
-                 .entity("Request successful for the " + propertyName + " property\n")
-                 .build());
+  private Properties getPropertiesWithDefaultHostName() {
+    try {
+      return defaultRestClient.getProperties();
+    } catch (UnknownUriException e) {
+      System.err.println("The given URI is not formatted correctly.");
+    } catch (ProcessingException ex) {
+      handleProcessingException(ex);
     }
+    return null;
+  }
 
-    @DELETE
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response resetSystems() {
-        manager.resetSystems();
-        return Response.status(Response.Status.OK)
-                       .build();
+  private Properties getPropertiesWithGivenHostName(String hostname) {
+    String customURIString = "http://" + hostname + ":" + HTTP_PORT + "/system";
+    URI customURI = null;
+    try {
+      customURI = URI.create(customURIString);
+      SystemClient customRestClient = RestClientBuilder.newBuilder()
+                                        .baseUri(customURI)
+                                        .register(UnknownUriExceptionMapper.class)
+                                        .build(SystemClient.class);
+      return customRestClient.getProperties();
+    } catch (ProcessingException ex) {
+      handleProcessingException(ex);
+    } catch (UnknownUriException e) {
+      System.err.println("The given URI is unreachable.");
     }
+    return null;
+  }
 
-    @Incoming("systemLoad")
-    public void updateStatus(SystemLoad sl)  {
-        String hostname = sl.hostname;
-        if (manager.getSystem(hostname).isPresent()) {
-            manager.updateCpuStatus(hostname, sl.loadAverage);
-            logger.info("Host " + hostname + " was updated: " + sl);
-        } else {
-            manager.addSystem(hostname, sl.loadAverage);
-            logger.info("Host " + hostname + " was added: " + sl);
-        }
+  private void handleProcessingException(ProcessingException ex) {
+    Throwable rootEx = ExceptionUtils.getRootCause(ex);
+    if (rootEx != null && (rootEx instanceof UnknownHostException
+        || rootEx instanceof ConnectException)) {
+      System.err.println("The specified host is unknown.");
+    } else {
+      throw ex;
     }
+  }
 
-    @Incoming("addSystemProperty")
-    public void getPropertyMessage(PropertyMessage pm)  {
-        logger.info("getPropertyMessage: " + pm);
-        String hostId = pm.hostname;
-        if (manager.getSystem(hostId).isPresent()) {
-            manager.updatePropertyMessage(hostId, pm.key, pm.value);
-            logger.info("Host " + hostId + " was updated: " + pm);
-        } else {
-            manager.addSystem(hostId, pm.key, pm.value);
-            logger.info("Host " + hostId + " was added: " + pm);
-        }
-    }
-
-    @Outgoing("requestSystemProperty")
-    public Publisher<Message<String>> sendPropertyName() {
-        Flowable<Message<String>> flowable = Flowable.create(emitter ->
-            this.propertyNameEmitter = emitter, BackpressureStrategy.BUFFER);
-        return flowable;
-    }
 }
 ```
 
 
 
-The ***sendPropertyName()*** method is updated to return a ***Message\<String\>*** instead of just a ***String***. This return type allows the method to set a callback that runs after the outgoing message is acknowledged. In addition to updating the ***sendPropertyName()*** method, the ***propertyNameEmitter*** variable is updated to send a ***Message\<String\>*** type.
+***@Inject*** and ***@RestClient*** annotations inject an instance of the ***SystemClient*** called ***defaultRestClient*** to the ***InventoryManager*** class.
 
-The ***updateSystemProperty()*** method now returns a ***CompletionStage*** object wrapped around a Response type. This return type allows for a response object to be returned after the outgoing message is acknowledged. The outgoing ***message*** is created with the requested property name as the ***payload*** and an acknowledgment ***callback*** to execute an action after the message is acknowledged. The method creates a ***CompletableFuture*** variable that returns a ***200*** response code after the variable is completed in the ***callback*** function.
+Because the ***InventoryManager*** class is ***@ApplicationScoped***, and the ***SystemClient*** CDI bean maintains the same scope through the default dependent scope, the client is initialized once per application.
 
-::page{title="Building and running the application"}
+If the ***hostname*** parameter is ***localhost***, the service runs the ***getPropertiesWithDefaultHostName()*** helper function to fetch system properties. The helper function invokes the ***system*** service by calling the ***defaultRestClient.getProperties()*** method.
 
-Build the ***system*** and ***inventory*** microservices using Maven and then run them in Docker containers.
 
-Start your Docker environment. Dockerfiles are provided for you to use.
+::page{title="Building the client with RestClientBuilder"}
 
-To build the application, run the Maven ***install*** and ***package*** goals from the command-line session in the ***start*** directory:
+The ***inventory*** service can also connect with a host other than the default ***localhost*** host, but you cannot configure a base URL that is not yet known. In this case, set the host name as a variable and build the client by using the ***RestClientBuilder*** method. You can customize the base URL from the host name attribute.
 
+Look at the ***getPropertiesWithGivenHostName()*** method in the ***src/main/java/io/openliberty/guides/inventory/InventoryManager.java*** file.
+
+
+The host name is provided as a parameter. This method first assembles the base URL that consists of the new host name. Then, the method instantiates a ***RestClientBuilder*** builder with the new URL, registers the response exception mapper, and builds the ***SystemClient*** instance.
+
+Similarly, call the ***customRestClient.getProperties()*** method to invoke the ***system*** service.
+
+
+::page{title="Running the application"}
+
+You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+
+When the Liberty instance is running, select either approach to fetch your system properties:
+
+
+ Visit the ***http\://localhost:9080/inventory/systems/localhost*** URL. The URL retrieves the system property information for the ***localhost*** host name by making a request to the ***system*** service at ***http://localhost:9080/system/properties***.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```bash
-./mvnw -pl models install
-./mvnw package
+curl -s http://localhost:9080/inventory/systems/localhost | jq
 ```
 
 
 
-Run the following commands to containerize the microservices:
 
-```bash
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-```
+Or, get your FQDN first. Then, visit the ***http://localhost:9080/inventory/systems/{your-hostname}*** URL by replacing ***{your-hostname}*** with your FQDN, which retrieves your system properties by making a request to the ***system*** service at ***http://{your-hostname}:9080/system/properties***.
 
-Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It also creates containers for Kafka and the microservices in the project. For simplicity, the script starts one instance of the ***system*** service.
-
-
-```bash
-./scripts/startContainers.sh
-```
 
 ::page{title="Testing the application"}
 
-The application might take some time to become available. After the application is up and running, you can access it by making a GET request to the ***/systems*** endpoint of the ***inventory*** service.
+Create the ***RestClientIT*** class.
 
-
-Run the following curl command to confirm that the ***inventory*** microservice is up and running.
+> Run the following touch command in your terminal
 ```bash
-curl -s http://localhost:9085/health | jq
+touch /home/project/guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
 ```
 
-When both the liveness and readiness health checks are up, run the following curl command to access the ***inventory*** microservice:
-```bash
-curl -s http://localhost:9085/inventory/systems | jq
-```
 
-Look for the CPU ***systemLoad*** property for all the systems:
+> Then, to open the RestClientIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java, or click the following button
 
-```
-{
-   "hostname":"30bec2b63a96",
-   "systemLoad":1.44
+::openFile{path="/home/project/guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.client;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.client.WebTarget;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
+public class RestClientIT {
+
+  private static String port;
+
+  private Client client;
+
+  private final String INVENTORY_SYSTEMS = "inventory/systems";
+
+  @BeforeAll
+  public static void oneTimeSetup() {
+    port = System.getProperty("http.port");
+  }
+
+  @BeforeEach
+  public void setup() {
+    client = ClientBuilder.newClient();
+  }
+
+  @AfterEach
+  public void teardown() {
+    client.close();
+  }
+
+  @Test
+  public void testSuite() {
+    this.testDefaultLocalhost();
+    this.testRestClientBuilder();
+  }
+
+  public void testDefaultLocalhost() {
+    String hostname = "localhost";
+
+    String url = "http://localhost:" + port + "/" + INVENTORY_SYSTEMS + "/" + hostname;
+
+    JsonObject obj = fetchProperties(url);
+
+    assertEquals(System.getProperty("os.name"), obj.getString("os.name"),
+                 "The system property for the local and remote JVM should match");
+  }
+
+  public void testRestClientBuilder() {
+    String hostname = null;
+    try {
+      hostname = InetAddress.getLocalHost().getHostAddress();
+    } catch (UnknownHostException e) {
+      System.err.println("Unknown Host.");
+    }
+
+    String url = "http://localhost:" + port + "/" + INVENTORY_SYSTEMS + "/" + hostname;
+
+    JsonObject obj = fetchProperties(url);
+
+    assertEquals(System.getProperty("os.name"), obj.getString("os.name"),
+                 "The system property for the local and remote JVM should match");
+  }
+
+  private JsonObject fetchProperties(String url) {
+    WebTarget target = client.target(url);
+    Response response = target.request().get();
+
+    assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+
+    JsonObject obj = response.readEntity(JsonObject.class);
+    response.close();
+    return obj;
+  }
+
 }
 ```
 
-The ***system*** service sends messages to the ***inventory*** service every 15 seconds. The ***inventory*** service processes and acknowledges each incoming message, ensuring that no ***system*** message is lost.
 
 
-If you run the curl command again after a while, notice that the CPU ***systemLoad*** property for the systems changed.
-```bash
-curl -s http://localhost:9085/inventory/systems | jq
-```
+Each test case tests one of the methods for instantiating a RESTful client.
 
-Make a ***PUT*** request to the ***http://localhost:9085/inventory/data*** URL to add the value of a particular system property to the set of existing properties. For example, run the following ***curl*** command:
+The ***testDefaultLocalhost()*** test fetches and compares system properties from the ***http\://localhost:9080/inventory/systems/localhost*** URL.
+
+The ***testRestClientBuilder()*** test gets your IP address. Then, use your IP address as the host name to fetch your system properties and compare them.
+
+In addition, a few endpoint tests are provided for you to test the basic functionality of the ***inventory*** and ***system*** services. If a test failure occurs, you might have introduced a bug into the code.
 
 
-```bash
-curl -X PUT -d "os.name" http://localhost:9085/inventory/data --header "Content-Type:text/plain"
-```
+### Running the tests
 
-In this example, the ***PUT*** request with the ***os.name*** system property in the request body on the ***http://localhost:9085/inventory/data*** URL adds the ***os.name*** system property for your system. The ***inventory*** service sends a message that contains the requested system property to the ***system*** service. The ***inventory*** service then waits until the message is acknowledged before it sends a response back.
-
-You see the following output:
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
 
 ```
-Request successful for the os.name property
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.377 sec - in it.io.openliberty.guides.system.SystemEndpointIT
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
+Could not send Message.
+[err] The specified host is unknown.
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.379 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+Running it.io.openliberty.guides.client.RestClientIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.121 sec - in it.io.openliberty.guides.client.RestClientIT
+
+Results :
+
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-The previous example response is confirmation that the sent request message was acknowledged.
+The warning and error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the ***testUnknownHost()*** test from the ***InventoryEndpointIT*** integration test.
 
+To see whether the tests detect a failure, change the base URL in the configuration file so that when the ***inventory*** service tries to access the invalid URL, an ***UnknownUriException*** is thrown. Rerun the tests to see a test failure occur.
 
-Run the following curl command again:
-```bash
-curl -s http://localhost:9085/inventory/systems | jq
-```
-
-The ***os.name*** system property value is now included with the previous values:
-
-```
-{
-   "hostname":"30bec2b63a96",
-   "os.name":"Linux",
-   "systemLoad":1.44
-}
-```
-
-::page{title="Tearing down the environment"}
-
-Finally, run the following script to stop the application:
-
-
-```bash
-./scripts/stopContainers.sh
-```
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You developed an application by using MicroProfile Reactive Messaging, Open Liberty, and Kafka.
+You just invoked a remote service by using a template interface with MicroProfile Rest Client in Open Liberty.
 
+
+MicroProfile Rest Client also provides a uniform way to configure SSL for the client. You can learn more in the [Hostname verification with SSL on Open Liberty and MicroProfile Rest Client](https://openliberty.io/blog/2019/06/21/microprofile-rest-client-19006.html#ssl) blog and the [MicroProfile Rest Client specification](https://github.com/eclipse/microprofile-rest-client/releases).
+
+Feel free to try one of the related guides where you can learn more technologies and expand on what you built here.
 
 
 ### Clean up your environment
@@ -459,39 +651,33 @@ You developed an application by using MicroProfile Reactive Messaging, Open Libe
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-microprofile-reactive-messaging-acknowledgment*** project by running the following commands:
+Delete the ***guide-microprofile-rest-client*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-microprofile-reactive-messaging-acknowledgment
+rm -fr guide-microprofile-rest-client
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Acknowledging%20messages%20using%20MicroProfile%20Reactive%20Messaging&guide-id=cloud-hosted-guide-microprofile-reactive-messaging-acknowledgment)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20RESTful%20services%20with%20template%20interfaces&guide-id=cloud-hosted-guide-microprofile-rest-client)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging-acknowledgment/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging-acknowledgment/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-rest-client/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-rest-client/pulls)
 
 
 
 ### Where to next?
 
-* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
-* [Integrating RESTful services with a reactive system](https://openliberty.io/guides/microprofile-reactive-messaging-rest.html)
-* [Streaming updates to a client using Server-Sent Events](https://openliberty.io/guides/reactive-messaging-sse.html)
-* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
 * [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
-
-**Learn more about MicroProfile**
-* [View the MicroProfile Reactive Messaging Specification](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-3.0/microprofile-reactive-messaging-spec.html)
-* [View the MicroProfile Reactive Messaging Javadoc](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-3.0/apidocs/)
-* [View the MicroProfile](https://openliberty.io/docs/latest/microprofile.html)
 
 
 ### Log out of the session
