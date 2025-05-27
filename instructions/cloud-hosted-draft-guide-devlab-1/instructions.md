@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Providing metrics from a microservice guide!"}
+::page{title="Welcome to the Building a dynamic web application with integrated user interface and backend logic guide!"}
 
-You'll explore how to provide system and application metrics from a microservice with MicroProfile Metrics.
+Learn how to build a dynamic web application using Jakarta Faces, Jakarta Contexts and Dependency Injection, and Jakarta Expression Language.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -17,13 +17,13 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You will learn how to use MicroProfile Metrics to provide metrics from a microservice. You can monitor metrics to determine the performance and health of a service. You can also use them to pinpoint issues, collect data for capacity planning, or to decide when to scale a service to run with more or fewer resources.
+You'll learn how to build a dynamic web application using Jakarta Faces for the user interface (UI), Jakarta Contexts and Dependency Injection (CDI) for managing backend logic, and Jakarta Expression Language (EL) for data binding.
 
-The application that you will work with is an ***inventory*** service that stores information about various systems. The ***inventory*** service communicates with the ***system*** service on a particular host to retrieve its system properties when necessary.
+Jakarta Faces is a framework for building component-based web applications that simplifies UI development by managing reusable components, handling user interactions, and binding data to backend logic. It provides built-in lifecycle management, event handling, and server-side validation, reducing the need for manual request processing. Jakarta Faces also includes tag libraries that allows developers define UI components using markup and connect them to backend objects without writing repetitive setup code.
 
-You will use annotations provided by MicroProfile Metrics to instrument the ***inventory*** service to provide application-level metrics data. You will add counter, gauge, and timer metrics to the service.
+To further streamline development, Jakarta Faces works with CDI to manage backend components. CDI allows beans to be automatically created and injected where needed, making it easier to manage application logic. Jakarta Expression Language enables data binding between the UI and backend, allowing UI components to dynamically display data and trigger backend actions.
 
-You will also check well-known REST endpoints that are defined by MicroProfile Metrics to review the metrics data collected. Monitoring agents can access these endpoints to collect metrics.
+The application you will build in this guide is a dynamic web application that displays system load data on demand. Using Jakarta Faces for the UI, you'll create a table to show the system CPU load and heap memory usage. You'll also learn how to use CDI to provide the system load data from a managed bean, and to use Jakarta Expression Language to bind this data to the UI components.
 
 ::page{title="Getting started"}
 
@@ -36,11 +36,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-metrics.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-jakarta-faces.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-microprofile-metrics.git
-cd guide-microprofile-metrics
+git clone https://github.com/openliberty/guide-jakarta-faces.git
+cd guide-jakarta-faces
 ```
 
 
@@ -48,132 +48,30 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-
 ### Try what you'll build
 
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed. 
 
-To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
+To try out the application, first go to the ***finish*** directory and run Maven with the ***liberty:run*** goal to build the application and deploy it to Open Liberty:
+
 
 ```bash
 cd finish
 ./mvnw liberty:run
 ```
 
-After you see the following message, your Liberty instance is ready:
+After you see the following message, your Liberty instance is ready.
 
 ```
 The defaultServer server is ready to run a smarter planet.
 ```
 
 
-Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
+Check out the web application by clicking the following button:
 
-Run the following curl command to access the **inventory** service. Because you just started the application, the inventory is empty. 
-```bash
-curl -s http://localhost:9080/inventory/systems | jq
-```
+::startApplication{port="9080" display="external" name="Launch application" route="/index.xhtml"}
 
-Run the following curl command to add the ***localhost*** into the inventory.
-```bash
-curl -s http://localhost:9080/inventory/systems/localhost | jq
-```
-
-Access the ***inventory*** service at the ***http://localhost:9080/inventory/systems*** URL at least once so that application metrics are collected. Otherwise, the metrics do not appear.
-
-Next, run the following curl command to visit the MicroProfile Metrics endpoint by the ***admin*** user with ***adminpwd*** as the password.  You can see both the system and application metrics in a text format.
-```bash
-curl -k --user admin:adminpwd https://localhost:9443/metrics
-```
-
-To see only the application metrics, run the following curl command:
-```bash
-curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=application
-```
-
-See the following sample outputs for the ***@Timed***, ***@Gauge***, and ***@Counted*** metrics:
-
-```
-# TYPE inventoryProcessingTime_seconds_max gauge
-inventoryProcessingTime_seconds_max{method="list",mp_scope="application",} 3.0375E-5
-inventoryProcessingTime_seconds_max{method="get",mp_scope="application",} 0.1997325
-# HELP inventoryProcessingTime_seconds Time needed to process the inventory
-# TYPE inventoryProcessingTime_seconds summary
-inventoryProcessingTime_seconds{method="list",mp_scope="application",quantile="0.5",} 0.0
-inventoryProcessingTime_seconds{method="list",mp_scope="application",quantile="0.75",} 0.0
-...
-inventoryProcessingTime_seconds_count{method="list",mp_scope="application",} 2.0
-inventoryProcessingTime_seconds_sum{method="list",mp_scope="application",} 3.6792E-5
-inventoryProcessingTime_seconds{method="get",mp_scope="application",quantile="0.5",} 0.0
-inventoryProcessingTime_seconds{method="get",mp_scope="application",quantile="0.75",} 0.0
-...
-inventoryProcessingTime_seconds_count{method="get",mp_scope="application",} 1.0
-inventoryProcessingTime_seconds_sum{method="get",mp_scope="application",} 0.1997325
-...
-# HELP inventoryAddingTime_seconds_max Time needed to add system properties to the inventory
-# TYPE inventoryAddingTime_seconds_max gauge
-inventoryAddingTime_seconds_max{mp_scope="application",} 3.1E-5
-# HELP inventoryAddingTime_seconds Time needed to add system properties to the inventory
-# TYPE inventoryAddingTime_seconds summary
-inventoryAddingTime_seconds{mp_scope="application",quantile="0.5",} 0.0
-inventoryAddingTime_seconds{mp_scope="application",quantile="0.75",} 0.0
-...
-inventoryAddingTime_seconds_count{mp_scope="application",} 1.0
-inventoryAddingTime_seconds_sum{mp_scope="application",} 3.1E-5
-...
-```
-
-```
-# HELP inventorySizeGauge Number of systems in the inventory
-# TYPE inventorySizeGauge gauge
-inventorySizeGauge{mp_scope="application",} 1.0
-```
-
-```
-# HELP inventoryAccessCount_total Number of times the list of systems method is requested
-# TYPE inventoryAccessCount_total counter
-inventoryAccessCount_total{mp_scope="application",} 2.0
-```
-
-
-To see only the system metrics, run the following curl command:
-```bash
-curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=base
-```
-
-See the following sample output:
-
-```
-# HELP jvm_uptime_seconds Displays the time from the start of the Java virtual machine in seconds.
-# TYPE jvm_uptime_seconds gauge
-jvm_uptime_seconds{mp_scope="base",} 730.705
-```
-```
-# HELP classloader_loadedClasses_count Displays the number of classes that are currently loaded in the Java virtual machine.
-# TYPE classloader_loadedClasses_count gauge
-classloader_loadedClasses_count{mp_scope="base",} 13033.0
-```
-
-
-To see only the vendor metrics, run the following curl command:
-```bash
-curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=vendor
-```
-
-See the following sample output:
-
-```
-# HELP threadpool_size The size of the thread pool.
-# TYPE threadpool_size gauge
-threadpool_size{mp_scope="vendor",pool="Default_Executor",} 24.0
-```
-```
-# HELP servlet_request_total The number of visits to this servlet ... the start of the server.
-# TYPE servlet_request_total counter
-servlet_request_total{mp_scope="vendor",servlet="guide_microprofile_metrics_io_openliberty_guides_system_SystemApplication",} 1.0
-servlet_request_total{mp_scope="vendor",servlet="guide_microprofile_metrics_io_openliberty_guides_inventory_InventoryApplication",} 3.0
-servlet_request_total{mp_scope="vendor",servlet="io_openliberty_microprofile_metrics_5_0_private_internal_PrivateMetricsRESTProxyServlet",} 3.0
-```
+Click the <img src="https://raw.githubusercontent.com/OpenLiberty/guide-jakarta-faces/prod/assets/refresh.png" width="18" height="18" alt="refresh icon"> refresh button, located next to the table title, to update and display the latest system load data in the table.
 
 After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
@@ -181,14 +79,14 @@ After you are finished checking out the application, stop the Liberty instance b
 ./mvnw liberty:stop
 ```
 
+::page{title="Creating a static Jakarta Faces page"}
 
-::page{title="Adding MicroProfile Metrics to the inventory service"}
+Start by creating a page that displays an empty table by using Jakarta Faces to extend standard HTML. The table will display the system load data and serves as the starting point for your application.
 
+Navigate to the ***start*** directory to begin.
 
-
-To begin, run the following command to navigate to the **start** directory:
 ```bash
-cd /home/project/guide-microprofile-metrics/start
+cd /home/project/guide-jakarta-faces/start
 ```
 
 When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
@@ -206,470 +104,446 @@ After you see the following message, your Liberty instance is ready in dev mode:
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-The MicroProfile Metrics API is included in the MicroProfile dependency specified by your ***pom.xml*** file. Look for the dependency with the ***microprofile*** artifact ID. This dependency provides a library that allows you to use the MicroProfile Metrics API in your code to provide metrics from your microservices.
+Create the index.xhtml file.
 
-Replace the Liberty ***server.xml*** configuration file.
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-jakarta-faces/start/src/main/webapp/index.xhtml
+```
 
-> To open the server.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-metrics/start/src/main/liberty/config/server.xml, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-metrics/start/src/main/liberty/config/server.xml"}
+> Then, to open the index.xhtml file in your IDE, select
+> ***File*** > ***Open*** > guide-jakarta-faces/start/src/main/webapp/index.xhtml, or click the following button
+
+::openFile{path="/home/project/guide-jakarta-faces/start/src/main/webapp/index.xhtml"}
+
+
+
+```
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+
+  <h:head>
+    <meta charset="UTF-8" />
+    <title>Open Liberty - Jakarta Faces Example</title>
+    <h:outputStylesheet library="css" name="styles.css" />
+    <link href="favicon.ico" rel="icon" />
+    <link href="favicon.ico" rel="shortcut icon" />
+  </h:head>
+  <h:body>
+    <section id="appIntro">
+      <div id="titleSection">
+        <h1 id="appTitle">Jakarta Faces Example</h1>
+        <div class="line"></div>
+        <div class="headerImage"></div>
+      </div>
+
+      <div class="msSection" id="systemLoads">
+        <div class="headerRow">
+          <div class="headerIcon">
+            <img src="#{resource['img/sysProps.svg']}" />
+          </div>
+          <div class="headerTitleWithButton" id="sysPropTitle">
+            <h2>System Loads</h2>
+          </div>
+        </div>
+        <div class="sectionContent">
+          <h:dataTable id="systemLoadsTable">
+            <h:column>
+              <f:facet name="header">Time</f:facet>
+            </h:column>
+            <h:column>
+              <f:facet name="header">CPU Load (%)</f:facet>
+            </h:column>
+            <h:column>
+              <f:facet name="header">Heap Memory Usage (%)</f:facet>
+            </h:column>
+          </h:dataTable>
+        </div>
+      </div>
+    </section>
+    <ui:include src="/WEB-INF/includes/footer.xhtml" />
+  </h:body>
+</html>
+```
+
+
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
+
+
+In the ***index.xhtml*** file, the ***xmlns*** attributes define the XML namespaces for various Jakarta Faces tag libraries. These namespaces allow the page to use Jakarta Faces tags for templating, creating UI components, and enabling core functionality, such as form submissions and data binding. For more information on the various tag libraries and their roles in Jakarta Faces, refer to the [Jakarta Faces Tag Libraries](https://jakarta.ee/learn/docs/jakartaee-tutorial/current/web/faces-facelets/faces-facelets.html#_tag_libraries_supported_by_facelets) and the [VDL Documentation Generator](https://jakarta.ee/specifications/faces/4.0/vdldoc) documentation.
+
+The ***index.xhtml*** file combines standard HTML elements with Jakarta Faces components, providing both static layout and dynamic functionality. Standard HTML elements, like ***div*** and ***section***, structure the page's layout. Jakarta Faces tags offer additional features beyond standard HTML, such as managing UI components, including resources, and binding data. For example, the ***h:outputStylesheet*** tag loads a CSS file for styling, and the ***ui:include*** tag incorporates reusable components, such as the provided ***footer.xhtml*** file, to streamline maintenance and reuse across multiple pages. The ***h:dataTable*** tag is used to display a table.
+
+At this point, the page defines a table that has no data entries. We'll add dynamic content in the following steps.
+
+::page{title="Configuring the Faces Servlet"}
+
+Before you can access the Jakarta Faces page, you need to configure a Faces servlet in your application. This servlet handles all requests for ***.xhtml*** pages and processes them using Jakarta Faces.
+
+Create the web.xml file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-jakarta-faces/start/src/main/webapp/WEB-INF/web.xml
+```
+
+
+> Then, to open the web.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-jakarta-faces/start/src/main/webapp/WEB-INF/web.xml, or click the following button
+
+::openFile{path="/home/project/guide-jakarta-faces/start/src/main/webapp/WEB-INF/web.xml"}
 
 
 
 ```xml
-<server description="Sample Liberty server">
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+         version="6.0">
 
-  <featureManager>
-    <platform>jakartaee-10.0</platform>
-    <platform>microprofile-7.0</platform>
-    <feature>restfulWS</feature>
-    <feature>jsonp</feature>
-    <feature>jsonb</feature>
-    <feature>cdi</feature>
-    <feature>mpConfig</feature>
-   <feature>mpMetrics</feature>
-   <feature>mpRestClient</feature>
- </featureManager>
+    <context-param>
+        <param-name>jakarta.faces.PROJECT_STAGE</param-name>
+        <param-value>Development</param-value>
+    </context-param>
 
-  <variable name="http.port" defaultValue="9080"/>
-  <variable name="https.port" defaultValue="9443"/>
+    <!-- Faces Servlet Configuration -->
+    <servlet>
+        <servlet-name>Faces Servlet</servlet-name>
+        <servlet-class>jakarta.faces.webapp.FacesServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
 
-  <applicationManager autoExpand="true" />
-  <quickStartSecurity userName="admin" userPassword="adminpwd"/>
-  <httpEndpoint host="*" httpPort="${http.port}"
-      httpsPort="${https.port}" id="defaultHttpEndpoint"/>
-  <webApplication location="guide-microprofile-metrics.war" contextRoot="/"/>
-</server>
-```
+    <!-- Servlet Mapping -->
+    <servlet-mapping>
+        <servlet-name>Faces Servlet</servlet-name>
+        <url-pattern>*.xhtml</url-pattern>
+    </servlet-mapping>
 
-
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
-
-
-The ***mpMetrics*** feature enables MicroProfile Metrics support in Open Liberty. Note that this feature requires SSL and the configuration has been provided for you.
-
-The ***quickStartSecurity*** configuration element provides basic security to secure the Liberty. When you visit the ***/metrics*** endpoint, use the credentials defined in the Liberty's configuration to log in and view the data.
-
-
-### Adding the annotations
-
-Replace the ***InventoryManager*** class.
-
-> To open the InventoryManager.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-metrics/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-metrics/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
-
-
-
-```java
-package io.openliberty.guides.inventory;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
-
-import jakarta.enterprise.context.ApplicationScoped;
-
-import org.eclipse.microprofile.metrics.MetricUnits;
-import org.eclipse.microprofile.metrics.annotation.Counted;
-import org.eclipse.microprofile.metrics.annotation.Gauge;
-import org.eclipse.microprofile.metrics.annotation.Timed;
-
-import io.openliberty.guides.inventory.model.InventoryList;
-import io.openliberty.guides.inventory.model.SystemData;
-
-@ApplicationScoped
-public class InventoryManager {
-
-  private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
-  private InventoryUtils invUtils = new InventoryUtils();
-
-  @Timed(name = "inventoryProcessingTime",
-         tags = {"method=get"},
-         absolute = true,
-         description = "Time needed to process the inventory")
-  public Properties get(String hostname) {
-    return invUtils.getProperties(hostname);
-  }
-
-  @Timed(name = "inventoryAddingTime",
-    absolute = true,
-    description = "Time needed to add system properties to the inventory")
-  public void add(String hostname, Properties systemProps) {
-    Properties props = new Properties();
-    props.setProperty("os.name", systemProps.getProperty("os.name"));
-    props.setProperty("user.name", systemProps.getProperty("user.name"));
-
-    SystemData host = new SystemData(hostname, props);
-    if (!systems.contains(host)) {
-      systems.add(host);
-    }
-  }
-
-  @Timed(name = "inventoryProcessingTime",
-         tags = {"method=list"},
-         absolute = true,
-         description = "Time needed to process the inventory")
-  @Counted(name = "inventoryAccessCount",
-           absolute = true,
-           description = "Number of times the list of systems method is requested")
-  public InventoryList list() {
-    return new InventoryList(systems);
-  }
-
-  @Gauge(unit = MetricUnits.NONE,
-         name = "inventorySizeGauge",
-         absolute = true,
-         description = "Number of systems in the inventory")
-  public int getTotal() {
-    return systems.size();
-  }
-}
+</web-app>
 ```
 
 
 
-Apply the ***@Timed*** annotation to the ***get()*** method,
-and apply the ***@Timed*** annotation to the ***list()*** method.
+The ***servlet*** element defines the Faces servlet that is responsible for processing requests for Jakarta Faces pages. The ***load-on-startup*** element with a value of ***1*** specifies that the servlet is loaded and initialized first when the application starts.
 
-This annotation has these metadata fields:
+The ***servlet-mapping*** element specifies which URL patterns are routed to the Faces servlet. In this case, all URLs ending with ***.xhtml*** are mapped to be processed by Jakarta Faces. This ensures that any request for an ***.xhtml*** page is handled by the Faces servlet, which manages the lifecycle of Jakarta Faces components, processes the page, and renders the output. 
 
-|***name*** | Optional. Use this field to name the metric.
-| ---| ---
-|***tags*** | Optional. Use this field to add tags to the metric with the same ***name***.
-|***absolute*** | Optional. Use this field to determine whether the metric name is the exact name that is specified in the ***name*** field or that is specified with the package prefix.
-|***description*** | Optional. Use this field to describe the purpose of the metric.
+By configuring both the servlet and the servlet mapping, you're ensuring that Jakarta Faces pages are properly processed and delivered in response to user requests.
 
-The ***@Timed*** annotation tracks how frequently the method is invoked and how long it takes for each invocation of the method to complete. Both the ***get()*** and ***list()*** methods are annotated with the ***@Timed*** metric and have the same ***inventoryProcessingTime*** name. The ***method=get*** and ***method=list*** tags add a dimension that uniquely identifies the collected metric data from the inventory processing time in getting the system properties.
+The ***jakarta.faces.PROJECT_STAGE*** context parameter determines the current stage of the application in its development lifecycle. Because it is currently set to ***Development***, you will see additional debugging information, including developer-friendly warning messages such as ***WARNING: Apache MyFaces Core is running in DEVELOPMENT mode.*** For more information about valid values and how to set the ***PROJECT_STAGE*** parameter, see the official [Jakarta Faces ProjectStage documentation](https://jakarta.ee/specifications/faces/4.1/apidocs/jakarta.faces/jakarta/faces/application/projectstage).
 
-* The ***method=get*** tag identifies the ***inventoryProcessingTime*** metric that measures the elapsed time to get the system properties when you call the ***system*** service.
-* The ***method=list*** tag identifies the ***inventoryProcessingTime*** metric that measures the elapsed time for the ***inventory*** service to list all of the system properties in the inventory.
+In your dev mode console, type ***r*** and press the ***enter/return*** key to restart the Liberty instance so that Liberty reads the configuration changes. When you see the following message, your Liberty instance is ready in dev mode:
 
-The tags allow you to query the metrics together or separately based on the functionality of the monitoring tool of your choice. The ***inventoryProcessingTime*** metrics for example could be queried to display an aggregate time of both tagged metrics or individual times.
-
-Apply the ***@Timed*** annotation to the ***add()*** method to track how frequently the method is invoked and how long it takes for each invocation of the method to complete.
-
-Apply the ***@Counted*** annotation to the ***list()*** method to count how many times the ***http://localhost:9080/inventory/systems*** URL is accessed monotonically, which is counting up sequentially.
-
-Apply the ***@Gauge*** annotation to the ***getTotal()*** method to track the number of systems that are stored in the inventory. When the value of the gauge is retrieved, the underlying ***getTotal()*** method is called to return the size of the inventory. Note the additional metadata field:
-
-| ***unit*** | Set the unit of the metric. If it is ***MetricUnits.NONE***, the metric name is used without appending the unit name, no scaling is applied.
-| ---| ---
-
-Additional information about these annotations, relevant metadata fields, and more are available at
-the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/latest/reference/javadoc/microprofile-6.1-javadoc.html?class=org/eclipse/microprofile/metrics/annotation/package-summary.html&package=allclasses-frame.html&path=microprofile-6.1-javadoc/org/eclipse/microprofile/metrics/annotation/package-summary.html).
-
-
-::page{title="Enabling vendor metrics for the microservices"}
-
-
-MicroProfile Metrics API implementers can provide vendor metrics in the same forms as the base and application metrics do. Open Liberty as a vendor supplies server component metrics when the ***mpMetrics*** feature is enabled in the ***server.xml*** configuration file.
-
-You can see the vendor-only metrics in the ***metrics?scope=vendor*** endpoint. You see metrics from the runtime components, such as Web Application, ThreadPool and Session Management. Note that these metrics are specific to the Liberty instance. Different vendors may provide other metrics. Visit the [Metrics reference list](https://openliberty.io/docs/ref/general/#metrics-list.html) for more information.
-
-
-::page{title="Building and running the application"}
-
-The Open Liberty instance was started in dev mode at the beginning of the guide and all the changes were automatically picked up.
-
-
-Run the following curl command to review all the metrics that are enabled through MicroProfile Metrics. You see only the system and vendor metrics because the Liberty instance just started, and the ***inventory*** service has not been accessed.
-```bash
-curl -k --user admin:adminpwd https://localhost:9443/metrics
 ```
-
-Next, run the following curl command to access the **inventory** service:
-```bash
-curl -s http://localhost:9080/inventory/systems | jq
-```
-
-Rerun the following curl command to access the all metrics:
-```bash
-curl -k --user admin:adminpwd https://localhost:9443/metrics
-```
-
-or access only the application metrics by running following curl command:
-```bash
-curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=application
-```
-
-You can see the system metrics by running following curl command:
-```bash
-curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=base
-```
-
-as well as see the vendor metrics by running following curl command:
-```bash
-curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=vendor
+**************************************************************
+*    Liberty is running in dev mode.
 ```
 
 
+Check out the web application that you created by clicking the following button:
 
-::page{title="Testing the metrics"}
+::startApplication{port="9080" display="external" name="Launch application" route="/index.xhtml"}
 
-You can test your application manually, but automated tests ensure code quality because they trigger a failure whenever a code change introduces a defect. JUnit and the Jakarta Restful Web Services Client API provide a simple environment for you to write tests.
+You should see the static page with the system loads table displaying only the headers and no data.
 
-Create the ***MetricsIT*** class.
+::page{title="Implementing backend logic with dependency injection"}
+
+To provide system load data to your web application, you'll create a CDI-managed bean that retrieves information about the system CPU load and memory usage. This bean is accessible from the Jakarta Faces page and supplies the data that is displayed.
+
+Create the SystemLoadBean class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-microprofile-metrics/start/src/test/java/it/io/openliberty/guides/metrics/MetricsIT.java
+touch /home/project/guide-jakarta-faces/start/src/main/java/io/openliberty/guides/bean/SystemLoadBean.java
 ```
 
 
-> Then, to open the MetricsIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-metrics/start/src/test/java/it/io/openliberty/guides/metrics/MetricsIT.java, or click the following button
+> Then, to open the SystemLoadBean.java file in your IDE, select
+> ***File*** > ***Open*** > guide-jakarta-faces/start/src/main/java/io/openliberty/guides/bean/SystemLoadBean.java, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-metrics/start/src/test/java/it/io/openliberty/guides/metrics/MetricsIT.java"}
+::openFile{path="/home/project/guide-jakarta-faces/start/src/main/java/io/openliberty/guides/bean/SystemLoadBean.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.metrics;
+package io.openliberty.guides.bean;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.security.KeyStore;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Calendar;
 import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.io.Serializable;
 
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Named;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
+import com.sun.management.OperatingSystemMXBean;
 
-@TestMethodOrder(OrderAnnotation.class)
-public class MetricsIT {
+import io.openliberty.guides.bean.model.SystemLoadData;
 
-  private static final String KEYSTORE_PATH = System.getProperty("user.dir")
-                              + "/target/liberty/wlp/usr/servers/"
-                              + "defaultServer/resources/security/key.p12";
-  private static final String SYSTEM_ENV_PATH =  System.getProperty("user.dir")
-                              + "/target/liberty/wlp/usr/servers/"
-                              + "defaultServer/server.env";
+@Named("systemLoadBean")
+@ApplicationScoped
+public class SystemLoadBean implements Serializable {
+    private static final long serialVersionUID = 1L;
 
-  private static String httpPort;
-  private static String httpsPort;
-  private static String baseHttpUrl;
-  private static String baseHttpsUrl;
-  private static KeyStore keystore;
+    private List<SystemLoadData> systemLoads;
 
-  private List<String> metrics;
-  private Client client;
+    private static final OperatingSystemMXBean OS =
+        (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
 
-  private final String INVENTORY_HOSTS = "inventory/systems";
-  private final String INVENTORY_HOSTNAME = "inventory/systems/localhost";
-  private final String METRICS_APPLICATION = "metrics?scope=application";
+    private static final MemoryMXBean MEM =
+        ManagementFactory.getMemoryMXBean();
 
-  @BeforeAll
-  public static void oneTimeSetup() throws Exception {
-    httpPort = System.getProperty("http.port");
-    httpsPort = System.getProperty("https.port");
-    baseHttpUrl = "http://localhost:" + httpPort + "/";
-    baseHttpsUrl = "https://localhost:" + httpsPort + "/";
-    loadKeystore();
-  }
-
-  private static void loadKeystore() throws Exception {
-    Properties sysEnv = new Properties();
-    sysEnv.load(new FileInputStream(SYSTEM_ENV_PATH));
-    char[] password = sysEnv.getProperty("keystore_password").toCharArray();
-    keystore = KeyStore.getInstance("PKCS12");
-    keystore.load(new FileInputStream(KEYSTORE_PATH), password);
-  }
-
-  @BeforeEach
-  public void setup() {
-    client = ClientBuilder.newBuilder().trustStore(keystore).build();
-  }
-
-  @AfterEach
-  public void teardown() {
-    client.close();
-  }
-
-  @Test
-  @Order(1)
-  public void testPropertiesRequestTimeMetric() {
-    connectToEndpoint(baseHttpUrl + INVENTORY_HOSTNAME);
-    metrics = getMetrics();
-    for (String metric : metrics) {
-      if (metric.startsWith(
-          "application_inventoryProcessingTime_rate_per_second")) {
-        float seconds = Float.parseFloat(metric.split(" ")[1]);
-        assertTrue(4 > seconds);
-      }
-    }
-  }
-
-  @Test
-  @Order(2)
-  public void testInventoryAccessCountMetric() {
-    metrics = getMetrics();
-    Map<String, Integer> accessCountsBefore = getIntMetrics(metrics,
-            "application_inventoryAccessCount_total");
-    connectToEndpoint(baseHttpUrl + INVENTORY_HOSTS);
-    metrics = getMetrics();
-    Map<String, Integer> accessCountsAfter = getIntMetrics(metrics,
-            "application_inventoryAccessCount_total");
-    for (String key : accessCountsBefore.keySet()) {
-      Integer accessCountBefore = accessCountsBefore.get(key);
-      Integer accessCountAfter = accessCountsAfter.get(key);
-      assertTrue(accessCountAfter > accessCountBefore);
-    }
-  }
-
-  @Test
-  @Order(3)
-  public void testInventorySizeGaugeMetric() {
-    metrics = getMetrics();
-    Map<String, Integer> inventorySizeGauges = getIntMetrics(metrics,
-            "application_inventorySizeGauge");
-    for (Integer value : inventorySizeGauges.values()) {
-      assertTrue(1 <= value);
-    }
-  }
-
-  @Test
-  @Order(4)
-  public void testPropertiesAddTimeMetric() {
-    connectToEndpoint(baseHttpUrl + INVENTORY_HOSTNAME);
-    metrics = getMetrics();
-    boolean checkMetric = false;
-    for (String metric : metrics) {
-      if (metric.startsWith(
-          "inventoryAddingTime_seconds_count")) {
-            checkMetric = true;
-      }
-    }
-    assertTrue(checkMetric);
-  }
-
-  public void connectToEndpoint(String url) {
-    Response response = this.getResponse(url);
-    this.assertResponse(url, response);
-    response.close();
-  }
-
-  private List<String> getMetrics() {
-    String usernameAndPassword = "admin" + ":" + "adminpwd";
-    String authorizationHeaderValue = "Basic "
-        + java.util.Base64.getEncoder()
-                          .encodeToString(usernameAndPassword.getBytes());
-    Response metricsResponse = client.target(baseHttpsUrl + METRICS_APPLICATION)
-                                     .request(MediaType.TEXT_PLAIN)
-                                     .header("Authorization",
-                                         authorizationHeaderValue)
-                                     .get();
-
-    BufferedReader br = new BufferedReader(new InputStreamReader((InputStream)
-    metricsResponse.getEntity()));
-    List<String> result = new ArrayList<String>();
-    try {
-      String input;
-      while ((input = br.readLine()) != null) {
-        result.add(input);
-      }
-      br.close();
-    } catch (IOException e) {
-      e.printStackTrace();
-      fail();
+    @PostConstruct
+    public void init() {
+        systemLoads = new ArrayList<>();
+        fetchSystemLoad();
     }
 
-    metricsResponse.close();
-    return result;
-  }
+    public void fetchSystemLoad() {
+        String time = Calendar.getInstance().getTime().toString();
 
-  private Response getResponse(String url) {
-    return client.target(url).request().get();
-  }
+        double cpuLoad = OS.getCpuLoad() * 100;
 
-  private void assertResponse(String url, Response response) {
-    assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
-  }
+        long heapMax = MEM.getHeapMemoryUsage().getMax();
+        long heapUsed = MEM.getHeapMemoryUsage().getUsed();
+        double memoryUsage = heapUsed * 100.0 / heapMax;
 
-  private Map<String, Integer> getIntMetrics(List<String> metrics, String metricName) {
-    Map<String, Integer> output = new HashMap<String, Integer>();
-    for (String metric : metrics) {
-      if (metric.startsWith(metricName)) {
-        String[] mSplit = metric.split(" ");
-        String key = mSplit[0];
-        Integer value = Integer.parseInt(mSplit[mSplit.length - 1]);
-        output.put(key, value);
-      }
+        SystemLoadData data = new SystemLoadData(time, cpuLoad, memoryUsage);
+
+        systemLoads.add(data);
     }
-    return output;
-  }
+
+    public List<SystemLoadData> getSystemLoads() {
+        return systemLoads;
+    }
 }
 ```
 
 
 
+Annotate the ***SystemLoadBean*** class with a ***@Named*** annotation to make it accessible in the Jakarta Faces pages under the ***systemLoadBean*** name. Because the ***SystemLoadBean*** bean is a CDI-managed bean, a scope is necessary. Annotating it with the ***@ApplicationScoped*** annotation indicates that it is initialized once and is shared between all requests while the application runs. To learn more about CDI, see the [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html) guide.
 
-* The ***testPropertiesRequestTimeMetric()*** test case validates the ***@Timed*** metric. The test case sends a request to the ***http://localhost:9080/inventory/systems/localhost*** URL to access the ***inventory*** service, which adds the ***localhost*** host to the inventory. Next, the test case makes a connection to the ***https://localhost:9443/metrics?scope=application*** URL to retrieve application metrics as plain text. Then, it asserts whether the time that is needed to retrieve the system properties for localhost is less than 4 seconds.
+The ***@PostConstruct*** annotation ensures the ***init()*** method runs after the ***SystemLoadBean*** is initialized and dependencies are injected. The ***init()*** method sets up any required resources for the bean's lifecyccle.
 
-* The ***testInventoryAccessCountMetric()*** test case validates the ***@Counted*** metric. The test case obtains metric data before and after a request to the ***http://localhost:9080/inventory/systems*** URL. It then asserts that the metric was increased after the URL was accessed.
+The ***fetchSystemLoad()*** method retrieves the current system load and memory usage, then updates the list of system load data.
 
-* The ***testInventorySizeGaugeMetric()*** test case validates the ***@Gauge*** metric. The test case first ensures that the localhost is in the inventory, then looks for the ***@Gauge*** metric and asserts that the inventory size is greater or equal to 1.
+The ***getSystemLoads()*** method is a getter method for accessing the list of system load data from the Jakarta Faces page.
 
-* The ***testPropertiesAddTimeMetric()*** test case validates the ***@Timed*** metric. The test case sends a request to the ***http://localhost:9080/inventory/systems/localhost*** URL to access the ***inventory*** service, which adds the ***localhost*** host to the inventory. Next, the test case makes a connection to the ***https://localhost:9443/metrics?scope=application*** URL to retrieve application metrics as plain text. Then, it looks for the ***@Timed*** metric and asserts true if the metric exists.
+::page{title="Binding data to the UI with expression language"}
 
-The ***oneTimeSetup()*** method retrieves the port number for the Liberty and builds a base URL string to set up the tests. Apply the ***@BeforeAll*** annotation to this method to run it before any of the test cases.
+Now that you have implemented the backend logic with CDI, you'll update the Jakarta Faces page to display the dynamic system load data. You'll do this by using Jakarta Expression Language to bind the UI components to the backend data.
 
-The ***setup()*** method creates a JAX-RS client that makes HTTP requests to the ***inventory*** service. The ***teardown()*** method destroys this client instance. Apply the ***@BeforeEach*** annotation so that a method runs before a test case and apply the ***@AfterEach*** annotation so that a method runs after a test case. Apply these annotations to methods that are generally used to perform any setup and teardown tasks before and after a test.
+Replace the index.xhtml file.
 
-To force these test cases to run in a particular order, annotate your ***MetricsIT*** test class with the ***@TestMethodOrder(OrderAnnotation.class)*** annotation. ***OrderAnnotation.class*** runs test methods in numerical order, according to the values specified in the ***@Order*** annotation. You can also create a custom ***MethodOrderer*** class or use built-in ***MethodOrderer*** implementations, such as ***OrderAnnotation.class***, ***Alphanumeric.class***, or ***Random.class***. Label your test cases with the ***@Test*** annotation so that they automatically run when your test class runs.
+> To open the index.xhtml file in your IDE, select
+> ***File*** > ***Open*** > guide-jakarta-faces/start/src/main/webapp/index.xhtml, or click the following button
 
-In addition, the endpoint tests ***src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java*** and ***src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java*** are provided for you to test the basic functionality of the ***inventory*** and ***system*** services. If a test failure occurs, then you might have introduced a bug into the code.
+::openFile{path="/home/project/guide-jakarta-faces/start/src/main/webapp/index.xhtml"}
 
+
+
+```
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+  <h:head>
+    <meta charset="UTF-8" />
+    <title>Open Liberty - Jakarta Faces Example</title>
+    <h:outputStylesheet library="css" name="styles.css" />
+    <link href="favicon.ico" rel="icon" />
+    <link href="favicon.ico" rel="shortcut icon" />
+  </h:head>
+  <h:body>
+    <section id="appIntro">
+      <div id="titleSection">
+        <h1 id="appTitle">Jakarta Faces Example</h1>
+        <div class="line"></div>
+        <div class="headerImage"></div>
+      </div>
+
+      <div class="msSection" id="systemLoads">
+        <h:form id="systemLoadForm">
+          <div class="headerRow">
+            <div class="headerIcon">
+              <img src="#{resource['img/sysProps.svg']}" />
+            </div>
+            <div class="headerTitleWithButton" id="sysPropTitle">
+              <h2>System Loads</h2>
+              <h:commandButton id="refreshButton" styleClass="refreshButton" value=""
+                               title="Refresh system load data"
+                               action="#{systemLoadBean.fetchSystemLoad}" >
+                <f:ajax render="systemLoadForm" />
+              </h:commandButton>
+            </div>
+          </div>
+          <div class="sectionContent">
+            <h:dataTable id="systemLoadsTable"
+                         value="#{systemLoadBean.systemLoads}"
+                         var="systemLoadData"
+                         styleClass = "systemLoadsTable"
+                         headerClass = "systemLoadsTableHeader"
+                         rowClasses = "systemLoadsTableOddRow,systemLoadsTableEvenRow">
+              <h:column>
+                <f:facet name="header">Time</f:facet>
+                <h:outputText value="#{systemLoadData.time}" />
+              </h:column>
+
+              <h:column>
+                <f:facet name="header">CPU Load (%)</f:facet>
+                <h:outputText
+                  value="#{systemLoadData.cpuLoad == null ? '-' : systemLoadData.cpuLoad}">
+                  <f:convertNumber pattern="#0.0000000" />
+                </h:outputText>
+              </h:column>
+
+              <h:column>
+                <f:facet name="header">Heap Memory Usage (%)</f:facet>
+                <h:outputText
+                  value="#{systemLoadData.memoryUsage == null ? '-' : systemLoadData.memoryUsage}">
+                  <f:convertNumber pattern="#0.00" />
+                </h:outputText>
+              </h:column>
+            </h:dataTable>
+          </div>
+        </h:form>
+      </div>
+    </section>
+    <ui:include src="/WEB-INF/includes/footer.xhtml" />
+  </h:body>
+</html>
+```
+
+
+
+
+
+The ***index.xhtml*** uses an ***h:commandButton*** tag to create the refresh button. When the button is clicked, the ***#{systemLoadBean.fetchSystemLoad}*** action invokes the ***fetchSystemLoad()*** method using Jakarta Expression Language. This expression references the ***systemLoadBean*** managed bean, triggering the method to update the system load data. The ***f:ajax*** tag ensures that the ***systemLoadForm*** component is re-rendered without requiring a full page reload.
+
+The ***systemLoadsTable*** is populated using the ***h:dataTable*** tag, which iterates over the list of system load data provided by the ***systemLoadBean***. The ***#{systemLoadBean.systemLoads}*** expression calls the ***getSystemLoads()*** method from the managed bean, binding the data to the UI components. If the ***systemLoadBean*** isn't created yet, it is automatically initialized at this point. For each entry, the ***time***, ***cpuLoad***, and ***memoryUsage*** fields are displayed by using the ***h:outputText*** tag. The ***f:convertNumber*** tag formats ***cpuLoad*** to seven decimal places and ***memoryUsage*** to two decimal places.
+
+To format the table, set the ***styleClass***, ***headerClass***, and ***rowClasses*** attributes in the ***h:dataTable*** tag. The style elements are defined in the ***src/main/webapp/resources/css/styles.css*** file.
+
+::page{title="Running the application"}
+
+
+The required ***faces***, ***expressionLanguage***, and ***cdi*** features are enabled for you in the Liberty ***server.xml*** configuration file.
+
+Because you started the Open Liberty in dev mode at the beginning of the guide, all the changes were automatically picked up.
+
+
+Now, you can check out the web application that you created by clicking the following button:
+
+::startApplication{port="9080" display="external" name="Launch application" route="/index.xhtml"}
+
+Click on the <img src="https://raw.githubusercontent.com/OpenLiberty/guide-jakarta-faces/prod/assets/refresh.png" width="18" height="18" alt="refresh icon"> refresh button to trigger an update on the system loads table.
+
+::page{title="Testing the application"}
+
+While you can manually verify the web application by visiting ***http\://localhost:9080/index.xhtml,*** automated tests are a much better approach because they are more reliable and trigger a failure if a breaking change is introduced. You can write unit tests for your CDI bean to ensure that the basic operations you implemented function correctly.
+
+Create the SystemLoadBeanTest class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-jakarta-faces/start/src/test/java/io/openliberty/guides/bean/SystemLoadBeanTest.java
+```
+
+
+> Then, to open the SystemLoadBeanTest.java file in your IDE, select
+> ***File*** > ***Open*** > guide-jakarta-faces/start/src/test/java/io/openliberty/guides/bean/SystemLoadBeanTest.java, or click the following button
+
+::openFile{path="/home/project/guide-jakarta-faces/start/src/test/java/io/openliberty/guides/bean/SystemLoadBeanTest.java"}
+
+
+
+```java
+package io.openliberty.guides.bean;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import io.openliberty.guides.bean.model.SystemLoadData;
+
+public class SystemLoadBeanTest {
+
+    private SystemLoadBean systemLoadBean;
+
+    @BeforeEach
+    public void setUp() {
+        systemLoadBean = new SystemLoadBean();
+        systemLoadBean.init();
+    }
+
+    @Test
+    public void testInitMethod() {
+        assertNotNull(systemLoadBean.getSystemLoads(),
+                      "System loads should not be null after initialization");
+        assertFalse(systemLoadBean.getSystemLoads().isEmpty(),
+                    "System loads should not be empty after initialization");
+    }
+
+    @Test
+    public void testFetchSystemLoad() {
+        int initialSize = systemLoadBean.getSystemLoads().size();
+        systemLoadBean.fetchSystemLoad();
+        int newSize = systemLoadBean.getSystemLoads().size();
+        assertEquals(initialSize + 1, newSize,
+                     "System loads size should increase by 1 after fetching new data");
+    }
+
+    @Test
+    public void testDataIntegrity() {
+        systemLoadBean.fetchSystemLoad();
+        SystemLoadData data = systemLoadBean.getSystemLoads().get(0);
+        assertNotNull(data.getTime(), "Time should not be null");
+        assertNotNull(data.getCpuLoad(), "Recent load should not be null");
+        assertNotNull(data.getMemoryUsage(), "Memory usage should not be null");
+    }
+}
+```
+
+
+
+The ***setUp()*** method is annotated with the ***@BeforeEach*** annotation, indicating that it is run before each test case to ensure a clean state for each test execution. In this case, it creates a new instance of ***SystemLoadBean*** and manually calls the ***init()*** method to initialize the list of system load data before each test.
+
+The ***testInitMethod()*** test case verifies that after initializing ***SystemLoadBean***, the list of system load data is not null and contains at least one entry.
+
+The ***testFetchSystemLoad()*** test case verifies that after calling the ***fetchSystemLoad()*** method, the size of the list of system load data increases by one.
+
+The ***testDataIntegrity()*** test case verifies that each ***SystemLoadData*** entry in the list of system load data contains valid values for ***time***, ***cpuLoad***, and ***memoryUsage***.
 
 ### Running the tests
 
-Because you started Open Liberty in dev mode at the start of the guide, press the ***enter/return*** key to run the tests and see the following output:
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+
+You see the following output:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.4 sec - in it.io.openliberty.guides.system.SystemEndpointIT
-Running it.io.openliberty.guides.metrics.MetricsIT
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.476 sec - in it.io.openliberty.guides.metrics.MetricsIT
-Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-[WARNING ] Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
-Could not send Message.
-[err] The specified host is unknown.
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.264 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+Running io.openliberty.guides.bean.SystemLoadBeanTest
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.037 s -- in io.openliberty.guides.bean.SystemLoadBeanTest
 
-Results :
+Results:
 
-Tests run: 8, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 ```
-
-The warning and error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the ***testUnknownHost()*** test from the ***InventoryEndpointIT*** integration test.
-
-To determine whether the tests detect a failure, go to the ***MetricsIT.java*** file and change any of the assertions in the test methods. Then re-run the tests to see a test failure occur.
 
 When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
 
@@ -678,9 +552,9 @@ When you are done checking out the service, exit dev mode by pressing `Ctrl+C` i
 
 ### Nice Work!
 
-You learned how to enable system, application and vendor metrics for microservices by using MicroProfile Metrics
+You just built a dynamic web application on Open Liberty by using Jakarta Faces for the user interface, CDI for managing beans, and Jakarta Expression Language for binding and handling data.
 
-and wrote tests to validate them in Open Liberty.
+
 
 
 ### Clean up your environment
@@ -688,32 +562,30 @@ and wrote tests to validate them in Open Liberty.
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-microprofile-metrics*** project by running the following commands:
+Delete the ***guide-jakarta-faces*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-microprofile-metrics
+rm -fr guide-jakarta-faces
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Providing%20metrics%20from%20a%20microservice&guide-id=cloud-hosted-guide-microprofile-metrics)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Building%20a%20dynamic%20web%20application%20with%20integrated%20user%20interface%20and%20backend%20logic&guide-id=cloud-hosted-guide-jakarta-faces)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-metrics/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-metrics/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-jakarta-faces/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-jakarta-faces/pulls)
 
 
 
 ### Where to next?
 
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Streaming messages between client and server services using gRPC](https://openliberty.io/guides/grpc-intro.html)
 
 
 ### Log out of the session
