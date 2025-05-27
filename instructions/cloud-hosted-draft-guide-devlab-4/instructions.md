@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Documenting RESTful APIs guide!"}
+::page{title="Welcome to the Acknowledging messages using MicroProfile Reactive Messaging guide!"}
 
-Explore how to document and filter RESTful APIs from code or static files by using MicroProfile OpenAPI.
+Learn how to acknowledge messages by using MicroProfile Reactive Messaging.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,17 +14,16 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 ::page{title="What you'll learn"}
 
-You will learn how to document and filter RESTful APIs from annotations, POJOs, and static OpenAPI files by using MicroProfile OpenAPI.
+MicroProfile Reactive Messaging provides a reliable way to handle messages in reactive applications. MicroProfile Reactive Messaging ensures that messages aren't lost by requiring that messages that were delivered to the target server are acknowledged after they are processed. Every message that gets sent out must be acknowledged. This way, any messages that were delivered to the target service but not processed, for example, due to a system failure, can be identified and sent again.
 
-The OpenAPI specification, previously known as the Swagger specification, defines a standard interface for documenting and exposing RESTful APIs. This specification allows both humans and computers to understand or process the functionalities of services without requiring direct access to underlying source code or documentation. The MicroProfile OpenAPI specification provides a set of Java interfaces and programming models that allow Java developers to natively produce OpenAPI v3 documents from their JAX-RS applications.
+The application in this guide consists of two microservices, ***system*** and ***inventory***. Every 15 seconds, the ***system*** microservice calculates and publishes events that contain its current average system load. The ***inventory*** microservice subscribes to that information so that it can keep an updated list of all the systems and their current system loads. You can get the current inventory of systems by accessing the ***/systems*** REST endpoint. The following diagram depicts the application that is used in this guide:
 
-You will document the RESTful APIs of the provided ***inventory*** service, which serves two endpoints, ***inventory/systems*** and ***inventory/properties***. These two endpoints function the same way as in the other MicroProfile guides.
+![Reactive system inventory](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging-acknowledgment/prod/assets/reactive-messaging-system-inventory-rest.png)
 
-Before you proceed, note that the 1.0 version of the MicroProfile OpenAPI specification does not define how the ***/openapi*** endpoint may be partitioned in the event of multiple JAX-RS applications running on the same server. In other words, you must stick to one JAX-RS application per server instance as the behaviour for handling multiple applications is currently undefined.
 
+You will explore the acknowledgment strategies that are available with MicroProfile Reactive Messaging, and you'll implement your own manual acknowledgment strategy. To learn more about how the reactive Java services used in this guide work, check out the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
 ::page{title="Getting started"}
 
@@ -37,11 +36,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-openapi.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-reactive-messaging-acknowledgment.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-microprofile-openapi.git
-cd guide-microprofile-openapi
+git clone https://github.com/openliberty/guide-microprofile-reactive-messaging-acknowledgment.git
+cd guide-microprofile-reactive-messaging-acknowledgment
 ```
 
 
@@ -49,171 +48,118 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-### Try what you'll build
+::page{title="Choosing an acknowledgment strategy"}
 
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
+Messages must be acknowledged in reactive applications. Messages are either acknowledged explicitly, or messages are acknowledged implicitly by MicroProfile Reactive Messaging. Acknowledgment for incoming messages is controlled by the ***@Acknowledgment*** annotation in MicroProfile Reactive Messaging. If the ***@Acknowledgment*** annotation isn't explicitly defined, then the default acknowledgment strategy applies, which depends on the method signature. Only methods that receive incoming messages and are annotated with the ***@Incoming*** annotation must acknowledge messages. Methods that are annotated only with the ***@Outgoing*** annotation don't need to acknowledge messages because messages aren't being received and MicroProfile Reactive Messaging requires only that _received_ messages are acknowledged.
 
+Almost all of the methods in this application that require message acknowledgment are assigned the ***POST_PROCESSING*** strategy by default. If the acknowledgment strategy is set to ***POST_PROCESSING***, then MicroProfile Reactive Messaging acknowledges the message based on whether the annotated method emits data:
+
+* If the method emits data, the incoming message is acknowledged after the outgoing message is acknowledged.
+* If the method doesn't emit data, the incoming message is acknowledged after the method or processing completes.
+
+It’s important that the methods use the ***POST_PROCESSING*** strategy because it fulfills the requirement that a message isn't acknowledged until after the message is fully processed. This processing strategy is beneficial in situations where messages must reliably not get lost. When the ***POST_PROCESSING*** acknowledgment strategy can’t be used, the ***MANUAL*** strategy can be used to fulfill the same requirement. In situations where message acknowledgment reliability isn't important and losing messages is acceptable, the ***PRE_PROCESSING*** strategy might be appropriate.
+
+The only method in the guide that doesn't default to the ***POST_PROCESSING*** strategy is the ***sendProperty()*** method in the ***system*** service. The ***sendProperty()*** method receives property requests from the ***inventory*** service. For each property request, if the property that's being requested is valid, then the method creates and returns a ***PropertyMessage*** object with the value of the property. However, if the ***propertyName*** requested property doesn't exist, the request is ignored and no property response is returned.
+
+A key difference exists between when a property response is returned and when a property response isn't returned. In the case where a property response is returned, the request doesn't finish processing until the response is sent and safely stored by the Kafka broker. Only then is the incoming message acknowledged. However, in the case where the requested property doesn’t exist and a property response isn't returned, the method finishes processing the request message so the message must be acknowledged immediately.
+
+This case where a message either needs to be acknowledged immediately or some time later is one of the situations where the ***MANUAL*** acknowledgment strategy would be beneficial
+
+::page{title="Implementing the MANUAL acknowledgment strategy"}
+
+
+To begin, run the following command to navigate to the ***start*** directory:
 ```bash
-cd finish
-./mvnw liberty:run
+cd /home/project/guide-microprofile-reactive-messaging-acknowledgment/start
 ```
 
-After you see the following message, your Liberty instance is ready:
+Update the ***SystemService.sendProperty*** method to use the ***MANUAL*** acknowledgment strategy, which fits the method processing requirements better than the default ***PRE_PROCESSING*** strategy.
 
-```
-The defaultServer server is ready to run a smarter planet.
-```
+Replace the ***SystemService*** class.
 
+> To open the SystemService.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-reactive-messaging-acknowledgment/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
 
-
-To open a new command-line session, select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Next, run the following curl command to see the RESTful APIs of the ***inventory*** service:
-```bash
-curl http://localhost:9080/openapi
-```
-
-A UI is also available for a more interactive view of the deployed APIs. Click the following button to visit the UI by the ***/openapi/ui*** endpoint. 
-::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
-
-This UI is built from the [Open Source Swagger UI](https://swagger.io/tools/swagger-ui), which renders the generated **/openapi** document into a very user friendly page.
-
-After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
-
-```bash
-./mvnw liberty:stop
-```
-
-
-::page{title="Generating the OpenAPI document for the inventory service"}
-
-You can generate an OpenAPI document in various ways. First, because all Jakarta Restful Web Services annotations are processed by default, you can augment your existing Jakarta Restful Web Services annotations with OpenAPI annotations to enrich your APIs with a minimal amount of work. Second, you can use a set of predefined models to manually create all elements of the OpenAPI tree. Finally, you can filter various elements of the OpenAPI tree, changing them to your liking or removing them entirely.
-
-Navigate to the ***start*** directory to begin.
-```bash
-cd /home/project/guide-microprofile-openapi/start
-```
-
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
-
-```bash
-./mvnw liberty:dev
-```
-
-After you see the following message, your Liberty instance is ready in dev mode:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
-
-Because the Jakarta Restful Web Services framework handles basic API generation for Jakarta Restful Web Services annotations, a skeleton OpenAPI tree will be generated from the ***inventory*** service. You can use this tree as a starting point and augment it with annotations and code to produce a complete OpenAPI document.
-
-
-
-Now, run the following curl command to see the generated OpenAPI tree:
-```bash
-curl http://localhost:9080/openapi
-```
-
-Click the following button to visit the UI by the ***/openapi/ui*** endpoint for a more interactive view of the APIs.
-::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
-
-### Augmenting the existing Jakarta Restful Web Services annotations with OpenAPI annotations
-
-Because all Jakarta Restful Web Services annotations are processed by default, you can augment the existing code with OpenAPI annotations without needing to rewrite portions of the OpenAPI document that are already covered by the Jakarta Restful Web Services framework.
-
-Replace the ***InventoryResource*** class.
-
-> To open the InventoryResource.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java"}
+::openFile{path="/home/project/guide-microprofile-reactive-messaging-acknowledgment/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
 
 
 
 ```java
-package io.openliberty.guides.inventory;
+package io.openliberty.guides.system;
 
-import java.util.Properties;
-import jakarta.enterprise.context.RequestScoped;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
-import org.eclipse.microprofile.openapi.annotations.Operation;
-import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
-import org.eclipse.microprofile.openapi.annotations.media.Content;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
-import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponseSchema;
-import io.openliberty.guides.inventory.model.InventoryList;
+import jakarta.enterprise.context.ApplicationScoped;
 
-@RequestScoped
-@Path("/systems")
-public class InventoryResource {
+import org.eclipse.microprofile.reactive.messaging.Acknowledgment;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.eclipse.microprofile.reactive.messaging.Message;
+import org.eclipse.microprofile.reactive.messaging.Outgoing;
+import org.eclipse.microprofile.reactive.streams.operators.PublisherBuilder;
+import org.eclipse.microprofile.reactive.streams.operators.ReactiveStreams;
+import org.reactivestreams.Publisher;
 
-    @Inject
-    InventoryManager manager;
+import io.openliberty.guides.models.PropertyMessage;
+import io.openliberty.guides.models.SystemLoad;
+import io.reactivex.rxjava3.core.Flowable;
 
-    @GET
-    @Path("/{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @APIResponse(
-        responseCode = "404",
-        description = "Missing description",
-        content = @Content(mediaType = "application/json"))
-    @APIResponseSchema(value = Properties.class,
-        responseDescription = "JVM system properties of a particular host.",
-        responseCode = "200")
-    @Operation(
-        summary = "Get JVM system properties for particular host",
-        description = "Retrieves and returns the JVM system properties from the system "
-        + "service running on the particular host.")
-    public Response getPropertiesForHost(
-        @Parameter(
-            description = "The host for whom to retrieve "
-                + "the JVM system properties for.",
-            required = true,
-            example = "localhost",
-            schema = @Schema(type = SchemaType.STRING))
-        @PathParam("hostname") String hostname) {
-        Properties props = manager.get(hostname);
-        if (props == null) {
-            return Response.status(Response.Status.NOT_FOUND)
-                           .entity("{ \"error\" : "
-                                   + "\"Unknown hostname " + hostname
-                                   + " or the resource may not be "
-                                   + "running on the host machine\" }")
-                           .build();
+@ApplicationScoped
+public class SystemService {
+
+    private static Logger logger = Logger.getLogger(SystemService.class.getName());
+
+    private static final OperatingSystemMXBean OS_MEAN =
+            ManagementFactory.getOperatingSystemMXBean();
+    private static String hostname = null;
+
+    private static String getHostname() {
+        if (hostname == null) {
+            try {
+                return InetAddress.getLocalHost().getHostName();
+            } catch (UnknownHostException e) {
+                return System.getenv("HOSTNAME");
+            }
         }
-
-        manager.add(hostname, props);
-        return Response.ok(props).build();
+        return hostname;
     }
 
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @APIResponseSchema(value = InventoryList.class,
-        responseDescription = "host:properties pairs stored in the inventory.",
-        responseCode = "200")
-    @Operation(
-        summary = "List inventory contents.",
-        description = "Returns the currently stored host:properties pairs in the "
-        + "inventory.")
-    public InventoryList listContents() {
-        return manager.list();
+    @Outgoing("systemLoad")
+    public Publisher<SystemLoad> sendSystemLoad() {
+        return Flowable.interval(15, TimeUnit.SECONDS)
+                       .map((interval -> new SystemLoad(getHostname(),
+                             OS_MEAN.getSystemLoadAverage())));
     }
 
+    @Incoming("propertyRequest")
+    @Outgoing("propertyResponse")
+    @Acknowledgment(Acknowledgment.Strategy.MANUAL)
+    public PublisherBuilder<Message<PropertyMessage>>
+    sendProperty(Message<String> propertyMessage) {
+        String propertyName = propertyMessage.getPayload();
+        String propertyValue = System.getProperty(propertyName, "unknown");
+        logger.info("sendProperty: " + propertyValue);
+        if (propertyName == null
+        || propertyName.isEmpty()
+        || propertyValue == "unknown") {
+            logger.warning("Provided property: "
+            + propertyName + " is not a system property");
+            propertyMessage.ack();
+            return ReactiveStreams.empty();
+        }
+        Message<PropertyMessage> message = Message.of(
+                new PropertyMessage(getHostname(),
+                        propertyName,
+                        propertyValue),
+                propertyMessage::ack
+        );
+        return ReactiveStreams.of(message);
+    }
 }
 ```
 
@@ -221,543 +167,290 @@ public class InventoryResource {
 Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
-Add OpenAPI ***@APIResponse***, ***@APIResponseSchema***, ***@Operation***, and ***@Parameter*** annotations to the two JAX-RS endpoint methods, ***getPropertiesForHost()*** and ***listContents()***.
+The ***sendProperty()*** method needs to manually acknowledge the incoming messages, so it is annotated with the ***@Acknowledgment(Acknowledgment.Strategy.MANUAL)*** annotation. This annotation sets the method up to expect an incoming message. To meet the requirements of acknowledgment, the method parameter is updated to receive and return a ***Message*** of type ***String***, rather than just a ***String***. Then, the ***propertyName*** is extracted from the ***propertyMessage*** incoming message using the ***getPayload()*** method and checked for validity. One of the following outcomes occurs:
+
+* If the ***propertyName*** system property isn't valid, the ***ack()*** method acknowledges the incoming message and returns an empty reactive stream using the ***empty()*** method. The processing is complete.
+* If the system property is valid, the method creates a ***Message*** object with the value of the requested system property and sends it to the proper channel. The method acknowledges the incoming message only after the sent message is acknowledged.
 
 
+::page{title="Waiting for a message to be acknowledged"}
 
-Clearly, there are many more OpenAPI annotations now, so let’s break them down:
+The ***inventory*** service contains an endpoint that accepts ***PUT*** requests. When a ***PUT*** request that contains a system property is made to the ***inventory*** service, the ***inventory*** service sends a message to the ***system*** service. The message from the ***inventory*** service requests the value of the system property from the system service. Currently, a ***200*** response code is returned without confirming whether the sent message was acknowledged. Replace the ***inventory*** service to return a ***200*** response only after the outgoing message is acknowledged.
 
-| *Annotation*    | *Description*
-| ---| ---
-| ***@APIResponse***  | Describes a single response from an API operation.
-| ***@APIResponseSchema*** | Convenient short-hand way to specify a simple response with a Java class that could otherwise be specified using @APIResponse.
-| ***@Operation***    | Describes a single API operation on a path.
-| ***@Parameter***    | Describes a single operation parameter.
+Replace the ***InventoryResource*** class.
 
+> To open the InventoryResource.java file in your IDE, select
+> ***File*** > ***Open*** > guide-microprofile-reactive-messaging-acknowledgment/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
 
-Because the Open Liberty instance was started in dev mode at the beginning of the guide, your changes were automatically picked up. Run the following curl command to see the updated OpenAPI tree:
-```bash
-curl http://localhost:9080/openapi
-```
-
-The two endpoints at which your JAX-RS endpoint methods are served are now more meaningful:
-
-```
-/inventory/systems:
-  get:
-    summary: List inventory contents.
-    description: Returns the currently stored host:properties pairs in the inventory.
-    responses:
-      "200":
-        description: host:properties pairs stored in the inventory.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InventoryList'
-/inventory/systems/{hostname}:
-  get:
-    summary: Get JVM system properties for particular host
-    description: Retrieves and returns the JVM system properties from the system
-      service running on the particular host.
-    parameters:
-    - name: hostname
-      in: path
-      description: The host for whom to retrieve the JVM system properties for.
-      required: true
-      schema:
-        type: string
-      example: localhost
-    responses:
-      "404":
-        description: Missing description
-        content:
-          application/json: {}
-      "200":
-        description: JVM system properties of a particular host.
-        content:
-          application/json:
-            schema:
-              type: object
-```
-
-
-OpenAPI annotations can also be added to POJOs to describe what they represent. Currently, your OpenAPI document doesn't have a very meaningful description of the ***InventoryList*** POJO and hence it's very difficult to tell exactly what that POJO is used for. To describe the ***InventoryList*** POJO in more detail, augment the ***src/main/java/io/openliberty/guides/inventory/model/InventoryList.java*** file with some OpenAPI annotations.
-
-Replace the ***InventoryList*** class.
-
-> To open the InventoryList.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/model/InventoryList.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/model/InventoryList.java"}
+::openFile{path="/home/project/guide-microprofile-reactive-messaging-acknowledgment/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java"}
 
 
 
 ```java
-package io.openliberty.guides.inventory.model;
+package io.openliberty.guides.inventory;
 
 import java.util.List;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
-
-@Schema(name = "InventoryList",
-description = "POJO that represents the inventory contents.")
-public class InventoryList {
-
-    @Schema(required = true)
-    private List<SystemData> systems;
-
-    public InventoryList(List<SystemData> systems) {
-        this.systems = systems;
-    }
-
-    public List<SystemData> getSystems() {
-        return systems;
-    }
-
-    public int getTotal() {
-        return systems.size();
-    }
-}
-```
-
-
-
-Add OpenAPI ***@Schema*** annotations to the ***InventoryList*** class and the ***systems*** variable.
-
-
-Likewise, annotate the ***src/main/java/io/openliberty/guides/inventory/model/SystemData.java*** POJO, which is referenced in the ***InventoryList*** class.
-
-Replace the ***SystemData*** class.
-
-> To open the SystemData.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/model/SystemData.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/model/SystemData.java"}
-
-
-
-```java
-package io.openliberty.guides.inventory.model;
-
+import java.util.Optional;
 import java.util.Properties;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
-@Schema(name = "SystemData",
-       description = "POJO that represents a single inventory entry.")
-public class SystemData {
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
-    @Schema(required = true)
-    private final String hostname;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.eclipse.microprofile.reactive.messaging.Message;
+import org.eclipse.microprofile.reactive.messaging.Outgoing;
+import org.reactivestreams.Publisher;
 
-    @Schema(required = true)
-    private final Properties properties;
+import io.openliberty.guides.models.PropertyMessage;
+import io.openliberty.guides.models.SystemLoad;
+import io.reactivex.rxjava3.core.BackpressureStrategy;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.FlowableEmitter;
 
-    public SystemData(String hostname, Properties properties) {
-        this.hostname = hostname;
-        this.properties = properties;
+
+@ApplicationScoped
+@Path("/inventory")
+public class InventoryResource {
+
+    private static Logger logger = Logger.getLogger(InventoryResource.class.getName());
+    private FlowableEmitter<Message<String>> propertyNameEmitter;
+
+    @Inject
+    private InventoryManager manager;
+
+    @GET
+    @Path("/systems")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getSystems() {
+        List<Properties> systems = manager.getSystems()
+                                          .values()
+                                          .stream()
+                                          .collect(Collectors.toList());
+        return Response.status(Response.Status.OK)
+                       .entity(systems)
+                       .build();
     }
 
-    public String getHostname() {
-        return hostname;
-    }
-
-    public Properties getProperties() {
-        return properties;
-    }
-
-    @Override
-    public boolean equals(Object host) {
-        if (host instanceof SystemData) {
-            return hostname.equals(((SystemData) host).getHostname());
+    @GET
+    @Path("/systems/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getSystem(@PathParam("hostname") String hostname) {
+        Optional<Properties> system = manager.getSystem(hostname);
+        if (system.isPresent()) {
+            return Response.status(Response.Status.OK)
+                           .entity(system)
+                           .build();
         }
-        return false;
+        return Response.status(Response.Status.NOT_FOUND)
+                       .entity("hostname does not exist.")
+                       .build();
+    }
+
+    @PUT
+    @Path("/data")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.TEXT_PLAIN)
+    /* This method sends a message and returns a CompletionStage that doesn't
+        complete until the message is acknowledged. */
+    public CompletionStage<Response> updateSystemProperty(String propertyName) {
+        logger.info("updateSystemProperty: " + propertyName);
+        CompletableFuture<Void> result = new CompletableFuture<>();
+
+        Message<String> message = Message.of(
+                propertyName,
+                () -> {
+                    /* This is the ack callback, which runs when the outgoing
+                        message is acknowledged. After the outgoing message is
+                        acknowledged, complete the "result" CompletableFuture. */
+                    result.complete(null);
+                    /* An ack callback must return a CompletionStage that says
+                        when it's complete. Asynchronous processing isn't necessary
+                        so a completed CompletionStage is returned to indicate that
+                        the work here is done. */
+                    return CompletableFuture.completedFuture(null);
+                }
+        );
+
+        propertyNameEmitter.onNext(message);
+        /* Set up what happens when the message is acknowledged and the "result"
+            CompletableFuture is completed. When "result" completes, the Response
+            object is created with the status code and message. */
+        return result.thenApply(a -> Response
+                 .status(Response.Status.OK)
+                 .entity("Request successful for the " + propertyName + " property\n")
+                 .build());
+    }
+
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response resetSystems() {
+        manager.resetSystems();
+        return Response.status(Response.Status.OK)
+                       .build();
+    }
+
+    @Incoming("systemLoad")
+    public void updateStatus(SystemLoad sl)  {
+        String hostname = sl.hostname;
+        if (manager.getSystem(hostname).isPresent()) {
+            manager.updateCpuStatus(hostname, sl.loadAverage);
+            logger.info("Host " + hostname + " was updated: " + sl);
+        } else {
+            manager.addSystem(hostname, sl.loadAverage);
+            logger.info("Host " + hostname + " was added: " + sl);
+        }
+    }
+
+    @Incoming("addSystemProperty")
+    public void getPropertyMessage(PropertyMessage pm)  {
+        logger.info("getPropertyMessage: " + pm);
+        String hostId = pm.hostname;
+        if (manager.getSystem(hostId).isPresent()) {
+            manager.updatePropertyMessage(hostId, pm.key, pm.value);
+            logger.info("Host " + hostId + " was updated: " + pm);
+        } else {
+            manager.addSystem(hostId, pm.key, pm.value);
+            logger.info("Host " + hostId + " was added: " + pm);
+        }
+    }
+
+    @Outgoing("requestSystemProperty")
+    public Publisher<Message<String>> sendPropertyName() {
+        Flowable<Message<String>> flowable = Flowable.create(emitter ->
+            this.propertyNameEmitter = emitter, BackpressureStrategy.BUFFER);
+        return flowable;
     }
 }
 ```
 
 
 
-Add OpenAPI ***@Schema*** annotations to the ***SystemData*** class, the ***hostname*** variable and the ***properties*** variable.
+The ***sendPropertyName()*** method is updated to return a ***Message\<String\>*** instead of just a ***String***. This return type allows the method to set a callback that runs after the outgoing message is acknowledged. In addition to updating the ***sendPropertyName()*** method, the ***propertyNameEmitter*** variable is updated to send a ***Message\<String\>*** type.
+
+The ***updateSystemProperty()*** method now returns a ***CompletionStage*** object wrapped around a Response type. This return type allows for a response object to be returned after the outgoing message is acknowledged. The outgoing ***message*** is created with the requested property name as the ***payload*** and an acknowledgment ***callback*** to execute an action after the message is acknowledged. The method creates a ***CompletableFuture*** variable that returns a ***200*** response code after the variable is completed in the ***callback*** function.
+
+::page{title="Building and running the application"}
+
+Build the ***system*** and ***inventory*** microservices using Maven and then run them in Docker containers.
+
+Start your Docker environment. Dockerfiles are provided for you to use.
+
+To build the application, run the Maven ***install*** and ***package*** goals from the command-line session in the ***start*** directory:
 
 
-
-Run the following curl command to see the updated OpenAPI tree:
 ```bash
-curl http://localhost:9080/openapi
-```
-
-```
-components:
-  schemas:
-    InventoryList:
-      description: POJO that represents the inventory contents.
-      required:
-      - systems
-      type: object
-      properties:
-        systems:
-          type: array
-          items:
-            $ref: '#/components/schemas/SystemData'
-        total:
-          format: int32
-          type: integer
-    SystemData:
-      description: POJO that represents a single inventory entry.
-      required:
-      - hostname
-      - properties
-      type: object
-      properties:
-        hostname:
-          type: string
-        properties:
-          type: object
+./mvnw -pl models install
+./mvnw package
 ```
 
 
-### Filtering the OpenAPI tree elements
 
-Filtering of certain elements and fields of the generated OpenAPI document can be done by using the ***OASFilter*** interface.
+Run the following commands to containerize the microservices:
 
-Create the ***InventoryOASFilter*** class.
-
-> Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/filter/InventoryOASFilter.java
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
 ```
 
-
-> Then, to open the InventoryOASFilter.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/filter/InventoryOASFilter.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/filter/InventoryOASFilter.java"}
+Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It also creates containers for Kafka and the microservices in the project. For simplicity, the script starts one instance of the ***system*** service.
 
 
+```bash
+./scripts/startContainers.sh
+```
 
-```java
-package io.openliberty.guides.inventory.filter;
+::page{title="Testing the application"}
 
-import java.util.Arrays;
-import java.util.Collections;
+The application might take some time to become available. After the application is up and running, you can access it by making a GET request to the ***/systems*** endpoint of the ***inventory*** service.
 
-import org.eclipse.microprofile.openapi.OASFactory;
-import org.eclipse.microprofile.openapi.OASFilter;
-import org.eclipse.microprofile.openapi.models.OpenAPI;
-import org.eclipse.microprofile.openapi.models.info.License;
-import org.eclipse.microprofile.openapi.models.info.Info;
-import org.eclipse.microprofile.openapi.models.responses.APIResponse;
-import org.eclipse.microprofile.openapi.models.servers.Server;
-import org.eclipse.microprofile.openapi.models.servers.ServerVariable;
 
-public class InventoryOASFilter implements OASFilter {
+Run the following curl command to confirm that the ***inventory*** microservice is up and running.
+```bash
+curl -s http://localhost:9085/health | jq
+```
 
-  @Override
-  public APIResponse filterAPIResponse(APIResponse apiResponse) {
-    if ("Missing description".equals(apiResponse.getDescription())) {
-      apiResponse.setDescription("Invalid hostname or the system service may not "
-          + "be running on the particular host.");
-    }
-    return apiResponse;
-  }
+When both the liveness and readiness health checks are up, run the following curl command to access the ***inventory*** microservice:
+```bash
+curl -s http://localhost:9085/inventory/systems | jq
+```
 
-  @Override
-  public void filterOpenAPI(OpenAPI openAPI) {
-    openAPI.setInfo(
-        OASFactory.createObject(Info.class).title("Inventory App").version("1.0")
-                  .description(
-                      "App for storing JVM system properties of various hosts.")
-                  .license(
-                      OASFactory.createObject(License.class)
-                                .name("Eclipse Public License - v 2.0").url(
-                                    "https://www.eclipse.org/legal/epl-2.0")));
+Look for the CPU ***systemLoad*** property for all the systems:
 
-    openAPI.addServer(
-        OASFactory.createServer()
-                  .url("http://localhost:{port}")
-                  .description("Simple Open Liberty.")
-                  .variables(Collections.singletonMap("port",
-                                 OASFactory.createServerVariable()
-                                           .defaultValue("9080")
-                                           .description("Server HTTP port."))));
-  }
-
+```
+{
+   "hostname":"30bec2b63a96",
+   "systemLoad":1.44
 }
 ```
 
+The ***system*** service sends messages to the ***inventory*** service every 15 seconds. The ***inventory*** service processes and acknowledges each incoming message, ensuring that no ***system*** message is lost.
 
 
-The ***filterAPIResponse()*** method allows filtering of ***APIResponse*** elements. When you override this method, it will be called once for every ***APIResponse*** element in the OpenAPI tree. In this case, you are matching the ***404*** response that is returned by the ***/inventory/systems/{hostname}*** endpoint and setting the previously missing description. To remove an ***APIResponse*** element or another filterable element, simply return ***null***.
-
-The ***filterOpenAPI()*** method allows filtering of the singleton ***OpenAPI*** element. Unlike other filter methods, when you override ***filterOpenAPI()***, it is called only once as the last method for a particular filter. Hence, make sure that it doesn't override any other filter operations that are called before it. Your current OpenAPI document doesn't provide much information on the application itself or on what server and port it runs on. This information is usually provided in the ***info*** and ***servers*** elements, which are currently missing. Use the ***OASFactory*** class to manually set these and other elements of the OpenAPI tree from the ***org.eclipse.microprofile.openapi.models*** package. The ***OpenAPI*** element is the only element that cannot be removed, because that would mean removing the whole OpenAPI tree.
-
-Each filtering method is called once for each corresponding element in the model tree. You can think of each method as a callback for various key OpenAPI elements.
-
-Before you can use the filter class that you created, you need to create the ***microprofile-config.properties*** file.
-
-Create the configuration file.
-
-> Run the following touch command in your terminal
+If you run the curl command again after a while, notice that the CPU ***systemLoad*** property for the systems changed.
 ```bash
-touch /home/project/guide-microprofile-openapi/start/src/main/resources/META-INF/microprofile-config.properties
+curl -s http://localhost:9085/inventory/systems | jq
 ```
 
-
-> Then, to open the microprofile-config.properties file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-openapi/start/src/main/resources/META-INF/microprofile-config.properties, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-openapi/start/src/main/resources/META-INF/microprofile-config.properties"}
+Make a ***PUT*** request to the ***http://localhost:9085/inventory/data*** URL to add the value of a particular system property to the set of existing properties. For example, run the following ***curl*** command:
 
 
-
-```
-mp.openapi.filter = io.openliberty.guides.inventory.filter.InventoryOASFilter
-```
-
-
-
-This configuration file is picked up automatically by MicroProfile Config and registers your filter by passing in the fully qualified name of the filter class into the ***mp.openapi.filter*** property.
-
-
-Run the following curl command to see the updated OpenAPI tree:
 ```bash
-curl http://localhost:9080/openapi
+curl -X PUT -d "os.name" http://localhost:9085/inventory/data --header "Content-Type:text/plain"
 ```
 
-```
-info:
-  title: Inventory App
-  version: "1.0"
-  description: App for storing JVM system properties of various hosts.
-  license:
-    name: Eclipse Public License - v 2.0
-    url: https://www.eclipse.org/legal/epl-2.0
+In this example, the ***PUT*** request with the ***os.name*** system property in the request body on the ***http://localhost:9085/inventory/data*** URL adds the ***os.name*** system property for your system. The ***inventory*** service sends a message that contains the requested system property to the ***system*** service. The ***inventory*** service then waits until the message is acknowledged before it sends a response back.
 
-...
-
-servers:
-- url: "http://localhost:{port}"
-  description: Simple Open Liberty.
-  variables:
-    port:
-      default: "9080"
-      description: Server HTTP port.
-```
+You see the following output:
 
 ```
-responses:
-  "404":
-    description: Invalid hostname or the system service may not be running on
-      the particular host.
-    content:
-      application/json: {}
+Request successful for the os.name property
 ```
 
-For more information about which elements you can filter, see the [MicroProfile API documentation](https://openliberty.io/docs/latest/reference/javadoc/microprofile-7.0-javadoc.html).
-
-To learn more about MicroProfile Config, visit the MicroProfile Config [GitHub repository](https://github.com/eclipse/microprofile-config) and try one of the MicroProfile Config [guides](https://openliberty.io/guides/?search=Config).
+The previous example response is confirmation that the sent request message was acknowledged.
 
 
-
-::page{title="Using pregenerated OpenAPI documents"}
-
-As an alternative to generating the OpenAPI model tree from code, you can provide a valid pregenerated OpenAPI document to describe your APIs. This document must be named ***openapi*** with a ***yml***, ***yaml***, or ***json*** extension and be placed under the ***META-INF*** directory. Depending on the scenario, the document might be fully or partially complete. If the document is fully complete, then you can disable annotation scanning entirely by setting the ***mp.openapi.scan.disable*** MicroProfile Config property to ***true***. If the document is partially complete, then you can augment it with code.
-
-To use the pre-generated OpenAPI document, create the OpenAPI document YAML file.
-
-Create the OpenAPI document file.
-
-> Run the following touch command in your terminal
+Run the following curl command again:
 ```bash
-touch /home/project/guide-microprofile-openapi/start/src/main/resources/META-INF/openapi.yaml
+curl -s http://localhost:9085/inventory/systems | jq
 ```
 
-
-> Then, to open the openapi.yaml file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-openapi/start/src/main/resources/META-INF/openapi.yaml, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-openapi/start/src/main/resources/META-INF/openapi.yaml"}
-
-
-
-```yaml
----
-openapi: 3.0.3
-info:
-  title: Inventory App
-  description: App for storing JVM system properties of various hosts.
-  license:
-    name: Eclipse Public License - v 2.0
-    url: https://www.eclipse.org/legal/epl-2.0
-  version: "1.0"
-paths:
-  /inventory/properties:
-    get:
-      operationId: getProperties
-      responses:
-        "200":
-          description: JVM system properties of the host running this service.
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties:
-                  type: string
-  /inventory/systems:
-    get:
-      summary: List inventory contents.
-      description: Returns the currently stored host:properties pairs in the inventory.
-      responses:
-        "200":
-          description: host:properties pairs stored in the inventory.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InventoryList'
-  /inventory/systems/{hostname}:
-    get:
-      summary: Get JVM system properties for particular host
-      description: Retrieves and returns the JVM system properties from the system
-        service running on the particular host.
-      parameters:
-      - name: hostname
-        in: path
-        description: The host for whom to retrieve the JVM system properties for.
-        required: true
-        schema:
-          type: string
-        example: localhost
-      responses:
-        "404":
-          description: Invalid hostname or the system service may not be running on
-            the particular host.
-          content:
-            application/json: {}
-        "200":
-          description: JVM system properties of a particular host.
-          content:
-            application/json:
-              schema:
-                type: object
-components:
-  schemas:
-    InventoryList:
-      description: POJO that represents the inventory contents.
-      required:
-      - systems
-      type: object
-      properties:
-        systems:
-          type: array
-          items:
-            $ref: '#/components/schemas/SystemData'
-        total:
-          format: int32
-          type: integer
-    SystemData:
-      description: POJO that represents a single inventory entry.
-      required:
-      - hostname
-      - properties
-      type: object
-      properties:
-        hostname:
-          type: string
-        properties:
-          type: object
-```
-
-
-
-
-This document is the same as your current OpenAPI document with extra APIs for the ***/inventory/properties*** endpoint. This document is complete so you can also add the ***mp.openapi.scan.disable*** property and set it to ***true*** in the ***src/main/resources/META-INF/microprofile-config.properties*** file.
-
-Replace the configuration file.
-
-> To open the microprofile-config.properties file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-openapi/start/src/main/resources/META-INF/microprofile-config.properties, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-openapi/start/src/main/resources/META-INF/microprofile-config.properties"}
-
-
+The ***os.name*** system property value is now included with the previous values:
 
 ```
-mp.openapi.scan.disable = true
-mp.openapi.filter = io.openliberty.guides.inventory.filter.InventoryOASFilter
+{
+   "hostname":"30bec2b63a96",
+   "os.name":"Linux",
+   "systemLoad":1.44
+}
 ```
 
+::page{title="Tearing down the environment"}
 
-Add and set the ***mp.openapi.scan.disable*** property to ***true***.
+Finally, run the following script to stop the application:
 
 
-
-Run the following curl command to see the updated OpenAPI tree:
 ```bash
-curl http://localhost:9080/openapi
+./scripts/stopContainers.sh
 ```
-
-```
-/inventory/properties:
-  get:
-    operationId: getProperties
-    responses:
-      "200":
-        description: JVM system properties of the host running this service.
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties:
-                type: string
-```
-
-
-
-::page{title="Testing the service"}
-
-
-No automated tests are provided to verify the correctness of the generated OpenAPI document. Manually verify the document by visiting the ***http://localhost:9080/openapi*** or the ***http://localhost:9080/openapi/ui*** URL.
-
-A few tests are included for you to test the basic functionality of the ***inventory*** service. If a test failure occurs, then you might have introduced a bug into the code. These tests will run automatically as a part of the integration test suite.
-
-### Running the tests
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
-
-You will see the following output:
-
-```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.4 sec - in it.io.openliberty.guides.system.SystemEndpointIT
-Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-[WARNING ] Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
-Could not send Message.
-[err] The specified host is unknown: java.net.UnknownHostException: UnknownHostException invoking http://badhostname:9080/inventory/properties: badhostname
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.264 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
-
-Results :
-
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-```
-
-The warning and error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the ***testUnknownHost()*** test from the ***InventoryEndpointIT*** integration test.
-
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
-
-
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You have just documented and filtered the APIs of the **inventory** service from both the code and a static file by using MicroProfile OpenAPI in Open Liberty.
-
-
-Feel free to try one of the related MicroProfile guides. They demonstrate additional technologies that you can learn and expand on top of what you built here.
-
-For more in-depth examples of MicroProfile OpenAPI, try one of the demo applications available in the MicroProfile OpenAPI [GitHub repository](https://github.com/eclipse/microprofile-open-api/tree/master/tck/src/main/java/org/eclipse/microprofile/openapi/apps).
+You developed an application by using MicroProfile Reactive Messaging, Open Liberty, and Kafka.
 
 
 
@@ -766,31 +459,39 @@ For more in-depth examples of MicroProfile OpenAPI, try one of the demo applicat
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-microprofile-openapi*** project by running the following commands:
+Delete the ***guide-microprofile-reactive-messaging-acknowledgment*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-microprofile-openapi
+rm -fr guide-microprofile-reactive-messaging-acknowledgment
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Documenting%20RESTful%20APIs&guide-id=cloud-hosted-guide-microprofile-openapi)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Acknowledging%20messages%20using%20MicroProfile%20Reactive%20Messaging&guide-id=cloud-hosted-guide-microprofile-reactive-messaging-acknowledgment)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-openapi/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-openapi/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging-acknowledgment/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging-acknowledgment/pulls)
 
 
 
 ### Where to next?
 
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
+* [Integrating RESTful services with a reactive system](https://openliberty.io/guides/microprofile-reactive-messaging-rest.html)
+* [Streaming updates to a client using Server-Sent Events](https://openliberty.io/guides/reactive-messaging-sse.html)
+* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
+* [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
+
+**Learn more about MicroProfile**
+* [View the MicroProfile Reactive Messaging Specification](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-3.0/microprofile-reactive-messaging-spec.html)
+* [View the MicroProfile Reactive Messaging Javadoc](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-3.0/apidocs/)
+* [View the MicroProfile](https://openliberty.io/docs/latest/microprofile.html)
 
 
 ### Log out of the session
