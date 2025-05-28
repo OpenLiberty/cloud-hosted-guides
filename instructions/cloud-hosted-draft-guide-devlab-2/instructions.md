@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Deploying a microservice to Kubernetes using Open Liberty Operator guide!"}
+::page{title="Welcome to the Building true-to-production integration tests with Testcontainers guide!"}
 
-Explore how to deploy a microservice to Kubernetes using Open Liberty Operator.
+Learn how to test your microservices with multiple containers by using Testcontainers and JUnit.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,19 +14,19 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 ::page{title="What you'll learn"}
 
-You will learn how to deploy a cloud-native application with a microservice to Kubernetes using the Open Liberty Operator. 
+You'll learn how to write true-to-production integration tests for Java microservices by using [Testcontainers](https://www.testcontainers.org/) and JUnit. You'll learn to set up and configure multiple containers, including the Open Liberty Docker container, to simulate a production-like environment for your tests.
 
-[Kubernetes](https://www.kubernetes.io/) is a container orchestration system. It streamlines the DevOps process by providing an intuitive development pipeline. It also provides integration with multiple tools to make the deployment and management of cloud applications easier. You can learn more about Kubernetes by checking out the [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html) guide.
+Sometimes tests might pass in development and testing environments, but fail in production because of the differences in how the application operates across these environments. Fortunately, you can minimize these differences by testing your application with the same Docker containers you use in production. This approach helps to ensure parity across the development, testing, and production environments, enhancing quality and test reliability.
 
-[Kubernetes operators](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/#operators-in-kubernetes) provide an easy way to automate the management and updating of applications by abstracting away some of the details of cloud application management. To learn more about operators, check out this [Operators tech topic article](https://www.openshift.com/learn/topics/operators). 
+### What is Testcontainers?
 
-The application in this guide consists of one microservice, ***system***. The system microservice returns the JVM system properties of its host.
+Testcontainers is an open source library that provides containers as a resource at test time, creating consistent and portable testing environments. This is especially useful for applications that have external resource dependencies such as databases, message queues, or web services. By encapsulating these dependencies in containers, Testcontainers simplifies the configuration process and ensures a uniform testing setup that closely mirrors production environments.
 
-You will deploy the ***system*** microservice by using the Open Liberty Operator. The [Open Liberty Operator](https://github.com/OpenLiberty/open-liberty-operator) packages, deploys, and manages Open Liberty applications on Kubernetes-based clusters. The Open Liberty Operator watches Open Liberty resources and creates various Kubernetes resources, including ***Deployments***, ***Services***, and ***Routes***, depending on the configurations. The Operator then continuously compares the current state of the resources, the desired state of application deployment, and reconciles them when necessary.
+The microservice that you'll be working with is called ***inventory***. The ***inventory*** microservice persists data into a PostgreSQL database and supports create, retrieve, update, and delete (CRUD) operations on the database records. You'll write integration tests for the application by using Testcontainers to run it in Docker containers.
 
+![Inventory microservice](https://raw.githubusercontent.com/OpenLiberty/guide-testcontainers/prod/assets/inventory.png)
 
 
 ::page{title="Getting started"}
@@ -40,11 +40,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-openliberty-operator-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-testcontainers.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-openliberty-operator-intro.git
-cd guide-openliberty-operator-intro
+git clone https://github.com/openliberty/guide-testcontainers.git
+cd guide-testcontainers
 ```
 
 
@@ -52,307 +52,821 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-
-
-::page{title="Installing the Operator"}
-
-
-The Open Liberty Operator is already installed in this Skills Network environment. To learn how to install the Open Liberty Operator yourself, see the [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators) guide or the [Open Liberty Operator documentation](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1.adoc#operator-installation).
-
-To check that the Open Liberty Operator has been installed successfully, run the following command to view all the supported API resources that are available through the Open Liberty Operator:
+In this IBM Cloud environment, you need to change the user home to ***/home/project*** by running the following command:
 ```bash
-kubectl api-resources --api-group=apps.openliberty.io
+sudo usermod -d /home/project theia
 ```
 
-Look for the following output, which shows the [custom resource definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRDs) that can be used by the Open Liberty Operator:
+### Try what you'll build
 
-```
-NAME                      SHORTNAMES         APIVERSION               NAMESPACED   KIND
-openlibertyapplications   olapp,olapps       apps.openliberty.io/v1   true         OpenLibertyApplication
-openlibertydumps          oldump,oldumps     apps.openliberty.io/v1   true         OpenLibertyDump
-openlibertytraces         oltrace,oltraces   apps.openliberty.io/v1   true         OpenLibertyTrace
-```
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-Each CRD defines a kind of object that can be used, which is specified in the previous example by the ***KIND*** value. The ***SHORTNAME*** value specifies alternative names that you can substitute in the configuration to refer to an object kind. For example, you can refer to the ***OpenLibertyApplication*** object kind by one of its specified shortnames, such as ***olapps***. 
-
-The ***openlibertyapplications*** CRD defines a set of configurations for deploying an Open Liberty-based application, including the application image, number of instances, and storage settings. The Open Liberty Operator watches for changes to instances of the ***OpenLibertyApplication*** object kind and creates Kubernetes resources that are based on the configuration that is defined in the CRD.
-
-::page{title="Deploying the system microservice to Kubernetes"}
-
-To deploy the ***system*** microservice, you must first package the microservice, then create and build a runnable container image of the packaged microservice.
-
-### Packaging the microservice
-
-Ensure that you are in the ***start*** directory and run the following command to package the ***system*** microservice:
+To try out the test, first go to the ***finish*** directory and run the following Maven goal that builds the application, starts the containers, runs the tests, and then stops the containers:
 
 
 ```bash
-cd /home/project/guide-openliberty-operator-intro/start
-./mvnw clean package
+cd /home/project/guide-testcontainers/finish
+export TESTCONTAINERS_RYUK_DISABLED=true
+./mvnw verify
 ```
 
-### Building the image
+You see the following output:
 
-Run the ***docker build*** command to build the container image for your application:
+```
+ -------------------------------------------------------
+  T E S T S
+ -------------------------------------------------------
+ Running it.io.openliberty.guides.inventory.SystemResourceIT
+ ...
+ Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.118 s - in it.io.openliberty.guides.inventory.SystemResourceIT
+
+ Results:
+
+ Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+```
+
+::page{title="Writing integration tests using Testcontainers"}
+
+Use Testcontainers to write integration tests that run in any environment with minimal setup using containers.
+
+Navigate to the ***postgres*** directory.
+
 ```bash
-docker build -t system:1.0-SNAPSHOT system/.
+cd /home/project/guide-testcontainers/postgres
 ```
 
-The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
 
-
-Next, push your image to the container registry on IBM Cloud with the following commands:
+This guide uses Docker to run an instance of the PostgreSQL database for a fast installation and setup. A ***Dockerfile*** file is provided for you. Run the following command to use the Dockerfile to build the image:
 
 ```bash
-docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+docker build -t postgres-sample .
 ```
 
-Run the following command to check the docker images:
+The PostgreSQL database is integral for the ***inventory*** microservice as it handles the persistence of data. Run the following command to start the PostgreSQL database, which runs the ***postgres-sample*** image in a Docker container and maps ***5432*** port from the container to your host machine:
+
 ```bash
-docker images
+docker run --name postgres-container --rm -e POSTGRES_PASSWORD=adminpwd -p 5432:5432 -d postgres-sample
 ```
 
-The output is similar to the following example:
-```
-REPOSITORY                          TAG                             IMAGE ID       CREATED         SIZE
-us.icr.io/sn-labs-yourname/system   1.0-SNAPSHOT                    5c5890296d6e   2 minutes ago   723MB
-system                              1.0-SNAPSHOT                    5c5890296d6e   2 minutes ago   723MB
-icr.io/appcafe/open-liberty         kernel-slim-java11-openj9-ubi   e959985784c2   2 days ago      659MB
+Retrieve the PostgreSQL container IP address by running the following command:
+
+```bash
+docker inspect -f "{{.NetworkSettings.IPAddress }}" postgres-container
 ```
 
-Now you're ready to deploy the image.
+The command returns the PostgreSQL container IP address:
 
-### Deploying the image
+```
+172.17.0.2
+```
 
-You can configure the specifics of the Open Liberty Operator-controlled deployment with a YAML configuration file.
+Now, navigate to the ***start*** directory to begin.
 
-Create the ***deploy.yaml*** configuration file in the ***start*** directory.
+```bash
+cd /home/project/guide-testcontainers/start
+```
+
+The Liberty Maven plug-in includes a ***devc*** goal that simplifies developing your application in a container by starting [dev mode](https://openliberty.io/docs/latest/development-mode.html#_container_support_for_dev_mode) with container support. This goal builds a Docker image, mounts the required directories, binds the required ports, and then runs the application inside of a container. Dev mode also listens for any changes in the application source code or configuration and rebuilds the image and restarts the container as necessary.
+
+In this IBM Cloud environment, you need to pre-create the ***logs*** directory by running the following commands:
+
+```bash
+mkdir -p /home/project/guide-testcontainers/start/target/liberty/wlp/usr/servers/defaultServer/logs
+chmod 777 /home/project/guide-testcontainers/start/target/liberty/wlp/usr/servers/defaultServer/logs
+```
+
+Build and run the container by running the ***devc*** goal with the PostgreSQL container IP address. If your PostgreSQL container IP address is not ***172.17.0.2***, replace the command with the right IP address.
+
+
+```bash
+./mvnw liberty:devc -DcontainerRunOpts="-e DB_HOSTNAME=172.17.0.2" -DserverStartTimeout=240
+```
+
+Wait a moment for dev mode to start. Some error messages are expected as a result of building the docker image. Although these messages are included on the standard error stream, in this case they are not errors, just logs of the docker build progress. After you see the following message, your Liberty instance is ready in dev mode:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+*    ...
+*    Container network information:
+*        Container name: [ liberty-dev ]
+*        IP address [ 172.17.0.2 ] on container network [ bridge ]
+*    ...
+```
+
+
+Dev mode holds your command-line session to listen for file changes.
+
+Click the following button to try out the ***inventory*** microservice manually by visiting the ***/openapi/ui*** endpoint. This interface provides a convenient visual way to interact with the APIs and test out their functionalities:
+
+::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
+
+Open another command-line session to continue.
+
+
+
+### Building a REST test client
+
+The REST test client is responsible for sending HTTP requests to an application and handling the responses. It enables accurate verification of the application's behavior by ensuring that it responds correctly to various scenarios and conditions. Using a REST client for testing ensures reliable interaction with the ***inventory*** microservice across various deployment environments: local processes, Docker containers, or containers through Testcontainers.
+
+Begin by creating a REST test client interface for the ***inventory*** microservice.
+
+Create the ***SystemResourceClient*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-openliberty-operator-intro/start/deploy.yaml
+touch /home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceClient.java
 ```
 
 
-> Then, to open the deploy.yaml file in your IDE, select
-> ***File*** > ***Open*** > guide-openliberty-operator-intro/start/deploy.yaml, or click the following button
+> Then, to open the SystemResourceClient.java file in your IDE, select
+> ***File*** > ***Open*** > guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceClient.java, or click the following button
 
-::openFile{path="/home/project/guide-openliberty-operator-intro/start/deploy.yaml"}
+::openFile{path="/home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceClient.java"}
 
 
 
-```yaml
-apiVersion: apps.openliberty.io/v1
-kind: OpenLibertyApplication
-metadata:
-  name: system
-  labels:
-    name: system
-spec:
-  applicationImage: system:1.0-SNAPSHOT
-  service:
-    port: 9443
-  expose: true
-  route:
-    pathType: ImplementationSpecific
-  env:
-    - name: WLP_LOGGING_MESSAGE_FORMAT
-      value: "json"
-    - name: WLP_LOGGING_MESSAGE_SOURCE
-      value: "message,trace,accessLog,ffdc,audit"
+```java
+package it.io.openliberty.guides.inventory;
+
+import java.util.List;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+
+@ApplicationScoped
+@Path("/systems")
+public interface SystemResourceClient {
+
+    @GET
+    @Path("/")
+    @Produces(MediaType.APPLICATION_JSON)
+    List<SystemData> listContents();
+
+    @GET
+    @Path("/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    SystemData getSystem(
+        @PathParam("hostname") String hostname);
+
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    Response addSystem(
+        @QueryParam("hostname") String hostname,
+        @QueryParam("osName") String osName,
+        @QueryParam("javaVersion") String javaVersion,
+        @QueryParam("heapSize") Long heapSize);
+
+    @PUT
+    @Path("/{hostname}")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    Response updateSystem(
+        @PathParam("hostname") String hostname,
+        @QueryParam("osName") String osName,
+        @QueryParam("javaVersion") String javaVersion,
+        @QueryParam("heapSize") Long heapSize);
+
+    @DELETE
+    @Path("/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    Response removeSystem(
+        @PathParam("hostname") String hostname);
+}
+
 ```
 
 
 Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-The ***deploy.yaml*** file is configured to deploy one ***OpenLibertyApplication*** resource, ***system***, which is controlled by the Open Liberty Operator.
+The ***SystemResourceClient*** interface declares the ***listContents()***, ***getSystem()***, ***addSystem()***, ***updateSystem()***, and ***removeSystem()*** methods for accessing the corresponding endpoints within the ***inventory*** microservice.
 
-The ***applicationImage*** parameter defines what container image is deployed as part of the ***OpenLibertyApplication*** CRD. This parameter follows the ***\\<image-name\\>[:tag]*** format. The parameter can also point to an image hosted on an external registry, such as Docker Hub. The ***system*** microservice is configured to use the ***image*** created from the earlier build. 
+Next, create the ***SystemData*** data model for testing.
 
-The ***env*** parameter is used to specify environment variables that are passed to the container at runtime.
+Create the ***SystemData*** class.
 
-Additionally, the microservice includes the ***service*** and ***expose*** parameters. The ***service.port*** parameter specifies which port is exposed by the container, allowing the microservice to be accessed from outside the container. To access the microservice from outside of the cluster, it must be exposed by setting the ***expose*** parameter to ***true***. After you expose the microservice, the Operator automatically creates and configures routes for external access to your microservice.
-
-
-Run the following commands to update the **applicationImage** with the **pullSecret** and deploy the **system** microservice with the previously explained configuration:
+> Run the following touch command in your terminal
 ```bash
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
-kubectl apply -f deploy.yaml
+touch /home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemData.java
 ```
 
-Next, run the following command to view your newly created ***OpenLibertyApplications*** resources:
+
+> Then, to open the SystemData.java file in your IDE, select
+> ***File*** > ***Open*** > guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemData.java, or click the following button
+
+::openFile{path="/home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemData.java"}
+
+
+
+```java
+package it.io.openliberty.guides.inventory;
+
+public class SystemData {
+
+    private int id;
+    private String hostname;
+    private String osName;
+    private String javaVersion;
+    private Long heapSize;
+
+    public SystemData() {
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getHostname() {
+        return hostname;
+    }
+
+    public String getOsName() {
+        return osName;
+    }
+
+    public String getJavaVersion() {
+        return javaVersion;
+    }
+
+    public Long getHeapSize() {
+        return heapSize;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public void setHostname(String hostname) {
+        this.hostname = hostname;
+    }
+
+    public void setOsName(String osName) {
+        this.osName = osName;
+    }
+
+    public void setJavaVersion(String javaVersion) {
+        this.javaVersion = javaVersion;
+    }
+
+    public void setHeapSize(Long heapSize) {
+        this.heapSize = heapSize;
+    }
+}
+```
+
+
+
+The ***SystemData*** class contains the ID, hostname, operating system name, Java version, and heap size properties. The various ***get*** and ***set*** methods within this class enable you to view and edit the properties of each system in the inventory.
+
+### Building a test container for Open Liberty
+
+Next, create a custom class that extends Testcontainers' generic container to define specific configurations that suit your application's requirements.
+
+Define a custom ***LibertyContainer*** class, which provides a framework to start and access a containerized version of the Open Liberty application for testing.
+
+Create the ***LibertyContainer*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/LibertyContainer.java
+```
+
+
+> Then, to open the LibertyContainer.java file in your IDE, select
+> ***File*** > ***Open*** > guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/LibertyContainer.java, or click the following button
+
+::openFile{path="/home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/LibertyContainer.java"}
+
+
+
+```java
+package it.io.openliberty.guides.inventory;
+
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.images.builder.ImageFromDockerfile;
+
+public class LibertyContainer extends GenericContainer<LibertyContainer> {
+
+    public LibertyContainer(ImageFromDockerfile image, int httpPort, int httpsPort) {
+
+        super(image);
+        addExposedPorts(httpPort, httpsPort);
+
+        waitingFor(Wait.forLogMessage("^.*CWWKF0011I.*$", 1));
+
+    }
+
+    public String getBaseURL() throws IllegalStateException {
+        return "http://" + getHost() + ":" + getFirstMappedPort();
+    }
+
+}
+```
+
+
+
+The ***LibertyContainer*** class extends the ***GenericContainer*** class from Testcontainers to create a custom container configuration specific to the Open Liberty application.
+
+The ***addExposedPorts()*** method exposes specified ports from the container's perspective, allowing test clients to communicate with services running inside the container. To avoid any port conflicts, Testcontainers assigns random host ports to these exposed container ports. 
+
+By default, the ***Wait.forLogMessage()*** method directs ***LibertyContainer*** to wait for the specific ***CWWKF0011I*** log message that indicates the Liberty instance has started successfully.
+
+The ***getBaseURL()*** method contructs the base URL to access the container.
+
+For more information about Testcontainers APIs and its functionality, refer to the [Testcontainers JavaDocs](https://javadoc.io/doc/org.testcontainers/testcontainers/latest/index.html).
+
+
+### Building test cases
+
+Next, write tests that use the ***SystemResourceClient*** REST client and Testcontainers integration. 
+
+Create the ***SystemResourceIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceIT.java
+```
+
+
+> Then, to open the SystemResourceIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceIT.java, or click the following button
+
+::openFile{path="/home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.inventory;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.net.Socket;
+import java.util.List;
+import java.nio.file.Paths;
+
+import org.jboss.resteasy.client.jaxrs.ResteasyClient;
+import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.images.builder.ImageFromDockerfile;
+
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.UriBuilder;
+
+@TestMethodOrder(OrderAnnotation.class)
+public class SystemResourceIT {
+
+    private static Logger logger = LoggerFactory.getLogger(SystemResourceIT.class);
+
+    private static final String DB_HOST = "postgres";
+    private static final int DB_PORT = 5432;
+    private static final String POSTGRES_PASSWORD = "adminpwd";
+    private static ImageFromDockerfile postgresImage
+        = new ImageFromDockerfile("postgres-sample")
+              .withDockerfile(Paths.get("../postgres/Dockerfile"));
+
+    private static int httpPort = Integer.parseInt(System.getProperty("http.port"));
+    private static int httpsPort = Integer.parseInt(System.getProperty("https.port"));
+    private static String contextRoot = System.getProperty("context.root") + "/api";
+    private static ImageFromDockerfile invImage
+        = new ImageFromDockerfile("inventory:1.0-SNAPSHOT")
+              .withDockerfile(Paths.get("./Dockerfile"));
+
+    private static SystemResourceClient client;
+    private static Network network = Network.newNetwork();
+
+    private static GenericContainer<?> postgresContainer
+        = new GenericContainer<>(postgresImage)
+              .withEnv("POSTGRES_PASSWORD", POSTGRES_PASSWORD)
+              .withNetwork(network)
+              .withExposedPorts(DB_PORT)
+              .withNetworkAliases(DB_HOST)
+              .withLogConsumer(new Slf4jLogConsumer(logger));
+
+    private static LibertyContainer inventoryContainer
+        = new LibertyContainer(invImage, httpPort, httpsPort)
+              .withEnv("DB_HOSTNAME", DB_HOST)
+              .withNetwork(network)
+              .waitingFor(Wait.forHttp("/health/ready").forPort(httpPort))
+              .withLogConsumer(
+                new Slf4jLogConsumer(
+                    LoggerFactory.getLogger(LibertyContainer.class)));
+
+    private static boolean isServiceRunning(String host, int port) {
+        try {
+            Socket socket = new Socket(host, port);
+            socket.close();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private static SystemResourceClient createRestClient(String urlPath) {
+        ClientBuilder builder = ResteasyClientBuilder.newBuilder();
+        ResteasyClient client = (ResteasyClient) builder.build();
+        ResteasyWebTarget target = client.target(UriBuilder.fromPath(urlPath));
+        return target.proxy(SystemResourceClient.class);
+    }
+
+    @BeforeAll
+    public static void setup() throws Exception {
+        String urlPath;
+        if (isServiceRunning("localhost", httpPort)) {
+            logger.info("Testing by dev mode or local Liberty...");
+            if (isServiceRunning("localhost", DB_PORT)) {
+                logger.info("The application is ready to test.");
+                urlPath = "http://localhost:" + httpPort;
+            } else {
+                throw new Exception("Postgres database is not running");
+            }
+        } else {
+            logger.info("Testing by using Testcontainers...");
+            if (isServiceRunning("localhost", DB_PORT)) {
+                throw new Exception(
+                      "Postgres database is running locally. Stop it and retry.");
+            } else {
+                postgresContainer.start();
+                inventoryContainer.start();
+                urlPath = inventoryContainer.getBaseURL();
+            }
+        }
+        urlPath += contextRoot;
+        logger.info("TEST: " + urlPath);
+        client = createRestClient(urlPath);
+    }
+
+    @AfterAll
+    public static void tearDown() {
+        inventoryContainer.stop();
+        postgresContainer.stop();
+        network.close();
+    }
+
+    private void showSystemData(SystemData system) {
+        logger.info("TEST: SystemData > "
+            + system.getId() + ", "
+            + system.getHostname() + ", "
+            + system.getOsName() + ", "
+            + system.getJavaVersion() + ", "
+            + system.getHeapSize());
+    }
+
+    @Test
+    @Order(1)
+    public void testAddSystem() {
+        logger.info("TEST: Testing add a system");
+        client.addSystem("localhost", "linux", "11", Long.valueOf(2048));
+        List<SystemData> systems = client.listContents();
+        assertEquals(1, systems.size());
+        showSystemData(systems.get(0));
+        assertEquals("11", systems.get(0).getJavaVersion());
+        assertEquals(Long.valueOf(2048), systems.get(0).getHeapSize());
+    }
+
+    @Test
+    @Order(2)
+    public void testUpdateSystem() {
+        logger.info("TEST: Testing update a system");
+        client.updateSystem("localhost", "linux", "8", Long.valueOf(1024));
+        SystemData system = client.getSystem("localhost");
+        showSystemData(system);
+        assertEquals("8", system.getJavaVersion());
+        assertEquals(Long.valueOf(1024), system.getHeapSize());
+    }
+
+    @Test
+    @Order(3)
+    public void testRemoveSystem() {
+        logger.info("TEST: Testing remove a system");
+        client.removeSystem("localhost");
+        List<SystemData> systems = client.listContents();
+        assertEquals(0, systems.size());
+    }
+}
+```
+
+
+
+
+
+
+Construct the ***postgresImage*** and ***invImage*** using the ***ImageFromDockerfile*** class, which allows Testcontainers to build Docker images from a Dockerfile during the test runtime. For these instances, the provided Dockerfiles at the specified paths ***../postgres/Dockerfile*** and ***./Dockerfile*** are used to generate the respective ***postgres-sample*** and ***inventory:1.0-SNAPSHOT*** images.
+
+Use ***GenericContainer*** class to create the ***postgresContainer*** test container to start up the ***postgres-sample*** Docker image, and use the ***LibertyContainer*** custom class to create the ***inventoryContainer*** test container to start up the ***inventory:1.0-SNAPSHOT*** Docker image. 
+
+As containers are isolated by default, placing both the ***LibertyContainer*** and the ***postgresContainer*** on the same ***network*** allows them to communicate by using the hostname ***localhost*** and the internal port ***5432***, bypassing the need for an externally mapped port.
+
+The ***waitingFor()*** method here overrides the ***waitingFor()*** method from ***LibertyContainer***. Given that the ***inventory*** service depends on a database service, ensuring that readiness involves more than just the microservice itself. To address this, the ***inventoryContainer*** readiness is determined by checking the ***/health/ready*** health readiness check API, which reflects both the application and database service states. For different container readiness check customizations, see to the [official Testcontainers documentation](https://www.testcontainers.org/features/startup_and_waits/).
+
+The ***LoggerFactory.getLogger()*** and ***withLogConsumer(new Slf4jLogConsumer(Logger))*** methods integrate container logs with the test logs by piping the container output to the specified logger.
+
+The ***createRestClient()*** method creates a REST client instance with the ***SystemResourceClient*** interface.
+
+The ***setup()*** method prepares the test environment. It checks whether the test is running in dev mode or there is a local running Liberty instance, by using the ***isServiceRunning()*** helper. In the case of no running Liberty instance, the test starts the ***postgresContainer*** and ***inventoryContainer*** test containers. Otherwise, it ensures that the Postgres database is running locally.
+
+The ***testAddSystem()*** verifies the ***addSystem*** and ***listContents*** endpoints.
+
+The ***testUpdateSystem()*** verifies the ***updateSystem*** and ***getSystem*** endpoints.
+
+The ***testRemoveSystem()*** verifies the ***removeSystem*** endpoint.
+
+After the tests are executed, the ***tearDown()*** method stops the containers and closes the network.
+
+
+### Setting up logs
+
+Having reliable logs is essential for efficient debugging, as they provide detailed insights into the test execution flow and help pinpoint issues during test failures. Testcontainers' built-in ***Slf4jLogConsumer*** enables integration of container output directly with the JUnit process, enhancing log analysis and simplifying test creation and debugging.
+
+Create the ***log4j.properties*** file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-testcontainers/start/src/test/resources/log4j.properties
+```
+
+
+> Then, to open the log4j.properties file in your IDE, select
+> ***File*** > ***Open*** > guide-testcontainers/start/src/test/resources/log4j.properties, or click the following button
+
+::openFile{path="/home/project/guide-testcontainers/start/src/test/resources/log4j.properties"}
+
+
+
+```
+log4j.rootLogger=INFO, stdout
+
+log4j.appender=org.apache.log4j.ConsoleAppender
+log4j.appender.layout=org.apache.log4j.PatternLayout
+
+log4j.appender.stdout=org.apache.log4j.ConsoleAppender
+log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
+log4j.appender.stdout.layout.ConversionPattern=%r %p %c %x - %m%n
+
+log4j.logger.it.io.openliberty.guides.inventory=DEBUG
+```
+
+
+
+The ***log4j.properties*** file configures the root logger, appenders, and layouts for console output. It sets the logging level to ***DEBUG*** for the ***it.io.openliberty.guides.inventory*** package. This level provides detailed logging information for the specified package, which can be helpful for debugging and understanding test behavior.
+
+
+### Configuring the Maven project
+
+Next, prepare your Maven project for test execution by adding the necessary dependencies for Testcontainers and logging, setting up Maven to copy the PostgreSQL JDBC driver during the build phase, and configuring the Liberty Maven Plugin to handle PostgreSQL dependency.
+
+Replace the ***pom.xml*** file.
+
+> To open the pom.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-testcontainers/start/pom.xml, or click the following button
+
+::openFile{path="/home/project/guide-testcontainers/start/pom.xml"}
+
+
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>guide-testcontainers</artifactId>
+    <packaging>war</packaging>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <liberty.var.http.port>9080</liberty.var.http.port>
+        <liberty.var.https.port>9443</liberty.var.https.port>
+        <liberty.var.context.root>/inventory</liberty.var.context.root>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>10.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>7.0</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.7.5</version>
+            <scope>provided</scope>
+        </dependency>
+        
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.12.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>6.2.12.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-json-binding-provider</artifactId>
+            <version>6.2.12.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>jakarta.json</artifactId>
+            <version>2.0.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse</groupId>
+            <artifactId>yasson</artifactId>
+            <version>3.0.4</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>1.21.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-reload4j</artifactId>
+            <version>2.0.17</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.17</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>inventory</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.4.0</version>
+            </plugin>
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <configuration>
+                    <copyDependencies>
+                        <dependencyGroup>
+                            <location>${project.build.directory}/liberty/wlp/usr/shared/resources</location>
+                            <dependency>
+                                <groupId>org.postgresql</groupId>
+                                <artifactId>postgresql</artifactId>
+                            </dependency>
+                        </dependencyGroup>
+                    </copyDependencies>
+                </configuration>
+                <version>3.11.3</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.5.3</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <http.port>${liberty.var.http.port}</http.port>
+                        <https.port>${liberty.var.https.port}</https.port>
+                        <context.root>${liberty.var.context.root}</context.root>
+                    </systemPropertyVariables>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+
+
+Add the required ***dependency*** for Testcontainers and Log4J libraries with ***test*** scope. The ***testcontainers*** dependency offers a general-purpose API for managing container-based test environments. The ***slf4j-reload4j*** and ***slf4j-api*** dependencies enable the Simple Logging Facade for Java (SLF4J) API for trace logging during test execution and facilitates debugging and test performance tracking. 
+
+Also, add and configure the ***maven-failsafe-plugin*** plugin, so that the integration test can be run by the Maven ***verify*** command.
+
+When you started Open Liberty in dev mode, all the changes were automatically picked up. You can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode. You see the following output:
+
+```
+ -------------------------------------------------------
+  T E S T S
+ -------------------------------------------------------
+ Running it.io.openliberty.guides.inventory.SystemResourceIT
+ it.io.openliberty.guides.inventory.SystemResourceIT  - Testing by dev mode or local Liberty...
+ ...
+ Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.873 s - in it.io.openliberty.guides.inventory.SystemResourceIT
+
+ Results:
+
+ Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+```
+
+
+
+::page{title="Running tests in a CI/CD pipeline"}
+
+Running tests in dev mode is useful for local development, but there may be times when you want to test your application in other scenarios, such as in a CI/CD pipeline. For these cases, you can use Testcontainers to run tests against a running Open Liberty instance in a controlled, self-contained environment, ensuring that your tests run consistently regardless of the deployment context.
+
+To test outside of dev mode, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the Liberty.
+
+Also, run the following commands to stop the PostgreSQL container that was started in the previous section:
 
 ```bash
-kubectl get OpenLibertyApplications
+docker stop postgres-container
 ```
 
-You can also replace ***OpenLibertyApplications*** with the shortname ***olapps***.
+Now, use the following Maven goal to run the tests from a cold start outside of dev mode:
 
-Look for output that is similar to the following example:
-
-```
-NAME      IMAGE                  EXPOSED   RECONCILED   AGE
-system    system:1.0-SNAPSHOT    true      True         10s
-```
-
-A ***RECONCILED*** state value of ***True*** indicates that the operator was able to successfully process the ***OpenLibertyApplications*** instances. Run the following command to view details of your microservice:
 
 ```bash
-kubectl describe olapps/system
+export TESTCONTAINERS_RYUK_DISABLED=true
+./mvnw clean verify
 ```
 
-This example shows part of the ***olapps/system*** output:
+You see the following output:
 
 ```
-Name:         system
-Namespace:    default
-Labels:       app.kubernetes.io/part-of=system
-              name=system
-Annotations:  <none>
-API Version:  apps.openliberty.io/v1
-Kind:         OpenLibertyApplication
-
+ -------------------------------------------------------
+  T E S T S
+ -------------------------------------------------------
+ Running it.io.openliberty.guides.inventory.SystemResourceIT
+ it.io.openliberty.guides.inventory.SystemResourceIT  - Testing by using Testcontainers...
+ ...
+ tc.postgres-sample:latest  - Creating container for image: postgres-sample:latest
+ tc.postgres-sample:latest  - Container postgres-sample:latest is starting: 7cf2e2c6a505f41877014d08b7688399b3abb9725550e882f1d33db8fa4cff5a
+ tc.postgres-sample:latest  - Container postgres-sample:latest started in PT2.925405S
+ ...
+ tc.inventory:1.0-SNAPSHOT  - Creating container for image: inventory:1.0-SNAPSHOT
+ tc.inventory:1.0-SNAPSHOT  - Container inventory:1.0-SNAPSHOT is starting: 432ac739f377abe957793f358bbb85cc916439283ed2336014cacb585f9992b8
+ tc.inventory:1.0-SNAPSHOT  - Container inventory:1.0-SNAPSHOT started in PT25.784899S
 ...
+
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 12.208 s - in it.io.openliberty.guides.inventory.SystemResourceIT
+
+Results:
+
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-::page{title="Accessing the microservice"}
-
-To access the exposed ***system*** microservice, the service must be port-forwarded. Run the following command to set up port forwarding to access the ***system*** service:
-
-
-```bash
-kubectl port-forward svc/system 9443
-```
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Access the microservice by running the following command:
-```bash
-curl -k -s https://localhost:9443/system/properties | jq
-```
-
-When you're done trying out the microservice, press **CTRL+C** in the command line session where you ran the ***kubectl port-forward*** command to stop the port forwarding.
-
-Run the following command to remove the deployed ***system*** microservice:
-```bash
-kubectl delete -f deploy.yaml
-```
-
-::page{title="Specifying optional parameters"}
-
-You can also use the Open Liberty Operator to implement optional parameters in your application deployment by specifying the associated CRDs in your ***deploy.yaml*** file. For example, you can configure the [Kubernetes liveness, readiness and startup probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/). Visit the [Open Liberty Operator user guide](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1.adoc#configuration) to find all of the supported optional CRDs.
-
-To configure the Kubernetes liveness, readiness and startup probes by using the Open Liberty Operator, specify the ***probes*** in your ***deploy.yaml*** file. The ***startup*** probe verifies whether deployed application is fully initialized before the liveness probe takes over. Then, the ***liveness*** probe determines whether the application is running and the ***readiness*** probe determines whether the application is ready to process requests. For more information about application health checks, see the [Checking the health of microservices on Kubernetes](https://openliberty.io/guides/kubernetes-microprofile-health.html) guide.
-
-Replace the ***deploy.yaml*** configuration file.
-
-> To open the deploy.yaml file in your IDE, select
-> ***File*** > ***Open*** > guide-openliberty-operator-intro/start/deploy.yaml, or click the following button
-
-::openFile{path="/home/project/guide-openliberty-operator-intro/start/deploy.yaml"}
-
-
-
-```yaml
-apiVersion: apps.openliberty.io/v1
-kind: OpenLibertyApplication
-metadata:
-  name: system
-  labels:
-    name: system
-spec:
-  applicationImage: system:1.0-SNAPSHOT
-  service:
-    port: 9443
-  expose: true
-  route:
-    pathType: ImplementationSpecific
-  env:
-    - name: WLP_LOGGING_MESSAGE_FORMAT
-      value: "json"
-    - name: WLP_LOGGING_MESSAGE_SOURCE
-      value: "message,trace,accessLog,ffdc,audit"
-  probes:
-    startup:
-      failureThreshold: 12
-      httpGet:
-        path: /health/started
-        port: 9443
-        scheme: HTTPS
-      initialDelaySeconds: 30
-      periodSeconds: 2
-      timeoutSeconds: 10
-    liveness:
-      failureThreshold: 12
-      httpGet:
-        path: /health/live
-        port: 9443
-        scheme: HTTPS
-      initialDelaySeconds: 30
-      periodSeconds: 2
-      timeoutSeconds: 10
-    readiness:
-      failureThreshold: 12
-      httpGet:
-        path: /health/ready
-        port: 9443
-        scheme: HTTPS
-      initialDelaySeconds: 30
-      periodSeconds: 2
-      timeoutSeconds: 10
-```
-
-
-
-The health check endpoints ***/health/started***, ***/health/live*** and ***/health/ready*** are already created for you. 
-
-
-Run the following commands to update the **applicationImage** with the **pullSecret** and redeploy the **system** microservice with the new configuration:
-```bash
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
-kubectl apply -f deploy.yaml
-```
-Run the following command to check status of the pods:
-```bash
-kubectl describe pods | grep health
-```
-
-Look for the following output to confirm that the health checks are successfully applied and working:
-
-```
-Liveness:   http-get http://:9080/health/live delay=30s timeout=10s period=2s #success=1 #failure=12
-Readiness:  http-get http://:9080/health/ready delay=30s timeout=10s period=2s #success=1 #failure=12
-Startup:    http-get http://:9080/health/started delay=30s timeout=10s period=2s #success=1 #failure=12
-```
-
-Run the following command to set up port forwarding to access the ***system*** service:
-
-
-```bash
-kubectl port-forward svc/system 9443
-```
-
-Access the microservice by running the following command:
-```bash
-curl -k -s https://localhost:9443/system/properties | jq
-```
-
-When you're done trying out the microservice, press **CTRL+C** in the command line session where you ran the ***kubectl port-forward*** command to stop the port forwarding.
-
-::page{title="Tearing down the environment"}
-
-
-When you no longer need your deployed microservice, you can delete all resources by running the following command:
-
-```bash
-kubectl delete -f deploy.yaml
-```
+Notice that the test initiates a new Docker container each for the PostgreSQL database and the ***inventory*** microservice, resulting in a longer test runtime. Despite this, cold start testing benefits from a clean instance per run and ensures consistent results. These tests also automatically hook into existing build pipelines that are set up to run the ***integration-test*** phase.
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just deployed a microservice running in Open Liberty to Kubernetes and configured the Kubernetes liveness, readiness and startup probes by using the Open Liberty Operator.
+You just tested your microservices with multiple Docker containers using Testcontainers.
 
 
 
@@ -361,32 +875,31 @@ You just deployed a microservice running in Open Liberty to Kubernetes and confi
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-openliberty-operator-intro*** project by running the following commands:
+Delete the ***guide-testcontainers*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-openliberty-operator-intro
+rm -fr guide-testcontainers
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Deploying%20a%20microservice%20to%20Kubernetes%20using%20Open%20Liberty%20Operator&guide-id=cloud-hosted-guide-openliberty-operator-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Building%20true-to-production%20integration%20tests%20with%20Testcontainers&guide-id=cloud-hosted-guide-testcontainers)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-openliberty-operator-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-openliberty-operator-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-testcontainers/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-testcontainers/pulls)
 
 
 
 ### Where to next?
 
-* [Deploying microservices to OpenShift 3](https://openliberty.io/guides/cloud-openshift.html)
-* [Deploying microservices to OpenShift 4 using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html)
-* [Deploying microservices to an OKD cluster using Minishift](https://openliberty.io/guides/okd.html)
+* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
+* [Testing microservices with the Arquillian managed container](https://openliberty.io/guides/arquillian-managed.html)
 
 
 ### Log out of the session
