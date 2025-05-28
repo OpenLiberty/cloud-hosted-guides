@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Consuming a RESTful web service with ReactJS guide!"}
+::page{title="Welcome to the Creating a hypermedia-driven RESTful web service guide!"}
 
-Explore how to access a simple RESTful web service and consume its resources with ReactJS in Open Liberty.
+You'll explore how to use Hypermedia As The Engine Of Application State (HATEOAS) to drive your RESTful web service on Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,19 +14,86 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 ::page{title="What you'll learn"}
 
-You will learn how to access a REST service and deserialize the returned JSON that contains a list of artists and their albums by using an HTTP client with the ReactJS library. You will then present this data by using a ReactJS paginated table component.
+You will learn how to use hypermedia to create a specific style of a response JSON, which has contents that you can use to navigate your REST service. You'll build on top of a simple inventory REST service that you can develop with MicroProfile technologies. You can find the service at the following URL:
 
-[ReactJS](https://reactjs.org/) is a JavaScript library that is used to build user interfaces. Its main purpose is to incorporate a component-based approach to create reusable UI elements. With ReactJS, you can also interface with other libraries and frameworks. Note that the names ReactJS and React are used interchangeably.
+```
+http://localhost:9080/inventory/hosts
+```
 
-The React application in this guide is provided and configured for you in the ***src/main/frontend*** directory. The application uses [Next.js](https://nextjs.org/), a [React-powered framework](https://react.dev/learn/start-a-new-react-project), to set up the modern React application. The ***Next.js*** framework provides a powerful environment for learning and building React applications, with features like server-side rendering, static site generation, and easy API routes. It is the best way to start building a highly performant React application.
+The service responds with a JSON file that contains all of the registered hosts. Each host has a collection of HATEOAS links:
 
+```
+{
+  "foo": [
+    {
+      "href": "http://localhost:9080/inventory/hosts/foo",
+      "rel": "self"
+    }
+  ],
+  "bar": [
+    {
+      "href": "http://localhost:9080/inventory/hosts/bar",
+      "rel": "self"
+    }
+  ],
+  "*": [
+    {
+      "href": "http://localhost:9080/inventory/hosts/*",
+      "rel": "self"
+    }
+  ]
+}
+```
 
-The REST service that provides the resources was written for you in advance in the back end of the application, and it responds with the ***artists.json*** file  in the ***src/resources*** directory. You will implement a ReactJS client as the front end of your application, which consumes this JSON file and displays its contents on a single web page. 
+### What is HATEOAS?
 
-To learn more about REST services and how you can write them, see the [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) guide.
+HATEOAS is a constraint of REST application architectures. With HATEOAS, the client receives information about the available resources from the REST application. The client does not need to be hardcoded to a fixed set of resources, and the application and client can evolve independently. In other words, the application tells the client where it can go and what it can access by providing it with a simple collection of links to other available resources.
+
+### Response JSON
+
+In the context of HATEOAS, each resource must contain a link reference to itself, which is commonly referred to as ***self***. In this guide, the JSON structure features a mapping between the hostname and its corresponding list of HATEOAS links:
+
+```
+  "*": [
+    {
+      "href": "http://localhost:9080/inventory/hosts/*",
+      "rel": "self"
+    }
+  ]
+```
+
+#### Link types
+
+The following example shows two different links. The first link has a ***self*** relationship with the resource object and is generated whenever you register a host. The link points to that host entry in the inventory:
+
+```
+  {
+    "href": "http://localhost:9080/inventory/hosts/<hostname>",
+    "rel": "self"
+  }
+```
+
+The second link has a ***properties*** relationship with the resource object and is generated if the host ***system*** service is running. The link points to the properties resource on the host:
+
+```
+  {
+    "href": "http://<hostname>:9080/system/properties",
+    "rel": "properties"
+  }
+```
+
+#### Other formats
+
+Although you should stick to the previous format for the purpose of this guide, another common convention has the link as the value of the relationship:
+
+```
+  "_links": {
+      "self": "http://localhost:9080/inventory/hosts/<hostname>",
+      "properties": "http://<hostname>:9080/system/properties"
+  }
+```
 
 ::page{title="Getting started"}
 
@@ -39,11 +106,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-client-reactjs.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-hateoas.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-rest-client-reactjs.git
-cd guide-rest-client-reactjs
+git clone https://github.com/openliberty/guide-rest-hateoas.git
+cd guide-rest-hateoas
 ```
 
 
@@ -51,40 +118,28 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-
 ### Try what you'll build
 
-The ***finish*** directory in the root of this guide contains the finished application. The React front end is already pre-built for you and the static files from the production build can be found in the ***src/main/webapp/_next/static*** directory.
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
+To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
 
-In this IBM cloud environment, you need to update the URL to access the ***artists.json***. Run the following commands to go to the ***finish*** directory and update the files where the URL has been specified:
 ```bash
 cd finish
-./mvnw process-resources
-sed -i 's=http://localhost:9080/artists='"https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-reactjs/finish/src/main/webapp/_next/static/chunks/app/page-*.js
-sed -i 's=http://localhost:9080/artists='"https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-reactjs/finish/src/main/frontend/src/app/ArtistTable.jsx
-```
-
-To try out the application, run the following Maven goal to build the application and deploy it to Open Liberty:
-```bash
 ./mvnw liberty:run
 ```
 
-After you see the following message, your application Liberty instance is ready:
+After you see the following message, your Liberty instance is ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
 ```
 
 
-When the Liberty instance is running, click the following button to check out the application:
-
-::startApplication{port="9080" display="external" name="Visit application" route="/"}
-
-See the following output:
-
-![React Paginated Table](https://raw.githubusercontent.com/OpenLiberty/guide-rest-client-reactjs/prod/assets/react-table.png)
-
+After the Liberty instance runs, you can find your hypermedia-driven ***inventory*** service at the ***/inventory/hosts*** endpoint. Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following curl command:
+```bash
+curl -s http://localhost:9080/inventory/hosts | jq
+```
 
 After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
@@ -93,13 +148,12 @@ After you are finished checking out the application, stop the Liberty instance b
 ```
 
 
-::page{title="Starting the service"}
 
-Before you begin the implementation, start the provided REST service so that the artist JSON is available to you.
+::page{title="Creating the response JSON"}
 
-Navigate to the ***start*** directory to begin.
+Navigate to the ***start*** directory.
 ```bash
-cd /home/project/guide-rest-client-reactjs/start
+cd /home/project/guide-rest-hateoas/start
 ```
 
 When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
@@ -117,721 +171,493 @@ After you see the following message, your Liberty instance is ready in dev mode:
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
+Begin by building your response JSON, which is composed of the name of the host machine and its list of HATEOAS links.
 
-After the Liberty instance is started, run the following curl command to view your artist JSON.
-```bash
-curl -s http://localhost:9080/artists | jq
-```
+### Linking to inventory contents
 
-All the dependencies for the React front end are listed in the  ***src/main/frontend/src/package.json*** file and are installed before the build process by the ***frontend-maven-plugin***. Also, ***CSS*** stylesheets files are available in the ***src/main/frontend/src/styles*** directory.
+As mentioned before, your starting point is an existing simple inventory REST service. 
 
+Look at the request handlers in the ***InventoryResource.java*** file.
 
-::page{title="Project configuration"}
+The ***.../inventory/hosts/*** URL will no longer respond with a JSON representation of your inventory contents, so you can discard the ***listContents*** method and integrate it into the ***getPropertiesForHost*** method.
 
-The front end of your application uses Node.js to build your React code. The Maven project is configured for you to install Node.js and produce the production files, which are copied to the web content of your application.
+Replace the ***InventoryResource*** class.
 
-Node.js is a server-side JavaScript runtime that is used for developing networking applications. Its convenient package manager, [npm](https://www.npmjs.com/), is used to run the React build scripts that are found in the ***package.json*** file. To learn more about Node.js, see the official [Node.js documentation](https://nodejs.org/en/docs/).
+> To open the InventoryResource.java file in your IDE, select
+> ***File*** > ***Open*** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryResource.java, or click the following button
 
+::openFile{path="/home/project/guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryResource.java"}
 
-Take a look at the **pom.xml** file.
-> From the menu of the IDE, select ***File*** > ***Open*** > guide-rest-client-reactjs/start/pom.xml, or click the following button:
 
-::openFile{path="/home/project/guide-rest-client-reactjs/start/pom.xml"}
 
-The ***frontend-maven-plugin*** is used to ***install*** the dependencies that are listed in your ***package.json*** file from the npm registry into a folder called ***node_modules***. The ***node_modules*** folder can be found in your ***working*** directory. Then, the configuration ***produces*** the production files to the ***src/main/frontend/build*** directory. 
+```java
+package io.openliberty.guides.microprofile;
 
-The ***maven-resources-plugin*** copies the ***static*** content from the ***build*** directory to the ***web content*** of the application.
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.UriInfo;
 
+@ApplicationScoped
+@Path("hosts")
+public class InventoryResource {
 
-::page{title="Creating the default page"}
+    @Inject
+    InventoryManager manager;
 
-Create the entry point of your React application. The latest version of ***Next.js*** recommends you use the [App Router](https://nextjs.org/docs/app), which centralizes routing logic under the ***app*** directory.
+    @Context
+    UriInfo uriInfo;
 
-To construct the home page of the web application, create a ***page.jsx*** file.
-
-Create the ***page.jsx*** file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/page.jsx
-```
-
-
-> Then, to open the page.jsx file in your IDE, select
-> ***File*** > ***Open*** > guide-rest-client-reactjs/start/src/main/frontend/src/app/page.jsx, or click the following button
-
-::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/page.jsx"}
-
-
-
-```
-import "../../styles/index.css";
-import ArtistTable from "./ArtistTable";
-import React from 'react';
-
-export default function Home() {
-  return (
-    <ArtistTable></ArtistTable>
-  );
-}
-```
-
-
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
-
-
-The ***page.jsx*** file is a container for all other components. When the ***Home*** React component  is rendered, the ***ArtistTable*** components content are displayed.
-
-To render the pages correctly, add a ***layout.jsx*** file that defines the ***RootLayout*** containing the UI that are shared across all routes.
-
-Create the ***layout.jsx*** file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/layout.jsx
-```
-
-
-> Then, to open the layout.jsx file in your IDE, select
-> ***File*** > ***Open*** > guide-rest-client-reactjs/start/src/main/frontend/src/app/layout.jsx, or click the following button
-
-::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/layout.jsx"}
-
-
-
-```
-export const metadata = {
-  title: 'Next.js',
-  description: 'Generated by Next.js',
-}
-
-export default function RootLayout({ children }) {
-  return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
-  )
-}
-```
-
-
-
-For more detailed information, see the ***Next.js*** documentation on the [Layouts and Pages](https://nextjs.org/docs/app/getting-started/layouts-and-pages).
-
-
-::page{title="Creating the React component"}
-
-A React web application is a collection of components, and each component has a specific function. You will create a component that the application uses to acquire and display data from the REST API. 
-
-Create the ***ArtistTable*** function that fetches data from your back-end and renders it in a table. 
-
-Create the ***ArtistTable.jsx*** file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx
-```
-
-
-> Then, to open the ArtistTable.jsx file in your IDE, select
-> ***File*** > ***Open*** > guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx, or click the following button
-
-::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx"}
-
-
-
-```
-"use client";
-import React, { useEffect, useMemo, useState } from 'react';
-import { useReactTable, getCoreRowModel, getPaginationRowModel, getSortedRowModel, flexRender} from '@tanstack/react-table'; 
-import '../../styles/table.css'
-
-function ArtistTable() {
-
-  const [posts, setPosts] = useState([]);
-  const [sorting, setSorting] = useState([]);
-  const [pagination, setPagination] = useState({pageIndex: 0, pageSize: 4});
-
-
-  const data = useMemo(() => [...posts], [posts]);
-
-  const columns = useMemo(() => [{
-    header: 'Artist Info',
-    columns: [
-      {
-        accessorKey: 'id',
-        header: 'Artist ID'
-      },
-      {
-        accessorKey: 'name',
-        header: 'Artist Name'
-      },
-      {
-        accessorKey: 'genres',
-        header: 'Genres'
-      }
-    ]
-  },
-  {
-    header: 'Albums',
-    columns: [
-      {
-        accessorKey: 'ntracks',
-        header: 'Number of Tracks'
-      },
-      {
-        accessorKey: 'title',
-        header: 'Title'
-      }
-    ]
-  }
-  ], []
-  );
-
-  const tableInstance = useReactTable({ 
-          columns, 
-          data,
-          getCoreRowModel: getCoreRowModel(), 
-          getPaginationRowModel: getPaginationRowModel(), 
-          getSortedRowModel: getSortedRowModel(), 
-          state:{
-            sorting: sorting,
-            pagination: pagination,
-          },
-          onSortingChange: setSorting,
-          onPaginationChange: setPagination,
-          }); 
-
-  const {
-    getHeaderGroups, 
-    getRowModel,
-    getState,
-    setPageIndex,
-    setPageSize,
-    getCanPreviousPage,
-    getCanNextPage,
-    previousPage,
-    nextPage,
-    getPageCount,
-  } = tableInstance;
-
-  const {pageIndex, pageSize} = getState().pagination;
-
-
-  return (
-    <>
-      <h2>Artist Web Service</h2>
-      {/* tag::table[] */}
-      <table>
-        <thead>
-          {getHeaderGroups().map(headerGroup => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map(header => (
-                <th key={header.id} colSpan={header.colSpan} onClick={header.column.getToggleSortingHandler()}>
-                  {header.isPlaceholder ? null :(
-                    <div>
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                      {
-                        {
-                          asc: " 🔼",
-                          desc: " 🔽",
-                        }[header.column.getIsSorted() ?? null]
-                      }
-                    </div>
-                  )}
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {getRowModel().rows.map(row => (
-            <tr key={row.id}>
-              {row.getVisibleCells().map(cell => (
-                <td key={cell.id}>
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {/* end::table[] */}
-      <div className="pagination">
-        <button onClick={() => previousPage()} disabled={!getCanPreviousPage()}>
-          {'Previous'}
-        </button>{' '}
-        <div className="page-info">
-          <span>
-            Page{' '}
-            <strong>
-              {pageIndex + 1} of {getPageCount()}
-            </strong>{' '}
-          </span>
-          <span>
-            | Go to page:{' '}
-            <input
-              type="number"
-              defaultValue={pageIndex + 1}
-              onChange={e => {
-                const page = e.target.value ? Number(e.target.value) - 1 : 0
-                setPageIndex(page);
-              }}
-              style={{ width: '100px' }}
-            />
-          </span>{' '}
-          <select
-            value={pageSize}
-            onChange={e => {
-              setPageSize(Number(e.target.value))
-            }}
-          >
-            {[4, 5, 6, 9].map(pageSize => (
-              <option key={pageSize} value={pageSize}>
-                Show {pageSize}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button onClick={() => nextPage()} disabled={!getCanNextPage()}>
-          {'Next'}
-        </button>{' '}
-      </div>
-    </>
-  );
-}
-
-export default ArtistTable
-```
-
-
-
-At the beginning of the file, the ***use client*** directive indicates the ***ArtistTable*** component is rendered on the client side.
-
-The ***React*** library imports the ***react*** package for you to create the ***ArtistTable*** function. This function must have the ***export*** declaration because it is being exported to the ***page.jsx*** module. The ***posts*** object is initialized using a React Hook that lets you add a state to represent the state of the posts that appear on the paginated table.
-
-To display the returned data, you will use pagination. Pagination is the process of separating content into discrete pages, and you can use it for handling data sets in React. In your application, you'll render the columns in the paginated table. The ***columns*** constant defines the table that is present on the web page.
-
-The ***useReactTable*** hook creates a table instance. The hook takes in the ***columns*** and  ***posts*** as parameters. The ***getCoreRowModel*** function is included for the generation of the core row model of the table, which serves as the foundational row model upon pagination and sorting build. The ***getPaginationRowModel*** function applies pagination to the core row model, returning a row model that includes only the rows that should be displayed on the current page based on the pagination state. In addition, the ***getSortedRowModel*** function sorts the paginated table by the column headers then applies the changes to the row model. The paginated table instance is assigned to the ***table*** constant, which renders the paginated table on the web page.
-
-
-### Importing the HTTP client
-
-Your application needs a way to communicate with and retrieve resources from RESTful web services to output the resources onto the paginated table. The [Axios](https://github.com/axios/axios) library will provide you with an HTTP client. This client is used to make HTTP requests to external resources. Axios is a promise-based HTTP client that can send asynchronous requests to REST endpoints. To learn more about the Axios library and its HTTP client, see the [Axios documentation](https://www.npmjs.com/package/axios).
-
-The ***GetArtistsInfo()*** function uses the Axios API to fetch data from your back end. This function is called when the ***ArtistTable*** is rendered to the page using the ***useEffect()*** React lifecycle method.
-
-Update the ***ArtistTable.jsx*** file.
-
-> To open the ArtistTable.jsx file in your IDE, select
-> ***File*** > ***Open*** > guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx, or click the following button
-
-::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx"}
-
-
-
-```
-"use client";
-import React, { useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
-import { useReactTable, getCoreRowModel, getPaginationRowModel, getSortedRowModel, flexRender} from '@tanstack/react-table'; 
-import '../../styles/table.css'
-
-function ArtistTable() {
-
-  const [posts, setPosts] = useState([]);
-  const [sorting, setSorting] = useState([]);
-  const [pagination, setPagination] = useState({pageIndex: 0, pageSize: 4});
-
-  const GetArtistsInfo = async () => {
-    try {
-      const response = await axios.get('http://localhost:9080/artists');
-      const artists = response.data;
-      const processedData = [];
-      for (const artist of artists) {
-        const { albums, ...rest } = artist;
-        for (const album of albums) {
-          processedData.push({ ...rest, ...album });
-        }
-      };
-      setPosts(processedData);
-    } catch (error) {
-      console.log(error);
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public JsonObject handler() {
+        return manager.getSystems(uriInfo.getAbsolutePath().toString());
     }
-  };
 
-  const data = useMemo(() => [...posts], [posts]);
-
-  const columns = useMemo(() => [{
-    header: 'Artist Info',
-    columns: [
-      {
-        accessorKey: 'id',
-        header: 'Artist ID'
-      },
-      {
-        accessorKey: 'name',
-        header: 'Artist Name'
-      },
-      {
-        accessorKey: 'genres',
-        header: 'Genres'
-      }
-    ]
-  },
-  {
-    header: 'Albums',
-    columns: [
-      {
-        accessorKey: 'ntracks',
-        header: 'Number of Tracks'
-      },
-      {
-        accessorKey: 'title',
-        header: 'Title'
-      }
-    ]
-  }
-  ], []
-  );
-
-  const tableInstance = useReactTable({ 
-          columns, 
-          data,
-          getCoreRowModel: getCoreRowModel(), 
-          getPaginationRowModel: getPaginationRowModel(), 
-          getSortedRowModel: getSortedRowModel(), 
-          state:{
-            sorting: sorting,
-            pagination: pagination,
-          },
-          onSortingChange: setSorting,
-          onPaginationChange: setPagination,
-          }); 
-
-  const {
-    getHeaderGroups, 
-    getRowModel,
-    getState,
-    setPageIndex,
-    setPageSize,
-    getCanPreviousPage,
-    getCanNextPage,
-    previousPage,
-    nextPage,
-    getPageCount,
-  } = tableInstance;
-
-  const {pageIndex, pageSize} = getState().pagination;
-
-  useEffect(() => {
-    GetArtistsInfo();
-  }, []);
-
-  return (
-    <>
-      <h2>Artist Web Service</h2>
-      {/* tag::table[] */}
-      <table>
-        <thead>
-          {getHeaderGroups().map(headerGroup => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map(header => (
-                <th key={header.id} colSpan={header.colSpan} onClick={header.column.getToggleSortingHandler()}>
-                  {header.isPlaceholder ? null :(
-                    <div>
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                      {
-                        {
-                          asc: " 🔼",
-                          desc: " 🔽",
-                        }[header.column.getIsSorted() ?? null]
-                      }
-                    </div>
-                  )}
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {getRowModel().rows.map(row => (
-            <tr key={row.id}>
-              {row.getVisibleCells().map(cell => (
-                <td key={cell.id}>
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {/* end::table[] */}
-      <div className="pagination">
-        <button onClick={() => previousPage()} disabled={!getCanPreviousPage()}>
-          {'Previous'}
-        </button>{' '}
-        <div className="page-info">
-          <span>
-            Page{' '}
-            <strong>
-              {pageIndex + 1} of {getPageCount()}
-            </strong>{' '}
-          </span>
-          <span>
-            | Go to page:{' '}
-            <input
-              type="number"
-              defaultValue={pageIndex + 1}
-              onChange={e => {
-                const page = e.target.value ? Number(e.target.value) - 1 : 0
-                setPageIndex(page);
-              }}
-              style={{ width: '100px' }}
-            />
-          </span>{' '}
-          <select
-            value={pageSize}
-            onChange={e => {
-              setPageSize(Number(e.target.value))
-            }}
-          >
-            {[4, 5, 6, 9].map(pageSize => (
-              <option key={pageSize} value={pageSize}>
-                Show {pageSize}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button onClick={() => nextPage()} disabled={!getCanNextPage()}>
-          {'Next'}
-        </button>{' '}
-      </div>
-    </>
-  );
+    @GET
+    @Path("{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public JsonObject getPropertiesForHost(@PathParam("hostname") String hostname) {
+        return (hostname.equals("*")) ? manager.list() : manager.get(hostname);
+    }
 }
+```
 
-export default ArtistTable
+
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+
+
+
+The contents of your inventory are now under the asterisk (`*`) wildcard and reside at the `http://localhost:9080/inventory/hosts/*` URL.
+
+The ***GET*** request handler is responsible for handling all ***GET*** requests that are made to the target URL. This method responds with a JSON that contains HATEOAS links.
+
+The ***UriInfo*** object is what will be used to build your HATEOAS links.
+
+The ***@Context*** annotation is a part of CDI and indicates that the ***UriInfo*** will be injected when the resource is instantiated.
+
+Your new ***InventoryResource*** class is now replaced. Next, you will implement the ***getSystems*** method and build the response JSON object.
+
+
+### Linking to each available resource
+
+Take a look at your ***InventoryManager*** and ***InventoryUtil*** files.
+
+Replace the ***InventoryManager*** class.
+
+> To open the InventoryManager.java file in your IDE, select
+> ***File*** > ***Open*** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryManager.java, or click the following button
+
+::openFile{path="/home/project/guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryManager.java"}
+
+
+
+```java
+package io.openliberty.guides.microprofile;
+
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
+
+import io.openliberty.guides.microprofile.util.ReadyJson;
+import io.openliberty.guides.microprofile.util.InventoryUtil;
+
+@ApplicationScoped
+public class InventoryManager {
+
+    private ConcurrentMap<String, JsonObject> inv = new ConcurrentHashMap<>();
+
+    public JsonObject get(String hostname) {
+        JsonObject properties = inv.get(hostname);
+        if (properties == null) {
+            if (InventoryUtil.responseOk(hostname)) {
+                properties = InventoryUtil.getProperties(hostname);
+                this.add(hostname, properties);
+            } else {
+                return ReadyJson.SERVICE_UNREACHABLE.getJson();
+            }
+        }
+        return properties;
+    }
+
+    public void add(String hostname, JsonObject systemProps) {
+        inv.putIfAbsent(hostname, systemProps);
+    }
+
+    public JsonObject list() {
+        JsonObjectBuilder systems = Json.createObjectBuilder();
+        inv.forEach((host, props) -> {
+            JsonObject systemProps = Json.createObjectBuilder()
+                                         .add("os.name", props.getString("os.name"))
+                                         .add("user.name", props.getString("user.name"))
+                                         .build();
+            systems.add(host, systemProps);
+        });
+        systems.add("hosts", systems);
+        systems.add("total", inv.size());
+        return systems.build();
+    }
+
+    public JsonObject getSystems(String url) {
+        JsonObjectBuilder systems = Json.createObjectBuilder();
+        systems.add("*", InventoryUtil.buildLinksForHost("*", url));
+
+        for (String host : inv.keySet()) {
+            systems.add(host, InventoryUtil.buildLinksForHost(host, url));
+        }
+
+        return systems.build();
+    }
+
+}
 ```
 
 
 
-Add the ***axios*** library and the ***GetArtistsInfo()*** function.
+The ***getSystems*** method accepts a target URL as an argument and returns a JSON object that contains HATEOAS links.
 
-The ***axios*** HTTP call is used to read the artist JSON that contains the data from the sample JSON file in the ***resources*** directory. When a response is successful, the state of the system changes by assigning ***response.data*** to ***posts***. The ***artists*** and their ***albums*** JSON data are manipulated to allow them to be accessed by the ***ReactTable***. The ***...rest*** or ***...album*** object spread syntax is designed for simplicity. To learn more about it, see [Spread in object literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax#Spread_in_object_literals).
+Replace the ***InventoryUtil*** class.
 
-Finally, run the following command to update the URL to access the ***artists.json*** in the ***ArtistTable.jsx*** file:
+> To open the InventoryUtil.java file in your IDE, select
+> ***File*** > ***Open*** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/util/InventoryUtil.java, or click the following button
+
+::openFile{path="/home/project/guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/util/InventoryUtil.java"}
+
+
+
+```java
+package io.openliberty.guides.microprofile.util;
+
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URL;
+
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.UriBuilder;
+
+import org.apache.commons.lang3.StringUtils;
+
+public class InventoryUtil {
+
+    private static final int PORT = 9080;
+    private static final String PROTOCOL = "http";
+    private static final String SYSTEM_PROPERTIES = "/system/properties";
+
+    public static JsonObject getProperties(String hostname) {
+        Client client = ClientBuilder.newClient();
+        URI propURI = InventoryUtil.buildUri(hostname);
+        JsonObject properties = client.target(propURI)
+                                      .request(MediaType.APPLICATION_JSON)
+                                      .get(JsonObject.class);
+        client.close();
+        return properties;
+    }
+
+    public static JsonArray buildLinksForHost(String hostname, String invUri) {
+
+        JsonArrayBuilder links = Json.createArrayBuilder();
+
+        links.add(Json.createObjectBuilder()
+                      .add("href", StringUtils.appendIfMissing(invUri, "/") + hostname)
+                      .add("rel", "self"));
+
+        if (!hostname.equals("*")) {
+            links.add(Json.createObjectBuilder()
+                 .add("href", InventoryUtil.buildUri(hostname).toString())
+                 .add("rel", "properties"));
+        }
+
+        return links.build();
+    }
+
+    public static boolean responseOk(String hostname) {
+        try {
+            URL target = new URL(buildUri(hostname).toString());
+            HttpURLConnection http = (HttpURLConnection) target.openConnection();
+            http.setConnectTimeout(50);
+            int response = http.getResponseCode();
+            return response == 200;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private static URI buildUri(String hostname) {
+        return UriBuilder.fromUri(SYSTEM_PROPERTIES)
+                .host(hostname)
+                .port(PORT)
+                .scheme(PROTOCOL)
+                .build();
+    }
+
+}
+```
+
+
+
+The helper builds a link that points to the inventory entry with a ***self*** relationship. The helper also builds a link that points to the ***system*** service with a ***properties*** relationship:
+
+
+* `http://localhost:9080/inventory/hosts/<hostname>`
+* `http://<hostname>:9080/system/properties`
+
+### Linking to inactive services or unavailable resources
+
+Consider what happens when one of the return links does not work or when a link should be available for one object but not for another. In other words, it is important that a resource or service is available and running before it is added in the HATEOAS links array of the hostname.
+
+Although this guide does not cover this case, always make sure that you receive a good response code from a service before you link that service. Similarly, make sure that it makes sense for a particular object to access a resource it is linked to. For instance, it doesn't make sense for an account holder to be able to withdraw money from their account when their balance is 0. Hence, the account holder should not be linked to a resource that provides money withdrawal.
+
+::page{title="Running the application"}
+
+You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+
+
+After the Liberty instance updates, you can find your new hypermedia-driven ***inventory*** service at the ***/inventory/hosts*** endpoint. Run the following curl command by another command-line session:
 ```bash
-sed -i 's=http://localhost:9080/artists='"https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx
+curl -s http://localhost:9080/inventory/hosts | jq
 ```
 
 
-::page{title="Building and packaging the front-end"}
+::page{title="Testing the hypermedia-driven RESTful web service"}
 
-After you successfully build your components, you need to build the front end and package your application. The Maven ***process-resources*** goal generates the Node.js resources, creates the front-end production build, and copies and processes the resources into the destination directory. 
-
-In a new command-line session, build the front end by running the following command in the ***start*** directory:
+If the Liberty instances are running, you can test the application manually by running the following curl commands to access the **inventory** service that is now driven by hypermedia: 
+```bash
+curl -s http://localhost:9080/inventory/hosts | jq
+```
 
 ```bash
-cd /home/project/guide-rest-client-reactjs/start
-./mvnw process-resources
+curl -s http://localhost:9080/inventory/hosts/localhost| jq
 ```
 
-The build may take a few minutes to complete. You can rebuild the front end at any time with the Maven ***process-resources*** goal. Any local changes to your JavaScript and HTML are picked up when you build the front-end.
+Nevertheless, you should rely on automated tests because they are more reliable and trigger a failure if a change introduces a defect.
 
+### Setting up your tests
 
-Click the following button to view the front end of your application:
+Create the ***EndpointIT*** class.
 
-::startApplication{port="9080" display="external" name="Visit application" route="/"}
-
-
-::page{title="Testing the React client"}
-
-**Next.js*** supports various testing tools. This guide uses ***Vitest*** for unit testing the React components, with the test file ***App.test.jsx*** located in ***src/main/frontend/__tests__/*** directory. The ***App.test.jsx*** file is a simple JavaScript file that tests against the ***page.jsx*** component. No explicit test cases are written for this application. To learn more about ***Vitest***, see [Setting up Vitest with Next.js](https://nextjs.org/docs/app/building-your-application/testing/vitest).
-
-
-Update the ***pom.xml*** file.
-
-> To open the pom.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-rest-client-reactjs/start/pom.xml, or click the following button
-
-::openFile{path="/home/project/guide-rest-client-reactjs/start/pom.xml"}
-
-
-
-```xml
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>com.microprofile.demo</groupId>
-    <artifactId>guide-rest-client-reactjs</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>war</packaging>
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <!-- Liberty configuration -->
-        <liberty.var.http.port>9080</liberty.var.http.port>
-        <liberty.var.https.port>9443</liberty.var.https.port>
-    </properties>
-
-    <dependencies>
-        <!-- Provided dependencies -->
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>10.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>7.0</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-
-        <!-- For tests -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.12.2</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.4.0</version>
-            </plugin>
-            <!-- Enable liberty-maven plugin -->
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.11.3</version>            
-            </plugin>
-            <!-- Frontend resources -->
-            <plugin>
-                <groupId>com.github.eirslett</groupId>
-                <artifactId>frontend-maven-plugin</artifactId>
-                <version>1.15.1</version>
-                <configuration>
-                    <workingDirectory>src/main/frontend</workingDirectory>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>install node and npm</id>
-                        <goals>
-                            <goal>install-node-and-npm</goal>
-                        </goals>
-                        <configuration>
-                            <nodeVersion>v20.14.0</nodeVersion>
-                            <npmVersion>10.7.0</npmVersion>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>npm install</id>
-                        <goals>
-                            <goal>npm</goal>
-                        </goals>
-                        <configuration>
-                            <arguments>install</arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>npm run build</id>
-                        <goals>
-                            <goal>npm</goal>
-                        </goals>
-                        <configuration>
-                            <arguments>run build</arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>run tests</id>
-                        <goals>
-                            <goal>npm</goal>
-                        </goals>
-                        <configuration>
-                            <arguments>test a</arguments>
-                            <environmentVariables>
-                                <CI>true</CI>
-                            </environmentVariables>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- Copy frontend static files to target directory -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>3.3.1</version>
-                <executions>
-                    <execution>
-                        <id>Copy frontend build to target</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>
-                                ${basedir}/src/main/webapp
-                            </outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>
-                                        ${basedir}/src/main/frontend/out
-                                    </directory>
-                                    <filtering>true</filtering>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-</project>
-```
-
-
-
-To run the default test, you can add the ***testing*** configuration to the ***frontend-maven-plugin***. Rerun the Maven ***process-resources*** goal to rebuild the front end and run the tests.
-
+> Run the following touch command in your terminal
 ```bash
-cd /home/project/guide-rest-client-reactjs/start
-./mvnw process-resources
+touch /home/project/guide-rest-hateoas/start/src/test/java/it/io/openliberty/guides/hateoas/EndpointIT.java
 ```
 
-If the test passes, you see a similar output to the following example:
+
+> Then, to open the EndpointIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-rest-hateoas/start/src/test/java/it/io/openliberty/guides/hateoas/EndpointIT.java, or click the following button
+
+::openFile{path="/home/project/guide-rest-hateoas/start/src/test/java/it/io/openliberty/guides/hateoas/EndpointIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.hateoas;
+
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonValue;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.Response;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestMethodOrder(OrderAnnotation.class)
+public class EndpointIT {
+    private String port;
+    private String baseUrl;
+
+    private Client client;
+
+    private final String SYSTEM_PROPERTIES = "system/properties";
+    private final String INVENTORY_HOSTS = "inventory/hosts";
+
+    @BeforeEach
+    public void setup() {
+        port = System.getProperty("http.port");
+        baseUrl = "http://localhost:" + port + "/";
+
+        client = ClientBuilder.newClient();
+    }
+
+    @AfterEach
+    public void teardown() {
+        client.close();
+    }
+
+    /**
+     * Checks if the HATEOAS link for the inventory contents (hostname=*)
+     * is as expected.
+     */
+    @Test
+    @Order(1)
+    public void testLinkForInventoryContents() {
+        Response response = this.getResponse(baseUrl + INVENTORY_HOSTS);
+        assertEquals(200, response.getStatus(),
+                    "Incorrect response code from " + baseUrl);
+
+        JsonObject systems = response.readEntity(JsonObject.class);
+
+        String expected;
+        String actual;
+        boolean isFound = false;
+
+
+        if (!systems.isNull("*")) {
+            isFound = true;
+            JsonArray links = systems.getJsonArray("*");
+
+            expected = baseUrl + INVENTORY_HOSTS + "/*";
+            actual = links.getJsonObject(0).getString("href");
+            assertEquals(expected, actual, "Incorrect href");
+
+            expected = "self";
+            actual = links.getJsonObject(0).getString("rel");
+            assertEquals(expected, actual, "Incorrect rel");
+        }
+
+
+        assertTrue(isFound, "Could not find system with hostname *");
+
+        response.close();
+    }
+
+    /**
+     * Checks that the HATEOAS links, with relationships 'self' and 'properties' for
+     * a simple localhost system is as expected.
+     */
+    @Test
+    @Order(2)
+    public void testLinksForSystem() {
+        this.visitLocalhost();
+
+        Response response = this.getResponse(baseUrl + INVENTORY_HOSTS);
+        assertEquals(200, response.getStatus(),
+                     "Incorrect response code from " + baseUrl);
+
+        JsonObject systems = response.readEntity(JsonObject.class);
+
+        String expected;
+        String actual;
+        boolean isHostnameFound = false;
+
+
+        if (!systems.isNull("localhost")) {
+            isHostnameFound = true;
+            JsonArray links = systems.getJsonArray("localhost");
+
+            expected = baseUrl + INVENTORY_HOSTS + "/localhost";
+            actual = links.getJsonObject(0).getString("href");
+            assertEquals(expected, actual, "Incorrect href");
+
+            expected = "self";
+            actual = links.getJsonObject(0).getString("rel");
+            assertEquals(expected, actual, "Incorrect rel");
+
+            expected = baseUrl + SYSTEM_PROPERTIES;
+            actual = links.getJsonObject(1).getString("href");
+            assertEquals(expected, actual, "Incorrect href");
+
+            expected = "properties";
+            actual = links.getJsonObject(1).getString("rel");
+
+            assertEquals(expected, actual, "Incorrect rel");
+        }
+
+
+        assertTrue(isHostnameFound, "Could not find system with hostname localhost");
+        response.close();
+
+    }
+
+    /**
+     * Returns a Response object for the specified URL.
+     */
+    private Response getResponse(String url) {
+        return client.target(url).request().get();
+    }
+
+    /**
+     * Makes a GET request to localhost at the Inventory service.
+     */
+    private void visitLocalhost() {
+        Response response = this.getResponse(baseUrl + SYSTEM_PROPERTIES);
+        assertEquals(200, response.getStatus(),
+                     "Incorrect response code from " + baseUrl);
+        response.close();
+        Response targetResponse =
+        client.target(baseUrl + INVENTORY_HOSTS + "/localhost")
+                                        .request()
+                                        .get();
+        targetResponse.close();
+    }
+}
+```
+
+
+
+The ***@BeforeEach*** and ***@AfterEach*** annotations are placed on setup and teardown tasks that are run for each individual test.
+
+### Writing the tests
+
+Each test method must be marked with the ***@Test*** annotation. The execution order of test methods is controlled by marking them with the ***@Order*** annotation. The value that is passed into the annotation denotes the order in which the methods are run.
+
+The ***testLinkForInventoryContents*** test is responsible for asserting that the correct HATEOAS link is created for the inventory contents.
+
+Finally, the ***testLinksForSystem*** test is responsible for asserting that the correct HATEOAS links are created for the ***localhost*** system. This method checks for both the ***self*** link that points to the ***inventory*** service and the ***properties*** link that points to the ***system*** service, which is running on the ***localhost*** system.
+
+### Running the tests
+
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+You will see the following output:
 
 ```
-[INFO]  ✓ __tests__/App.test.jsx  (1 test) 96ms
-[INFO] 
-[INFO]  Test Files  1 passed (1)
-[INFO]       Tests  1 passed (1)
-[INFO]    Start at  10:43:25
-[INFO]    Duration  3.73s (transform 264ms, setup 0ms, collect 343ms, tests 96ms, environment 408ms, prepare 1.16s)
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.hateoas.EndpointIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.951 s - in it.io.openliberty.guides.hateoas.EndpointIT
+
+Results:
+
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+
+Integration tests finished.
 ```
 
-Although the React application in this guide is simple, when you build more complex React applications, testing becomes a crucial part of your development lifecycle. If you need to write application-oriented test cases, follow the official [React testing documentation](https://reactjs.org/docs/testing.html).
-
-When you are done checking the application root, exit dev mode by pressing `Ctrl+C` in the shell session where you ran the Liberty.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-Nice work! You just accessed a simple RESTful web service and consumed its resources by using ReactJS in Open Liberty.
+You've just built and tested a hypermedia-driven RESTful web service on top of Open Liberty.
+
 
 
 
@@ -840,31 +666,31 @@ Nice work! You just accessed a simple RESTful web service and consumed its resou
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-rest-client-reactjs*** project by running the following commands:
+Delete the ***guide-rest-hateoas*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-rest-client-reactjs
+rm -fr guide-rest-hateoas
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20a%20RESTful%20web%20service%20with%20ReactJS&guide-id=cloud-hosted-guide-rest-client-reactjs)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20hypermedia-driven%20RESTful%20web%20service&guide-id=cloud-hosted-guide-rest-hateoas)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-client-reactjs/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-client-reactjs/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-hateoas/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-hateoas/pulls)
 
 
 
 ### Where to next?
 
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
+* [Creating a MicroProfile application](https://openliberty.io/guides/microprofile-intro.html)
 
 
 ### Log out of the session
