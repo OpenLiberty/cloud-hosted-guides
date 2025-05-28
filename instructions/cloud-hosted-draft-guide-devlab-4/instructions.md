@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Consuming a RESTful web service guide!"}
+::page{title="Welcome to the Consuming a RESTful web service with ReactJS guide!"}
 
-Explore how to access a simple RESTful web service and consume its resources in Java using JSON-B and JSON-P.
+Explore how to access a simple RESTful web service and consume its resources with ReactJS in Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -17,18 +17,16 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You will learn how to access a REST service, serialize a Java object that contains a list of artists and their albums, and use two different approaches to deserialize the returned JSON resources. The first approach consists of using the Java API for JSON Binding (JSON-B) to directly convert JSON messages into Java objects. The second approach consists of using the Java API for JSON Processing (JSON-P) to process the JSON.
+You will learn how to access a REST service and deserialize the returned JSON that contains a list of artists and their albums by using an HTTP client with the ReactJS library. You will then present this data by using a ReactJS paginated table component.
 
-The REST service that provides the artists and albums resources is already written for you. When the Liberty is running, this service is accessible at the ***http://localhost:9080/artists*** endpoint, which responds with the ***artists.json*** file.
+[ReactJS](https://reactjs.org/) is a JavaScript library that is used to build user interfaces. Its main purpose is to incorporate a component-based approach to create reusable UI elements. With ReactJS, you can also interface with other libraries and frameworks. Note that the names ReactJS and React are used interchangeably.
 
-You will implement the following two endpoints using the two deserialization approaches:
+The React application in this guide is provided and configured for you in the ***src/main/frontend*** directory. The application uses [Next.js](https://nextjs.org/), a [React-powered framework](https://react.dev/learn/start-a-new-react-project), to set up the modern React application. The ***Next.js*** framework provides a powerful environment for learning and building React applications, with features like server-side rendering, static site generation, and easy API routes. It is the best way to start building a highly performant React application.
 
-* ***.../artists/total*** to return the total number of artists in the JSON
-* ***.../artists/total/\<artist\>*** to return the total number of albums in the JSON
-for the particular artist
 
-If you are interested in learning more about REST services and how you can write them, read [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html).
+The REST service that provides the resources was written for you in advance in the back end of the application, and it responds with the ***artists.json*** file  in the ***src/resources*** directory. You will implement a ReactJS client as the front end of your application, which consumes this JSON file and displays its contents on a single web page. 
 
+To learn more about REST services and how you can write them, see the [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) guide.
 
 ::page{title="Getting started"}
 
@@ -41,11 +39,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-client-java.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-client-reactjs.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-rest-client-java.git
-cd guide-rest-client-java
+git clone https://github.com/openliberty/guide-rest-client-reactjs.git
+cd guide-rest-client-reactjs
 ```
 
 
@@ -56,38 +54,37 @@ The ***finish*** directory contains the finished project that you will build.
 
 ### Try what you'll build
 
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+The ***finish*** directory in the root of this guide contains the finished application. The React front end is already pre-built for you and the static files from the production build can be found in the ***src/main/webapp/_next/static*** directory.
 
-To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
 
+In this IBM cloud environment, you need to update the URL to access the ***artists.json***. Run the following commands to go to the ***finish*** directory and update the files where the URL has been specified:
 ```bash
 cd finish
+./mvnw process-resources
+sed -i 's=http://localhost:9080/artists='"https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-reactjs/finish/src/main/webapp/_next/static/chunks/app/page-*.js
+sed -i 's=http://localhost:9080/artists='"https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-reactjs/finish/src/main/frontend/src/app/ArtistTable.jsx
+```
+
+To try out the application, run the following Maven goal to build the application and deploy it to Open Liberty:
+```bash
 ./mvnw liberty:run
 ```
 
-After you see the following message, your Liberty instance is ready:
+After you see the following message, your application Liberty instance is ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
 ```
 
 
-Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
+When the Liberty instance is running, click the following button to check out the application:
 
-You can find your service at the **http://localhost:9080/artists** endpoint by running the following curl command:
-```bash
-curl -s http://localhost:9080/artists | jq
-```
+::startApplication{port="9080" display="external" name="Visit application" route="/"}
 
-Run the following curl command to retrieve the total number of artists:
-```bash
-curl http://localhost:9080/artists/total
-```
+See the following output:
 
-You can access the endpoint at ***http://localhost:9080/artists/total/<artist>*** to see a particular artist’s total number of albums. Run the following curl command to retrieve the artist ***bar***'s total number of albums:
-```bash
-curl http://localhost:9080/artists/total/bar
-```
+![React Paginated Table](https://raw.githubusercontent.com/OpenLiberty/guide-rest-client-reactjs/prod/assets/react-table.png)
+
 
 After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
@@ -98,10 +95,11 @@ After you are finished checking out the application, stop the Liberty instance b
 
 ::page{title="Starting the service"}
 
+Before you begin the implementation, start the provided REST service so that the artist JSON is available to you.
 
-To begin, run the following command to navigate to the ***start*** directory:
+Navigate to the ***start*** directory to begin.
 ```bash
-cd /home/project/guide-rest-client-java/start
+cd /home/project/guide-rest-client-reactjs/start
 ```
 
 When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
@@ -120,125 +118,61 @@ After you see the following message, your Liberty instance is ready in dev mode:
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
 
-The application that you'll build upon was created for you. After your Liberty instance is ready, run the following curl command to access the service:
+After the Liberty instance is started, run the following curl command to view your artist JSON.
 ```bash
 curl -s http://localhost:9080/artists | jq
 ```
 
-::page{title="Creating POJOs"}
+All the dependencies for the React front end are listed in the  ***src/main/frontend/src/package.json*** file and are installed before the build process by the ***frontend-maven-plugin***. Also, ***CSS*** stylesheets files are available in the ***src/main/frontend/src/styles*** directory.
 
 
+::page{title="Project configuration"}
 
-To deserialize a JSON message, start with creating Plain Old Java Objects (POJOs) that represent what is in the JSON and whose instance members map to the keys in the JSON.
+The front end of your application uses Node.js to build your React code. The Maven project is configured for you to install Node.js and produce the production files, which are copied to the web content of your application.
 
-For the purpose of this guide, you are given two POJOs. The ***Artist*** object has two instance members ***name*** and ***albums***, which map to the artist name and the collection of the albums they have written. The ***Album*** object represents a single object within the album collection, and contains three instance members ***title***, ***artistName***, and ***totalTracks***, which map to the album title, the artist who wrote the album, and the number of tracks the album contains.
-
-::page{title="Introducing JSON-B and JSON-P"}
-
-JSON-B is a feature introduced with Java EE 8 and strengthens Java support for JSON. With JSON-B you directly serialize and deserialize POJOs. This API gives you a variety of options for working with JSON resources.
-
-In contrast, you need to use helper methods with JSON-P to process a JSON response. This tactic is more straightforward, but it can be cumbersome with more complex classes.
-
-JSON-B is built on top of the existing JSON-P API. JSON-B can do everything that JSON-P can do and allows for more customization for serializing and deserializing.
-
-### Using JSON-B
-
-JSON-B requires a POJO to have a public default no-argument constructor for deserialization and binding to work properly.
-
-The JSON-B engine includes a set of default mapping rules, which can be run without any customization annotations or custom configuration. In some instances, you might find it useful to deserialize a JSON message with only certain fields, specific field names, or classes with custom constructors. In these cases, annotations are necessary and recommended:
-
-* The ***@JsonbProperty*** annotation to map JSON keys to class instance members and vice versa. Without the use of this annotation, JSON-B will attempt to do POJO mapping, matching the keys in the JSON to the class instance members by name. JSON-B will attempt to match the JSON key with a Java field or method annotated with ***@JsonbProperty*** where the value in the annotation exactly matches the JSON key. If no annotation exists with the given JSON key, JSON-B will attempt to find a matching field with the same name. If no match is found, JSON-B attempts to find a matching getter method for serialization or a matching setter method for de-serialization. A match occurs when the property name of the method matches the JSON key. If no matching getter or setter method is found, serialization or de-serialization, respectively, fails with an exception. The Artist POJO does not require this annotation because all instance members match the JSON keys by name.
-
-* The ***@JsonbCreator*** and ***@JsonbProperty*** annotations to annotate a custom constructor. These annotations are required for proper parameter substitution when a custom constructor is used.
-
-* The ***@JsonbTransient*** annotation to define an object property that does not map to a JSON property. While the use of this annotation is good practice, it is only necessary for serialization.
-
-For more information on customization with JSON-B, see the [official JSON-B site](https://javaee.github.io/jsonb-spec).
+Node.js is a server-side JavaScript runtime that is used for developing networking applications. Its convenient package manager, [npm](https://www.npmjs.com/), is used to run the React build scripts that are found in the ***package.json*** file. To learn more about Node.js, see the official [Node.js documentation](https://nodejs.org/en/docs/).
 
 
-::page{title="Consuming the REST resource"}
+Take a look at the **pom.xml** file.
+> From the menu of the IDE, select ***File*** > ***Open*** > guide-rest-client-reactjs/start/pom.xml, or click the following button:
+
+::openFile{path="/home/project/guide-rest-client-reactjs/start/pom.xml"}
+
+The ***frontend-maven-plugin*** is used to ***install*** the dependencies that are listed in your ***package.json*** file from the npm registry into a folder called ***node_modules***. The ***node_modules*** folder can be found in your ***working*** directory. Then, the configuration ***produces*** the production files to the ***src/main/frontend/build*** directory. 
+
+The ***maven-resources-plugin*** copies the ***static*** content from the ***build*** directory to the ***web content*** of the application.
 
 
+::page{title="Creating the default page"}
 
-The ***Artist*** and ***Album*** POJOs are ready for deserialization. 
-Next, we'll learn to consume the JSON response from your REST service.
+Create the entry point of your React application. The latest version of ***Next.js*** recommends you use the [App Router](https://nextjs.org/docs/app), which centralizes routing logic under the ***app*** directory.
 
-Create the ***Consumer*** class.
+To construct the home page of the web application, create a ***page.jsx*** file.
+
+Create the ***page.jsx*** file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/Consumer.java
+touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/page.jsx
 ```
 
 
-> Then, to open the Consumer.java file in your IDE, select
-> ***File*** > ***Open*** > guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/Consumer.java, or click the following button
+> Then, to open the page.jsx file in your IDE, select
+> ***File*** > ***Open*** > guide-rest-client-reactjs/start/src/main/frontend/src/app/page.jsx, or click the following button
 
-::openFile{path="/home/project/guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/Consumer.java"}
+::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/page.jsx"}
 
 
 
-```java
-package io.openliberty.guides.consumingrest;
+```
+import "../../styles/index.css";
+import ArtistTable from "./ArtistTable";
+import React from 'react';
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.Response;
-
-import io.openliberty.guides.consumingrest.model.Album;
-import io.openliberty.guides.consumingrest.model.Artist;
-
-public class Consumer {
-    public static Artist[] consumeWithJsonb(String targetUrl) {
-      Client client = ClientBuilder.newClient();
-      Response response = client.target(targetUrl).request().get();
-      Artist[] artists = response.readEntity(Artist[].class);
-
-      response.close();
-      client.close();
-
-      return artists;
-    }
-
-    public static Artist[] consumeWithJsonp(String targetUrl) {
-      Client client = ClientBuilder.newClient();
-      Response response = client.target(targetUrl).request().get();
-      JsonArray arr = response.readEntity(JsonArray.class);
-
-      response.close();
-      client.close();
-
-      return Consumer.collectArtists(arr);
-    }
-
-    private static Artist[] collectArtists(JsonArray artistArr) {
-      List<Artist> artists = artistArr.stream().map(artistJson -> {
-        JsonArray albumArr = ((JsonObject) artistJson).getJsonArray("albums");
-        Artist artist = new Artist(
-          ((JsonObject) artistJson).getString("name"),
-          Consumer.collectAlbums(albumArr));
-        return artist;
-      }).collect(Collectors.toList());
-
-      return artists.toArray(new Artist[artists.size()]);
-    }
-
-    private static Album[] collectAlbums(JsonArray albumArr) {
-      List<Album> albums = albumArr.stream().map(albumJson -> {
-        Album album = new Album(
-          ((JsonObject) albumJson).getString("title"),
-          ((JsonObject) albumJson).getString("artist"),
-          ((JsonObject) albumJson).getInt("ntracks"));
-        return album;
-      }).collect(Collectors.toList());
-
-      return albums.toArray(new Album[albums.size()]);
-    }
+export default function Home() {
+  return (
+    <ArtistTable></ArtistTable>
+  );
 }
 ```
 
@@ -246,328 +180,658 @@ public class Consumer {
 Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-### Processing JSON using JSON-B
+The ***page.jsx*** file is a container for all other components. When the ***Home*** React component  is rendered, the ***ArtistTable*** components content are displayed.
 
+To render the pages correctly, add a ***layout.jsx*** file that defines the ***RootLayout*** containing the UI that are shared across all routes.
 
-JSON-B is a Java API that is used to serialize Java objects to JSON messages and vice versa.
-
-Open Liberty's JSON-B feature on Maven Central includes the JSON-B provider through transitive dependencies. The JSON-B APIs are provided by the MicroProfile dependency in your ***pom.xml*** file. Look for the dependency with the ***microprofile*** artifact ID. 
-
-The ***consumeWithJsonb()*** method in the ***Consumer*** class makes a ***GET*** request to the running artist service and retrieves the JSON. To bind the JSON into an ***Artist*** array, use the ***Artist[]*** entity type in the ***readEntity*** call.
-
-### Processing JSON using JSON-P
-
-The ***consumeWithJsonp()*** method in the ***Consumer*** class makes a ***GET*** request to the running artist service and retrieves the JSON. This method then uses the ***collectArtists*** and ***collectAlbums*** helper methods. These helper methods will parse the JSON and collect its objects into individual POJOs. Notice that you can use the custom constructors to create instances of ***Artist*** and ***Album***.
-
-::page{title="Creating additional REST resources"}
-
-Now that you can consume a JSON resource you can put that data to use.
-
-Replace the ***ArtistResource*** class.
-
-> To open the ArtistResource.java file in your IDE, select
-> ***File*** > ***Open*** > guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/service/ArtistResource.java, or click the following button
-
-::openFile{path="/home/project/guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/service/ArtistResource.java"}
-
-
-
-```java
-package io.openliberty.guides.consumingrest.service;
-
-import jakarta.json.JsonArray;
-import jakarta.json.bind.Jsonb;
-import jakarta.json.bind.JsonbBuilder;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.UriInfo;
-
-import io.openliberty.guides.consumingrest.model.Artist;
-import io.openliberty.guides.consumingrest.Consumer;
-
-@Path("artists")
-public class ArtistResource {
-
-    @Context
-    UriInfo uriInfo;
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public JsonArray getArtists() {
-      return Reader.getArtists();
-    }
-
-    @GET
-    @Path("jsonString")
-    @Produces(MediaType.TEXT_PLAIN)
-    public String getJsonString() {
-      Jsonb jsonb = JsonbBuilder.create();
-
-      Artist[] artists = Consumer.consumeWithJsonb(uriInfo.getBaseUri().toString()
-                                                   + "artists");
-      String result = jsonb.toJson(artists);
-
-      return result;
-    }
-
-    @GET
-    @Path("total/{artist}")
-    @Produces(MediaType.TEXT_PLAIN)
-    public int getTotalAlbums(@PathParam("artist") String artist) {
-      Artist[] artists = Consumer.consumeWithJsonb(uriInfo.getBaseUri().toString()
-        + "artists");
-
-      for (int i = 0; i < artists.length; i++) {
-        if (artists[i].name.equals(artist)) {
-          return artists[i].albums.length;
-        }
-      }
-      return -1;
-    }
-
-    @GET
-    @Path("total")
-    @Produces(MediaType.TEXT_PLAIN)
-    public int getTotalArtists() {
-      return Consumer.consumeWithJsonp(uriInfo.getBaseUri().toString()
-                                       + "artists").length;
-    }
-}
-```
-
-
-
-* The ***getArtists()*** method provides the raw JSON data service that you accessed at the beginning of this guide.
-
-* The ***getJsonString()*** method uses JSON-B to return the JSON as a string that will be used later for testing.
-
-* The ***getTotalAlbums()*** method uses JSON-B to return the total number of albums present in the JSON for a particular artist. The method returns -1 if this artist does not exist.
-
-* The ***getTotalArtists()*** method uses JSON-P to return the total number of artists present in the JSON.
-
-The methods that you wrote in the ***Consumer*** class could be written directly in the ***ArtistResource*** class. However, if you are consuming a REST resource from a third party service, you should separate your ***GET***/***POST*** requests from your data consumption.
-
-
-::page{title="Running the application"}
-
-The Open Liberty was started in dev mode at the beginning of the guide and all the changes were automatically picked up.
-
-
-You can find your service at the ***http://localhost:9080/artists*** endpoint by running the following curl command:
-```bash
-curl -s http://localhost:9080/artists | jq
-```
-
-Run the following curl command to retrieve the total number of artists:
-```bash
-curl http://localhost:9080/artists/total
-```
-
-You can access the endpoint at ***http://localhost:9080/artists/total/<artist>*** to see a particular artist’s total number of albums.
-Run the following curl command to retrieve the artist **bar**'s total number of albums:
-```bash
-curl http://localhost:9080/artists/total/bar
-```
-
-
-::page{title="Testing deserialization"}
-
-Create the ***ConsumingRestIT*** class.
+Create the ***layout.jsx*** file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-rest-client-java/start/src/test/java/it/io/openliberty/guides/consumingrest/ConsumingRestIT.java 
+touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/layout.jsx
 ```
 
 
-> Then, to open the ConsumingRestIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-rest-client-java/start/src/test/java/it/io/openliberty/guides/consumingrest/ConsumingRestIT.java, or click the following button
+> Then, to open the layout.jsx file in your IDE, select
+> ***File*** > ***Open*** > guide-rest-client-reactjs/start/src/main/frontend/src/app/layout.jsx, or click the following button
 
-::openFile{path="/home/project/guide-rest-client-java/start/src/test/java/it/io/openliberty/guides/consumingrest/ConsumingRestIT.java"}
+::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/layout.jsx"}
 
 
 
-```java
-package it.io.openliberty.guides.consumingrest;
+```
+export const metadata = {
+  title: 'Next.js',
+  description: 'Generated by Next.js',
+}
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import jakarta.json.bind.Jsonb;
-import jakarta.json.bind.JsonbBuilder;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.Response;
-
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
-import io.openliberty.guides.consumingrest.model.Artist;
-
-public class ConsumingRestIT {
-
-    private static String port;
-    private static String baseUrl;
-    private static String targetUrl;
-
-    private Client client;
-    private Response response;
-
-    @BeforeAll
-    public static void oneTimeSetup() {
-      port = System.getProperty("http.port");
-      baseUrl = "http://localhost:" + port + "/artists/";
-      targetUrl = baseUrl + "total/";
-    }
-
-    @BeforeEach
-    public void setup() {
-      client = ClientBuilder.newClient();
-    }
-
-    @AfterEach
-    public void teardown() {
-      client.close();
-    }
-
-    @Test
-    public void testArtistDeserialization() {
-      response = client.target(baseUrl + "jsonString").request().get();
-      this.assertResponse(baseUrl + "jsonString", response);
-
-      Jsonb jsonb = JsonbBuilder.create();
-
-      String expectedString = "{\"name\":\"foo\",\"albums\":"
-        + "[{\"title\":\"album_one\",\"artist\":\"foo\",\"ntracks\":12}]}";
-      Artist expected = jsonb.fromJson(expectedString, Artist.class);
-
-      String actualString = response.readEntity(String.class);
-      Artist[] actual = jsonb.fromJson(actualString, Artist[].class);
-
-      assertEquals(expected.name, actual[0].name,
-        "Expected names of artists does not match");
-
-      response.close();
-    }
-
-    @Test
-    public void testJsonBAlbumCount() {
-      String[] artists = {"dj", "bar", "foo"};
-      for (int i = 0; i < artists.length; i++) {
-        response = client.target(targetUrl + artists[i]).request().get();
-        this.assertResponse(targetUrl + artists[i], response);
-
-        int expected = i;
-        int actual = response.readEntity(int.class);
-        assertEquals(expected, actual, "Album count for "
-                      + artists[i] + " does not match");
-
-        response.close();
-      }
-    }
-
-    @Test
-    public void testJsonBAlbumCountForUnknownArtist() {
-      response = client.target(targetUrl + "unknown-artist").request().get();
-
-      int expected = -1;
-      int actual = response.readEntity(int.class);
-      assertEquals(expected, actual, "Unknown artist must have -1 albums");
-
-      response.close();
-    }
-
-    @Test
-    public void testJsonPArtistCount() {
-      response = client.target(targetUrl).request().get();
-      this.assertResponse(targetUrl, response);
-
-      int expected = 3;
-      int actual = response.readEntity(int.class);
-      assertEquals(expected, actual, "Expected number of artists does not match");
-
-      response.close();
-    }
-
-    /**
-     * Asserts that the given URL has the correct (200) response code.
-     */
-    private void assertResponse(String url, Response response) {
-      assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
-    }
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  )
 }
 ```
 
 
 
-Maven finds and executes all tests under the ***src/test/java/it/*** directory, and each test method must be marked with the ***@Test*** annotation.
-
-You can use the ***@BeforeAll*** and ***@AfterAll*** annotations to perform any one-time setup and teardown tasks before and after all of your tests run. You can also use the ***@BeforeEach*** and ***@AfterEach*** annotations to perform setup and teardown tasks for individual test cases.
-
-### Testing the binding process
+For more detailed information, see the ***Next.js*** documentation on the [Layouts and Pages](https://nextjs.org/docs/app/getting-started/layouts-and-pages).
 
 
-The ***yasson*** dependency was added in your ***pom.xml*** file so that your test classes have access to JSON-B.
+::page{title="Creating the React component"}
 
-The ***testArtistDeserialization*** test case checks that ***Artist*** instances created from the REST data and those that are hardcoded perform the same.
+A React web application is a collection of components, and each component has a specific function. You will create a component that the application uses to acquire and display data from the REST API. 
 
-The ***assertResponse*** helper method ensures that the response code you receive is valid (200).
+Create the ***ArtistTable*** function that fetches data from your back-end and renders it in a table. 
 
-### Processing with JSON-B test
+Create the ***ArtistTable.jsx*** file.
 
-The ***testJsonBAlbumCount*** and ***testJsonBAlbumCountForUnknownArtist*** tests both use the ***total/{artist}*** endpoint which invokes JSON-B.
-
-The ***testJsonBAlbumCount*** test case checks that deserialization with JSON-B was done correctly and that the correct number of albums is returned for each artist in the JSON.
-
-The ***testJsonBAlbumCountForUnknownArtist*** test case is similar to ***testJsonBAlbumCount*** but instead checks an artist that does not exist in the JSON and ensures that a value of ***-1*** is returned.
-
-### Processing with JSON-P test
-
-The ***testJsonPArtistCount*** test uses the ***total*** endpoint which invokes JSON-P. This test checks that deserialization with JSON-P was done correctly and that the correct number of artists is returned.
-
-
-### Running the tests
-
-Becayse you started Open Liberty in dev mode at the start of the guide, press the ***enter/return*** key to run the tests.
-
-If the tests pass, you see a similar output to the following example:
-
-```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.consumingrest.ConsumingRestIT
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.59 sec - in it.io.openliberty.guides.consumingrest.ConsumingRestIT
-
-Results :
-
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx
 ```
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
 
-::page{title="Building the application"}
+> Then, to open the ArtistTable.jsx file in your IDE, select
+> ***File*** > ***Open*** > guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx, or click the following button
 
-If you are satisfied with your application, run the Maven ***package*** goal to build the WAR file in the ***target*** directory:
+::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx"}
 
+
+
+```
+"use client";
+import React, { useEffect, useMemo, useState } from 'react';
+import { useReactTable, getCoreRowModel, getPaginationRowModel, getSortedRowModel, flexRender} from '@tanstack/react-table'; 
+import '../../styles/table.css'
+
+function ArtistTable() {
+
+  const [posts, setPosts] = useState([]);
+  const [sorting, setSorting] = useState([]);
+  const [pagination, setPagination] = useState({pageIndex: 0, pageSize: 4});
+
+
+  const data = useMemo(() => [...posts], [posts]);
+
+  const columns = useMemo(() => [{
+    header: 'Artist Info',
+    columns: [
+      {
+        accessorKey: 'id',
+        header: 'Artist ID'
+      },
+      {
+        accessorKey: 'name',
+        header: 'Artist Name'
+      },
+      {
+        accessorKey: 'genres',
+        header: 'Genres'
+      }
+    ]
+  },
+  {
+    header: 'Albums',
+    columns: [
+      {
+        accessorKey: 'ntracks',
+        header: 'Number of Tracks'
+      },
+      {
+        accessorKey: 'title',
+        header: 'Title'
+      }
+    ]
+  }
+  ], []
+  );
+
+  const tableInstance = useReactTable({ 
+          columns, 
+          data,
+          getCoreRowModel: getCoreRowModel(), 
+          getPaginationRowModel: getPaginationRowModel(), 
+          getSortedRowModel: getSortedRowModel(), 
+          state:{
+            sorting: sorting,
+            pagination: pagination,
+          },
+          onSortingChange: setSorting,
+          onPaginationChange: setPagination,
+          }); 
+
+  const {
+    getHeaderGroups, 
+    getRowModel,
+    getState,
+    setPageIndex,
+    setPageSize,
+    getCanPreviousPage,
+    getCanNextPage,
+    previousPage,
+    nextPage,
+    getPageCount,
+  } = tableInstance;
+
+  const {pageIndex, pageSize} = getState().pagination;
+
+
+  return (
+    <>
+      <h2>Artist Web Service</h2>
+      {/* tag::table[] */}
+      <table>
+        <thead>
+          {getHeaderGroups().map(headerGroup => (
+            <tr key={headerGroup.id}>
+              {headerGroup.headers.map(header => (
+                <th key={header.id} colSpan={header.colSpan} onClick={header.column.getToggleSortingHandler()}>
+                  {header.isPlaceholder ? null :(
+                    <div>
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                      {
+                        {
+                          asc: " 🔼",
+                          desc: " 🔽",
+                        }[header.column.getIsSorted() ?? null]
+                      }
+                    </div>
+                  )}
+                </th>
+              ))}
+            </tr>
+          ))}
+        </thead>
+        <tbody>
+          {getRowModel().rows.map(row => (
+            <tr key={row.id}>
+              {row.getVisibleCells().map(cell => (
+                <td key={cell.id}>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {/* end::table[] */}
+      <div className="pagination">
+        <button onClick={() => previousPage()} disabled={!getCanPreviousPage()}>
+          {'Previous'}
+        </button>{' '}
+        <div className="page-info">
+          <span>
+            Page{' '}
+            <strong>
+              {pageIndex + 1} of {getPageCount()}
+            </strong>{' '}
+          </span>
+          <span>
+            | Go to page:{' '}
+            <input
+              type="number"
+              defaultValue={pageIndex + 1}
+              onChange={e => {
+                const page = e.target.value ? Number(e.target.value) - 1 : 0
+                setPageIndex(page);
+              }}
+              style={{ width: '100px' }}
+            />
+          </span>{' '}
+          <select
+            value={pageSize}
+            onChange={e => {
+              setPageSize(Number(e.target.value))
+            }}
+          >
+            {[4, 5, 6, 9].map(pageSize => (
+              <option key={pageSize} value={pageSize}>
+                Show {pageSize}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button onClick={() => nextPage()} disabled={!getCanNextPage()}>
+          {'Next'}
+        </button>{' '}
+      </div>
+    </>
+  );
+}
+
+export default ArtistTable
+```
+
+
+
+At the beginning of the file, the ***use client*** directive indicates the ***ArtistTable*** component is rendered on the client side.
+
+The ***React*** library imports the ***react*** package for you to create the ***ArtistTable*** function. This function must have the ***export*** declaration because it is being exported to the ***page.jsx*** module. The ***posts*** object is initialized using a React Hook that lets you add a state to represent the state of the posts that appear on the paginated table.
+
+To display the returned data, you will use pagination. Pagination is the process of separating content into discrete pages, and you can use it for handling data sets in React. In your application, you'll render the columns in the paginated table. The ***columns*** constant defines the table that is present on the web page.
+
+The ***useReactTable*** hook creates a table instance. The hook takes in the ***columns*** and  ***posts*** as parameters. The ***getCoreRowModel*** function is included for the generation of the core row model of the table, which serves as the foundational row model upon pagination and sorting build. The ***getPaginationRowModel*** function applies pagination to the core row model, returning a row model that includes only the rows that should be displayed on the current page based on the pagination state. In addition, the ***getSortedRowModel*** function sorts the paginated table by the column headers then applies the changes to the row model. The paginated table instance is assigned to the ***table*** constant, which renders the paginated table on the web page.
+
+
+### Importing the HTTP client
+
+Your application needs a way to communicate with and retrieve resources from RESTful web services to output the resources onto the paginated table. The [Axios](https://github.com/axios/axios) library will provide you with an HTTP client. This client is used to make HTTP requests to external resources. Axios is a promise-based HTTP client that can send asynchronous requests to REST endpoints. To learn more about the Axios library and its HTTP client, see the [Axios documentation](https://www.npmjs.com/package/axios).
+
+The ***GetArtistsInfo()*** function uses the Axios API to fetch data from your back end. This function is called when the ***ArtistTable*** is rendered to the page using the ***useEffect()*** React lifecycle method.
+
+Update the ***ArtistTable.jsx*** file.
+
+> To open the ArtistTable.jsx file in your IDE, select
+> ***File*** > ***Open*** > guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx, or click the following button
+
+::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx"}
+
+
+
+```
+"use client";
+import React, { useEffect, useMemo, useState } from 'react';
+import axios from 'axios';
+import { useReactTable, getCoreRowModel, getPaginationRowModel, getSortedRowModel, flexRender} from '@tanstack/react-table'; 
+import '../../styles/table.css'
+
+function ArtistTable() {
+
+  const [posts, setPosts] = useState([]);
+  const [sorting, setSorting] = useState([]);
+  const [pagination, setPagination] = useState({pageIndex: 0, pageSize: 4});
+
+  const GetArtistsInfo = async () => {
+    try {
+      const response = await axios.get('http://localhost:9080/artists');
+      const artists = response.data;
+      const processedData = [];
+      for (const artist of artists) {
+        const { albums, ...rest } = artist;
+        for (const album of albums) {
+          processedData.push({ ...rest, ...album });
+        }
+      };
+      setPosts(processedData);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const data = useMemo(() => [...posts], [posts]);
+
+  const columns = useMemo(() => [{
+    header: 'Artist Info',
+    columns: [
+      {
+        accessorKey: 'id',
+        header: 'Artist ID'
+      },
+      {
+        accessorKey: 'name',
+        header: 'Artist Name'
+      },
+      {
+        accessorKey: 'genres',
+        header: 'Genres'
+      }
+    ]
+  },
+  {
+    header: 'Albums',
+    columns: [
+      {
+        accessorKey: 'ntracks',
+        header: 'Number of Tracks'
+      },
+      {
+        accessorKey: 'title',
+        header: 'Title'
+      }
+    ]
+  }
+  ], []
+  );
+
+  const tableInstance = useReactTable({ 
+          columns, 
+          data,
+          getCoreRowModel: getCoreRowModel(), 
+          getPaginationRowModel: getPaginationRowModel(), 
+          getSortedRowModel: getSortedRowModel(), 
+          state:{
+            sorting: sorting,
+            pagination: pagination,
+          },
+          onSortingChange: setSorting,
+          onPaginationChange: setPagination,
+          }); 
+
+  const {
+    getHeaderGroups, 
+    getRowModel,
+    getState,
+    setPageIndex,
+    setPageSize,
+    getCanPreviousPage,
+    getCanNextPage,
+    previousPage,
+    nextPage,
+    getPageCount,
+  } = tableInstance;
+
+  const {pageIndex, pageSize} = getState().pagination;
+
+  useEffect(() => {
+    GetArtistsInfo();
+  }, []);
+
+  return (
+    <>
+      <h2>Artist Web Service</h2>
+      {/* tag::table[] */}
+      <table>
+        <thead>
+          {getHeaderGroups().map(headerGroup => (
+            <tr key={headerGroup.id}>
+              {headerGroup.headers.map(header => (
+                <th key={header.id} colSpan={header.colSpan} onClick={header.column.getToggleSortingHandler()}>
+                  {header.isPlaceholder ? null :(
+                    <div>
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                      {
+                        {
+                          asc: " 🔼",
+                          desc: " 🔽",
+                        }[header.column.getIsSorted() ?? null]
+                      }
+                    </div>
+                  )}
+                </th>
+              ))}
+            </tr>
+          ))}
+        </thead>
+        <tbody>
+          {getRowModel().rows.map(row => (
+            <tr key={row.id}>
+              {row.getVisibleCells().map(cell => (
+                <td key={cell.id}>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {/* end::table[] */}
+      <div className="pagination">
+        <button onClick={() => previousPage()} disabled={!getCanPreviousPage()}>
+          {'Previous'}
+        </button>{' '}
+        <div className="page-info">
+          <span>
+            Page{' '}
+            <strong>
+              {pageIndex + 1} of {getPageCount()}
+            </strong>{' '}
+          </span>
+          <span>
+            | Go to page:{' '}
+            <input
+              type="number"
+              defaultValue={pageIndex + 1}
+              onChange={e => {
+                const page = e.target.value ? Number(e.target.value) - 1 : 0
+                setPageIndex(page);
+              }}
+              style={{ width: '100px' }}
+            />
+          </span>{' '}
+          <select
+            value={pageSize}
+            onChange={e => {
+              setPageSize(Number(e.target.value))
+            }}
+          >
+            {[4, 5, 6, 9].map(pageSize => (
+              <option key={pageSize} value={pageSize}>
+                Show {pageSize}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button onClick={() => nextPage()} disabled={!getCanNextPage()}>
+          {'Next'}
+        </button>{' '}
+      </div>
+    </>
+  );
+}
+
+export default ArtistTable
+```
+
+
+
+Add the ***axios*** library and the ***GetArtistsInfo()*** function.
+
+The ***axios*** HTTP call is used to read the artist JSON that contains the data from the sample JSON file in the ***resources*** directory. When a response is successful, the state of the system changes by assigning ***response.data*** to ***posts***. The ***artists*** and their ***albums*** JSON data are manipulated to allow them to be accessed by the ***ReactTable***. The ***...rest*** or ***...album*** object spread syntax is designed for simplicity. To learn more about it, see [Spread in object literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax#Spread_in_object_literals).
+
+Finally, run the following command to update the URL to access the ***artists.json*** in the ***ArtistTable.jsx*** file:
+```bash
+sed -i 's=http://localhost:9080/artists='"https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx
+```
+
+
+::page{title="Building and packaging the front-end"}
+
+After you successfully build your components, you need to build the front end and package your application. The Maven ***process-resources*** goal generates the Node.js resources, creates the front-end production build, and copies and processes the resources into the destination directory. 
+
+In a new command-line session, build the front end by running the following command in the ***start*** directory:
 
 ```bash
-./mvnw package
+cd /home/project/guide-rest-client-reactjs/start
+./mvnw process-resources
 ```
+
+The build may take a few minutes to complete. You can rebuild the front end at any time with the Maven ***process-resources*** goal. Any local changes to your JavaScript and HTML are picked up when you build the front-end.
+
+
+Click the following button to view the front end of your application:
+
+::startApplication{port="9080" display="external" name="Visit application" route="/"}
+
+
+::page{title="Testing the React client"}
+
+**Next.js*** supports various testing tools. This guide uses ***Vitest*** for unit testing the React components, with the test file ***App.test.jsx*** located in ***src/main/frontend/__tests__/*** directory. The ***App.test.jsx*** file is a simple JavaScript file that tests against the ***page.jsx*** component. No explicit test cases are written for this application. To learn more about ***Vitest***, see [Setting up Vitest with Next.js](https://nextjs.org/docs/app/building-your-application/testing/vitest).
+
+
+Update the ***pom.xml*** file.
+
+> To open the pom.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-rest-client-reactjs/start/pom.xml, or click the following button
+
+::openFile{path="/home/project/guide-rest-client-reactjs/start/pom.xml"}
+
+
+
+```xml
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.microprofile.demo</groupId>
+    <artifactId>guide-rest-client-reactjs</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <!-- Liberty configuration -->
+        <liberty.var.http.port>9080</liberty.var.http.port>
+        <liberty.var.https.port>9443</liberty.var.https.port>
+    </properties>
+
+    <dependencies>
+        <!-- Provided dependencies -->
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>10.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>7.0</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- For tests -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.12.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.4.0</version>
+            </plugin>
+            <!-- Enable liberty-maven plugin -->
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.11.3</version>            
+            </plugin>
+            <!-- Frontend resources -->
+            <plugin>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <version>1.15.1</version>
+                <configuration>
+                    <workingDirectory>src/main/frontend</workingDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>install node and npm</id>
+                        <goals>
+                            <goal>install-node-and-npm</goal>
+                        </goals>
+                        <configuration>
+                            <nodeVersion>v20.14.0</nodeVersion>
+                            <npmVersion>10.7.0</npmVersion>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm install</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>install</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm run build</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>run build</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>run tests</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>test a</arguments>
+                            <environmentVariables>
+                                <CI>true</CI>
+                            </environmentVariables>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Copy frontend static files to target directory -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <id>Copy frontend build to target</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>
+                                ${basedir}/src/main/webapp
+                            </outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>
+                                        ${basedir}/src/main/frontend/out
+                                    </directory>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+
+
+To run the default test, you can add the ***testing*** configuration to the ***frontend-maven-plugin***. Rerun the Maven ***process-resources*** goal to rebuild the front end and run the tests.
+
+```bash
+cd /home/project/guide-rest-client-reactjs/start
+./mvnw process-resources
+```
+
+If the test passes, you see a similar output to the following example:
+
+```
+[INFO]  ✓ __tests__/App.test.jsx  (1 test) 96ms
+[INFO] 
+[INFO]  Test Files  1 passed (1)
+[INFO]       Tests  1 passed (1)
+[INFO]    Start at  10:43:25
+[INFO]    Duration  3.73s (transform 264ms, setup 0ms, collect 343ms, tests 96ms, environment 408ms, prepare 1.16s)
+```
+
+Although the React application in this guide is simple, when you build more complex React applications, testing becomes a crucial part of your development lifecycle. If you need to write application-oriented test cases, follow the official [React testing documentation](https://reactjs.org/docs/testing.html).
+
+When you are done checking the application root, exit dev mode by pressing `Ctrl+C` in the shell session where you ran the Liberty.
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just accessed a simple RESTful web service and consumed its resources by using JSON-B and JSON-P in Open Liberty.
-
-
+Nice work! You just accessed a simple RESTful web service and consumed its resources by using ReactJS in Open Liberty.
 
 
 
@@ -576,31 +840,31 @@ You just accessed a simple RESTful web service and consumed its resources by usi
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-rest-client-java*** project by running the following commands:
+Delete the ***guide-rest-client-reactjs*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-rest-client-java
+rm -fr guide-rest-client-reactjs
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20a%20RESTful%20web%20service&guide-id=cloud-hosted-guide-rest-client-java)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20a%20RESTful%20web%20service%20with%20ReactJS&guide-id=cloud-hosted-guide-rest-client-reactjs)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-client-java/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-client-java/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-client-reactjs/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-client-reactjs/pulls)
 
 
 
 ### Where to next?
 
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
+* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
 
 
 ### Log out of the session
