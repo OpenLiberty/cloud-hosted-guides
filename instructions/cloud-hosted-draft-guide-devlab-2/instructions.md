@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Building true-to-production integration tests with Testcontainers guide!"}
+::page{title="Welcome to the Testing reactive Java microservices guide!"}
 
-Learn how to test your microservices with multiple containers by using Testcontainers and JUnit.
+Learn how to test reactive Java microservices in true-to-production environments using Testcontainers.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,19 +14,17 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 ::page{title="What you'll learn"}
 
-You'll learn how to write true-to-production integration tests for Java microservices by using [Testcontainers](https://www.testcontainers.org/) and JUnit. You'll learn to set up and configure multiple containers, including the Open Liberty Docker container, to simulate a production-like environment for your tests.
+You will learn how to write integration tests for reactive Java microservices and to run the tests in true-to-production environments by using containers with [Testcontainers](https://java.testcontainers.org/) and JUnit. Testcontainers tests your containerized application from outside the container so that you are testing the exact same image that runs in production. The reactive application in this guide sends and receives messages between services by using an external message broker, [Apache Kafka](https://kafka.apache.org/). Using an external message broker enables asynchronous communications between services so that requests are non-blocking and decoupled from responses. You can learn more about reactive Java services that use an external message broker to manage communications in the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
-Sometimes tests might pass in development and testing environments, but fail in production because of the differences in how the application operates across these environments. Fortunately, you can minimize these differences by testing your application with the same Docker containers you use in production. This approach helps to ensure parity across the development, testing, and production environments, enhancing quality and test reliability.
+![Reactive system inventory application](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-service-testing/prod/assets/reactive-messaging-system-inventory.png)
 
-### What is Testcontainers?
 
-Testcontainers is an open source library that provides containers as a resource at test time, creating consistent and portable testing environments. This is especially useful for applications that have external resource dependencies such as databases, message queues, or web services. By encapsulating these dependencies in containers, Testcontainers simplifies the configuration process and ensures a uniform testing setup that closely mirrors production environments.
+*True-to-production integration testing with Testcontainers*
 
-The microservice that you'll be working with is called ***inventory***. The ***inventory*** microservice persists data into a PostgreSQL database and supports create, retrieve, update, and delete (CRUD) operations on the database records. You'll write integration tests for the application by using Testcontainers to run it in Docker containers.
-
-![Inventory microservice](https://raw.githubusercontent.com/OpenLiberty/guide-testcontainers/prod/assets/inventory.png)
+Tests sometimes pass during the development and testing stages of an application's lifecycle but then fail in production because of differences between your development and production environments. While you can create mock objects and custom setups to minimize differences between environments, it is difficult to mimic a production system for an application that uses an external messaging system. Testcontainers addresses this problem by enabling the testing of applications in the same Docker containers that you’ll use in production. As a result, your environment remains the same throughout the application’s lifecycle – from development, through testing, and into production. You can learn more about Testcontainers in the [Building true-to-production integration tests with Testcontainers](https://openliberty.io/guides/testcontainers.html) guide.
 
 
 ::page{title="Getting started"}
@@ -40,11 +38,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-testcontainers.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-reactive-service-testing.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-testcontainers.git
-cd guide-testcontainers
+git clone https://github.com/openliberty/guide-reactive-service-testing.git
+cd guide-reactive-service-testing
 ```
 
 
@@ -57,425 +55,196 @@ In this IBM Cloud environment, you need to change the user home to ***/home/proj
 sudo usermod -d /home/project theia
 ```
 
+
 ### Try what you'll build
 
 The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To try out the test, first go to the ***finish*** directory and run the following Maven goal that builds the application, starts the containers, runs the tests, and then stops the containers:
+To try out the tests, go to the ***finish*** directory and run the following Maven goal to install the ***models*** artifact to the local Maven repository:
 
 
 ```bash
-cd /home/project/guide-testcontainers/finish
+./mvnw -pl models install
+```
+
+Next, navigate to the ***finish*** directory and run the following Maven goal to build the ***system*** microservice and run the integration tests on an Open Liberty server in a container:
+
+
+```bash
 export TESTCONTAINERS_RYUK_DISABLED=true
-./mvnw verify
+./mvnw -pl system verify
 ```
 
-You see the following output:
+You will see the following output:
 
 ```
- -------------------------------------------------------
-  T E S T S
- -------------------------------------------------------
- Running it.io.openliberty.guides.inventory.SystemResourceIT
- ...
- Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.118 s - in it.io.openliberty.guides.inventory.SystemResourceIT
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 52.46 s - in it.io.openliberty.guides.system.SystemServiceIT
 
  Results:
 
- Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+
+
+ --- failsafe:3.2.5:verify (verify) @ system ---
+ ------------------------------------------------------------------------
+ BUILD SUCCESS
+ ------------------------------------------------------------------------
+ Total time:  57.710 s
+ Finished at: 2024-02-01T08:48:15-08:00
+ ------------------------------------------------------------------------
 ```
 
-::page{title="Writing integration tests using Testcontainers"}
+This command might take some time to run the first time because the dependencies and the Docker image for Open Liberty must download. If you run the same command again, it will be faster.
 
-Use Testcontainers to write integration tests that run in any environment with minimal setup using containers.
+You can also try out the ***inventory*** integration tests by repeating the same commands in the ***finish/inventory*** directory.
 
-Navigate to the ***postgres*** directory.
 
+::page{title="Testing with the Kafka consumer client"}
+
+
+
+
+
+
+Navigate to the ***start*** directory to begin.
 ```bash
-cd /home/project/guide-testcontainers/postgres
+cd /home/project/guide-reactive-service-testing/start
 ```
 
+The example reactive application consists of the ***system*** and ***inventory*** microservices. The ***system*** microservice produces messages to the Kafka message broker, and the ***inventory*** microservice consumes messages from the Kafka message broker. You will write integration tests to see how you can use the Kafka consumer and producer client APIs to test each service. Kafka test containers, Testcontainers, and JUnit are already included as required test dependencies in your Maven ***pom.xml*** files for the ***system*** and ***inventory*** microservices.
 
-This guide uses Docker to run an instance of the PostgreSQL database for a fast installation and setup. A ***Dockerfile*** file is provided for you. Run the following command to use the Dockerfile to build the image:
-
-```bash
-docker build -t postgres-sample .
-```
-
-The PostgreSQL database is integral for the ***inventory*** microservice as it handles the persistence of data. Run the following command to start the PostgreSQL database, which runs the ***postgres-sample*** image in a Docker container and maps ***5432*** port from the container to your host machine:
-
-```bash
-docker run --name postgres-container --rm -e POSTGRES_PASSWORD=adminpwd -p 5432:5432 -d postgres-sample
-```
-
-Retrieve the PostgreSQL container IP address by running the following command:
-
-```bash
-docker inspect -f "{{.NetworkSettings.IPAddress }}" postgres-container
-```
-
-The command returns the PostgreSQL container IP address:
-
-```
-172.17.0.2
-```
-
-Now, navigate to the ***start*** directory to begin.
-
-```bash
-cd /home/project/guide-testcontainers/start
-```
-
-The Liberty Maven plug-in includes a ***devc*** goal that simplifies developing your application in a container by starting [dev mode](https://openliberty.io/docs/latest/development-mode.html#_container_support_for_dev_mode) with container support. This goal builds a Docker image, mounts the required directories, binds the required ports, and then runs the application inside of a container. Dev mode also listens for any changes in the application source code or configuration and rebuilds the image and restarts the container as necessary.
-
-In this IBM Cloud environment, you need to pre-create the ***logs*** directory by running the following commands:
-
-```bash
-mkdir -p /home/project/guide-testcontainers/start/target/liberty/wlp/usr/servers/defaultServer/logs
-chmod 777 /home/project/guide-testcontainers/start/target/liberty/wlp/usr/servers/defaultServer/logs
-```
-
-Build and run the container by running the ***devc*** goal with the PostgreSQL container IP address. If your PostgreSQL container IP address is not ***172.17.0.2***, replace the command with the right IP address.
+The ***start*** directory contains three directories: the ***system*** microservice directory, the ***inventory*** microservice directory, and the ***models*** directory. The ***models*** directory contains the model class that defines the structure of the system load data that is used in the application. Run the following Maven goal to install the packaged ***models*** artifact to the local Maven repository so it can be used later by the ***system*** and ***inventory*** microservices:
 
 
 ```bash
-./mvnw liberty:devc -DcontainerRunOpts="-e DB_HOSTNAME=172.17.0.2" -DserverStartTimeout=240
+./mvnw -pl models install
 ```
 
-Wait a moment for dev mode to start. Some error messages are expected as a result of building the docker image. Although these messages are included on the standard error stream, in this case they are not errors, just logs of the docker build progress. After you see the following message, your Liberty instance is ready in dev mode:
+### Launching the system microservice in dev mode with container support
+
+Start the microservices in dev mode by running the following command to launch a Kafka instance that replicates the production environment. The ***startKafka*** script launches a local Kafka container. It also establishes a ***reactive-app*** network that allows the ***system*** and ***inventory*** microservices to connect to the Kafka message broker.
+
+
+```bash
+./scripts/startKafka.sh
+```
+
+In this IBM Cloud environment, you must first create the ***logs*** directory by running the following commands:
+```bash
+mkdir -p /home/project/guide-reactive-service-testing/start/system/target/liberty/wlp/usr/servers/defaultServer/logs
+chmod 777 /home/project/guide-reactive-service-testing/start/system/target/liberty/wlp/usr/servers/defaultServer/logs
+```
+
+To launch the ***system*** microservice in dev mode with container support, configure the container by specifying the options within the ***\<containerRunOpts\>*** element to connect to the ***reactive-app*** network and expose the container port.
+
+Run the following goal to start the ***system*** microservice in dev mode with container support:
+
+
+```bash
+export TESTCONTAINERS_RYUK_DISABLED=true
+./mvnw -pl system liberty:devc
+```
+
+For more information about disabling Ryuk, see the [Testcontainers custom configuration](https://java.testcontainers.org/features/configuration/#disabling-ryuk) document.
+
+After you see the following message, your Liberty instance is ready in dev mode:
+
 
 ```
 **************************************************************
 *    Liberty is running in dev mode.
-*    ...
-*    Container network information:
-*        Container name: [ liberty-dev ]
-*        IP address [ 172.17.0.2 ] on container network [ bridge ]
-*    ...
+*    ...    
+*    Liberty container port information:
+*        Internal container HTTP port [ 9083 ] is mapped to container host port [ 9083 ] <
+*   ...     
 ```
 
+[Dev mode](https://openliberty.io/docs/latest/development-mode.html) holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-Dev mode holds your command-line session to listen for file changes.
+The ***system*** microservice actively seeks a Kafka topic for message push operations. After the Kafka service starts, the ***system*** microservice connects to the Kafka message broker by using the ***mp.messaging.connector.liberty-kafka.bootstrap.servers*** property. When you run your application in dev mode with container support, the running ***system*** container exposes its service on the ***9083*** port for testing purposes.
 
-Click the following button to try out the ***inventory*** microservice manually by visiting the ***/openapi/ui*** endpoint. This interface provides a convenient visual way to interact with the APIs and test out their functionalities:
+### Testing the system microservice
 
-::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
+Now you can start writing the test by using Testcontainers.
 
-Open another command-line session to continue.
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-
-
-### Building a REST test client
-
-The REST test client is responsible for sending HTTP requests to an application and handling the responses. It enables accurate verification of the application's behavior by ensuring that it responds correctly to various scenarios and conditions. Using a REST client for testing ensures reliable interaction with the ***inventory*** microservice across various deployment environments: local processes, Docker containers, or containers through Testcontainers.
-
-Begin by creating a REST test client interface for the ***inventory*** microservice.
-
-Create the ***SystemResourceClient*** class.
+Create the ***SystemServiceIT*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceClient.java
+touch /home/project/guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java
 ```
 
 
-> Then, to open the SystemResourceClient.java file in your IDE, select
-> ***File*** > ***Open*** > guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceClient.java, or click the following button
+> Then, to open the SystemServiceIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java, or click the following button
 
-::openFile{path="/home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceClient.java"}
+::openFile{path="/home/project/guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.inventory;
-
-import java.util.List;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-
-
-@ApplicationScoped
-@Path("/systems")
-public interface SystemResourceClient {
-
-    @GET
-    @Path("/")
-    @Produces(MediaType.APPLICATION_JSON)
-    List<SystemData> listContents();
-
-    @GET
-    @Path("/{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    SystemData getSystem(
-        @PathParam("hostname") String hostname);
-
-    @POST
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Produces(MediaType.APPLICATION_JSON)
-    Response addSystem(
-        @QueryParam("hostname") String hostname,
-        @QueryParam("osName") String osName,
-        @QueryParam("javaVersion") String javaVersion,
-        @QueryParam("heapSize") Long heapSize);
-
-    @PUT
-    @Path("/{hostname}")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Produces(MediaType.APPLICATION_JSON)
-    Response updateSystem(
-        @PathParam("hostname") String hostname,
-        @QueryParam("osName") String osName,
-        @QueryParam("javaVersion") String javaVersion,
-        @QueryParam("heapSize") Long heapSize);
-
-    @DELETE
-    @Path("/{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    Response removeSystem(
-        @PathParam("hostname") String hostname);
-}
-
-```
-
-
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
-
-
-The ***SystemResourceClient*** interface declares the ***listContents()***, ***getSystem()***, ***addSystem()***, ***updateSystem()***, and ***removeSystem()*** methods for accessing the corresponding endpoints within the ***inventory*** microservice.
-
-Next, create the ***SystemData*** data model for testing.
-
-Create the ***SystemData*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemData.java
-```
-
-
-> Then, to open the SystemData.java file in your IDE, select
-> ***File*** > ***Open*** > guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemData.java, or click the following button
-
-::openFile{path="/home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemData.java"}
-
-
-
-```java
-package it.io.openliberty.guides.inventory;
-
-public class SystemData {
-
-    private int id;
-    private String hostname;
-    private String osName;
-    private String javaVersion;
-    private Long heapSize;
-
-    public SystemData() {
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public String getHostname() {
-        return hostname;
-    }
-
-    public String getOsName() {
-        return osName;
-    }
-
-    public String getJavaVersion() {
-        return javaVersion;
-    }
-
-    public Long getHeapSize() {
-        return heapSize;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public void setHostname(String hostname) {
-        this.hostname = hostname;
-    }
-
-    public void setOsName(String osName) {
-        this.osName = osName;
-    }
-
-    public void setJavaVersion(String javaVersion) {
-        this.javaVersion = javaVersion;
-    }
-
-    public void setHeapSize(Long heapSize) {
-        this.heapSize = heapSize;
-    }
-}
-```
-
-
-
-The ***SystemData*** class contains the ID, hostname, operating system name, Java version, and heap size properties. The various ***get*** and ***set*** methods within this class enable you to view and edit the properties of each system in the inventory.
-
-### Building a test container for Open Liberty
-
-Next, create a custom class that extends Testcontainers' generic container to define specific configurations that suit your application's requirements.
-
-Define a custom ***LibertyContainer*** class, which provides a framework to start and access a containerized version of the Open Liberty application for testing.
-
-Create the ***LibertyContainer*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/LibertyContainer.java
-```
-
-
-> Then, to open the LibertyContainer.java file in your IDE, select
-> ***File*** > ***Open*** > guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/LibertyContainer.java, or click the following button
-
-::openFile{path="/home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/LibertyContainer.java"}
-
-
-
-```java
-package it.io.openliberty.guides.inventory;
-
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.images.builder.ImageFromDockerfile;
-
-public class LibertyContainer extends GenericContainer<LibertyContainer> {
-
-    public LibertyContainer(ImageFromDockerfile image, int httpPort, int httpsPort) {
-
-        super(image);
-        addExposedPorts(httpPort, httpsPort);
-
-        waitingFor(Wait.forLogMessage("^.*CWWKF0011I.*$", 1));
-
-    }
-
-    public String getBaseURL() throws IllegalStateException {
-        return "http://" + getHost() + ":" + getFirstMappedPort();
-    }
-
-}
-```
-
-
-
-The ***LibertyContainer*** class extends the ***GenericContainer*** class from Testcontainers to create a custom container configuration specific to the Open Liberty application.
-
-The ***addExposedPorts()*** method exposes specified ports from the container's perspective, allowing test clients to communicate with services running inside the container. To avoid any port conflicts, Testcontainers assigns random host ports to these exposed container ports. 
-
-By default, the ***Wait.forLogMessage()*** method directs ***LibertyContainer*** to wait for the specific ***CWWKF0011I*** log message that indicates the Liberty instance has started successfully.
-
-The ***getBaseURL()*** method contructs the base URL to access the container.
-
-For more information about Testcontainers APIs and its functionality, refer to the [Testcontainers JavaDocs](https://javadoc.io/doc/org.testcontainers/testcontainers/latest/index.html).
-
-
-### Building test cases
-
-Next, write tests that use the ***SystemResourceClient*** REST client and Testcontainers integration. 
-
-Create the ***SystemResourceIT*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceIT.java
-```
-
-
-> Then, to open the SystemResourceIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceIT.java, or click the following button
-
-::openFile{path="/home/project/guide-testcontainers/start/src/test/java/it/io/openliberty/guides/inventory/SystemResourceIT.java"}
-
-
-
-```java
-package it.io.openliberty.guides.inventory;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+package it.io.openliberty.guides.system;
 
 import java.net.Socket;
-import java.util.List;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.Properties;
 import java.nio.file.Paths;
 
-import org.jboss.resteasy.client.jaxrs.ResteasyClient;
-import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
-import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.GenericContainer;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.containers.Network;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.utility.DockerImageName;
 
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.UriBuilder;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.serialization.StringDeserializer;
 
-@TestMethodOrder(OrderAnnotation.class)
-public class SystemResourceIT {
+import io.openliberty.guides.models.SystemLoad;
+import io.openliberty.guides.models.SystemLoad.SystemLoadDeserializer;
 
-    private static Logger logger = LoggerFactory.getLogger(SystemResourceIT.class);
+@Testcontainers
+public class SystemServiceIT {
 
-    private static final String DB_HOST = "postgres";
-    private static final int DB_PORT = 5432;
-    private static final String POSTGRES_PASSWORD = "adminpwd";
-    private static ImageFromDockerfile postgresImage
-        = new ImageFromDockerfile("postgres-sample")
-              .withDockerfile(Paths.get("../postgres/Dockerfile"));
-
-    private static int httpPort = Integer.parseInt(System.getProperty("http.port"));
-    private static int httpsPort = Integer.parseInt(System.getProperty("https.port"));
-    private static String contextRoot = System.getProperty("context.root") + "/api";
-    private static ImageFromDockerfile invImage
-        = new ImageFromDockerfile("inventory:1.0-SNAPSHOT")
-              .withDockerfile(Paths.get("./Dockerfile"));
-
-    private static SystemResourceClient client;
+    private static Logger logger = LoggerFactory.getLogger(SystemServiceIT.class);
     private static Network network = Network.newNetwork();
 
-    private static GenericContainer<?> postgresContainer
-        = new GenericContainer<>(postgresImage)
-              .withEnv("POSTGRES_PASSWORD", POSTGRES_PASSWORD)
-              .withNetwork(network)
-              .withExposedPorts(DB_PORT)
-              .withNetworkAliases(DB_HOST)
-              .withLogConsumer(new Slf4jLogConsumer(logger));
+    public static KafkaConsumer<String, SystemLoad> consumer;
 
-    private static LibertyContainer inventoryContainer
-        = new LibertyContainer(invImage, httpPort, httpsPort)
-              .withEnv("DB_HOSTNAME", DB_HOST)
-              .withNetwork(network)
-              .waitingFor(Wait.forHttp("/health/ready").forPort(httpPort))
-              .withLogConsumer(
-                new Slf4jLogConsumer(
-                    LoggerFactory.getLogger(LibertyContainer.class)));
+    private static ImageFromDockerfile systemImage =
+        new ImageFromDockerfile("system:1.0-SNAPSHOT")
+            .withDockerfile(Paths.get("./Dockerfile"));
+
+    private static KafkaContainer kafkaContainer = new KafkaContainer(
+        DockerImageName.parse("confluentinc/cp-kafka:latest"))
+            .withListener(() -> "kafka:19092")
+            .withNetwork(network);
+
+    private static GenericContainer<?> systemContainer =
+        new GenericContainer(systemImage)
+            .withNetwork(network)
+            .withExposedPorts(9083)
+            .waitingFor(Wait.forHttp("/health/ready").forPort(9083))
+            .withStartupTimeout(Duration.ofMinutes(3))
+            .withLogConsumer(new Slf4jLogConsumer(logger))
+            .dependsOn(kafkaContainer);
 
     private static boolean isServiceRunning(String host, int port) {
         try {
@@ -487,86 +256,401 @@ public class SystemResourceIT {
         }
     }
 
-    private static SystemResourceClient createRestClient(String urlPath) {
-        ClientBuilder builder = ResteasyClientBuilder.newBuilder();
-        ResteasyClient client = (ResteasyClient) builder.build();
-        ResteasyWebTarget target = client.target(UriBuilder.fromPath(urlPath));
-        return target.proxy(SystemResourceClient.class);
+    @BeforeAll
+    public static void startContainers() {
+        if (isServiceRunning("localhost", 9083)) {
+            System.out.println("Testing with mvn liberty:devc");
+        } else {
+            kafkaContainer.start();
+            systemContainer.withEnv(
+                "mp.messaging.connector.liberty-kafka.bootstrap.servers",
+                "kafka:19092");
+            systemContainer.start();
+            System.out.println("Testing with mvn verify");
+        }
     }
 
-    @BeforeAll
-    public static void setup() throws Exception {
-        String urlPath;
-        if (isServiceRunning("localhost", httpPort)) {
-            logger.info("Testing by dev mode or local Liberty...");
-            if (isServiceRunning("localhost", DB_PORT)) {
-                logger.info("The application is ready to test.");
-                urlPath = "http://localhost:" + httpPort;
-            } else {
-                throw new Exception("Postgres database is not running");
-            }
+    @BeforeEach
+    public void createKafkaConsumer() {
+        Properties consumerProps = new Properties();
+        if (isServiceRunning("localhost", 9083)) {
+            consumerProps.put(
+                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                "localhost:9094");
         } else {
-            logger.info("Testing by using Testcontainers...");
-            if (isServiceRunning("localhost", DB_PORT)) {
-                throw new Exception(
-                      "Postgres database is running locally. Stop it and retry.");
-            } else {
-                postgresContainer.start();
-                inventoryContainer.start();
-                urlPath = inventoryContainer.getBaseURL();
-            }
+            consumerProps.put(
+                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                kafkaContainer.getBootstrapServers());
         }
-        urlPath += contextRoot;
-        logger.info("TEST: " + urlPath);
-        client = createRestClient(urlPath);
+        consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "system-load-status");
+        consumerProps.put(
+            ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
+            StringDeserializer.class.getName());
+        consumerProps.put(
+            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+            SystemLoadDeserializer.class.getName());
+        consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        consumer = new KafkaConsumer<String, SystemLoad>(consumerProps);
+        consumer.subscribe(Collections.singletonList("system.load"));
     }
 
     @AfterAll
-    public static void tearDown() {
+    public static void stopContainers() {
+        systemContainer.stop();
+        kafkaContainer.stop();
+        if (network != null) {
+            network.close();
+        }
+    }
+
+    @AfterEach
+    public void closeKafkaConsumer() {
+        consumer.close();
+    }
+
+    @Test
+    public void testCpuStatus() {
+        ConsumerRecords<String, SystemLoad> records =
+            consumer.poll(Duration.ofMillis(30 * 1000));
+        System.out.println("Polled " + records.count() + " records from Kafka:");
+
+        for (ConsumerRecord<String, SystemLoad> record : records) {
+            SystemLoad sl = record.value();
+            System.out.println(sl);
+            assertNotNull(sl.hostname);
+            assertNotNull(sl.loadAverage);
+        }
+        consumer.commitAsync();
+    }
+}
+```
+
+
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
+
+
+
+
+Construct the ***systemImage*** by using the ***ImageFromDockerfile*** class, which allows Testcontainers to build the Docker image from a Dockerfile during the test run time. For instance, the provided Dockerfile at the specified ***./Dockerfile*** paths is used to generate the ***system:1.0-SNAPSHOT*** image.
+
+Use the ***kafkaContainer*** class to instantiate the ***kafkaContainer*** test container, initiating the ***confluentinc/cp-kafka:latest*** Docker image. Similarly, use the ***GenericContainer*** class to create the ***systemContainer*** test container, starting the ***system:1.0-SNAPSHOT*** Docker image.
+ 
+The ***withListener()*** is configured to ***kafka:19092***, as the containerized ***system*** microservice functions as an additional producer. Therefore, the Kafka container needs to set up a listener to accommodate this requirement. For more information about using an additional consumer or producer with a Kafka container, see the [Testcontainers Kafka documentation](https://java.testcontainers.org/modules/kafka/)
+
+Because containers are isolated by default, facilitating communication between the ***kafkaContainer*** and the ***systemContainer*** requires placing them on the same ***network***. The ***dependsOn()*** method is used to indicate that the ***system*** microservice container starts only after ensuring the readiness of the Kafka container. 
+
+Before you start the ***systemContainer***, you must override the ***mp.messaging.connector.liberty-kafka.bootstrap.servers*** property with ***kafka:19092*** by using the ***withEnv()*** method. This step creates a listener in the Kafka container that is configured to handle an additional producer.
+
+The test uses the ***KafkaConsumer*** client API, configuring the consumer to use the ***BOOTSTRAP_SERVERS_CONFIG*** property with the Kafka broker address if a local ***system*** microservice container is present. In the absence of a local service container, it uses the ***getBootstrapServers()*** method to obtain the broker address from the Kafka test container. Then, the consumer is set up to consume messages from the ***system.load*** topic within the ***Kafka*** container.
+
+To consume messages from a stream, the messages need to be deserialized from bytes. Kafka has its own default deserializer, but a custom deserializer is provided for you. The deserializer is configured by the ***VALUE_DESERIALIZER_CLASS_CONFIG*** property and is implemented in the ***SystemLoad*** class. To learn more about Kafka APIs and their usage, see the [official Kafka Documentation](https://kafka.apache.org/documentation/#api).
+
+The running ***system*** microservice container produces messages to the ***systemLoad*** Kafka topic, as denoted by the ***@Outgoing*** annotation. The ***testCpuStatus()*** test method uses the ***consumer.poll()*** method from the ***KafkaConsumer*** client API to retrieve a record from Kafka every 3 seconds within a specified timeout limit. This record is produced by the system service. Then, the method uses ***Assertions*** to verify that the polled record aligns with the expected record.
+
+### Running the tests
+
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+
+You will see the following output:
+
+```
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 25.674 s - in it.io.openliberty.guides.system.SystemServiceIT
+
+ Results:
+
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+
+ Integration tests finished.
+```
+
+After you are finished running tests, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server.
+
+
+If you aren't running in dev mode, you can run the tests by running the following command:
+
+
+```bash
+./mvnw -pl system clean verify
+```
+
+You will see the following output:
+
+```
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 50.63 s - in it.io.openliberty.guides.system.SystemServiceIT
+
+ Results:
+
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+
+
+ --- failsafe:3.2.5:verify (verify) @ system ---
+ ------------------------------------------------------------------------
+ BUILD SUCCESS
+ ------------------------------------------------------------------------
+ Total time:  55.636 s
+ Finished at: 2024-01-31T11:33:40-08:00
+ ------------------------------------------------------------------------
+```
+
+
+::page{title="Testing with the Kafka producer client"}
+
+The ***inventory*** microservice is tested in the same way as the ***system*** microservice. The only difference is that the ***inventory*** microservice consumes messages, which means that tests are written to use the Kafka producer client.
+
+### Launching the inventory microservice in dev mode with container
+
+First, create the ***logs*** directory by running the following commands:
+```bash
+mkdir -p /home/project/guide-reactive-service-testing/start/inventory/target/liberty/wlp/usr/servers/defaultServer/logs
+chmod 777 /home/project/guide-reactive-service-testing/start/inventory/target/liberty/wlp/usr/servers/defaultServer/logs
+```
+
+Run the following goal to start the ***inventory*** microservice in dev mode with container support:
+
+
+```bash
+./mvnw -pl inventory liberty:devc
+```
+
+### Building a test REST client
+
+Create a REST client interface to access the ***inventory*** microservice.
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+
+Create the ***InventoryResourceClient*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java
+```
+
+
+> Then, to open the InventoryResourceClient.java file in your IDE, select
+> ***File*** > ***Open*** > guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java, or click the following button
+
+::openFile{path="/home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java"}
+
+
+
+```java
+package it.io.openliberty.guides.inventory;
+
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+@Path("/inventory")
+public interface InventoryResourceClient {
+
+    @GET
+    @Path("/systems")
+    @Produces(MediaType.APPLICATION_JSON)
+    Response getSystems();
+
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    Response resetSystems();
+
+}
+```
+
+
+
+The ***InventoryResourceClient*** interface declares the ***getSystems()*** and ***resetSystems()*** methods for accessing the corresponding endpoints within the ***inventory*** microservice.
+
+
+### Testing the inventory microservice
+
+Now you can start writing the test by using Testcontainers.
+
+Create the ***InventoryServiceIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java
+```
+
+
+> Then, to open the InventoryServiceIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java, or click the following button
+
+::openFile{path="/home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.inventory;
+
+import java.util.List;
+import java.net.Socket;
+import java.time.Duration;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.math.BigDecimal;
+import java.nio.file.Paths;
+import java.util.Properties;
+
+import jakarta.ws.rs.core.GenericType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.client.ClientBuilder;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Assertions;
+import org.testcontainers.containers.Network;
+import org.testcontainers.utility.DockerImageName;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.images.builder.ImageFromDockerfile;
+import org.apache.kafka.common.serialization.StringSerializer;
+import org.jboss.resteasy.client.jaxrs.ResteasyClient;
+import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+
+import io.openliberty.guides.models.SystemLoad;
+import io.openliberty.guides.models.SystemLoad.SystemLoadSerializer;
+
+
+@Testcontainers
+public class InventoryServiceIT {
+
+    private static Logger logger = LoggerFactory.getLogger(InventoryServiceIT.class);
+
+    public static InventoryResourceClient client;
+
+    private static Network network = Network.newNetwork();
+    public static KafkaProducer<String, SystemLoad> producer;
+    private static ImageFromDockerfile inventoryImage =
+        new ImageFromDockerfile("inventory:1.0-SNAPSHOT")
+            .withDockerfile(Paths.get("./Dockerfile"));
+
+    private static KafkaContainer kafkaContainer = new KafkaContainer(
+        DockerImageName.parse("confluentinc/cp-kafka:latest"))
+            .withListener(() -> "kafka:19092")
+            .withNetwork(network);
+
+    private static GenericContainer<?> inventoryContainer =
+        new GenericContainer(inventoryImage)
+            .withNetwork(network)
+            .withExposedPorts(9085)
+            .waitingFor(Wait.forHttp("/health/ready").forPort(9085))
+            .withStartupTimeout(Duration.ofMinutes(3))
+            .withLogConsumer(new Slf4jLogConsumer(logger))
+            .dependsOn(kafkaContainer);
+
+    private static InventoryResourceClient createRestClient(String urlPath) {
+        ClientBuilder builder = ResteasyClientBuilder.newBuilder();
+        ResteasyClient client = (ResteasyClient) builder.build();
+        ResteasyWebTarget target = client.target(UriBuilder.fromPath(urlPath));
+        return target.proxy(InventoryResourceClient.class);
+    }
+
+    private static boolean isServiceRunning(String host, int port) {
+        try {
+            Socket socket = new Socket(host, port);
+            socket.close();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @BeforeAll
+    public static void startContainers() {
+
+        String urlPath;
+        if (isServiceRunning("localhost", 9085)) {
+            System.out.println("Testing with mvn liberty:devc");
+            urlPath = "http://localhost:9085";
+        } else {
+            System.out.println("Testing with mvn verify");
+            kafkaContainer.start();
+            inventoryContainer.withEnv(
+                "mp.messaging.connector.liberty-kafka.bootstrap.servers",
+                "kafka:19092");
+            inventoryContainer.start();
+            urlPath = "http://"
+                + inventoryContainer.getHost()
+                + ":" + inventoryContainer.getFirstMappedPort();
+        }
+
+        System.out.println("Creating REST client with: " + urlPath);
+        client = createRestClient(urlPath);
+    }
+
+    @BeforeEach
+    public void createKafkaProducer() {
+        Properties producerProps = new Properties();
+        if (isServiceRunning("localhost", 9085)) {
+            producerProps.put(
+                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                "localhost:9094");
+        } else {
+            producerProps.put(
+                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                kafkaContainer.getBootstrapServers());
+        }
+
+        producerProps.put(
+            ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+            StringSerializer.class.getName());
+        producerProps.put(
+            ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+            SystemLoadSerializer.class.getName());
+
+        producer = new KafkaProducer<String, SystemLoad>(producerProps);
+    }
+
+    @AfterAll
+    public static void stopContainers() {
+        client.resetSystems();
         inventoryContainer.stop();
-        postgresContainer.stop();
-        network.close();
+        kafkaContainer.stop();
+        if (network != null) {
+            network.close();
+        }
     }
 
-    private void showSystemData(SystemData system) {
-        logger.info("TEST: SystemData > "
-            + system.getId() + ", "
-            + system.getHostname() + ", "
-            + system.getOsName() + ", "
-            + system.getJavaVersion() + ", "
-            + system.getHeapSize());
-    }
-
-    @Test
-    @Order(1)
-    public void testAddSystem() {
-        logger.info("TEST: Testing add a system");
-        client.addSystem("localhost", "linux", "11", Long.valueOf(2048));
-        List<SystemData> systems = client.listContents();
-        assertEquals(1, systems.size());
-        showSystemData(systems.get(0));
-        assertEquals("11", systems.get(0).getJavaVersion());
-        assertEquals(Long.valueOf(2048), systems.get(0).getHeapSize());
+    @AfterEach
+    public void closeKafkaProducer() {
+        producer.close();
     }
 
     @Test
-    @Order(2)
-    public void testUpdateSystem() {
-        logger.info("TEST: Testing update a system");
-        client.updateSystem("localhost", "linux", "8", Long.valueOf(1024));
-        SystemData system = client.getSystem("localhost");
-        showSystemData(system);
-        assertEquals("8", system.getJavaVersion());
-        assertEquals(Long.valueOf(1024), system.getHeapSize());
-    }
-
-    @Test
-    @Order(3)
-    public void testRemoveSystem() {
-        logger.info("TEST: Testing remove a system");
-        client.removeSystem("localhost");
-        List<SystemData> systems = client.listContents();
-        assertEquals(0, systems.size());
+    public void testCpuUsage() throws InterruptedException {
+        SystemLoad sl = new SystemLoad("localhost", 1.1);
+        producer.send(new ProducerRecord<String, SystemLoad>("system.load", sl));
+        Thread.sleep(5000);
+        Response response = client.getSystems();
+        Assertions.assertEquals(200, response.getStatus(), "Response should be 200");
+        List<Properties> systems =
+            response.readEntity(new GenericType<List<Properties>>() { });
+        assertEquals(systems.size(), 1);
+        for (Properties system : systems) {
+            assertEquals(sl.hostname, system.get("hostname"),
+                "Hostname doesn't match!");
+            BigDecimal systemLoad = (BigDecimal) system.get("systemLoad");
+            assertEquals(sl.loadAverage, systemLoad.doubleValue(),
+                "CPU load doesn't match!");
+        }
     }
 }
 ```
@@ -575,298 +659,71 @@ public class SystemResourceIT {
 
 
 
+The ***InventoryServiceIT*** class uses the ***KafkaProducer*** client API to generate messages in the test environment, which are then consumed by the ***inventory*** microservice container.
 
-Construct the ***postgresImage*** and ***invImage*** using the ***ImageFromDockerfile*** class, which allows Testcontainers to build Docker images from a Dockerfile during the test runtime. For these instances, the provided Dockerfiles at the specified paths ***../postgres/Dockerfile*** and ***./Dockerfile*** are used to generate the respective ***postgres-sample*** and ***inventory:1.0-SNAPSHOT*** images.
+Similar to ***system*** microservice testing, the configuration of the producer ***BOOTSTRAP_SERVERS_CONFIG*** property depends on whether a local ***inventory*** microservice container is detected. In addition, the producer is configured with a custom serializer provided in the ***SystemLoad*** class.
 
-Use ***GenericContainer*** class to create the ***postgresContainer*** test container to start up the ***postgres-sample*** Docker image, and use the ***LibertyContainer*** custom class to create the ***inventoryContainer*** test container to start up the ***inventory:1.0-SNAPSHOT*** Docker image. 
+The ***testCpuUsage*** test method uses the ***producer.send()*** method, using the ***KafkaProducer*** client API, to generate the ***Systemload*** message. Then, it uses ***Assertions*** to verify that the response from the ***inventory*** microservice aligns with the expected outcome.
 
-As containers are isolated by default, placing both the ***LibertyContainer*** and the ***postgresContainer*** on the same ***network*** allows them to communicate by using the hostname ***localhost*** and the internal port ***5432***, bypassing the need for an externally mapped port.
+### Running the tests
 
-The ***waitingFor()*** method here overrides the ***waitingFor()*** method from ***LibertyContainer***. Given that the ***inventory*** service depends on a database service, ensuring that readiness involves more than just the microservice itself. To address this, the ***inventoryContainer*** readiness is determined by checking the ***/health/ready*** health readiness check API, which reflects both the application and database service states. For different container readiness check customizations, see to the [official Testcontainers documentation](https://www.testcontainers.org/features/startup_and_waits/).
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
 
-The ***LoggerFactory.getLogger()*** and ***withLogConsumer(new Slf4jLogConsumer(Logger))*** methods integrate container logs with the test logs by piping the container output to the specified logger.
-
-The ***createRestClient()*** method creates a REST client instance with the ***SystemResourceClient*** interface.
-
-The ***setup()*** method prepares the test environment. It checks whether the test is running in dev mode or there is a local running Liberty instance, by using the ***isServiceRunning()*** helper. In the case of no running Liberty instance, the test starts the ***postgresContainer*** and ***inventoryContainer*** test containers. Otherwise, it ensures that the Postgres database is running locally.
-
-The ***testAddSystem()*** verifies the ***addSystem*** and ***listContents*** endpoints.
-
-The ***testUpdateSystem()*** verifies the ***updateSystem*** and ***getSystem*** endpoints.
-
-The ***testRemoveSystem()*** verifies the ***removeSystem*** endpoint.
-
-After the tests are executed, the ***tearDown()*** method stops the containers and closes the network.
-
-
-### Setting up logs
-
-Having reliable logs is essential for efficient debugging, as they provide detailed insights into the test execution flow and help pinpoint issues during test failures. Testcontainers' built-in ***Slf4jLogConsumer*** enables integration of container output directly with the JUnit process, enhancing log analysis and simplifying test creation and debugging.
-
-Create the ***log4j.properties*** file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-testcontainers/start/src/test/resources/log4j.properties
-```
-
-
-> Then, to open the log4j.properties file in your IDE, select
-> ***File*** > ***Open*** > guide-testcontainers/start/src/test/resources/log4j.properties, or click the following button
-
-::openFile{path="/home/project/guide-testcontainers/start/src/test/resources/log4j.properties"}
-
-
+You will see the following output:
 
 ```
-log4j.rootLogger=INFO, stdout
-
-log4j.appender=org.apache.log4j.ConsoleAppender
-log4j.appender.layout=org.apache.log4j.PatternLayout
-
-log4j.appender.stdout=org.apache.log4j.ConsoleAppender
-log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
-log4j.appender.stdout.layout.ConversionPattern=%r %p %c %x - %m%n
-
-log4j.logger.it.io.openliberty.guides.inventory=DEBUG
-```
-
-
-
-The ***log4j.properties*** file configures the root logger, appenders, and layouts for console output. It sets the logging level to ***DEBUG*** for the ***it.io.openliberty.guides.inventory*** package. This level provides detailed logging information for the specified package, which can be helpful for debugging and understanding test behavior.
-
-
-### Configuring the Maven project
-
-Next, prepare your Maven project for test execution by adding the necessary dependencies for Testcontainers and logging, setting up Maven to copy the PostgreSQL JDBC driver during the build phase, and configuring the Liberty Maven Plugin to handle PostgreSQL dependency.
-
-Replace the ***pom.xml*** file.
-
-> To open the pom.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-testcontainers/start/pom.xml, or click the following button
-
-::openFile{path="/home/project/guide-testcontainers/start/pom.xml"}
-
-
-
-```xml
-<?xml version="1.0" encoding="UTF-8" ?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>guide-testcontainers</artifactId>
-    <packaging>war</packaging>
-    <version>1.0-SNAPSHOT</version>
-
-    <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <liberty.var.http.port>9080</liberty.var.http.port>
-        <liberty.var.https.port>9443</liberty.var.https.port>
-        <liberty.var.context.root>/inventory</liberty.var.context.root>
-    </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>10.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>7.0</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>42.7.5</version>
-            <scope>provided</scope>
-        </dependency>
-        
-        <!-- Test dependencies -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.12.2</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-client</artifactId>
-            <version>6.2.12.Final</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-json-binding-provider</artifactId>
-            <version>6.2.12.Final</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish</groupId>
-            <artifactId>jakarta.json</artifactId>
-            <version>2.0.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse</groupId>
-            <artifactId>yasson</artifactId>
-            <version>3.0.4</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>testcontainers</artifactId>
-            <version>1.21.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-reload4j</artifactId>
-            <version>2.0.17</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>2.0.17</version>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <finalName>inventory</finalName>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.4.0</version>
-            </plugin>
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <configuration>
-                    <copyDependencies>
-                        <dependencyGroup>
-                            <location>${project.build.directory}/liberty/wlp/usr/shared/resources</location>
-                            <dependency>
-                                <groupId>org.postgresql</groupId>
-                                <artifactId>postgresql</artifactId>
-                            </dependency>
-                        </dependencyGroup>
-                    </copyDependencies>
-                </configuration>
-                <version>3.11.3</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.3</version>
-                <configuration>
-                    <systemPropertyVariables>
-                        <http.port>${liberty.var.http.port}</http.port>
-                        <https.port>${liberty.var.https.port}</https.port>
-                        <context.root>${liberty.var.context.root}</context.root>
-                    </systemPropertyVariables>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-</project>
-```
-
-
-
-Add the required ***dependency*** for Testcontainers and Log4J libraries with ***test*** scope. The ***testcontainers*** dependency offers a general-purpose API for managing container-based test environments. The ***slf4j-reload4j*** and ***slf4j-api*** dependencies enable the Simple Logging Facade for Java (SLF4J) API for trace logging during test execution and facilitates debugging and test performance tracking. 
-
-Also, add and configure the ***maven-failsafe-plugin*** plugin, so that the integration test can be run by the Maven ***verify*** command.
-
-When you started Open Liberty in dev mode, all the changes were automatically picked up. You can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode. You see the following output:
-
-```
- -------------------------------------------------------
-  T E S T S
- -------------------------------------------------------
- Running it.io.openliberty.guides.inventory.SystemResourceIT
- it.io.openliberty.guides.inventory.SystemResourceIT  - Testing by dev mode or local Liberty...
- ...
- Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.873 s - in it.io.openliberty.guides.inventory.SystemResourceIT
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 32.564 s - in it.io.openliberty.guides.inventory.InventoryServiceIT
 
  Results:
 
- Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+
+ Integration tests finished.
 ```
 
+After you are finished running tests, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server.
 
-
-::page{title="Running tests in a CI/CD pipeline"}
-
-Running tests in dev mode is useful for local development, but there may be times when you want to test your application in other scenarios, such as in a CI/CD pipeline. For these cases, you can use Testcontainers to run tests against a running Open Liberty instance in a controlled, self-contained environment, ensuring that your tests run consistently regardless of the deployment context.
-
-To test outside of dev mode, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the Liberty.
-
-Also, run the following commands to stop the PostgreSQL container that was started in the previous section:
-
-```bash
-docker stop postgres-container
-```
-
-Now, use the following Maven goal to run the tests from a cold start outside of dev mode:
+If you aren't running in dev mode, you can run the tests by running the following command:
 
 
 ```bash
-export TESTCONTAINERS_RYUK_DISABLED=true
-./mvnw clean verify
+./mvnw -pl inventory clean verify
 ```
 
-You see the following output:
+You will see the following output:
 
 ```
- -------------------------------------------------------
-  T E S T S
- -------------------------------------------------------
- Running it.io.openliberty.guides.inventory.SystemResourceIT
- it.io.openliberty.guides.inventory.SystemResourceIT  - Testing by using Testcontainers...
- ...
- tc.postgres-sample:latest  - Creating container for image: postgres-sample:latest
- tc.postgres-sample:latest  - Container postgres-sample:latest is starting: 7cf2e2c6a505f41877014d08b7688399b3abb9725550e882f1d33db8fa4cff5a
- tc.postgres-sample:latest  - Container postgres-sample:latest started in PT2.925405S
- ...
- tc.inventory:1.0-SNAPSHOT  - Creating container for image: inventory:1.0-SNAPSHOT
- tc.inventory:1.0-SNAPSHOT  - Container inventory:1.0-SNAPSHOT is starting: 432ac739f377abe957793f358bbb85cc916439283ed2336014cacb585f9992b8
- tc.inventory:1.0-SNAPSHOT  - Container inventory:1.0-SNAPSHOT started in PT25.784899S
-...
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 53.22 s - in it.io.openliberty.guides.inventory.InventoryServiceIT
 
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 12.208 s - in it.io.openliberty.guides.inventory.SystemResourceIT
+ Results:
 
-Results:
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+
+ --- failsafe:3.2.5:verify (verify) @ inventory ---
+ ------------------------------------------------------------------------
+ BUILD SUCCESS
+ ------------------------------------------------------------------------
+ Total time:  58.789 s
+ Finished at: 2024-01-31T11:40:43-08:00
+ ------------------------------------------------------------------------
 ```
 
-Notice that the test initiates a new Docker container each for the PostgreSQL database and the ***inventory*** microservice, resulting in a longer test runtime. Despite this, cold start testing benefits from a clean instance per run and ensures consistent results. These tests also automatically hook into existing build pipelines that are set up to run the ***integration-test*** phase.
+
+When you're finished trying out the microservice, you can stop the local Kafka container by running the following command from the ***start*** directory:
+
+
+```bash
+cd /home/project/guide-reactive-service-testing/start
+./scripts/stopKafka.sh
+```
+
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just tested your microservices with multiple Docker containers using Testcontainers.
+You just tested two reactive Java microservices using Testcontainers.
 
 
 
@@ -875,31 +732,34 @@ You just tested your microservices with multiple Docker containers using Testcon
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-testcontainers*** project by running the following commands:
+Delete the ***guide-reactive-service-testing*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-testcontainers
+rm -fr guide-reactive-service-testing
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Building%20true-to-production%20integration%20tests%20with%20Testcontainers&guide-id=cloud-hosted-guide-testcontainers)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Testing%20reactive%20Java%20microservices&guide-id=cloud-hosted-guide-reactive-service-testing)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-testcontainers/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-testcontainers/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-reactive-service-testing/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-reactive-service-testing/pulls)
 
 
 
 ### Where to next?
 
-* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
-* [Testing microservices with the Arquillian managed container](https://openliberty.io/guides/arquillian-managed.html)
+* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
+* [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html)
+
+**Learn more about Testcontainers**
+* [Visit the official Testcontainers website](https://testcontainers.com/)
 
 
 ### Log out of the session
