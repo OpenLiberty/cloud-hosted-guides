@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Creating a hypermedia-driven RESTful web service guide!"}
+::page{title="Welcome to the Creating a RESTful web service guide!"}
 
-You'll explore how to use Hypermedia As The Engine Of Application State (HATEOAS) to drive your RESTful web service on Open Liberty.
+Learn how to create a RESTful service with Jakarta Restful Web Services, JSON-B, and Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,86 +14,22 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
+
 ::page{title="What you'll learn"}
 
-You will learn how to use hypermedia to create a specific style of a response JSON, which has contents that you can use to navigate your REST service. You'll build on top of a simple inventory REST service that you can develop with MicroProfile technologies. You can find the service at the following URL:
+You will learn how to build and test a simple RESTful service with Jakarta Restful Web Services and JSON-B, which will expose the JVM's system properties. The RESTful service responds to ***GET*** requests made to the ***http://localhost:9080/LibertyProject/system/properties*** URL.
 
-```
-http://localhost:9080/inventory/hosts
-```
-
-The service responds with a JSON file that contains all of the registered hosts. Each host has a collection of HATEOAS links:
+The service responds to a ***GET*** request with a JSON representation of the system properties, where each property is a field in a JSON object, like this:
 
 ```
 {
-  "foo": [
-    {
-      "href": "http://localhost:9080/inventory/hosts/foo",
-      "rel": "self"
-    }
-  ],
-  "bar": [
-    {
-      "href": "http://localhost:9080/inventory/hosts/bar",
-      "rel": "self"
-    }
-  ],
-  "*": [
-    {
-      "href": "http://localhost:9080/inventory/hosts/*",
-      "rel": "self"
-    }
-  ]
+  "os.name":"Mac",
+  "java.version": "1.8"
 }
 ```
 
-### What is HATEOAS?
-
-HATEOAS is a constraint of REST application architectures. With HATEOAS, the client receives information about the available resources from the REST application. The client does not need to be hardcoded to a fixed set of resources, and the application and client can evolve independently. In other words, the application tells the client where it can go and what it can access by providing it with a simple collection of links to other available resources.
-
-### Response JSON
-
-In the context of HATEOAS, each resource must contain a link reference to itself, which is commonly referred to as ***self***. In this guide, the JSON structure features a mapping between the hostname and its corresponding list of HATEOAS links:
-
-```
-  "*": [
-    {
-      "href": "http://localhost:9080/inventory/hosts/*",
-      "rel": "self"
-    }
-  ]
-```
-
-#### Link types
-
-The following example shows two different links. The first link has a ***self*** relationship with the resource object and is generated whenever you register a host. The link points to that host entry in the inventory:
-
-```
-  {
-    "href": "http://localhost:9080/inventory/hosts/<hostname>",
-    "rel": "self"
-  }
-```
-
-The second link has a ***properties*** relationship with the resource object and is generated if the host ***system*** service is running. The link points to the properties resource on the host:
-
-```
-  {
-    "href": "http://<hostname>:9080/system/properties",
-    "rel": "properties"
-  }
-```
-
-#### Other formats
-
-Although you should stick to the previous format for the purpose of this guide, another common convention has the link as the value of the relationship:
-
-```
-  "_links": {
-      "self": "http://localhost:9080/inventory/hosts/<hostname>",
-      "properties": "http://<hostname>:9080/system/properties"
-  }
-```
+The design of an HTTP API is an essential part of creating a web application. The REST API is the go-to architectural style for building an HTTP API. The Jakarta Restful Web Services API offers functions to create, read, update, and delete exposed resources. The Jakarta Restful Web Services API supports the creation of RESTful web services that are performant, scalable, and modifiable.
 
 ::page{title="Getting started"}
 
@@ -106,11 +42,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-hateoas.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-intro.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-rest-hateoas.git
-cd guide-rest-hateoas
+git clone https://github.com/openliberty/guide-rest-intro.git
+cd guide-rest-intro
 ```
 
 
@@ -126,7 +62,7 @@ To try out the application, first go to the ***finish*** directory and run the f
 
 ```bash
 cd finish
-./mvnw liberty:run
+mvn liberty:run
 ```
 
 After you see the following message, your Liberty instance is ready:
@@ -136,30 +72,39 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 
-After the Liberty instance runs, you can find your hypermedia-driven ***inventory*** service at the ***/inventory/hosts*** endpoint. Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following curl command:
+
+Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
+
+
+Check out the service at the ***http\://localhost:9080/LibertyProject/system/properties*** URL. 
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
 ```bash
-curl -s http://localhost:9080/inventory/hosts | jq
+curl -s http://localhost:9080/LibertyProject/system/properties | jq
 ```
+
+
 
 After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
-./mvnw liberty:stop
+mvn liberty:stop
 ```
 
 
+::page{title="Creating a RESTful application"}
 
-::page{title="Creating the response JSON"}
-
-Navigate to the ***start*** directory.
+Navigate to the ***start*** directory to begin.
 ```bash
-cd /home/project/guide-rest-hateoas/start
+cd /home/project/guide-rest-intro/start
 ```
 
 When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
-./mvnw liberty:dev
+mvn liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
@@ -171,62 +116,27 @@ After you see the following message, your Liberty instance is ready in dev mode:
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-Begin by building your response JSON, which is composed of the name of the host machine and its list of HATEOAS links.
+Jakarta Restful Web Services defines two key concepts for creating REST APIs. The most obvious one is the resource itself, which is modelled as a class. The second is a RESTful application, which groups all exposed resources under a common path. You can think of the RESTful application as a wrapper for all of your resources.
 
-### Linking to inventory contents
 
-As mentioned before, your starting point is an existing simple inventory REST service. 
+Replace the ***SystemApplication*** class.
 
-Look at the request handlers in the ***InventoryResource.java*** file.
+> To open the SystemApplication.java file in your IDE, select
+> ***File*** > ***Open*** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java, or click the following button
 
-The ***.../inventory/hosts/*** URL will no longer respond with a JSON representation of your inventory contents, so you can discard the ***listContents*** method and integrate it into the ***getPropertiesForHost*** method.
-
-Replace the ***InventoryResource*** class.
-
-> To open the InventoryResource.java file in your IDE, select
-> ***File*** > ***Open*** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryResource.java, or click the following button
-
-::openFile{path="/home/project/guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryResource.java"}
+::openFile{path="/home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java"}
 
 
 
 ```java
-package io.openliberty.guides.microprofile;
+package io.openliberty.guides.rest;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.UriInfo;
+import jakarta.ws.rs.core.Application;
+import jakarta.ws.rs.ApplicationPath;
 
-@ApplicationScoped
-@Path("hosts")
-public class InventoryResource {
+@ApplicationPath("system")
+public class SystemApplication extends Application {
 
-    @Inject
-    InventoryManager manager;
-
-    @Context
-    UriInfo uriInfo;
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public JsonObject handler() {
-        return manager.getSystems(uriInfo.getAbsolutePath().toString());
-    }
-
-    @GET
-    @Path("{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public JsonObject getPropertiesForHost(@PathParam("hostname") String hostname) {
-        return (hostname.equals("*")) ? manager.list() : manager.get(hostname);
-    }
 }
 ```
 
@@ -234,179 +144,45 @@ public class InventoryResource {
 Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
-
-The contents of your inventory are now under the asterisk (`*`) wildcard and reside at the `http://localhost:9080/inventory/hosts/*` URL.
-
-The ***GET*** request handler is responsible for handling all ***GET*** requests that are made to the target URL. This method responds with a JSON that contains HATEOAS links.
-
-The ***UriInfo*** object is what will be used to build your HATEOAS links.
-
-The ***@Context*** annotation is a part of CDI and indicates that the ***UriInfo*** will be injected when the resource is instantiated.
-
-Your new ***InventoryResource*** class is now replaced. Next, you will implement the ***getSystems*** method and build the response JSON object.
+The ***SystemApplication*** class extends the ***Application*** class, which associates all RESTful resource classes in the WAR file with this RESTful application. These resources become available under the common path that's specified with the ***@ApplicationPath*** annotation. The ***@ApplicationPath*** annotation has a value that indicates the path in the WAR file that the RESTful application accepts requests from.
 
 
-### Linking to each available resource
+::page{title="Creating the RESTful resource"}
 
-Take a look at your ***InventoryManager*** and ***InventoryUtil*** files.
+In a RESTful application, a single class represents a single resource, or a group of resources of the same type. In this application, a resource might be a system property, or a set of system properties. A single class can easily handle multiple different resources, but keeping a clean separation between types of resources helps with maintainability in the long run.
 
-Replace the ***InventoryManager*** class.
+Create the ***PropertiesResource*** class.
 
-> To open the InventoryManager.java file in your IDE, select
-> ***File*** > ***Open*** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryManager.java, or click the following button
-
-::openFile{path="/home/project/guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryManager.java"}
-
-
-
-```java
-package io.openliberty.guides.microprofile;
-
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonArrayBuilder;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonObjectBuilder;
-
-import io.openliberty.guides.microprofile.util.ReadyJson;
-import io.openliberty.guides.microprofile.util.InventoryUtil;
-
-@ApplicationScoped
-public class InventoryManager {
-
-    private ConcurrentMap<String, JsonObject> inv = new ConcurrentHashMap<>();
-
-    public JsonObject get(String hostname) {
-        JsonObject properties = inv.get(hostname);
-        if (properties == null) {
-            if (InventoryUtil.responseOk(hostname)) {
-                properties = InventoryUtil.getProperties(hostname);
-                this.add(hostname, properties);
-            } else {
-                return ReadyJson.SERVICE_UNREACHABLE.getJson();
-            }
-        }
-        return properties;
-    }
-
-    public void add(String hostname, JsonObject systemProps) {
-        inv.putIfAbsent(hostname, systemProps);
-    }
-
-    public JsonObject list() {
-        JsonObjectBuilder systems = Json.createObjectBuilder();
-        inv.forEach((host, props) -> {
-            JsonObject systemProps = Json.createObjectBuilder()
-                                         .add("os.name", props.getString("os.name"))
-                                         .add("user.name", props.getString("user.name"))
-                                         .build();
-            systems.add(host, systemProps);
-        });
-        systems.add("hosts", systems);
-        systems.add("total", inv.size());
-        return systems.build();
-    }
-
-    public JsonObject getSystems(String url) {
-        JsonObjectBuilder systems = Json.createObjectBuilder();
-        systems.add("*", InventoryUtil.buildLinksForHost("*", url));
-
-        for (String host : inv.keySet()) {
-            systems.add(host, InventoryUtil.buildLinksForHost(host, url));
-        }
-
-        return systems.build();
-    }
-
-}
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
 ```
 
 
+> Then, to open the PropertiesResource.java file in your IDE, select
+> ***File*** > ***Open*** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java, or click the following button
 
-The ***getSystems*** method accepts a target URL as an argument and returns a JSON object that contains HATEOAS links.
-
-Replace the ***InventoryUtil*** class.
-
-> To open the InventoryUtil.java file in your IDE, select
-> ***File*** > ***Open*** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/util/InventoryUtil.java, or click the following button
-
-::openFile{path="/home/project/guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/util/InventoryUtil.java"}
+::openFile{path="/home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java"}
 
 
 
 ```java
-package io.openliberty.guides.microprofile.util;
+package io.openliberty.guides.rest;
 
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URL;
+import java.util.Properties;
 
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonArrayBuilder;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.UriBuilder;
 
-import org.apache.commons.lang3.StringUtils;
+@Path("properties")
+public class PropertiesResource {
 
-public class InventoryUtil {
-
-    private static final int PORT = 9080;
-    private static final String PROTOCOL = "http";
-    private static final String SYSTEM_PROPERTIES = "/system/properties";
-
-    public static JsonObject getProperties(String hostname) {
-        Client client = ClientBuilder.newClient();
-        URI propURI = InventoryUtil.buildUri(hostname);
-        JsonObject properties = client.target(propURI)
-                                      .request(MediaType.APPLICATION_JSON)
-                                      .get(JsonObject.class);
-        client.close();
-        return properties;
-    }
-
-    public static JsonArray buildLinksForHost(String hostname, String invUri) {
-
-        JsonArrayBuilder links = Json.createArrayBuilder();
-
-        links.add(Json.createObjectBuilder()
-                      .add("href", StringUtils.appendIfMissing(invUri, "/") + hostname)
-                      .add("rel", "self"));
-
-        if (!hostname.equals("*")) {
-            links.add(Json.createObjectBuilder()
-                 .add("href", InventoryUtil.buildUri(hostname).toString())
-                 .add("rel", "properties"));
-        }
-
-        return links.build();
-    }
-
-    public static boolean responseOk(String hostname) {
-        try {
-            URL target = new URL(buildUri(hostname).toString());
-            HttpURLConnection http = (HttpURLConnection) target.openConnection();
-            http.setConnectTimeout(50);
-            int response = http.getResponseCode();
-            return response == 200;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private static URI buildUri(String hostname) {
-        return UriBuilder.fromUri(SYSTEM_PROPERTIES)
-                .host(hostname)
-                .port(PORT)
-                .scheme(PROTOCOL)
-                .build();
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Properties getProperties() {
+        return System.getProperties();
     }
 
 }
@@ -414,250 +190,184 @@ public class InventoryUtil {
 
 
 
-The helper builds a link that points to the inventory entry with a ***self*** relationship. The helper also builds a link that points to the ***system*** service with a ***properties*** relationship:
+
+The ***@Path*** annotation on the class indicates that this resource responds to the ***properties*** path in the RESTful Web Services application. The ***@ApplicationPath*** annotation in the ***SystemApplication*** class together with the ***@Path*** annotation in this class indicates that the resource is available at the ***system/properties*** path.
+
+Jakarta Restful Web Services maps the HTTP methods on the URL to the methods of the class by using annotations. Your application uses the ***GET*** annotation to map an HTTP ***GET*** request to the ***system/properties*** path.
+
+The ***@GET*** annotation on the method indicates that this method is called for the HTTP ***GET*** method. The ***@Produces*** annotation indicates the format of the content that is returned. The value of the ***@Produces*** annotation is specified in the HTTP ***Content-Type*** response header. This application returns a JSON structured. The desired ***Content-Type*** for a JSON response is ***application/json***, with ***MediaType.APPLICATION_JSON*** instead of the ***String*** content type. Using a constant such as ***MediaType.APPLICATION_JSON*** is better because a spelling error results in a compile failure.
+
+Jakarta Restful Web Services supports a number of ways to marshal JSON. The Jakarta Restful Web Services specification mandates JSON-Binding (JSON-B). The method body returns the result of ***System.getProperties()***, which is of type ***java.util.Properties***. The method is annotated with ***@Produces(MediaType.APPLICATION_JSON)*** so Jakarta Restful Web Services uses JSON-B to automatically convert the returned object to JSON data in the HTTP response.
 
 
-* `http://localhost:9080/inventory/hosts/<hostname>`
-* `http://<hostname>:9080/system/properties`
+::page{title="Configuring Liberty"}
 
-### Linking to inactive services or unavailable resources
+To get the service running, the Liberty ***server.xml*** configuration file needs to be correctly configured.
 
-Consider what happens when one of the return links does not work or when a link should be available for one object but not for another. In other words, it is important that a resource or service is available and running before it is added in the HATEOAS links array of the hostname.
+Replace the Liberty ***server.xml*** configuration file.
 
-Although this guide does not cover this case, always make sure that you receive a good response code from a service before you link that service. Similarly, make sure that it makes sense for a particular object to access a resource it is linked to. For instance, it doesn't make sense for an account holder to be able to withdraw money from their account when their balance is 0. Hence, the account holder should not be linked to a resource that provides money withdrawal.
+> To open the server.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-rest-intro/start/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-rest-intro/start/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="Intro REST Guide Liberty server">
+  <featureManager>
+      <platform>jakartaee-10.0</platform>
+      <feature>restfulWS</feature>
+      <feature>jsonb</feature>
+  </featureManager>
+
+  <httpEndpoint httpPort="${http.port}" httpsPort="${https.port}"
+                id="defaultHttpEndpoint" host="*" />
+
+  <webApplication location="guide-rest-intro.war" contextRoot="${app.context.root}"/>
+</server>
+```
+
+
+
+The configuration does the following actions:
+
+* Configures Liberty to enable Jakarta Restful Web Services. This is specified in the ***featureManager*** element.
+* Configures Liberty to resolve the HTTP port numbers from variables, which are then specified in the Maven ***pom.xml*** file. This is specified in the ***httpEndpoint*** element. Variables use the ***${variableName}*** syntax.
+* Configures Liberty to run the produced web application on a context root specified in the ***pom.xml*** file. This is specified in the ***webApplication*** element.
+
+
+The variables that are being used in the ***server.xml*** file are provided by the properties set in the Maven ***pom.xml*** file. The properties must be formatted as ***liberty.var.variableName***.
+
 
 ::page{title="Running the application"}
 
 You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 
-After the Liberty instance updates, you can find your new hypermedia-driven ***inventory*** service at the ***/inventory/hosts*** endpoint. Run the following curl command by another command-line session:
+Check out the service that you created at the ***http\://localhost:9080/LibertyProject/system/properties*** URL. 
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
 ```bash
-curl -s http://localhost:9080/inventory/hosts | jq
+curl -s http://localhost:9080/LibertyProject/system/properties | jq
 ```
 
 
-::page{title="Testing the hypermedia-driven RESTful web service"}
 
-If the Liberty instances are running, you can test the application manually by running the following curl commands to access the **inventory** service that is now driven by hypermedia: 
-```bash
-curl -s http://localhost:9080/inventory/hosts | jq
-```
 
-```bash
-curl -s http://localhost:9080/inventory/hosts/localhost| jq
-```
+::page{title="Testing the service"}
 
-Nevertheless, you should rely on automated tests because they are more reliable and trigger a failure if a change introduces a defect.
 
-### Setting up your tests
+You can test this service manually by starting Liberty and visiting the http://localhost:9080/LibertyProject/system/properties URL. However, automated tests are a much better approach because they trigger a failure if a change introduces a bug. JUnit and the Jakarta Restful Web Services Client API provide a simple environment to test the application.
+
+You can write tests for the individual units of code outside of a running Liberty instance, or they can be written to call the Liberty instance directly. In this example, you will create a test that does the latter.
 
 Create the ***EndpointIT*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-rest-hateoas/start/src/test/java/it/io/openliberty/guides/hateoas/EndpointIT.java
+touch /home/project/guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
 ```
 
 
 > Then, to open the EndpointIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-rest-hateoas/start/src/test/java/it/io/openliberty/guides/hateoas/EndpointIT.java, or click the following button
+> ***File*** > ***Open*** > guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java, or click the following button
 
-::openFile{path="/home/project/guide-rest-hateoas/start/src/test/java/it/io/openliberty/guides/hateoas/EndpointIT.java"}
+::openFile{path="/home/project/guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.hateoas;
-
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonValue;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.Response;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.TestMethodOrder;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+package it.io.openliberty.guides.rest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@TestMethodOrder(OrderAnnotation.class)
+import java.util.Properties;
+
+import jakarta.json.bind.Jsonb;
+import jakarta.json.bind.JsonbBuilder;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.Response;
+
+import org.junit.jupiter.api.Test;
+
 public class EndpointIT {
-    private String port;
-    private String baseUrl;
+    private static final Jsonb JSONB = JsonbBuilder.create();
+    @Test
+    public void testGetProperties() {
+        String port = System.getProperty("http.port");
+        String context = System.getProperty("context.root");
+        String url = "http://localhost:" + port + "/" + context + "/";
 
-    private Client client;
+        Client client = ClientBuilder.newClient();
 
-    private final String SYSTEM_PROPERTIES = "system/properties";
-    private final String INVENTORY_HOSTS = "inventory/hosts";
+        WebTarget target = client.target(url + "system/properties");
+        Response response = target.request().get();
 
-    @BeforeEach
-    public void setup() {
-        port = System.getProperty("http.port");
-        baseUrl = "http://localhost:" + port + "/";
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus(),
+                     "Incorrect response code from " + url);
 
-        client = ClientBuilder.newClient();
-    }
+        String json = response.readEntity(String.class);
+        Properties sysProps = JSONB.fromJson(json, Properties.class);
 
-    @AfterEach
-    public void teardown() {
+        assertEquals(System.getProperty("os.name"), sysProps.getProperty("os.name"),
+                     "The system property for the local and remote JVM should match");
+        response.close();
         client.close();
-    }
-
-    /**
-     * Checks if the HATEOAS link for the inventory contents (hostname=*)
-     * is as expected.
-     */
-    @Test
-    @Order(1)
-    public void testLinkForInventoryContents() {
-        Response response = this.getResponse(baseUrl + INVENTORY_HOSTS);
-        assertEquals(200, response.getStatus(),
-                    "Incorrect response code from " + baseUrl);
-
-        JsonObject systems = response.readEntity(JsonObject.class);
-
-        String expected;
-        String actual;
-        boolean isFound = false;
-
-
-        if (!systems.isNull("*")) {
-            isFound = true;
-            JsonArray links = systems.getJsonArray("*");
-
-            expected = baseUrl + INVENTORY_HOSTS + "/*";
-            actual = links.getJsonObject(0).getString("href");
-            assertEquals(expected, actual, "Incorrect href");
-
-            expected = "self";
-            actual = links.getJsonObject(0).getString("rel");
-            assertEquals(expected, actual, "Incorrect rel");
-        }
-
-
-        assertTrue(isFound, "Could not find system with hostname *");
-
-        response.close();
-    }
-
-    /**
-     * Checks that the HATEOAS links, with relationships 'self' and 'properties' for
-     * a simple localhost system is as expected.
-     */
-    @Test
-    @Order(2)
-    public void testLinksForSystem() {
-        this.visitLocalhost();
-
-        Response response = this.getResponse(baseUrl + INVENTORY_HOSTS);
-        assertEquals(200, response.getStatus(),
-                     "Incorrect response code from " + baseUrl);
-
-        JsonObject systems = response.readEntity(JsonObject.class);
-
-        String expected;
-        String actual;
-        boolean isHostnameFound = false;
-
-
-        if (!systems.isNull("localhost")) {
-            isHostnameFound = true;
-            JsonArray links = systems.getJsonArray("localhost");
-
-            expected = baseUrl + INVENTORY_HOSTS + "/localhost";
-            actual = links.getJsonObject(0).getString("href");
-            assertEquals(expected, actual, "Incorrect href");
-
-            expected = "self";
-            actual = links.getJsonObject(0).getString("rel");
-            assertEquals(expected, actual, "Incorrect rel");
-
-            expected = baseUrl + SYSTEM_PROPERTIES;
-            actual = links.getJsonObject(1).getString("href");
-            assertEquals(expected, actual, "Incorrect href");
-
-            expected = "properties";
-            actual = links.getJsonObject(1).getString("rel");
-
-            assertEquals(expected, actual, "Incorrect rel");
-        }
-
-
-        assertTrue(isHostnameFound, "Could not find system with hostname localhost");
-        response.close();
-
-    }
-
-    /**
-     * Returns a Response object for the specified URL.
-     */
-    private Response getResponse(String url) {
-        return client.target(url).request().get();
-    }
-
-    /**
-     * Makes a GET request to localhost at the Inventory service.
-     */
-    private void visitLocalhost() {
-        Response response = this.getResponse(baseUrl + SYSTEM_PROPERTIES);
-        assertEquals(200, response.getStatus(),
-                     "Incorrect response code from " + baseUrl);
-        response.close();
-        Response targetResponse =
-        client.target(baseUrl + INVENTORY_HOSTS + "/localhost")
-                                        .request()
-                                        .get();
-        targetResponse.close();
     }
 }
 ```
 
 
 
-The ***@BeforeEach*** and ***@AfterEach*** annotations are placed on setup and teardown tasks that are run for each individual test.
+This test class has more lines of code than the resource implementation. This situation is common. The test method is indicated with the ***@Test*** annotation.
 
-### Writing the tests
 
-Each test method must be marked with the ***@Test*** annotation. The execution order of test methods is controlled by marking them with the ***@Order*** annotation. The value that is passed into the annotation denotes the order in which the methods are run.
+The test code needs to know some information about the application to make requests. The server port and the application context root are key, and are dictated by the Liberty's configuration. While this information can be hardcoded, it is better to specify it in a single place like the Maven ***pom.xml*** file. Refer to the ***pom.xml*** file to see how the application information such as the ***http.port***, ***https.port*** and ***app.context.root*** elements are provided in the file.
 
-The ***testLinkForInventoryContents*** test is responsible for asserting that the correct HATEOAS link is created for the inventory contents.
 
-Finally, the ***testLinksForSystem*** test is responsible for asserting that the correct HATEOAS links are created for the ***localhost*** system. This method checks for both the ***self*** link that points to the ***inventory*** service and the ***properties*** link that points to the ***system*** service, which is running on the ***localhost*** system.
+These Maven properties are then passed to the Java test program as the ***systemPropertyVariables*** element in the ***pom.xml*** file.
+
+Getting the values to create a representation of the URL is simple. The test class uses the ***getProperty*** method to get the application details.
+
+To call the RESTful service using the Jakarta Restful Web Services client, first create a ***WebTarget*** object by calling the ***target*** method that provides the URL. To cause the HTTP request to occur, the ***request().get()*** method is called on the ***WebTarget*** object. The ***get*** method call is a synchronous call that blocks until a response is received. This call returns a ***Response*** object, which can be inspected to determine whether the request was successful.
+
+The first thing to check is that a ***200*** response was received. The JUnit ***assertEquals*** method can be used for this check.
+
+Check the response body to ensure it returned the right information. The client and the server are running on the same machine so it is reasonable to expect that the system properties for the local and remote JVM would be the same. In this case, an ***assertEquals*** assertion is made so that the ***os.name*** system property for both JVMs is the same. You can write additional assertions to check for more values.
 
 ### Running the tests
 
 Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+
 You will see the following output:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.hateoas.EndpointIT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.951 s - in it.io.openliberty.guides.hateoas.EndpointIT
+Running it.io.openliberty.guides.rest.EndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.884 sec - in it.io.openliberty.guides.rest.EndpointIT
 
-Results:
+Results :
 
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
-
-Integration tests finished.
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 ```
 
+To see whether the tests detect a failure, add an assertion that you know fails, or change the existing assertion to a constant value that doesn't match the ***os.name*** system property.
+
 When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
+
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You've just built and tested a hypermedia-driven RESTful web service on top of Open Liberty.
-
+You just developed a RESTful service in Open Liberty by using Jakarta Restful Web Services and JSON-B.
 
 
 
@@ -666,31 +376,31 @@ You've just built and tested a hypermedia-driven RESTful web service on top of O
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-rest-hateoas*** project by running the following commands:
+Delete the ***guide-rest-intro*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-rest-hateoas
+rm -fr guide-rest-intro
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20hypermedia-driven%20RESTful%20web%20service&guide-id=cloud-hosted-guide-rest-hateoas)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20RESTful%20web%20service&guide-id=cloud-hosted-guide-rest-intro)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-hateoas/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-hateoas/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-intro/pulls)
 
 
 
 ### Where to next?
 
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Creating a MicroProfile application](https://openliberty.io/guides/microprofile-intro.html)
+* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
+* [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
 
 
 ### Log out of the session
