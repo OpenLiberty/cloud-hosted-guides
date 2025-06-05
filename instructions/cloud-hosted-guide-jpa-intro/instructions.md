@@ -54,17 +54,18 @@ The ***finish*** directory contains the finished project that you will build.
 
 The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To try out the application, run the following commands to navigate to the ***finish/frontendUI*** directory and deploy the ***frontendUI*** service to Open Liberty:
+To try out the application, run the following commands to navigate to the ***finish*** directory and deploy the ***frontendUI*** service to Open Liberty:
+
 
 ```bash
-cd finish/frontendUI
-mvn liberty:run
+cd finish
+./mvnw -pl frontendUI liberty:run
 ```
 
-Open another command-line session and run the following commands to navigate to the ***finish/backendServices*** directory and deploy the service to Open Liberty:
+Open another command-line session and run the following commands to navigate to the ***finish*** directory and deploy the ***backendServices*** to Open Liberty:
 ```bash
-cd /home/project/guide-jpa-intro/finish/backendServices
-mvn liberty:run
+cd /home/project/guide-jpa-intro/finish
+./mvnw -pl backendServices liberty:run
 ```
 
 
@@ -76,13 +77,13 @@ The defaultServer server is ready to run a smarter planet.
 
 Click the following button to view the Event Manager application:
 ::startApplication{port="9090" display="external" name="Visit Event Manager application" route="/"}
-The event application does not display any events because no events are stored in the database. Go ahead and click ***Create Event***, located in the left navigation bar. After entering an event name, location and time, click ***Submit*** to persist your event entity to the database. The event is now stored in the database and is visible in the list of current events.
+The event application does not display any events because no events are stored in the database. Go ahead and click ***Create Event***, located in the left navigation bar. After entering an event name, location and event date set in the future, click ***Submit*** to persist your event entity to the database. The event is now stored in the database and is visible in the list of current events.
 
-Notice that if you stop the Open Liberty instance and then restart it, the events created are still displayed in the list of current events. Ensure you are in the ***finish/backendServices*** directory and run the following Maven goals to stop and then restart the instance:
+Notice that if you stop the Open Liberty instance and then restart it, the events created are still displayed in the list of current events. Ensure you are in the ***finish*** directory and run the following Maven goals to stop and then restart the instance:
 ```bash
-cd /home/project/guide-jpa-intro/finish/backendServices
-mvn liberty:stop
-mvn liberty:run
+cd /home/project/guide-jpa-intro/finish
+./mvnw -pl backendServices liberty:stop
+./mvnw -pl backendServices liberty:run
 ```
 
 
@@ -91,8 +92,8 @@ The events created are still displayed in the list of current events. The ***Upd
 After you are finished checking out the application, stop the Open Liberty instances by pressing `Ctrl+C` in the command-line sessions where you ran the ***backendServices*** and ***frontendUI*** services. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another command-line session for the ***frontendUI*** and ***backendServices*** services:
 ```bash
 cd /home/project/guide-jpa-intro/finish
-mvn -pl frontendUI liberty:stop
-mvn -pl backendServices liberty:stop
+./mvnw -pl frontendUI liberty:stop
+./mvnw -pl backendServices liberty:stop
 ```
 
 
@@ -103,16 +104,16 @@ Navigate to the ***start*** directory to begin.
 
 When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
 
-Run the following commands to navigate to the ***frontendUI*** directory and start the ***frontendUI*** service in dev mode:
+Run the following commands to start the ***frontendUI*** service in dev mode:
 ```bash
-cd /home/project/guide-jpa-intro/start/frontendUI
-mvn liberty:dev
+cd /home/project/guide-jpa-intro/start
+./mvnw -pl frontendUI liberty:dev
 ```
 
-Open another command-line session and run the following commands to navigate to the ***backendServices*** directory and start the service in dev mode:
+Open another command-line session and run the following commands to start the ***backendServices*** in dev mode:
 ```bash
-cd /home/project/guide-jpa-intro/start/backendServices
-mvn liberty:dev
+cd /home/project/guide-jpa-intro/start
+./mvnw -pl backendServices liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
@@ -481,7 +482,7 @@ Replace the ***backendServices/pom.xml*** configuration file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.12.2</version>
+            <version>5.13.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
