@@ -59,15 +59,16 @@ cd start
 You can find the starting Java project in the ***start*** directory. This project is a multi-module Maven project that is made up of the ***system*** and ***inventory*** microservices. Each microservice is located in its own corresponding directory, ***system*** and ***inventory***.
 
 To try out the microservices by using Maven, run the following Maven goal to build the ***system*** microservice and run it inside Open Liberty:
+
 ```bash
-mvn -pl system liberty:run
+./mvnw -pl system liberty:run
 ```
 
 
 Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session and run the following Maven goal to build the **inventory** microservice and run it inside Open Liberty:
 ```bash
 cd /home/project/guide-containerize/start
-mvn -pl inventory liberty:run
+./mvnw -pl inventory liberty:run
 ```
 
 After you see the following message in both command-line sessions, both of your services are ready:
@@ -95,13 +96,14 @@ curl -s http://localhost:9081/inventory/systems/localhost | jq
 After you are finished checking out the microservices, stop the Liberty instances by pressing **CTRL+C** in the command-line sessions where you ran the **system** and **inventory** services. Alternatively, you can run the **liberty:stop** goal in another command-line session from the **start** directory:
 ```bash
 cd /home/project/guide-containerize/start
-mvn -pl system liberty:stop
-mvn -pl inventory liberty:stop
+./mvnw -pl system liberty:stop
+./mvnw -pl inventory liberty:stop
 ```
 
-To package your microservices, run the Maven package goal to build the application ***.war*** files from the start directory so that the ***.war*** files are in the ***system/target*** and ***inventory/target*** directories.
+To package your microservices, run the Maven ***package*** goal to build the application ***.war*** files from the ***start*** directory so that the ***.war*** files are in the ***system/target*** and ***inventory/target*** directories.
+
 ```bash
-mvn package
+./mvnw package
 ```
 
 To learn more about RESTful web services and how to build them, see [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) for details about how to build the ***system*** service. The ***inventory*** service is built in a similar way.
@@ -177,7 +179,7 @@ The ***FROM*** instruction initializes a new build stage, which indicates the pa
 
 It is also recommended to label your Docker images with the ***LABEL*** command, as the label information can help you manage your images. For more information, see [Best practices for writing Dockerfiles](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#label).
 
-The ***COPY*** instructions are structured as ***COPY*** ***[--chown=\<user\>:\<group\>]*** ***\<source\>*** ***\<destination\>***. They copy local files into the specified destination within your Docker image. In this case, the ***inventory*** Liberty configuration files that are located at ***src/main/liberty/config*** are copied to the ***/config/*** destination directory. The ***inventory*** application WAR file ***inventory.war***, which was created from running ***mvn package***, is copied to the ***/config/apps*** destination directory.
+The ***COPY*** instructions are structured as ***COPY*** ***[--chown=\<user\>:\<group\>]*** ***\<source\>*** ***\<destination\>***. They copy local files into the specified destination within your Docker image. In this case, the ***inventory*** Liberty configuration files that are located at ***src/main/liberty/config*** are copied to the ***/config/*** destination directory. The ***inventory*** application WAR file ***inventory.war***, which was created from running Maven ***package*** goal, is copied to the ***/config/apps*** destination directory.
 
 The ***COPY*** instructions use the ***1001*** user ID  and ***0*** group because the ***icr.io/appcafe/open-liberty:full-java11-openj9-ubi*** image runs by default with the ***USER 1001*** (non-root) user for security purposes. Otherwise, the files and directories that are copied over are owned by the root user.
 
@@ -265,6 +267,7 @@ system        1.0-SNAPSHOT    1dff6d0b4f31    5 minutes ago    977MB
 
 
 ::page{title="Running your microservices in Docker containers"}
+
 Now that your two images are built, you will run your microservices in Docker containers:
 
 ```bash
@@ -813,8 +816,8 @@ Run the Maven **package** goal to compile the test classes. Run the Maven **fail
 
 ```bash
 SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
-mvn package
-mvn failsafe:integration-test -Dsystem.ip="$SYSTEM_IP" -Dinventory.http.port=9081 -Dsystem.http.port=9080
+./mvnw package
+./mvnw failsafe:integration-test -Dsystem.ip="$SYSTEM_IP" -Dinventory.http.port=9081 -Dsystem.http.port=9080
 ```
 
 If the tests pass, you see output similar to the following example:
