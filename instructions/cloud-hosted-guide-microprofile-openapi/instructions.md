@@ -57,7 +57,7 @@ To try out the application, first go to the ***finish*** directory and run the f
 
 ```bash
 cd finish
-mvn liberty:run
+./mvnw liberty:run
 ```
 
 After you see the following message, your Liberty instance is ready:
@@ -83,7 +83,7 @@ This UI is built from the [Open Source Swagger UI](https://swagger.io/tools/swag
 After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
-mvn liberty:stop
+./mvnw liberty:stop
 ```
 
 
@@ -99,7 +99,7 @@ cd /home/project/guide-microprofile-openapi/start
 When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
-mvn liberty:dev
+./mvnw liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
@@ -526,11 +526,14 @@ curl http://localhost:9080/openapi
 ```
 info:
   title: Inventory App
+  version: "1.0"
   description: App for storing JVM system properties of various hosts.
   license:
     name: Eclipse Public License - v 2.0
     url: https://www.eclipse.org/legal/epl-2.0
-  version: "1.0"
+
+...
+
 servers:
 - url: "http://localhost:{port}"
   description: Simple Open Liberty.
