@@ -101,11 +101,12 @@ cd /home/project/guide-liberty-deep-dive/start/inventory
 
 Build and deploy the ***inventory*** microservice to Liberty by running the Maven ***liberty:run*** goal:
 
+
 ```bash
-mvn liberty:run
+./mvnw liberty:run
 ```
 
-The ***mvn*** command initiates a Maven build, during which the target directory is created to store all build-related files.
+The previous command initiates a Maven build, during which the target directory is created to store all build-related files.
 
 The ***liberty:run*** argument specifies the Liberty ***run*** goal, which starts a Liberty instance in the foreground. As part of this phase, a Liberty runtime is downloaded and installed into the ***target/liberty/wlp*** directory. Additionally, a Liberty instance is created and configured in the ***target/liberty/wlp/usr/servers/defaultServer*** directory, and the application is installed into that Liberty instance by using [loose config](https://www.ibm.com/support/knowledgecenter/en/SSEQTP_liberty/com.ibm.websphere.wlp.doc/ae/rwlp_loose_applications.html).
 
@@ -124,9 +125,10 @@ When you need to stop the Liberty instance, press `Ctrl+C` in the command-line s
 
 Although you can start and stop the Liberty instance in the foreground by using the Maven ***liberty:run*** goal, you can also start and stop the instance in the background with the Maven ***liberty:start*** and ***liberty:stop*** goals:
 
+
 ```bash
-mvn liberty:start
-mvn liberty:stop
+./mvnw liberty:start
+./mvnw liberty:stop
 ```
 
 
@@ -136,8 +138,9 @@ The Liberty Maven plug-in includes a ***dev*** goal that listens for any changes
 
 If the Liberty instance is running, stop it and restart it in dev mode by running the ***liberty:dev*** goal in the ***start/inventory*** directory:
 
+
 ```bash
-mvn liberty:dev
+./mvnw liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
@@ -523,6 +526,7 @@ import java.util.List;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameters;
@@ -555,9 +559,13 @@ public class SystemResource {
     @GET
     @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
-    @APIResponseSchema(value = SystemData.class,
-        responseDescription = "A list of system data stored within the inventory.",
-        responseCode = "200")
+    @APIResponse(responseCode = "200",
+        description = "A list of system data stored within the inventory.",
+        content = {
+            @Content(schema = @Schema(
+                type = SchemaType.ARRAY,
+                implementation = SystemData.class))
+        })
     @Operation(
         summary = "List contents.",
         description = "Returns the currently stored system data in the inventory.",
@@ -788,15 +796,17 @@ paths:
   /api/systems:
     get:
       summary: List contents.
-      description: Returns the currently stored host:properties pairs in the inventory.
+      description: Returns the currently stored system data in the inventory.
       operationId: listContents
       responses:
         "200":
-          description: Returns the currently stored host:properties pairs in the inventory.
+          description: Returns the currently stored system data in the inventory.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SystemData'
+                type: array
+                items:
+                  $ref: '#/components/schemas/SystemData'
 ...
 ```
 
@@ -912,15 +922,22 @@ components:
   schemas:
     SystemData:
       description: POJO that represents a single inventory entry.
-      required:
-      - hostname
-      - properties
       type: object
       properties:
+        id:
+          type: integer
+          format: int32
         hostname:
           type: string
-        properties:
-          type: object
+        osName:
+          type: string
+        javaVersion:
+          type: string
+        heapSize:
+          type: integer
+          format: int64
+      required:
+      - hostname
 ```
 
 Again, you can also view this at the ***http\://localhost:9080/openapi/ui*** URL. Scroll down in the UI to the schemas section and open up the SystemData schema icon.
@@ -1199,6 +1216,7 @@ import java.util.List;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameters;
@@ -1238,9 +1256,13 @@ public class SystemResource {
     @GET
     @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
-    @APIResponseSchema(value = SystemData.class,
-        responseDescription = "A list of system data stored within the inventory.",
-        responseCode = "200")
+    @APIResponse(responseCode = "200",
+        description = "A list of system data stored within the inventory.",
+        content = {
+            @Content(schema = @Schema(
+                type = SchemaType.ARRAY,
+                implementation = SystemData.class))
+        })
     @Operation(
         summary = "List contents.",
         description = "Returns the currently stored system data in the inventory.",
@@ -1735,6 +1757,7 @@ import java.util.List;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameters;
@@ -1775,9 +1798,13 @@ public class SystemResource {
     @GET
     @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
-    @APIResponseSchema(value = SystemData.class,
-        responseDescription = "A list of system data stored within the inventory.",
-        responseCode = "200")
+    @APIResponse(responseCode = "200",
+        description = "A list of system data stored within the inventory.",
+        content = {
+            @Content(schema = @Schema(
+                type = SchemaType.ARRAY,
+                implementation = SystemData.class))
+        })
     @Operation(
         summary = "List contents.",
         description = "Returns the currently stored system data in the inventory.",
@@ -2155,7 +2182,7 @@ Replace the ***pom.xml*** configuration file.
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.5</version>
+            <version>42.7.6</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -2381,6 +2408,7 @@ import java.util.List;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameters;
@@ -2422,9 +2450,13 @@ public class SystemResource {
     @GET
     @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
-    @APIResponseSchema(value = SystemData.class,
-        responseDescription = "A list of system data stored within the inventory.",
-        responseCode = "200")
+    @APIResponse(responseCode = "200",
+        description = "A list of system data stored within the inventory.",
+        content = {
+            @Content(schema = @Schema(
+                type = SchemaType.ARRAY,
+                implementation = SystemData.class))
+        })
     @Operation(
         summary = "List contents.",
         description = "Returns the currently stored system data in the inventory.",
@@ -2651,7 +2683,7 @@ You can manually check that the ***inventory*** microservice is secured by makin
 Before making requests, you must add a system to the inventory. Try adding a system by using the POST endpoint ***/systems*** by running the following command:
 
 ```bash
-curl -X POST 'http://localhost:9080/inventory/api/systems?hostname=localhost&osName=mac&javaVersion=17&heapSize=1'
+curl -X POST "http://localhost:9080/inventory/api/systems?hostname=localhost&osName=mac&javaVersion=17&heapSize=1"
 ```
 
 You can expect the following response:
@@ -2676,7 +2708,7 @@ You can now expect the following response:
 Now try calling your secure PUT endpoint to update the system that you just added by the following curl command:
 
 ```bash
-curl -k --user alice:alicepwd -X PUT 'http://localhost:9080/inventory/api/systems/localhost?heapSize=2097152&javaVersion=17&osName=linux'
+curl -k --user alice:alicepwd -X PUT "http://localhost:9080/inventory/api/systems/localhost?heapSize=2097152&javaVersion=17&osName=linux"
 ```
 
 As this endpoint is accessible to the groups ***user*** and ***admin***, you must log in with ***user*** credentials to update the system.
@@ -2694,7 +2726,7 @@ Now try calling the DELETE endpoint. As this endpoint is only accessible to ***a
 You can check that your application is secured against these requests with the following command:
 
 ```bash
-curl -kf --user alice:alicepwd -X DELETE 'https://localhost:9443/inventory/api/systems/localhost'
+curl -kf --user alice:alicepwd -X DELETE "https://localhost:9443/inventory/api/systems/localhost"
 ```
 
 You should see the following response:
@@ -2712,7 +2744,7 @@ jakarta.ws.rs.ForbiddenException: Unauthorized
 Now attempt to call this endpoint with an authenticated ***admin*** user that can work correctly. Run the following curl command:
 
 ```bash
-curl -k --user bob:bobpwd -X DELETE 'https://localhost:9443/inventory/api/systems/localhost'
+curl -k --user bob:bobpwd -X DELETE "https://localhost:9443/inventory/api/systems/localhost"
 ```
 
 You can expect to see the following response:
@@ -2724,7 +2756,7 @@ You can expect to see the following response:
 This response means that your endpoint is secure. Validate that it works correctly by calling the ***/systems*** endpoint with the following curl command:
 
 ```bash
-curl 'http://localhost:9080/inventory/api/systems'
+curl "http://localhost:9080/inventory/api/systems"
 ```
 
 You can expect to see the following output:
@@ -2903,6 +2935,7 @@ import java.util.List;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameters;
@@ -2949,9 +2982,13 @@ public class SystemResource {
     @GET
     @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
-    @APIResponseSchema(value = SystemData.class,
-        responseDescription = "A list of system data stored within the inventory.",
-        responseCode = "200")
+    @APIResponse(responseCode = "200",
+        description = "A list of system data stored within the inventory.",
+        content = {
+            @Content(schema = @Schema(
+                type = SchemaType.ARRAY,
+                implementation = SystemData.class))
+        })
     @Operation(
         summary = "List contents.",
         description = "Returns the currently stored system data in the inventory.",
@@ -3366,7 +3403,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.5</version>
+            <version>42.7.6</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -3398,7 +3435,7 @@ Replace the ***pom.xml*** file.
                             <dependency>
                                 <groupId>org.postgresql</groupId>
                                 <artifactId>postgresql</artifactId>
-                                <version>42.7.5</version>
+                                <version>42.7.6</version>
                             </dependency>
                         </dependencyGroup>
                     </copyDependencies>
@@ -3414,8 +3451,10 @@ Replace the ***pom.xml*** file.
 Configure the client https port by setting the ***\<liberty.var.client.https.port\>*** to ***9444***.
 
 In your dev mode console for the ***inventory*** microservice, press `Ctrl+C` to stop the Liberty instance. Then, restart the dev mode of the ***inventory*** microservice.
+
+
 ```bash
-mvn liberty:dev
+./mvnw liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode again:
@@ -3431,8 +3470,8 @@ Open another command-line session and run the ***system*** microservice from the
 
 
 ```bash
-cd /home/project/guide-liberty-deep-dive/finish/system
-mvn liberty:run
+cd /home/project/guide-liberty-deep-dive/finish
+./mvnw -f system/pom.xml liberty:run
 ```
 
 Wait until the following message displays on the ***system*** microservice console.
@@ -3443,7 +3482,7 @@ CWWKF0011I: The defaultServer server is ready to run a smarter planet. ...
 You can check that the ***system*** microservice is secured against unauthenticated requests at the ***https\://localhost:9444/system/api/heapsize*** URL. Open another command-line session and run the following command:
 
 ```bash
-curl -kf 'https://localhost:9444/system/api/heapsize'
+curl -kf "https://localhost:9444/system/api/heapsize"
 ```
 
 You should see the following response:
@@ -3464,7 +3503,7 @@ Make an authorized request to the new ***/client/{hostname}*** endpoint.
 As this endpoint is restricted to ***admin***, you can use the login credentials for ***bob***, which is in the ***admin*** group.
 
 ```bash
-curl -k --user bob:bobpwd -X POST 'https://localhost:9443/inventory/api/systems/client/localhost'
+curl -k --user bob:bobpwd -X POST "https://localhost:9443/inventory/api/systems/client/localhost"
 ```
 
 You can expect the following output:
@@ -3827,6 +3866,7 @@ import java.util.List;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameters;
@@ -3874,9 +3914,13 @@ public class SystemResource {
     @GET
     @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
-    @APIResponseSchema(value = SystemData.class,
-        responseDescription = "A list of system data stored within the inventory.",
-        responseCode = "200")
+    @APIResponse(responseCode = "200",
+        description = "A list of system data stored within the inventory.",
+        content = {
+            @Content(schema = @Schema(
+                type = SchemaType.ARRAY,
+                implementation = SystemData.class))
+        })
     @Operation(
         summary = "List contents.",
         description = "Returns the currently stored system data in the inventory.",
@@ -4203,10 +4247,10 @@ To review all the metrics, run the following curl command:
 curl -k --user bob:bobpwd https://localhost:9443/metrics
 ```
 
+When you are done checking out the service, stop both the ***inventory*** and ***system*** services by pressing `Ctrl+C` in the command-line sessions where you ran them.
+
 
 ::page{title="Building the container "}
-
-Press `Ctrl+C` in the command-line session to stop the ***mvn liberty:dev*** dev mode that you started in the previous section.
 
 Navigate to your application directory:
 
@@ -4402,7 +4446,7 @@ Build and run the container by running the ***devc*** goal with the PostgreSQL c
 ```bash
 chmod 777 /home/project/guide-liberty-deep-dive/start/inventory/target/liberty/wlp/usr/servers/defaultServer/logs
 POSTGRES_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" postgres-container`
-mvn liberty:devc \
+./mvnw liberty:devc \
   -DdockerRunOpts="-e POSTGRES_HOSTNAME=$POSTGRES_IP" \
   -DserverStartTimeout=240
 ```
@@ -4453,14 +4497,15 @@ docker rm postgres-container
 
 ### Building the container image
 
-Run the ***mvn package*** command from the ***start/inventory*** directory so that the ***.war*** file resides in the ***target*** directory.
+Run the Maven ***package*** command from the ***start/inventory*** directory so that the ***.war*** file resides in the ***target*** directory.
 
 ```bash
 cd /home/project/guide-liberty-deep-dive/start/inventory
 ```
 
+
 ```bash
-mvn package
+./mvnw package
 ```
 
 Build your Docker image with the following commands:
@@ -5031,7 +5076,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.5</version>
+            <version>42.7.6</version>
             <scope>provided</scope>
         </dependency>
         
@@ -5039,19 +5084,19 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.12.2</version>
+            <version>5.13.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.21.0</version>
+            <version>1.21.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>1.21.0</version>
+            <version>1.21.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -5098,7 +5143,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-auth-jwt</artifactId>
-            <version>4.5.14</version>
+            <version>5.0.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -5130,7 +5175,7 @@ Replace the ***pom.xml*** file.
                             <dependency>
                                 <groupId>org.postgresql</groupId>
                                 <artifactId>postgresql</artifactId>
-                                <version>42.7.5</version>
+                                <version>42.7.6</version>
                             </dependency>
                         </dependencyGroup>
                     </copyDependencies>
@@ -5166,7 +5211,7 @@ You can run the Maven ***verify*** goal, which compiles the java files, starts t
 In this Skills Network environment, you can test the HTTP protcol only.
 ```bash
 export TESTCONTAINERS_RYUK_DISABLED=true
-mvn verify
+./mvnw verify
 ```
 
 
@@ -5483,9 +5528,10 @@ In the ***pom.xml***, add the ***\<configuration\>*** element as the following:
 
 Rebuild and restart the ***inventory*** service by dev mode:
 
+
 ```
-mvn clean
-mvn liberty:dev
+./mvnw clean
+./mvnw liberty:dev
 ```
 
 In the ***Dockerfile***, replace the Liberty image at the ***FROM*** statement with ***websphere-liberty*** as shown in the following example:
