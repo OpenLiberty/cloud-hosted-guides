@@ -368,9 +368,10 @@ Start your Docker environment. Dockerfiles are provided for you to use.
 
 To build the application, run the Maven ***install*** and ***package*** goals from the command line in the ***start*** directory:
 
+
 ```bash
-mvn -pl models install
-mvn package
+./mvnw -pl models install
+./mvnw package
 ```
 
 
