@@ -33,9 +33,9 @@ To learn more about REST services and how you can write them, see
 ::page{title="Getting started"}
 
 To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
+select ***Terminal*** > ***New Terminal*** from the menu of the IDE.
 
-Run the following command to navigate to the **/home/project** directory:
+Run the following command to navigate to the ***/home/project*** directory:
 
 ```bash
 cd /home/project
@@ -66,7 +66,7 @@ sed -i 's=http://localhost:9080/artists='"https://${USERNAME}-9080.$(echo $TOOL_
 
 To try out the application, run the following Maven goal to build the application and deploy it to Open Liberty:
 ```bash
-mvn liberty:run
+./mvnw liberty:run
 ```
 
 After you see the following message, your Liberty instance is ready:
@@ -96,7 +96,7 @@ dj wrote 0 albums:
 After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
-mvn liberty:stop
+./mvnw liberty:stop
 ```
 
 
@@ -112,7 +112,7 @@ cd /home/project/guide-rest-client-angularjs/start
 When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
-mvn liberty:dev
+./mvnw liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
