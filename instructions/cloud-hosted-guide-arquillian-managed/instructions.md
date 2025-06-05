@@ -25,9 +25,9 @@ You will work with an ***inventory*** microservice, which stores information abo
 ::page{title="Getting started"}
 
 To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
+select ***Terminal*** > ***New Terminal*** from the menu of the IDE.
 
-Run the following command to navigate to the **/home/project** directory:
+Run the following command to navigate to the ***/home/project*** directory:
 
 ```bash
 cd /home/project
@@ -47,14 +47,17 @@ The ***finish*** directory contains the finished project that you will build.
 
 ### Try what you'll build
 
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+
 Run the following commands to navigate to the ***finish*** directory and run the tests:
+
 
 ```bash
 cd finish
-mvn clean package
-mvn liberty:create liberty:install-feature
-mvn liberty:configure-arquillian
-mvn failsafe:integration-test
+./mvnw clean package
+./mvnw liberty:create liberty:install-feature
+./mvnw liberty:configure-arquillian
+./mvnw failsafe:integration-test
 ```
 
 Look for the following output:
@@ -92,7 +95,7 @@ You'll develop tests that use Arquillian and JUnit to verify the ***inventory***
 When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
-mvn liberty:dev
+./mvnw liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
@@ -284,7 +287,7 @@ Open another command-line session and run the ***configure-arquillian*** goal fr
 
 ```bash
 cd /home/project/guide-arquillian-managed/start
-mvn liberty:configure-arquillian
+./mvnw liberty:configure-arquillian
 ```
 
 Because you started Open Liberty in dev mode, all the changes were automatically picked up. You can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode. Look for the following output:
@@ -315,15 +318,16 @@ Run the Maven command to package the application. Then, run the Liberty Maven Pl
 
 ```bash
 cd /home/project/guide-arquillian-managed/start
-mvn clean package
-mvn liberty:create liberty:install-feature
-mvn liberty:configure-arquillian
+./mvnw clean package
+./mvnw liberty:create liberty:install-feature
+./mvnw liberty:configure-arquillian
 ```
 
 Now, you can run your Arquillian tests with the Maven ***integration-test*** goal:
 
+
 ```bash
-mvn failsafe:integration-test
+./mvnw failsafe:integration-test
 ```
 
 In the test output, you can see that the Liberty instance launched, and that the web archive, ***arquillian-managed***, started as an application in the instance. You can also see that the tests are running and that the results are reported.
