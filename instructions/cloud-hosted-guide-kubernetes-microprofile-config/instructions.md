@@ -52,9 +52,10 @@ The ***finish*** directory contains the finished project that you will build.
 
 The two microservices you will deploy are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of the running container. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This demonstrates how communication can be established between pods inside a cluster. To build these applications, navigate to the ***start*** directory and run the following command.
 
+
 ```bash
 cd start
-mvn clean package
+./mvnw clean package
 ```
 
 
@@ -508,10 +509,10 @@ Using the ***valueFrom*** field, you can specify the value of an environment var
 ::page{title="Deploying your changes"}
 
 
-Rebuild the application using ***mvn clean package***.
+Rebuild the application using Maven ***clean package***.
 ```bash
 cd /home/project/guide-kubernetes-microprofile-config/start
-mvn clean package
+./mvnw clean package
 ```
 
 Run the ***docker build*** commands to rebuild container images for your application:
@@ -605,7 +606,7 @@ sed -i 's=localhost:31000='"localhost:$SYSTEM_NODEPORT"'=g' system/pom.xml
 Run the integration tests by using the following command:
 
 ```bash
-mvn failsafe:integration-test \
+./mvnw failsafe:integration-test \
     -Dsystem.service.root=localhost:$SYSTEM_NODEPORT \
     -Dsystem.context.root=/dev \
     -Dinventory.service.root=localhost:$INVENTORY_NODEPORT
