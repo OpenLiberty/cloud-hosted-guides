@@ -162,10 +162,11 @@ chmod 777 /home/project/guide-docker/start/target/liberty/wlp/usr/servers/defaul
 Build and run the container by running the ***devc*** goal from the ***start*** directory:
 
 ```bash
-mvn liberty:devc
+./mvnw liberty:devc
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
+
 ```
 **************************************************************
 *    Liberty is running in dev mode.
@@ -346,7 +347,7 @@ Another useful feature of dev mode with a container is the ability to pass addit
 ```
 <groupId>io.openliberty.tools</groupId>
 <artifactId>liberty-maven-plugin</artifactId>
-<version>3.11.2</version>
+<version>3.11.3</version>
 <configuration>
     <dockerRunOpts>-e ENV_VAR=exampleValue</dockerRunOpts>
 </configuration>
@@ -357,7 +358,7 @@ If the Dockerfile isn't located in the directory that the ***devc*** goal is bei
 Additionally, both of these options can be passed from the command line when running the ***devc*** goal by adding ***-D*** as such:
 
 ```
-mvn liberty:devc \
+./mvnw liberty:devc \
 -DdockerRunOpts="-e ENV_VAR=exampleValue" \
 -Ddockerfile="./path/to/file"
 ```
