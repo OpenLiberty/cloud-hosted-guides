@@ -66,19 +66,24 @@ The ***finish*** directory in the root of this guide contains the finished appli
 
 To try out the application, first go to the ***finish*** directory and run the following Maven goal to generate all the gRPC abstract classes defined in the ***.proto*** file. 
 
+
 ```bash
 cd finish
-mvn -pl systemproto install
+./mvnw -pl systemproto install
 ```
 
 Start the ***system*** service by running the following command:
+
+
 ```bash
-mvn -pl system liberty:run
+./mvnw -pl system liberty:run
 ```
 
 Next, open another command-line session, navigate to the ***finish*** directory, and start the ***query*** service by using the following command:
+
+
 ```bash
-mvn -pl query liberty:run
+./mvnw -pl query liberty:run
 ```
 
 
@@ -101,9 +106,11 @@ Visit the ***/query/properties/java*** endpoint to test out bidirectional stream
 Observe the output from the consoles running the ***system*** and ***query*** services.
 
 After you are finished checking out the application, stop both the ***query*** and ***system*** services by pressing `Ctrl+C` in the command-line sessions where you ran them. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
+
+
 ```bash
-mvn -pl system liberty:stop
-mvn -pl query liberty:stop
+./mvnw -pl system liberty:stop
+./mvnw -pl query liberty:stop
 ```
 
 
@@ -189,8 +196,9 @@ The ***getBidirectionalProperties*** RPC defines the bidirectional streaming cal
 To compile the ***.proto*** file, the ***pom.xml*** Maven configuration file needs the ***grpc-protobuf***, ***grpc-stub***, ***javax.annotation-api*** dependencies, and the ***protobuf-maven-plugin*** plugin. To install the correct version of the Protobuf compiler automatically, the ***os-maven-plugin*** extension is required in the ***build*** configuration.
 
 Run the following command to generate the gRPC classes.
+
 ```bash
-mvn -pl systemproto install
+./mvnw -pl systemproto install
 ```
 
 
@@ -204,14 +212,16 @@ cd /home/project/guide-grpc-intro/start
 
 When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following command to start the ***system*** service in dev mode:
 
+
 ```bash
-mvn -pl system liberty:dev
+./mvnw -pl system liberty:dev
 ```
 
 Open another command-line session, navigate to the ***start*** directory, and run the following command to start the ***query*** service in dev mode:
 
+
 ```bash
-mvn -pl query liberty:dev
+./mvnw -pl query liberty:dev
 ```
 
 After you see the following message, your Liberty instances are ready in dev mode:
