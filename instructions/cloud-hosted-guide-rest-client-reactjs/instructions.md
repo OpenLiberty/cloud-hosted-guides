@@ -60,14 +60,14 @@ The ***finish*** directory in the root of this guide contains the finished appli
 In this IBM cloud environment, you need to update the URL to access the ***artists.json***. Run the following commands to go to the ***finish*** directory and update the files where the URL has been specified:
 ```bash
 cd finish
-mvn process-resources
+./mvnw process-resources
 sed -i 's=http://localhost:9080/artists='"https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-reactjs/finish/src/main/webapp/_next/static/chunks/app/page-*.js
 sed -i 's=http://localhost:9080/artists='"https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-reactjs/finish/src/main/frontend/src/app/ArtistTable.jsx
 ```
 
 To try out the application, run the following Maven goal to build the application and deploy it to Open Liberty:
 ```bash
-mvn liberty:run
+./mvnw liberty:run
 ```
 
 After you see the following message, your application Liberty instance is ready:
@@ -89,7 +89,7 @@ See the following output:
 After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
-mvn liberty:stop
+./mvnw liberty:stop
 ```
 
 
@@ -105,7 +105,7 @@ cd /home/project/guide-rest-client-reactjs/start
 When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
-mvn liberty:dev
+./mvnw liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
@@ -634,7 +634,7 @@ In a new command-line session, build the front end by running the following comm
 
 ```bash
 cd /home/project/guide-rest-client-reactjs/start
-mvn process-resources
+./mvnw process-resources
 ```
 
 The build may take a few minutes to complete. You can rebuild the front end at any time with the Maven ***process-resources*** goal. Any local changes to your JavaScript and HTML are picked up when you build the front-end.
@@ -700,7 +700,7 @@ Update the ***pom.xml*** file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.12.2</version>
+            <version>5.13.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -809,7 +809,7 @@ To run the default test, you can add the ***testing*** configuration to the ***f
 
 ```bash
 cd /home/project/guide-rest-client-reactjs/start
-mvn process-resources
+./mvnw process-resources
 ```
 
 If the test passes, you see a similar output to the following example:
