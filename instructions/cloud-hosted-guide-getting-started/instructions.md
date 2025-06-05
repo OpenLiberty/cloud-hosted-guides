@@ -69,12 +69,13 @@ Your ***pom.xml*** file is located in the ***start*** directory and is configure
 
 To begin, navigate to the ***start*** directory. Build the ***system*** microservice that is provided and deploy it to Open Liberty by running the Maven ***liberty:run*** goal:
 
+
 ```bash
 cd start
-mvn liberty:run
+./mvnw liberty:run
 ```
 
-The ***mvn*** command initiates a Maven build, during which the ***target*** directory is created to store all build-related files.
+The Maven command initiates a Maven build, during which the ***target*** directory is created to store all build-related files.
 
 The ***liberty:run*** argument specifies the Open Liberty ***run*** goal, which starts an Open Liberty instance in the foreground. As part of this phase, an Open Liberty runtime is downloaded and installed into the ***target/liberty/wlp*** directory, an instance of Liberty is created and configured in the ***target/liberty/wlp/usr/servers/defaultServer*** directory, and the application is installed into that instance using [loose config](https://www.ibm.com/support/knowledgecenter/en/SSEQTP_liberty/com.ibm.websphere.wlp.doc/ae/rwlp_loose_applications.html).
 
@@ -111,8 +112,9 @@ curl -s http://localhost:9080/system/properties | jq
 
 When you need to stop the Liberty instance, press `Ctrl+C` in the command-line session where you ran Liberty, or run the ***liberty:stop*** goal from the ***start*** directory in another command-line session:
 
+
 ```bash
-mvn liberty:stop
+./mvnw liberty:stop
 ```
 
 
@@ -120,10 +122,12 @@ mvn liberty:stop
 
 Although you can start and stop Liberty in the foreground by using the Maven ***liberty:run*** goal, you can also start and stop the Liberty instance in the background with the Maven ***liberty:start*** and ***liberty:stop*** goals:
 
+
 ```bash
-mvn liberty:start
-mvn liberty:stop
+./mvnw liberty:start
+./mvnw liberty:stop
 ```
+
 
 
 
@@ -133,9 +137,11 @@ The Open Liberty Maven plug-in includes a ***dev*** goal that listens for any ch
 
 Stop the Open Liberty instance if it is running, and start it in [dev mode](https://openliberty.io/docs/latest/development-mode.html) by running the ***liberty:dev*** goal in the ***start*** directory:
 
+
 ```bash
-mvn liberty:dev
+./mvnw liberty:dev
 ```
+
 
 Dev mode automatically picks up changes that you make to your application and allows you to run tests by pressing the ***enter/return*** key in the active command-line session. When you’re working on your application, rather than rerunning Maven commands, press the ***enter/return*** key to verify your change.
 
@@ -239,8 +245,8 @@ curl -s http://localhost:9080/health | jq
 
 ```
 {
-    "checks":[],
-    "status":"UP"
+    "status":"UP",
+    "checks":[]
 }
 ```
 
@@ -388,20 +394,20 @@ curl -s http://localhost:9080/health | jq
 
 
 ```
-{  
-   "checks":[  
-      {  
-         "data":{},
-         "name":"SystemResource Readiness Check",
-         "status":"UP"
-      },
-      {  
-         "data":{},
-         "name":"SystemResource Liveness Check",
-         "status":"UP"
-      }
-   ],
-   "status":"UP"
+{
+  "status": "UP",
+  "checks": [
+    {
+      "name": "SystemResource Liveness Check",
+      "status": "UP",
+      "data": {}
+    },
+    {
+      "name": "SystemResource Readiness Check",
+      "status": "UP",
+      "data": {}
+    }
+  ]
 }
 ```
 
@@ -427,7 +433,7 @@ curl -s http://localhost:9080/health/live | jq
 
 
 
-Making code changes and recompiling is fast and straightforward. Open Liberty dev mode automatically picks up changes in the ***.class*** files and artifacts, without needing to be restarted. Alternatively, you can run the ***run*** goal and manually repackage or recompile the application by using the ***mvn package*** command or the ***mvn compile*** command while Liberty is running. Dev mode was added to further improve the developer experience by minimizing turnaround times.
+Making code changes and recompiling is fast and straightforward. Open Liberty dev mode automatically picks up changes in the ***.class*** files and artifacts, without needing to be restarted. Alternatively, you can run the ***run*** goal and manually repackage or recompile the application by using the Maven ***package*** goal or the Maven ***compile*** goal while Liberty is running. Dev mode was added to further improve the developer experience by minimizing turnaround times.
 
 
 
@@ -504,10 +510,11 @@ When you are done checking out the service, exit dev mode by pressing `Ctrl+C` i
 
 To containerize the application, you need a ***Dockerfile***. This file contains a collection of instructions that define how a Docker image is built, what files are packaged into it, what commands run when the image runs as a container, and other information. You can find a complete ***Dockerfile*** in the ***start*** directory. This ***Dockerfile*** copies the ***.war*** file into a Docker image that contains the Java runtime and a preconfigured Open Liberty runtime.
 
-Run the ***mvn package*** command from the ***start*** directory so that the ***.war*** file resides in the ***target*** directory.
+Run the Maven ***package*** goal from the ***start*** directory so that the ***.war*** file resides in the ***target*** directory.
+
 
 ```bash
-mvn package
+./mvnw package
 ```
 
 
@@ -590,7 +597,7 @@ Build and run the container by running the devc goal from the ***start*** direct
 
 ```bash
 chmod 777 /home/project/guide-getting-started/start/target/liberty/wlp/usr/servers/defaultServer/logs
-mvn liberty:devc -DserverStartTimeout=300
+./mvnw liberty:devc -DserverStartTimeout=300
 ```
 
 When you see the following message, Open Liberty is ready to run in dev mode:
@@ -747,7 +754,7 @@ Replace the pom.xml file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.12.2</version>
+            <version>5.13.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -832,9 +839,13 @@ So far, Open Liberty was running out of the ***target/liberty/wlp*** directory, 
 Open Liberty supports a number of different server packages. The sample application currently generates a ***usr*** package that contains the Liberty runtime and application to be extracted onto an Open Liberty installation.
 
 Instead of creating a server package, you can generate a runnable JAR file that contains the application along with a Liberty runtime. This JAR file can then be run anywhere and deploy your application and runtime at the same time. To generate a runnable JAR file, override the  ***include*** property: 
+
+
 ```bash
-mvn liberty:package -Dinclude=runnable
+./mvnw liberty:package -Dinclude=runnable
 ```
+
+
 
 The packaging type is overridden from the ***usr*** package to the ***runnable*** package. This property then propagates to the ***liberty-maven-plugin*** plug-in, which generates the server package based on the ***openliberty-kernel*** package.
 
