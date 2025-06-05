@@ -81,9 +81,11 @@ The first step of deploying to Kubernetes is to build your microservices and con
 The starting Java project, which you can find in the ***start*** directory, is a multi-module Maven project that's made up of the ***system*** and ***inventory*** microservices. Each microservice resides in its own directory, ***start/system*** and ***start/inventory***. Each of these directories also contains a Dockerfile, which is necessary for building Docker images. If you're unfamiliar with Dockerfiles, check out the [Containerizing Microservices](https://openliberty.io/guides/containerize.html) guide, which covers Dockerfiles in depth.
 
 Navigate to the ***start*** directory and build the applications by running the following commands:
+
+
 ```bash
 cd start
-mvn clean package
+./mvnw clean package
 ```
 
 
@@ -489,7 +491,7 @@ When you're building your application, you might want to quickly test a change. 
 cd /home/project/guide-kubernetes-intro/start
 kubectl delete -f kubernetes.yaml
 
-mvn clean package
+./mvnw clean package
 docker build -t system:1.0-SNAPSHOT system/.
 docker build -t inventory:1.0-SNAPSHOT inventory/.
 docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
@@ -527,7 +529,7 @@ sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' system/pom.xml
 Run the integration tests by using the following command:
 
 ```bash
-mvn failsafe:integration-test
+./mvnw failsafe:integration-test
 ```
 
 If the tests pass, you'll see an output similar to the following for each service respectively:
