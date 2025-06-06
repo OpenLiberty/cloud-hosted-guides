@@ -703,7 +703,7 @@ Replace the Maven project file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.12.2</version>
+            <version>5.13.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -813,12 +813,13 @@ The ***mpGraphQL*** feature that is added to the ***server.xml*** enables the us
 
 From the ***start*** directory, run the following commands:
 
+
 ```bash
-mvn -pl models install
-mvn package
+./mvnw -pl models install
+./mvnw package
 ```
 
-The ***mvn install*** command compiles and packages the object types you created to a ***.jar*** file. This allows them to be used by the ***system*** and ***graphql*** services. The ***mvn package*** command packages the ***system*** and ***graphql*** services to ***.war*** files.
+The Maven ***install*** goal compiles and packages the object types you created to a ***.jar*** file. This allows them to be used by the ***system*** and ***graphql*** services. The Maven ***package*** goal packages the ***system*** and ***graphql*** services to ***.war*** files.
 
 
 
