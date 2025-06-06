@@ -55,15 +55,16 @@ The ***finish*** directory in the root of this guide contains the finished appli
 
 To try out the application, go to the finish directory and run the following Maven goal to build the ***system*** service and deploy it to Open Liberty:
 
-```bash
-mvn -pl system liberty:run
 
+```bash
+./mvnw -pl system liberty:run
 ```
 
 Next, open another command-line session and run the following command to start the ***client*** service:
 
+
 ```bash
-mvn -pl client liberty:run
+./mvnw -pl client liberty:run
 ```
 
 After you see the following message in both command-line sessions, both your services are ready.
@@ -76,9 +77,10 @@ Check out the service at the ***http\://localhost:9080*** URL. See that the tabl
 
 After you are finished checking out the application, stop both the ***system*** and ***client*** services by pressing `Ctrl+C` in the command-line sessions where you ran them. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
 
+
 ```bash
-mvn -pl system liberty:stop
-mvn -pl client liberty:stop
+./mvnw -pl system liberty:stop
+./mvnw -pl client liberty:stop
 ```
  
 
@@ -94,8 +96,9 @@ cd /home/project/guide-jakarta-websocket/start
 
 When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following command to start the ***system*** service in dev mode:
 
+
 ```bash
-mvn -pl system liberty:dev
+./mvnw -pl system liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
@@ -328,8 +331,9 @@ In this section, you will create the WebSocket client that communicates with the
 
 On another command-line session, navigate to the ***start*** directory and run the following goal to start the ***client*** service in dev mode:
 
+
 ```bash
-mvn -pl client liberty:dev
+./mvnw -pl client liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
