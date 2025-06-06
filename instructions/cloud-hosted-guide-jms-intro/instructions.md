@@ -63,14 +63,15 @@ To try out the application, first go to the ***finish*** directory and run the f
 
 ```bash
 cd /home/project/guide-jms-intro/finish
-mvn -pl models clean install
+./mvnw -pl models clean install
 ```
 
 
 Start the ***inventory*** microservice by running the following command:
 
+
 ```bash
-mvn -pl inventory liberty:run
+./mvnw -pl inventory liberty:run
 ```
 
 Next, open another command-line session, navigate to the ***finish*** directory, and start the ***system*** microservice by using the following command:
@@ -78,7 +79,7 @@ Next, open another command-line session, navigate to the ***finish*** directory,
 
 ```bash
 cd /home/project/guide-jms-intro/finish
-mvn -pl system liberty:run
+./mvnw -pl system liberty:run
 ```
 
 When you see the following message, your Liberty instances are ready:
@@ -139,8 +140,8 @@ After you are finished checking out the application, stop the Liberty instances 
 
 ```bash
 cd /home/project/guide-jms-intro/finish
-mvn -pl inventory liberty:stop
-mvn -pl system liberty:stop
+./mvnw -pl inventory liberty:stop
+./mvnw -pl system liberty:stop
 ```
 
 ::page{title="Creating the consumer in the inventory microservice"}
@@ -155,8 +156,9 @@ When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/devel
 
 Run the following goal to start the ***inventory*** microservice in dev mode:
 
+
 ```bash
-mvn -pl inventory liberty:dev
+./mvnw -pl inventory liberty:dev
 ```
 
 When you see the following message, your Liberty instance is ready in dev mode:
@@ -332,8 +334,9 @@ Open another command-line session, navigate to the ***start*** directory, and ru
 cd /home/project/guide-jms-intro/start
 ```
 
+
 ```bash
-mvn -pl system liberty:dev
+./mvnw -pl system liberty:dev
 ```
 
 When you see the following message, your Liberty instance is ready in dev mode:
@@ -784,7 +787,7 @@ Replace the ***pom.xml*** file of the inventory service.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.12.2</version>
+            <version>5.13.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -1002,7 +1005,7 @@ Replace the ***pom.xml*** file of the system service.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.12.2</version>
+            <version>5.13.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -1140,7 +1143,7 @@ Start the ***inventory*** microservice by running the following command in dev m
 
 ```bash
 cd /home/project/guide-jms-intro/start
-mvn -pl inventory liberty:dev
+./mvnw -pl inventory liberty:dev
 ```
 
 Next, open another command-line session, navigate to the ***start*** directory, and start the ***system*** microservice by using the following command:
@@ -1148,7 +1151,7 @@ Next, open another command-line session, navigate to the ***start*** directory, 
 
 ```bash
 cd /home/project/guide-jms-intro/start
-mvn -pl system liberty:dev
+./mvnw -pl system liberty:dev
 ```
 
 When you see the following message, your Liberty instances are ready in dev mode:
