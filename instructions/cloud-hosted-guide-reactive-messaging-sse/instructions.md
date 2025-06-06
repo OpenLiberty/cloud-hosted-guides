@@ -290,8 +290,8 @@ To build the application, navigate to the ***start*** directory and run the foll
 
 ```bash
 cd /home/project/guide-reactive-messaging-sse/start
-mvn -pl models install
-mvn package
+./mvnw -pl models install
+./mvnw package
 ```
 
 
