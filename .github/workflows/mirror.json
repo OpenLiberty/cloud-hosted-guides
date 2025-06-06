@@ -443,5 +443,12 @@
         "gitlab": "OpenLiberty-GPXX0KQTEN",
         "quicklab_id": 7634,
         "lab_id": 13818
+    },
+    {
+        "guide": "gradle-multimodules",
+        "github": "cloud-hosted-guide-gradle-multimodules",
+        "gitlab": "OpenLiberty-GPXX09PNEN",
+        "quicklab_id": 7974,
+        "lab_id": 14897
     }
 ]
