@@ -68,16 +68,19 @@ The ***finish*** directory in the root of this guide contains the finished appli
 
 To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application:
 
+
 ```bash
 cd finish
-mvn install
+./mvnw install
 ```
 
 To deploy your EAR application on Open Liberty, run the Maven ***liberty:run*** goal from the finish directory using the ***-pl*** flag to specify the ***ear*** project. The ***-pl*** flag specifies the project where the Maven goal runs.
 
+
 ```bash
-mvn -pl ear liberty:run
+./mvnw -pl ear liberty:run
 ```
+
 
 After you see the following message, your Liberty instance is ready:
 
@@ -90,8 +93,9 @@ When the Liberty instance is running, click the following button to check out yo
 
 After you are finished checking out the application, stop the Open Liberty instance by pressing `Ctrl+C` in the command-line session where you ran the Liberty. Alternatively, you can run the ***liberty:stop*** goal using the ***-pl ear*** flag from the ***finish*** directory in another command-line session:
 
+
 ```bash
-mvn -pl ear liberty:stop
+./mvnw -pl ear liberty:stop
 ```
 
 
@@ -241,7 +245,7 @@ Replace the ear/POM file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.12.2</version>
+            <version>5.13.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -436,7 +440,7 @@ cd /home/project/guide-maven-multimodules/start
 When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
-mvn liberty:dev
+./mvnw liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
@@ -684,17 +688,17 @@ When you are done checking out the service, exit dev mode by pressing `Ctrl+C` i
 
 ::page{title="Building the multi-module application"}
 
-You have aggregated and developed the application. Now, you can run ***mvn install*** from the ***start*** directory to build all your modules. This command creates a JAR file in the ***jar/target*** directory, a WAR file in the ***war/target*** directory, and an EAR file that contains the WAR file in the ***ear/target*** directory.
+You have aggregated and developed the application. Now, you can run the Maven ***install*** goal from the ***start*** directory to build all your modules. This command creates a JAR file in the ***jar/target*** directory, a WAR file in the ***war/target*** directory, and an EAR file that contains the WAR file in the ***ear/target*** directory.
 
 Run the following commands to navigate to the start directory and build the entire application:
 ```bash
 cd /home/project/guide-maven-multimodules/start
-mvn install
+./mvnw install
 ```
 
-Because the modules are independent, you can re-build them individually by running ***mvn install*** from the corresponding ***start*** directory for each module.
+Because the modules are independent, you can re-build them individually by running the Maven ***install*** goal from the corresponding ***start*** directory for each module.
 
-Or, run `mvn -pl <child project> install` from the start directory.
+Or, run `./mvnw -pl <child project> install` from the start directory.
 
 
 ::page{title="Summary"}
