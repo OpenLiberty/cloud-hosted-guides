@@ -54,9 +54,10 @@ The ***finish*** directory in the root of this guide contains the finished appli
 
 To try out the application, first go to the ***finish*** directory and run Maven with the ***liberty:run*** goal to build the application and deploy it to Open Liberty:
 
+
 ```bash
 cd finish
-mvn liberty:run
+./mvnw liberty:run
 ```
 
 After you see the following message, your Liberty instance is ready.
@@ -75,7 +76,7 @@ Click the <img src="https://raw.githubusercontent.com/OpenLiberty/guide-jakarta-
 After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
-mvn liberty:stop
+./mvnw liberty:stop
 ```
 
 ::page{title="Creating a static Jakarta Faces page"}
@@ -91,7 +92,7 @@ cd /home/project/guide-jakarta-faces/start
 When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
-mvn liberty:dev
+./mvnw liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
@@ -331,7 +332,7 @@ public class SystemLoadBean implements Serializable {
 
 Annotate the ***SystemLoadBean*** class with a ***@Named*** annotation to make it accessible in the Jakarta Faces pages under the ***systemLoadBean*** name. Because the ***SystemLoadBean*** bean is a CDI-managed bean, a scope is necessary. Annotating it with the ***@ApplicationScoped*** annotation indicates that it is initialized once and is shared between all requests while the application runs. To learn more about CDI, see the [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html) guide.
 
-The ***@PostConstruct*** annotation ensures the ***init()*** method runs after the ***SystemLoadBean*** is initialized and dependencies are injected. The ***init()*** method sets up any required resources for the bean's lifecyccle.
+The ***@PostConstruct*** annotation ensures the ***init()*** method runs after the ***SystemLoadBean*** is initialized and dependencies are injected. The ***init()*** method sets up any required resources for the bean's lifecycle.
 
 The ***fetchSystemLoad()*** method retrieves the current system load and memory usage, then updates the list of system load data.
 
