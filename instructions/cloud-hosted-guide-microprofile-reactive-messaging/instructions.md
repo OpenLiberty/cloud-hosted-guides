@@ -456,19 +456,19 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>kafka</artifactId>
-            <version>1.21.0</version>
+            <version>1.21.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.12.2</version>
+            <version>5.13.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>1.21.0</version>
+            <version>1.21.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -544,9 +544,10 @@ Start your Docker environment. Dockerfiles are provided for you to use.
 
 To build the application, run the Maven ***install*** and ***package*** goals from the command line in the ***start*** directory:
 
+
 ```bash
-mvn -pl models install
-mvn package
+./mvnw -pl models install
+./mvnw package
 ```
 
 
