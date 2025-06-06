@@ -88,7 +88,7 @@ Ensure that you are in the ***start*** directory and run the following command t
 
 ```bash
 cd /home/project/guide-openliberty-operator-intro/start
-mvn clean package
+./mvnw clean package
 ```
 
 ### Building the image
