@@ -67,7 +67,7 @@ To try out the test, first go to the ***finish*** directory and run the followin
 ```bash
 cd /home/project/guide-testcontainers/finish
 export TESTCONTAINERS_RYUK_DISABLED=true
-mvn verify
+./mvnw verify
 ```
 
 You see the following output:
@@ -137,8 +137,9 @@ chmod 777 /home/project/guide-testcontainers/start/target/liberty/wlp/usr/server
 
 Build and run the container by running the ***devc*** goal with the PostgreSQL container IP address. If your PostgreSQL container IP address is not ***172.17.0.2***, replace the command with the right IP address.
 
+
 ```bash
-mvn liberty:devc -DcontainerRunOpts="-e DB_HOSTNAME=172.17.0.2" -DserverStartTimeout=240
+./mvnw liberty:devc -DcontainerRunOpts="-e DB_HOSTNAME=172.17.0.2" -DserverStartTimeout=240
 ```
 
 Wait a moment for dev mode to start. Some error messages are expected as a result of building the docker image. Although these messages are included on the standard error stream, in this case they are not errors, just logs of the docker build progress. After you see the following message, your Liberty instance is ready in dev mode:
@@ -687,7 +688,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.5</version>
+            <version>42.7.6</version>
             <scope>provided</scope>
         </dependency>
         
@@ -695,7 +696,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.12.2</version>
+            <version>5.13.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -725,7 +726,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.21.0</version>
+            <version>1.21.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -794,7 +795,7 @@ Replace the ***pom.xml*** file.
 
 Add the required ***dependency*** for Testcontainers and Log4J libraries with ***test*** scope. The ***testcontainers*** dependency offers a general-purpose API for managing container-based test environments. The ***slf4j-reload4j*** and ***slf4j-api*** dependencies enable the Simple Logging Facade for Java (SLF4J) API for trace logging during test execution and facilitates debugging and test performance tracking. 
 
-Also, add and configure the ***maven-failsafe-plugin*** plugin, so that the integration test can be run by the ***mvn verify*** command.
+Also, add and configure the ***maven-failsafe-plugin*** plugin, so that the integration test can be run by the Maven ***verify*** goal.
 
 When you started Open Liberty in dev mode, all the changes were automatically picked up. You can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode. You see the following output:
 
@@ -828,12 +829,10 @@ docker stop postgres-container
 
 Now, use the following Maven goal to run the tests from a cold start outside of dev mode:
 
-****WINDOWS****
-****MAC****
-****LINUX****
+
 ```bash
 export TESTCONTAINERS_RYUK_DISABLED=true
-mvn clean verify
+./mvnw clean verify
 ```
 
 You see the following output:
