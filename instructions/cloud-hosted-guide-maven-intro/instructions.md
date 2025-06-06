@@ -26,25 +26,6 @@ Choosing a build tool often comes down to personal or organizational preference,
 You will create a Maven build definition file that's called a ***pom.xml*** file, which stands for Project Object Model, and use it to build your web application. You will then create a simple, automated test and configure Maven to automatically run the test.
 
 
-::page{title="Installing Maven"}
-
-
-Run the following command to test that Maven is installed:
-
-```bash
-mvn -v
-```
-
-If Maven is installed properly, you see information about the Maven installation similar to the following example:
-
-```
-Apache Maven 3.9.6 (05c21c65bdfed0f71a2f2ada8b84da59348c4c5d)
-Maven home: /Applications/Maven/apache-maven-3.9.6
-Java version: 11.0.12, vendor: International Business Machines Corporation, runtime: /Library/Java/JavaVirtualMachines/ibm-semeru-open-11.jdk/Contents/Home
-Default locale: en_US, platform encoding: UTF-8
-OS name: "mac os x", version: "11.6", arch: "x86_64", family: "mac"
-```
-
 ::page{title="Getting started"}
 
 To open a new command-line session,
@@ -72,12 +53,27 @@ The ***finish*** directory contains the finished project that you will build.
 ### Try what you'll build
 
 The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+Run the following command to test that Maven Wrapper works:
+
+
+```bash
+./mvnw -v
+```
+
+If Maven Wrapper is installed properly, you see information about the Maven installation similar to the following example:
+
+```
+Apache Maven 3.9.9 (05c21c65bdfed0f71a2f2ada8b84da59348c4c5d)
+Maven home: /Applications/Maven/apache-maven-3.9.9
+Java version: 11.0.12, vendor: International Business Machines Corporation, runtime: /Library/Java/JavaVirtualMachines/ibm-semeru-open-11.jdk/Contents/Home
+Default locale: en_US, platform encoding: UTF-8
+OS name: "mac os x", version: "11.6", arch: "x86_64", family: "mac"
+```
 
 To try out the application, first go to the ***finish*** directory and run Maven with the ***liberty:run*** goal to build the application and deploy it to Open Liberty:
 
 ```bash
-cd finish
-mvn liberty:run
+./mvnw liberty:run
 ```
 
 After you see the following message, your Liberty instance is ready.
@@ -97,7 +93,7 @@ The servlet returns a simple response of ***Hello! How are you today?***.
 After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
-mvn liberty:stop
+./mvnw liberty:stop
 ```
 
 
@@ -187,7 +183,7 @@ touch /home/project/guide-maven-intro/start/pom.xml
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.12.2</version>
+            <version>5.13.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -260,7 +256,7 @@ In the ***liberty-maven-plugin*** plug-in section, you can add a ***configuratio
 When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
-mvn liberty:dev
+./mvnw liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
