@@ -264,11 +264,11 @@ Start your Docker environment.
 
 To build the application, run the Maven ***install*** and ***package*** goals from the command-line session in the ***start*** directory:
 
-```bash
-mvn -pl models install
-mvn package
-```
 
+```bash
+./mvnw -pl models install
+./mvnw package
+```
 
 
 Run the following commands to containerize the microservices:
@@ -304,14 +304,14 @@ curl -s http://localhost:9080/query/systemLoad | jq
 When the service is ready, you see an output similar to the following example. This example was formatted for readability:
 
 ```
-
+{
     "highest": {
-        "hostname":"30bec2b63a96",       
-        ”systemLoad": 6.1
+        "hostname": "30bec2b63a96",
+        "systemLoad": 6.1
     },     
     "lowest": { 
-        "hostname":"55ec2b63a96",    
-        ”systemLoad": 0.1
+        "hostname": "55ec2b63a96",
+        "systemLoad": 0.1
     }
 }
 ```
@@ -413,7 +413,7 @@ Replace the Maven configuration file.
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>mockserver</artifactId>
-            <version>1.21.0</version>
+            <version>1.21.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -425,13 +425,13 @@ Replace the Maven configuration file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.12.2</version>
+            <version>5.13.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>1.21.0</version>
+            <version>1.21.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -723,8 +723,9 @@ Instead of using the ***thenAcceptAsync()*** method, ***Observable*** uses the *
 
 Run the Maven ***install*** and ***package*** goals from the command-line session in the ***start*** directory:
 
+
 ```bash
-mvn -pl query package
+./mvnw -pl query package
 ```
 
 Run the following command to containerize the ***query*** microservice:
@@ -1003,13 +1004,12 @@ The ***testSystemLoad()*** test case verifies that the ***query*** service can c
 
 ### Running the tests
 
-Navigate to the ***query*** directory, then verify that the tests pass by running the Maven ***verify*** goal:
+Verify that the tests pass by running the Maven ***verify*** goal on the ***query*** service:
 
 
 ```bash
 export TESTCONTAINERS_RYUK_DISABLED=true
-cd query
-mvn verify
+./mvnw -pl query verify
 ```
 
 For more information about disabling Ryuk, see the [Testcontainers custom configuration](https://java.testcontainers.org/features/configuration/#disabling-ryuk) document.
