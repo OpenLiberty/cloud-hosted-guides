@@ -68,18 +68,16 @@ The MicroProfile Config configuration profile feature supplies configurations fo
 
 When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
 
-Open a command-line session and run the following commands to navigate to the ***system*** directory and start the ***system*** service in the ***dev*** environment:
+Open a command-line session and run the following commands to start the ***system*** service in the ***dev*** environment:
 
 ```bash
-cd /home/project/guide-microprofile-config-profile/start/system
-mvn liberty:dev
+./mvnw -pl system liberty:dev
 ```
 
-Open another command-line session and run the following commands to navigate to the ***query*** directory and start the ***query*** service in the ***dev*** environment:
+Open another command-line session and run the following commands to start the ***query*** service in the ***dev*** environment:
 
 ```bash
-cd /home/project/guide-microprofile-config-profile/start/query
-mvn liberty:dev
+./mvnw -pl query liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
@@ -409,7 +407,7 @@ Before deploying, create the Dockerfile files for both ***system*** and ***query
 cp /home/project/guide-microprofile-config-profile/finish/system/Dockerfile /home/project/guide-microprofile-config-profile/start/system
 cp /home/project/guide-microprofile-config-profile/finish/query/Dockerfile /home/project/guide-microprofile-config-profile/start/query
 cd /home/project/guide-microprofile-config-profile/start
-mvn -P prod clean package
+./mvnw -P prod clean package
 docker build -t system:1.0-SNAPSHOT system/.
 docker build -t query:1.0-SNAPSHOT query/.
 ```
