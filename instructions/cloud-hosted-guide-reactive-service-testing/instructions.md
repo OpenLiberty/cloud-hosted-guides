@@ -62,20 +62,17 @@ The ***finish*** directory in the root of this guide contains the finished appli
 
 To try out the tests, go to the ***finish*** directory and run the following Maven goal to install the ***models*** artifact to the local Maven repository:
 
+
 ```bash
-cd finish
-mvn -pl models install
+./mvnw -pl models install
 ```
 
-
-
-Next, navigate to the ***finish/system*** directory and run the following Maven goal to build the ***system*** microservice and run the integration tests on an Open Liberty server in a container:
+Next, navigate to the ***finish*** directory and run the following Maven goal to build the ***system*** microservice and run the integration tests on an Open Liberty server in a container:
 
 
 ```bash
 export TESTCONTAINERS_RYUK_DISABLED=true
-cd system
-mvn verify
+./mvnw -pl system verify
 ```
 
 You will see the following output:
@@ -118,8 +115,9 @@ The example reactive application consists of the ***system*** and ***inventory**
 
 The ***start*** directory contains three directories: the ***system*** microservice directory, the ***inventory*** microservice directory, and the ***models*** directory. The ***models*** directory contains the model class that defines the structure of the system load data that is used in the application. Run the following Maven goal to install the packaged ***models*** artifact to the local Maven repository so it can be used later by the ***system*** and ***inventory*** microservices:
 
+
 ```bash
-mvn -pl models install
+./mvnw -pl models install
 ```
 
 ### Launching the system microservice in dev mode with container support
@@ -129,12 +127,6 @@ Start the microservices in dev mode by running the following command to launch a
 
 ```bash
 ./scripts/startKafka.sh
-```
-
-Navigate to the ***start/system*** directory.
-
-```bash
-cd /home/project/guide-reactive-service-testing/start/system
 ```
 
 In this IBM Cloud environment, you must first create the ***logs*** directory by running the following commands:
@@ -150,7 +142,7 @@ Run the following goal to start the ***system*** microservice in dev mode with c
 
 ```bash
 export TESTCONTAINERS_RYUK_DISABLED=true
-mvn liberty:devc
+./mvnw -pl system liberty:devc
 ```
 
 For more information about disabling Ryuk, see the [Testcontainers custom configuration](https://java.testcontainers.org/features/configuration/#disabling-ryuk) document.
@@ -377,8 +369,9 @@ After you are finished running tests, stop the Open Liberty server by pressing `
 
 If you aren't running in dev mode, you can run the tests by running the following command:
 
+
 ```bash
-mvn clean verify
+./mvnw -pl system clean verify
 ```
 
 You will see the following output:
@@ -407,12 +400,6 @@ The ***inventory*** microservice is tested in the same way as the ***system*** m
 
 ### Launching the inventory microservice in dev mode with container
 
-Navigate to the ***start/inventory*** directory.
-
-```bash
-cd /home/project/guide-reactive-service-testing/start/inventory
-```
-
 First, create the ***logs*** directory by running the following commands:
 ```bash
 mkdir -p /home/project/guide-reactive-service-testing/start/inventory/target/liberty/wlp/usr/servers/defaultServer/logs
@@ -423,7 +410,7 @@ Run the following goal to start the ***inventory*** microservice in dev mode wit
 
 
 ```bash
-mvn liberty:devc
+./mvnw -pl inventory liberty:devc
 ```
 
 ### Building a test REST client
@@ -698,8 +685,9 @@ After you are finished running tests, stop the Open Liberty server by pressing `
 
 If you aren't running in dev mode, you can run the tests by running the following command:
 
+
 ```bash
-mvn clean verify
+./mvnw -pl inventory clean verify
 ```
 
 You will see the following output:
