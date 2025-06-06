@@ -63,18 +63,20 @@ The ***finish*** directory contains the finished project that you will build.
 
 The ***finish*** directory contains the finished JWT security implementation for the services in the application. Try the finished application before you build your own.
 
-To try out the application, run the following commands to navigate to the ***finish/frontend*** directory and deploy the ***frontend*** service to Open Liberty:
+To try out the application, run the following commands to navigate to the ***finish*** directory and deploy the ***frontend*** service to Open Liberty:
+
 
 ```bash
-cd finish/frontend
-mvn liberty:run
+cd finish
+./mvnw -pl frontend liberty:run
 ```
 
-Open another command-line session and run the following commands to navigate to the ***finish/system*** directory and deploy the ***system*** service to Open Liberty:
+Open another command-line session and run the following commands to navigate to the ***finish*** directory and deploy the ***system*** service to Open Liberty:
+
 
 ```bash
-cd finish/system
-mvn liberty:run
+cd finish
+./mvnw -pl system liberty:run
 ```
 
 After you see the following message in both command-line sessions, both of your services are ready:
@@ -113,9 +115,10 @@ The response is empty because you don't have access. Access is granted if a vali
 
 When you are done with the application, stop both the ***frontend*** and ***system*** services by pressing `Ctrl+C` in the command-line sessions where you ran them. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
 
+
 ```bash
-mvn -pl system liberty:stop
-mvn -pl frontend liberty:stop
+./mvnw -pl system liberty:stop
+./mvnw -pl frontend liberty:stop
 ```
 
 
@@ -127,17 +130,18 @@ To begin, run the following command to navigate to the ***start*** directory:
 cd /home/project/guide-microprofile-jwt/start
 ```
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following commands to navigate to the ***frontend*** directory and start the ***frontend*** service in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following command to start the ***frontend*** service in dev mode:
+
 
 ```bash
-cd frontend
-mvn liberty:dev
+./mvnw -pl frontend liberty:dev
 ```
 
-Open another command-line session and run the following commands to navigate to the ***system*** directory and start the ***system*** service in dev mode:
+Open another command-line session and run the following command to start the ***system*** service in dev mode:
+
+
 ```bash
-cd system
-mvn liberty:dev
+./mvnw -pl system liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
