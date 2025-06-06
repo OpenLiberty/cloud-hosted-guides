@@ -391,7 +391,7 @@ To build these microservices, navigate to the ***start*** directory and run the 
 
 ```bash
 cd /home/project/guide-kubernetes-microprofile-health/start
-mvn package
+./mvnw package
 ```
 
 
@@ -581,7 +581,7 @@ INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/inve
 
 Run the integration tests by using the following command:
 ```bash
-mvn failsafe:integration-test \
+./mvnw failsafe:integration-test \
     -Dsystem.service.root=$SYSTEM_PROXY \
     -Dinventory.service.root=$INVENTORY_PROXY
 ```
