@@ -249,9 +249,10 @@ Start your Docker environment. Dockerfiles are provided for you to use.
 
 To build the application, run the Maven ***install*** and ***package*** goals from the command-line session in the ***start*** directory:
 
+
 ```bash
-mvn -pl models install
-mvn package
+./mvnw -pl models install
+./mvnw package
 ```
 
 
@@ -510,11 +511,11 @@ The ***testLoads()*** test case verifies that the ***query*** service can calcul
 ### Running the tests
 
 
-Run the following commands to navigate to the ***query*** directory and verify that the tests pass by using the Maven ***verify*** goal:
+Run the following commands to navigate to the ***start*** directory and verify that the tests pass by using the Maven ***verify*** goal:
 ```bash
 export TESTCONTAINERS_RYUK_DISABLED=true
-cd /home/project/guide-microprofile-rest-client-async/start/query
-mvn verify
+cd /home/project/guide-microprofile-rest-client-async/start
+./mvnw -pl query verify
 ```
 
 For more information about disabling Ryuk, see the [Testcontainers custom configuratio](https://java.testcontainers.org/features/configuration/#disabling-ryuk) document.
