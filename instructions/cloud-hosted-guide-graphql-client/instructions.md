@@ -273,7 +273,7 @@ Replace the Maven project file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.12.2</version>
+            <version>5.13.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -297,13 +297,13 @@ Replace the Maven project file.
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.21.0</version>
+            <version>1.21.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>1.21.0</version>
+            <version>1.21.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -404,12 +404,13 @@ The ***graphql.server*** variable is defined in the ***server.xml*** file. This 
 
 From the ***start*** directory, run the following commands:
 
+
 ```bash
-mvn -pl models install
-mvn package
+./mvnw -pl models install
+./mvnw package
 ```
 
-The ***mvn install*** command compiles and packages the object types you created to a ***.jar*** file. This allows them to be used by the ***system*** and ***graphql*** services. The ***mvn package*** command packages the ***system***, ***graphql***, and ***query*** services to ***.war*** files. 
+The Maven ***install*** goal compiles and packages the object types you created to a ***.jar*** file. This allows them to be used by the ***system*** and ***graphql*** services. The Maven ***package*** goal packages the ***system***, ***graphql***, and ***query*** services to ***.war*** files. 
 
 
 
@@ -812,9 +813,9 @@ You can run the Maven ***verify*** goal, which compiles the java files, starts t
 
 
 ```bash
-cd /home/project/guide-graphql-client/start/query
+cd /home/project/guide-graphql-client/start
 export TESTCONTAINERS_RYUK_DISABLED=true
-mvn verify
+./mvnw verify
 ```
 
 You will see the following output:
