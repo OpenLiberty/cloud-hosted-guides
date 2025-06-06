@@ -61,7 +61,7 @@ The ***finish*** directory contains the finished project that you will build.
 
 Run the following command to start the Pact Broker:
 ```bash
-docker-compose -f "pact-broker/docker-compose.yml" up -d --build
+docker compose -f "pact-broker/docker-compose.yml" up -d --build
 ```
 
 When the Pact Broker is running, you'll see the following output:
@@ -88,16 +88,17 @@ You can refer to the [official Pact Broker documentation](https://docs.pact.io/p
 
 ::page{title="Implementing pact testing in the inventory service"}
 
-Navigate to the ***start/inventory*** directory to begin.
+Navigate to the ***start*** directory to begin.
 
 ```bash
-cd /home/project/guide-contract-testing/start/inventory
+cd /home/project/guide-contract-testing/start
 ```
 
 When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
+
 ```bash
-mvn liberty:dev
+./mvnw -f inventory/pom.xml liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
@@ -108,9 +109,6 @@ After you see the following message, your Liberty instance is ready in dev mode:
 ```
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
-
-
-Open a new command-line session.
 
 Create the InventoryPactIT class file.
 
@@ -380,7 +378,7 @@ Replace the inventory Maven project file.
 
 
 
-The Pact framework provides a ***Maven*** plugin that can be added to the build section of the ***pom.xml*** file. The ***serviceProvider*** element defines the endpoint URL for the ***system*** microservice and the ***pactFileDirectory*** directory where you want to store the pact file. The ***pact-jvm-consumer-junit*** dependency provides the base test class that you can use with JUnit to build unit tests.
+The Pact framework provides a ***maven*** plugin that can be added to the build section of the ***pom.xml*** file. The ***serviceProvider*** element defines the endpoint URL for the ***system*** microservice and the ***pactFileDirectory*** directory where you want to store the pact file. The ***pact-jvm-consumer-junit*** dependency provides the base test class that you can use with JUnit to build unit tests.
 
 After you create the ***InventoryPactIT.java*** class and replace the ***pom.xml*** file, Open Liberty automatically reloads its configuration.
 
@@ -401,7 +399,7 @@ When completed, you'll see a similar output to the following example:
 [INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-When you integrate the Pact framework in a CI/CD build pipeline, you can use the ***mvn failsafe:integration-test*** goal to generate the pact file. The Maven failsafe plug-in provides a lifecycle phase for running integration tests that run after unit tests. By default, it looks for classes that are suffixed with ***IT***, which stands for Integration Test. You can refer to the [Maven failsafe plug-in documentation](https://maven.apache.org/surefire/maven-failsafe-plugin/) for more information.
+When you integrate the Pact framework in a CI/CD build pipeline, you can use the Maven ***failsafe:integration-test*** goal to generate the pact file. The Maven ***failsafe*** plug-in provides a lifecycle phase for running integration tests that run after unit tests. By default, it looks for classes that are suffixed with ***IT***, which stands for Integration Test. You can refer to the [Maven failsafe plug-in documentation](https://maven.apache.org/surefire/maven-failsafe-plugin/) for more information.
 
 The generated pact file is named ***Inventory-System.json*** and is located in the ***inventory/target/pacts*** directory. The pact file contains the defined interactions in JSON format:
 
@@ -438,15 +436,17 @@ The generated pact file is named ***Inventory-System.json*** and is located in t
 ```
 
 
-Open a new command-line session and navigate to the `start/inventory` directory.
+Open a new command-line session and navigate to the `start` directory.
 
 ```bash
-cd /home/project/guide-contract-testing/start/inventory
+cd /home/project/guide-contract-testing/start
 ```
 
 Publish the generated pact file to the Pact Broker by running the following command:
+
+
 ```bash
-mvn pact:publish
+./mvnw -f inventory/pom.xml pact:publish
 ```
 
 After the file is published, you'll see a similar output to the following example:
@@ -483,15 +483,17 @@ The insights look similar to the following image:
 ::page{title="Implementing pact testing in the system service"}
 
 
-Open another command-line session and navigate to the ***start/system*** directory.
+Open another command-line session and navigate to the ***start*** directory.
 
 ```bash
-cd /home/project/guide-contract-testing/start/system
+cd /home/project/guide-contract-testing/start
 ```
 
 Start Open Liberty in dev mode for the ***system*** microservice:
+
+
 ```bash
-mvn liberty:dev
+./mvnw -f system/pom.xml liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
@@ -696,7 +698,7 @@ After you create the ***SystemBrokerIT.java*** class and replace the ***pom.xml*
 
 ::page{title="Verifying the contract"}
 
-In the command-line session where you started the ***system*** microservice, press the ***enter/return*** key to run the tests to verify the pact file. When you integrate the Pact framework into a CI/CD build pipeline, you can use the ***mvn failsafe:integration-test*** goal to verify the pact file from the Pact Broker.
+In the command-line session where you started the ***system*** microservice, press the ***enter/return*** key to run the tests to verify the pact file. When you integrate the Pact framework into a CI/CD build pipeline, you can use the Maven ***failsafe:integration-test*** goal to verify the pact file from the Pact Broker.
 
 The tests fail with the following errors:
 ```
@@ -834,7 +836,7 @@ cd /home/project/guide-contract-testing
 ```
 
 ```bash
-docker-compose -f "pact-broker/docker-compose.yml" down
+docker compose -f "pact-broker/docker-compose.yml" down
 docker rmi postgres:17.2
 docker rmi pactfoundation/pact-broker:latest
 docker volume rm pact-broker_postgres-volume
