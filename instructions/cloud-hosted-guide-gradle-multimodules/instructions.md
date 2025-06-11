@@ -23,7 +23,7 @@ In this guide, you will learn how to:
 
 * establish a dependency between a web module and a Java library module,
 * use Gradle to package the WAR file and the JAR file into an EAR file so that you can run and test the application on Open Liberty, and
- use the Liberty Gradle plug-in to develop a multi-module application in [dev mode](https://openliberty.io/docs/latest/development-mode.html#_run_multi_module_gradle_projects_in_dev_mode) without having to prebuild the JAR and WAR files. In dev mode, your changes are automatically picked up by the running Liberty instance.
+* use the Liberty Gradle plug-in to develop a multi-module application in [dev mode](https://openliberty.io/docs/latest/development-mode.html#_run_multi_module_gradle_projects_in_dev_mode) without having to prebuild the JAR and WAR files. In dev mode, your changes are automatically picked up by the running Liberty instance.
 
 You will build a unit converter application that converts heights from centimeters into feet and inches. The application prompts the user to enter a height value in centimeters. Then, the application processes the input by using functions that are found in the JAR file to return the height value in imperial units.
 
@@ -86,7 +86,8 @@ The sampleLibertyServer server is ready to run a smarter planet.
 ```
 
 When the Liberty instance is running, click the following button to check out your service by visiting the ***/converter*** endpoint.
-::startApplication{port="9080" display="external" name="Visit application" route="/converter"}
+
+::startApplication{port="9080" display="external" name="Check out the application" route="/converter"}
 
 After you finish checking out the application, stop the Open Liberty instance by pressing **CTRL+C** in the command-line session where you ran Liberty. Alternatively, you can run the ***libertyStop*** task from the ***finish*** directory in another command-line session:
 
@@ -441,7 +442,8 @@ The ***getFeet(cm)*** invocation is added to the ***setHeightFeet*** method to c
 The ***getInches(cm)*** invocation is added to the ***setHeightInches*** method to convert a measurement into inches.
 
 Click the following button to check out the running application by visiting the ***/converter*** endpoint:
-::startApplication{port="9080" display="external" name="Visit application" route="/converter"}
+
+::startApplication{port="9080" display="external" name="Check out the application" route="/converter"}
 
 Note that the application currently returns 0 for height conversions because the logic in the converter hasn't been implemented yet. You'll fix this by updating the converter in the following step.
 
@@ -494,6 +496,7 @@ public class Converter {
 The ***getFeet*** method is changed to convert the ***cm*** integer parameter from centimeters to feet, and the ***getInches*** method to convert the ***cm*** integer parameter from centimeters to inches. The ***sum***, ***diff***, ***product***, and ***quotient*** methods are updated to add, subtract, multiply, and divide 2 numbers respectively.
 
 Now check out the application again at the ***/converter*** endpoint:
+
 ::startApplication{port="9080" display="external" name="Check out the application" route="/converter"}
 
 Try entering a height in centimeters and see if it converts correctly.
