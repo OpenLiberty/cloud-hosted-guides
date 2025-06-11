@@ -41,8 +41,8 @@
     },
     {
         "guide": "guide-grpc-intro",
-        "instructionDir": "cloud-hosted-guide-grpc-intro/labs",
-        "instruction": "cloud-hosted-guide-grpc-intro.md"
+        "instructionDir": "cloud-hosted-guide-grpc-intro",
+        "instruction": "instructions.md"
     },
     {
         "guide": "guide-jpa-intro",
@@ -161,8 +161,8 @@
     },
     {
         "guide": "guide-mongodb-intro",
-        "instructionDir": "cloud-hosted-guide-mongodb-intro/labs",
-        "instruction": "cloud_hosted_guide_mongodb_intro.md"
+        "instructionDir": "cloud-hosted-guide-mongodb-intro",
+        "instruction": "instructions.md"
     },
     {
         "guide": "guide-openliberty-operator-intro",
@@ -221,8 +221,8 @@
     },
     {
         "guide": "guide-security-intro",
-        "instructionDir": "cloud-hosted-guide-security-intro/labs",
-        "instruction": "cloud_hosted_guide_security_intro.md"
+        "instructionDir": "cloud-hosted-guide-security-intro",
+        "instruction": "instructions.md"
     },
     {
         "guide": "guide-spring-boot",
@@ -231,7 +231,7 @@
     },
     {
         "guide": "guide-jakarta-websocket",
-        "instructionDir": "cloud-hosted-guide-jakarta-websocket/labs",
-        "instruction": "cloud-hosted-guide-jakarta-websocket.md"  
+        "instructionDir": "cloud-hosted-guide-jakarta-websocket",
+        "instruction": "instructions.md"  
     }
 ]
