@@ -2182,7 +2182,7 @@ Replace the ***pom.xml*** configuration file.
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.5</version>
+            <version>42.7.6</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -2214,7 +2214,7 @@ Replace the ***pom.xml*** configuration file.
                             <dependency>
                                 <groupId>org.postgresql</groupId>
                                 <artifactId>postgresql</artifactId>
-                                <version>42.7.1</version>
+                                <version>42.7.6</version>
                             </dependency>
                         </dependencyGroup>
                     </copyDependencies>
@@ -2235,13 +2235,13 @@ The ***postgresql*** dependency ensures that Maven downloads the PostgreSQL libr
 
 Use Docker to run an instance of the PostgreSQL database for a fast installation and setup.
 
-A container file is provided for you. First, navigate to the ***finish/postgres*** directory. Then, run the following commands to use the ***Dockerfile*** to build the image, run the image in a Docker container, and map ***5432*** port from the container to your machine:
+A container file is provided for you. First, navigate to the ***finish/postgres*** directory. Then, run the following commands to use the ***Dockerfile*** to build the image, run the image in a Docker container, provide the database's password, and map ***5432*** port from the container to your machine:
 
 
 ```bash
 cd /home/project/guide-liberty-deep-dive/finish/postgres
 docker build -t postgres-sample .
-docker run --name postgres-container -p 5432:5432 -d postgres-sample
+docker run --name postgres-container -e POSTGRES_PASSWORD=adminpwd -p 5432:5432 -d postgres-sample
 ```
 
 ### Running the application ###
@@ -2683,7 +2683,7 @@ You can manually check that the ***inventory*** microservice is secured by makin
 Before making requests, you must add a system to the inventory. Try adding a system by using the POST endpoint ***/systems*** by running the following command:
 
 ```bash
-curl -X POST 'http://localhost:9080/inventory/api/systems?hostname=localhost&osName=mac&javaVersion=17&heapSize=1'
+curl -X POST "http://localhost:9080/inventory/api/systems?hostname=localhost&osName=mac&javaVersion=17&heapSize=1"
 ```
 
 You can expect the following response:
@@ -2708,7 +2708,7 @@ You can now expect the following response:
 Now try calling your secure PUT endpoint to update the system that you just added by the following curl command:
 
 ```bash
-curl -k --user alice:alicepwd -X PUT 'http://localhost:9080/inventory/api/systems/localhost?heapSize=2097152&javaVersion=17&osName=linux'
+curl -k --user alice:alicepwd -X PUT "http://localhost:9080/inventory/api/systems/localhost?heapSize=2097152&javaVersion=17&osName=linux"
 ```
 
 As this endpoint is accessible to the groups ***user*** and ***admin***, you must log in with ***user*** credentials to update the system.
@@ -2726,7 +2726,7 @@ Now try calling the DELETE endpoint. As this endpoint is only accessible to ***a
 You can check that your application is secured against these requests with the following command:
 
 ```bash
-curl -kf --user alice:alicepwd -X DELETE 'https://localhost:9443/inventory/api/systems/localhost'
+curl -kf --user alice:alicepwd -X DELETE "https://localhost:9443/inventory/api/systems/localhost"
 ```
 
 You should see the following response:
@@ -2744,7 +2744,7 @@ jakarta.ws.rs.ForbiddenException: Unauthorized
 Now attempt to call this endpoint with an authenticated ***admin*** user that can work correctly. Run the following curl command:
 
 ```bash
-curl -k --user bob:bobpwd -X DELETE 'https://localhost:9443/inventory/api/systems/localhost'
+curl -k --user bob:bobpwd -X DELETE "https://localhost:9443/inventory/api/systems/localhost"
 ```
 
 You can expect to see the following response:
@@ -2756,7 +2756,7 @@ You can expect to see the following response:
 This response means that your endpoint is secure. Validate that it works correctly by calling the ***/systems*** endpoint with the following curl command:
 
 ```bash
-curl 'http://localhost:9080/inventory/api/systems'
+curl "http://localhost:9080/inventory/api/systems"
 ```
 
 You can expect to see the following output:
@@ -3403,7 +3403,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.5</version>
+            <version>42.7.6</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -3435,7 +3435,7 @@ Replace the ***pom.xml*** file.
                             <dependency>
                                 <groupId>org.postgresql</groupId>
                                 <artifactId>postgresql</artifactId>
-                                <version>42.7.5</version>
+                                <version>42.7.6</version>
                             </dependency>
                         </dependencyGroup>
                     </copyDependencies>
@@ -3482,7 +3482,7 @@ CWWKF0011I: The defaultServer server is ready to run a smarter planet. ...
 You can check that the ***system*** microservice is secured against unauthenticated requests at the ***https\://localhost:9444/system/api/heapsize*** URL. Open another command-line session and run the following command:
 
 ```bash
-curl -kf 'https://localhost:9444/system/api/heapsize'
+curl -kf "https://localhost:9444/system/api/heapsize"
 ```
 
 You should see the following response:
@@ -3503,7 +3503,7 @@ Make an authorized request to the new ***/client/{hostname}*** endpoint.
 As this endpoint is restricted to ***admin***, you can use the login credentials for ***bob***, which is in the ***admin*** group.
 
 ```bash
-curl -k --user bob:bobpwd -X POST 'https://localhost:9443/inventory/api/systems/client/localhost'
+curl -k --user bob:bobpwd -X POST "https://localhost:9443/inventory/api/systems/client/localhost"
 ```
 
 You can expect the following output:
@@ -4247,10 +4247,10 @@ To review all the metrics, run the following curl command:
 curl -k --user bob:bobpwd https://localhost:9443/metrics
 ```
 
+When you are done checking out the service, stop both the ***inventory*** and ***system*** services by pressing `Ctrl+C` in the command-line sessions where you ran them.
+
 
 ::page{title="Building the container "}
-
-Press `Ctrl+C` in the command-line session to stop the Maven ***liberty:dev*** dev mode that you started in the previous section.
 
 Navigate to your application directory:
 
@@ -4917,6 +4917,7 @@ public class SystemResourceIT {
     public static GenericContainer<?> postgresContainer
         = new GenericContainer<>(postgresImageName)
               .withNetwork(network)
+              .withEnv("POSTGRES_PASSWORD", "adminpwd")
               .withExposedPorts(5432)
               .withNetworkAliases(postgresHost)
               .withLogConsumer(new Slf4jLogConsumer(logger));
@@ -5076,7 +5077,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.5</version>
+            <version>42.7.6</version>
             <scope>provided</scope>
         </dependency>
         
@@ -5084,19 +5085,19 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.12.2</version>
+            <version>5.13.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.21.0</version>
+            <version>1.21.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>1.21.0</version>
+            <version>1.21.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -5143,7 +5144,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-auth-jwt</artifactId>
-            <version>4.5.14</version>
+            <version>5.0.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -5175,7 +5176,7 @@ Replace the ***pom.xml*** file.
                             <dependency>
                                 <groupId>org.postgresql</groupId>
                                 <artifactId>postgresql</artifactId>
-                                <version>42.7.5</version>
+                                <version>42.7.6</version>
                             </dependency>
                         </dependencyGroup>
                     </copyDependencies>
