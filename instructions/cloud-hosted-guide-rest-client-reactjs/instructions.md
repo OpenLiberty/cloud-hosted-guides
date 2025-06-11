@@ -647,7 +647,7 @@ Click the following button to view the front end of your application:
 
 ::page{title="Testing the React client"}
 
-**Next.js*** supports various testing tools. This guide uses ***Vitest*** for unit testing the React components, with the test file ***App.test.jsx*** located in ***src/main/frontend/__tests__/*** directory. The ***App.test.jsx*** file is a simple JavaScript file that tests against the ***page.jsx*** component. No explicit test cases are written for this application. To learn more about ***Vitest***, see [Setting up Vitest with Next.js](https://nextjs.org/docs/app/building-your-application/testing/vitest).
+***Next.js*** supports various testing tools. This guide uses ***Vitest*** for unit testing the React components, with the test file ***App.test.jsx*** located in ***src/main/frontend/__tests__/*** directory. The ***App.test.jsx*** file is a simple JavaScript file that tests against the ***page.jsx*** component. No explicit test cases are written for this application. To learn more about ***Vitest***, see [Setting up Vitest with Next.js](https://nextjs.org/docs/app/building-your-application/testing/vitest).
 
 
 Update the ***pom.xml*** file.
