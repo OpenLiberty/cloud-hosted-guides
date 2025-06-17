@@ -2214,7 +2214,7 @@ Replace the ***pom.xml*** configuration file.
                             <dependency>
                                 <groupId>org.postgresql</groupId>
                                 <artifactId>postgresql</artifactId>
-                                <version>42.7.1</version>
+                                <version>42.7.6</version>
                             </dependency>
                         </dependencyGroup>
                     </copyDependencies>
@@ -2235,13 +2235,13 @@ The ***postgresql*** dependency ensures that Maven downloads the PostgreSQL libr
 
 Use Docker to run an instance of the PostgreSQL database for a fast installation and setup.
 
-A container file is provided for you. First, navigate to the ***finish/postgres*** directory. Then, run the following commands to use the ***Dockerfile*** to build the image, run the image in a Docker container, and map ***5432*** port from the container to your machine:
+A container file is provided for you. First, navigate to the ***finish/postgres*** directory. Then, run the following commands to use the ***Dockerfile*** to build the image, run the image in a Docker container, provide the database's password, and map ***5432*** port from the container to your machine:
 
 
 ```bash
 cd /home/project/guide-liberty-deep-dive/finish/postgres
 docker build -t postgres-sample .
-docker run --name postgres-container -p 5432:5432 -d postgres-sample
+docker run --name postgres-container -e POSTGRES_PASSWORD=adminpwd -p 5432:5432 -d postgres-sample
 ```
 
 ### Running the application ###
@@ -4917,6 +4917,7 @@ public class SystemResourceIT {
     public static GenericContainer<?> postgresContainer
         = new GenericContainer<>(postgresImageName)
               .withNetwork(network)
+              .withEnv("POSTGRES_PASSWORD", "adminpwd")
               .withExposedPorts(5432)
               .withNetworkAliases(postgresHost)
               .withLogConsumer(new Slf4jLogConsumer(logger));
