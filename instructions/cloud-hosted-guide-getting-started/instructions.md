@@ -754,7 +754,7 @@ Replace the pom.xml file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.13.0</version>
+            <version>5.13.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -784,7 +784,7 @@ Replace the pom.xml file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.11.3</version>
+                <version>3.11.4</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
