@@ -1072,7 +1072,7 @@ Replace the ***pom.xml*** file.
                 <plugin>
                     <groupId>io.openliberty.tools</groupId>
                     <artifactId>liberty-maven-plugin</artifactId>
-                    <version>3.11.3</version>
+                    <version>3.11.4</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -1172,7 +1172,7 @@ Replace the ***pom.xml*** file.
                 <plugin>
                     <groupId>io.openliberty.tools</groupId>
                     <artifactId>liberty-maven-plugin</artifactId>
-                    <version>3.11.3</version>
+                    <version>3.11.4</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -2182,7 +2182,7 @@ Replace the ***pom.xml*** configuration file.
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.6</version>
+            <version>42.7.7</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -2199,7 +2199,7 @@ Replace the ***pom.xml*** configuration file.
                 <plugin>
                     <groupId>io.openliberty.tools</groupId>
                     <artifactId>liberty-maven-plugin</artifactId>
-                    <version>3.11.3</version>
+                    <version>3.11.4</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -3403,7 +3403,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.6</version>
+            <version>42.7.7</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -3420,7 +3420,7 @@ Replace the ***pom.xml*** file.
                 <plugin>
                     <groupId>io.openliberty.tools</groupId>
                     <artifactId>liberty-maven-plugin</artifactId>
-                    <version>3.11.3</version>
+                    <version>3.11.4</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -3435,7 +3435,7 @@ Replace the ***pom.xml*** file.
                             <dependency>
                                 <groupId>org.postgresql</groupId>
                                 <artifactId>postgresql</artifactId>
-                                <version>42.7.6</version>
+                                <version>42.7.7</version>
                             </dependency>
                         </dependencyGroup>
                     </copyDependencies>
@@ -5077,7 +5077,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.6</version>
+            <version>42.7.7</version>
             <scope>provided</scope>
         </dependency>
         
@@ -5085,19 +5085,19 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.13.0</version>
+            <version>5.13.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.21.1</version>
+            <version>1.21.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>1.21.1</version>
+            <version>1.21.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -5144,7 +5144,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-auth-jwt</artifactId>
-            <version>5.0.0</version>
+            <version>5.0.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -5161,7 +5161,7 @@ Replace the ***pom.xml*** file.
                 <plugin>
                     <groupId>io.openliberty.tools</groupId>
                     <artifactId>liberty-maven-plugin</artifactId>
-                    <version>3.11.3</version>
+                    <version>3.11.4</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -5176,7 +5176,7 @@ Replace the ***pom.xml*** file.
                             <dependency>
                                 <groupId>org.postgresql</groupId>
                                 <artifactId>postgresql</artifactId>
-                                <version>42.7.6</version>
+                                <version>42.7.7</version>
                             </dependency>
                         </dependencyGroup>
                     </copyDependencies>
