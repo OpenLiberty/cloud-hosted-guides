@@ -23,7 +23,7 @@ In this guide, you will learn how to:
 
 * establish a dependency between a web module and a Java library module,
 * use Maven to package the WAR file and the JAR file into an EAR file so that you can run and test the application on Open Liberty, and
- use Liberty Maven plug-in to develop a multi-module application in [dev mode](https://openliberty.io/docs/latest/development-mode.html#_run_multi_module_maven_projects_in_dev_mode) without having to prebuild the JAR and WAR files. In dev mode, your changes are automatically picked up by the running Liberty instance.
+* use Liberty Maven plug-in to develop a multi-module application in [dev mode](https://openliberty.io/docs/latest/development-mode.html#_run_multi_module_maven_projects_in_dev_mode) without having to prebuild the JAR and WAR files. In dev mode, your changes are automatically picked up by the running Liberty instance.
 
 You will build a unit converter application that converts heights from centimeters into feet and inches. The application will request the user to enter a height value in centimeters. Then, the application processes the input by using functions that are found in the JAR file to return the height value in imperial units.
 
@@ -89,6 +89,7 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 When the Liberty instance is running, click the following button to check out your service at the ***/converter*** endpoint.
+
 ::startApplication{port="9080" display="external" name="Check out the application" route="/converter"}
 
 After you are finished checking out the application, stop the Open Liberty instance by pressing `Ctrl+C` in the command-line session where you ran the Liberty. Alternatively, you can run the ***liberty:stop*** goal using the ***-pl ear*** flag from the ***finish*** directory in another command-line session:
@@ -245,7 +246,7 @@ Replace the ear/POM file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.13.0</version>
+            <version>5.13.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -256,7 +257,7 @@ Replace the ear/POM file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-ear-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.4.0</version>
                 <configuration>
                     <modules>
                         <webModule>
@@ -412,7 +413,7 @@ Replace the start/POM file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.11.3</version>
+                <version>3.11.4</version>
             </plugin>
         </plugins>
     </build>
@@ -521,6 +522,7 @@ The ***getFeet(cm)*** invocation was added to the ***setHeightFeet*** method to 
 The ***getInches(cm)*** invocation was added to the ***setHeightInches*** method to convert a measurement into inches.
 
 Click the following button to check out the running application at the ***/converter*** endpoint:
+
 ::startApplication{port="9080" display="external" name="Check out the application" route="/converter"}
 
 Now try updating the converter so that it converts heights correctly, rather than returning 0.
@@ -574,6 +576,7 @@ public class Converter {
 Change the ***getFeet*** method so that it converts from centimeters to feet, and the ***getInches*** method so that it converts from centimeters to inches. Update the ***sum***, ***diff***, ***product***, and ***quotient*** functions so that they add, subtract, multiply, and divide 2 numbers respectively.
 
 Now check out the application again at the ***/converter*** endpoint:
+
 ::startApplication{port="9080" display="external" name="Check out the application" route="/converter"}
 
 Try entering a height in centimeters and see whether it converts correctly.
