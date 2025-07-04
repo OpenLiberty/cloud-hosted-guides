@@ -647,7 +647,7 @@ Click the following button to view the front end of your application:
 
 ::page{title="Testing the React client"}
 
-**Next.js*** supports various testing tools. This guide uses ***Vitest*** for unit testing the React components, with the test file ***App.test.jsx*** located in ***src/main/frontend/__tests__/*** directory. The ***App.test.jsx*** file is a simple JavaScript file that tests against the ***page.jsx*** component. No explicit test cases are written for this application. To learn more about ***Vitest***, see [Setting up Vitest with Next.js](https://nextjs.org/docs/app/building-your-application/testing/vitest).
+***Next.js*** supports various testing tools. This guide uses ***Vitest*** for unit testing the React components, with the test file ***App.test.jsx*** located in ***src/main/frontend/__tests__/*** directory. The ***App.test.jsx*** file is a simple JavaScript file that tests against the ***page.jsx*** component. No explicit test cases are written for this application. To learn more about ***Vitest***, see [Setting up Vitest with Next.js](https://nextjs.org/docs/app/building-your-application/testing/vitest).
 
 
 Update the ***pom.xml*** file.
@@ -700,7 +700,7 @@ Update the ***pom.xml*** file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.13.0</version>
+            <version>5.13.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -717,7 +717,7 @@ Update the ***pom.xml*** file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.11.3</version>            
+                <version>3.11.4</version>            
             </plugin>
             <!-- Frontend resources -->
             <plugin>
