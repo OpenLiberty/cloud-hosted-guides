@@ -413,7 +413,7 @@ Replace the Maven configuration file.
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>mockserver</artifactId>
-            <version>1.21.1</version>
+            <version>1.21.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -425,13 +425,13 @@ Replace the Maven configuration file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.13.0</version>
+            <version>5.13.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>1.21.1</version>
+            <version>1.21.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -467,7 +467,7 @@ Replace the Maven configuration file.
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>2.19.0</version>
+            <version>2.19.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -488,7 +488,7 @@ Replace the Maven configuration file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.11.3</version>
+                <version>3.11.4</version>
                 <configuration>
                     <containerRunOpts>
                         -e INVENTORY_BASE_URI=http://mock-server:1080
