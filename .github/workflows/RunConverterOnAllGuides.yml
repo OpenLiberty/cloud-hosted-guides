@@ -41,7 +41,7 @@ jobs:
         TASKS="${TASKS//'%'/'%25'}"
         TASKS="${TASKS//$'\n'/'%0A'}"
         TASKS="${TASKS//$'\r'/'%0D'}"
-        echo "::set-output name=matrix::$TASKS"
+        echo "matrix=$TASKS" >> $GITHUB_OUTPUT
   convertProd:
     needs: matrix
     continue-on-error: true
