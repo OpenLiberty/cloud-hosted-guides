@@ -598,7 +598,7 @@ mongo.hostname=localhost
 mongo.port=27017
 mongo.dbname=testdb
 mongo.user=sampleUser
-mongo.pass.encoded={aes}APtt+/vYxxPa0jE1rhmZue9wBm3JGqFK3JR4oJdSDGWM1wLr1ckvqkqKjSB2Voty8g==
+mongo.pass.encoded={aes}ARA4ekmrhPKiAbTmGOiOj/HXdCgSbbf2rXCRK5N6w9fMNnQ8UGhAm7SDQ3lTA7R3fTRjeXnZND7YMx2edrkI2auBRrBA1ntisAVx0CWYK90gqsqXaj0+QejSdirXaD60Ao1UDGPkwPwKG+viIs8=
 ```
 
 
