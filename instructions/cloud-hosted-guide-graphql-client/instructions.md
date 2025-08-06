@@ -4,7 +4,7 @@ tool-type: theia
 ---
 ::page{title="Welcome to the Running GraphQL queries and mutations using a GraphQL client guide!"}
 
-
+Learn how to use the SmallRye GraphQL client's typesafe interface to query and mutate data from multiple microservices.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -13,7 +13,6 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-Learn how to use the SmallRye GraphQL client's typesafe interface to query and mutate data from multiple microservices.
 
 ::page{title="What you'll learn"}
 
@@ -273,7 +272,7 @@ Replace the Maven project file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.13.2</version>
+            <version>5.13.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>
