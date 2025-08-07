@@ -440,7 +440,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
         <dependency>
             <groupId>io.reactivex.rxjava3</groupId>
             <artifactId>rxjava</artifactId>
-            <version>3.1.10</version>
+            <version>3.1.11</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -462,7 +462,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.13.2</version>
+            <version>5.13.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>
