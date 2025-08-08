@@ -425,7 +425,7 @@ Replace the Maven configuration file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.13.2</version>
+            <version>5.13.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -467,7 +467,7 @@ Replace the Maven configuration file.
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>2.19.1</version>
+            <version>2.19.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
