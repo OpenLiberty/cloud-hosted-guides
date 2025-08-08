@@ -787,7 +787,7 @@ Replace the ***pom.xml*** file of the inventory service.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.13.2</version>
+            <version>5.13.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -1005,7 +1005,7 @@ Replace the ***pom.xml*** file of the system service.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.13.2</version>
+            <version>5.13.4</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
