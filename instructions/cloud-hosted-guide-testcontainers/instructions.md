@@ -764,7 +764,7 @@ Replace the ***pom.xml*** file.
                         </dependencyGroup>
                     </copyDependencies>
                 </configuration>
-                <version>3.11.4</version>
+                <version>3.11.5</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
