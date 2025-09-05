@@ -397,17 +397,17 @@ Replace the Maven configuration file.
         <dependency>
             <groupId>org.glassfish.jersey.core</groupId>
             <artifactId>jersey-client</artifactId>
-            <version>3.1.10</version>
+            <version>3.1.11</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.ext.rx</groupId>
             <artifactId>jersey-rx-client-rxjava</artifactId>
-            <version>3.1.10</version>
+            <version>3.1.11</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.ext.rx</groupId>
             <artifactId>jersey-rx-client-rxjava2</artifactId>
-            <version>3.1.10</version>
+            <version>3.1.11</version>
         </dependency>
         <!-- For tests -->
         <dependency>
@@ -437,19 +437,19 @@ Replace the Maven configuration file.
         <dependency>
             <groupId>org.glassfish.jersey.ext</groupId>
             <artifactId>jersey-proxy-client</artifactId>
-            <version>3.1.10</version>
+            <version>3.1.11</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.media</groupId>
             <artifactId>jersey-media-json-jackson</artifactId>
-            <version>3.1.10</version>
+            <version>3.1.11</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.inject</groupId>
             <artifactId>jersey-hk2</artifactId>
-            <version>3.1.10</version>
+            <version>3.1.11</version>
                 <scope>test</scope>
         </dependency>
         <dependency>
@@ -467,7 +467,7 @@ Replace the Maven configuration file.
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>2.19.2</version>
+            <version>2.20.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -488,7 +488,7 @@ Replace the Maven configuration file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.11.4</version>
+                <version>3.11.5</version>
                 <configuration>
                     <containerRunOpts>
                         -e INVENTORY_BASE_URI=http://mock-server:1080
