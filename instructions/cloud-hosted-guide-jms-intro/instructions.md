@@ -820,7 +820,7 @@ Replace the ***pom.xml*** file of the inventory service.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.11.4</version>
+                <version>3.11.5</version>
             </plugin>
 
             <!-- Plugin to run unit tests -->
@@ -1026,7 +1026,7 @@ Replace the ***pom.xml*** file of the system service.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.11.4</version>
+                <version>3.11.5</version>
             </plugin>
 
             <!-- Plugin to run unit tests -->
