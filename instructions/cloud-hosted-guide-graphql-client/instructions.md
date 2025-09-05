@@ -260,7 +260,7 @@ Replace the Maven project file.
         <dependency>
             <groupId>io.smallrye.stork</groupId>
             <artifactId>stork-core</artifactId>
-            <version>2.7.3</version>
+            <version>2.7.4</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -320,7 +320,7 @@ Replace the Maven project file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.11.4</version>
+                <version>3.11.5</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
