@@ -3534,6 +3534,7 @@ You can expect to see your system listed in the output.
 ```
 
 ::page{title="Adding health checks"}
+
 Next, you'll use [MicroProfile Health](https://download.eclipse.org/microprofile/microprofile-health-4.0/microprofile-health-spec-4.0.html) to report the health status of the microservice and PostgreSQL database connection.
 
 Navigate to your application directory
