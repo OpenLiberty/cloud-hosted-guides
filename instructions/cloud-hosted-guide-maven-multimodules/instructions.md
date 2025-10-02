@@ -246,7 +246,7 @@ Replace the ear/POM file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.13.4</version>
+            <version>5.14.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -290,7 +290,7 @@ Replace the ear/POM file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.3</version>
+                <version>3.5.4</version>
                 <configuration>
                     <systemPropertyVariables>
                         <http.port>
@@ -404,7 +404,7 @@ Replace the start/POM file.
                 </plugin>
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.14.0</version>
+                    <version>3.14.1</version>
                 </plugin>
             </plugins>
         </pluginManagement>
