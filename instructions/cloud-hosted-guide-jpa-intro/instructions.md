@@ -482,7 +482,7 @@ Replace the ***backendServices/pom.xml*** configuration file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.13.4</version>
+            <version>5.14.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -558,13 +558,13 @@ Replace the ***backendServices/pom.xml*** configuration file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.3</version>
+                <version>3.5.4</version>
             </plugin>
             <!-- Plugin to run integration tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.3</version>
+                <version>3.5.4</version>
                 <configuration>
                     <systemPropertyVariables>
                         <backend.http.port>${backend.service.http.port}</backend.http.port>
