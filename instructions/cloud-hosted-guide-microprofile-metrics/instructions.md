@@ -228,7 +228,7 @@ Replace the Liberty ***server.xml*** configuration file.
     <feature>jsonb</feature>
     <feature>cdi</feature>
     <feature>mpConfig</feature>
-   <feature>mpMetrics</feature>
+    <feature>mpMetrics</feature>
    <feature>mpRestClient</feature>
  </featureManager>
 
