@@ -793,13 +793,13 @@ Replace the ***pom.xml*** file of the inventory service.
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>6.2.12.Final</version>
+            <version>6.2.14.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-json-binding-provider</artifactId>
-            <version>6.2.12.Final</version>
+            <version>6.2.14.Final</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
