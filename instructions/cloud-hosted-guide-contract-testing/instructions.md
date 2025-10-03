@@ -318,7 +318,7 @@ Replace the inventory Maven project file.
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>6.2.12.Final</version>
+            <version>6.2.14.Final</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -654,7 +654,7 @@ Replace the system Maven project file.
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>6.2.12.Final</version>
+            <version>6.2.14.Final</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
