@@ -96,7 +96,7 @@ You will see the following output:
 
 This command might take some time to run the first time because the dependencies and the Docker image for Open Liberty must download. If you run the same command again, it will be faster.
 
-You can also try out the ***inventory*** integration tests by repeating the same commands in the ***finish/inventory*** directory.
+You can also try out the ***inventory*** integration tests by repeating the same command but replacing ***system*** with ***inventory***.
 
 
 ::page{title="Testing with the Kafka consumer client"}
