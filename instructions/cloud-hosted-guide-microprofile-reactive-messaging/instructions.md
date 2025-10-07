@@ -440,7 +440,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
         <dependency>
             <groupId>io.reactivex.rxjava3</groupId>
             <artifactId>rxjava</artifactId>
-            <version>3.1.11</version>
+            <version>3.1.12</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -462,7 +462,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.13.4</version>
+            <version>5.14.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -503,14 +503,14 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.3</version>
+                <version>3.5.4</version>
             </plugin>
 
             <!-- Plugin to run integration tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.3</version>
+                <version>3.5.4</version>
                 <executions>
                     <execution>
                         <id>integration-test</id>
