@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Creating reactive Java microservices guide!"}
+::page{title="Welcome to the Consuming RESTful services using the reactive JAX-RS client guide!"}
 
-Learn how to write reactive Java microservices using MicroProfile Reactive Messaging.
+Learn how to use a reactive JAX-RS client to asynchronously invoke RESTful microservices over HTTP.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,21 +14,23 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 ::page{title="What you'll learn"}
 
-You will learn how to build reactive microservices that can send requests to other microservices, and asynchronously receive and process the responses. You will use an external messaging system to handle the asynchronous messages that are sent and received between the microservices as streams of events. MicroProfile Reactive Messaging makes it easy to write and configure your application to send, receive, and process the events efficiently.
+First, you'll learn how to create a reactive JAX-RS client application by using the default reactive JAX-RS client APIs. You will then learn how to take advantage of the RxJava reactive extensions with a pluggable reactive JAX-RS client provider that's published by [Eclipse Jersey](https://eclipse-ee4j.github.io/jersey). The JAX-RS client is an API used to communicate with RESTful web services.  The API makes it easy to consume a web service by using the HTTP protocol, which means that you can efficiently implement client-side applications. The reactive client extension to JAX-RS is an API that enables you to use the reactive programming model when using the JAX-RS client.
 
-*Asynchronous messaging between microservices*
+Reactive programming is an extension of asynchronous programming and focuses on the flow of data through data streams. Reactive applications process data when it becomes available and respond to requests as soon as processing is complete. The request to the application and response from the application are decoupled so that the application is not blocked from responding to other requests in the meantime. Because reactive applications can run faster than synchronous applications, they provide a much smoother user experience.
 
-Asynchronous communication between microservices can be used to build reactive and responsive applications. By decoupling the requests sent by a microservice from the responses that it receives, the microservice is not blocked from performing other tasks while waiting for the requested data to become available. Imagine asynchronous communication as a restaurant. A waiter might come to your table and take your order. While you are waiting for your food to be prepared, that waiter serves other tables and takes their orders too. When your food is ready, the waiter brings your food to the table and then continues to serve the other tables. If the waiter were to operate synchronously, they must take your order and then wait until they deliver your food before serving any other tables. In microservices, a request call from a REST client to another microservice can be time-consuming because the network might be slow, or the other service might be overwhelmed with requests and can’t respond quickly. But in an asynchronous system, the microservice sends a request to another microservice and continues to send other calls and to receive and process other responses until it receives a response to the original request.
+The application in this guide demonstrates how the JAX-RS client accesses remote RESTful services by using asynchronous method calls. You’ll first look at the supplied client application that uses the JAX-RS default ***CompletionStage***-based provider. Then, you’ll modify the client application to use Jersey’s RxJava provider, which is an alternative JAX-RS reactive provider. Both Jersey and Apache CXF provide third-party reactive libraries for RxJava and were tested for use in Open Liberty.
 
-*What is MicroProfile Reactive Messaging?*
+The application that you will be working with consists of three microservices, ***system***, ***inventory***, and ***query***. Every 15 seconds, the ***system*** microservice calculates and publishes an event that contains its current average system load. The ***inventory*** microservice subscribes to that information so that it can keep an updated list of all the systems and their current system loads.
 
-MicroProfile Reactive Messaging provides an easy way to asynchronously send, receive, and process messages that are received as continuous streams of events. You simply annotate application beans' methods and Open Liberty converts the annotated methods to reactive streams-compatible publishers, subscribers, and processors and connects them up to each other. MicroProfile Reactive Messaging provides a Connector API so that your methods can be connected to external messaging systems that produce and consume the streams of events, such as [Apache Kafka](https://kafka.apache.org/).
+![Reactive Query Service](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-rest-client/prod/assets/QueryService.png)
 
-The application in this guide consists of two microservices, ***system*** and ***inventory***. Every 15 seconds, the ***system*** microservice calculates and publishes an event that contains its current average system load. The ***inventory*** microservice subscribes to that information so that it can keep an updated list of all the systems and their current system loads. The current inventory of systems can be accessed via the ***/systems*** REST endpoint. You'll create the ***system*** and ***inventory*** microservices using MicroProfile Reactive Messaging.
 
-![Reactive system inventory](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/prod/assets/reactive-messaging-system-inventory.png)
+The microservice that you will modify is the ***query*** service. It communicates with the ***inventory*** service to determine which system has the highest system load and which system has the lowest system load.
+
+The ***system*** and ***inventory*** microservices use MicroProfile Reactive Messaging to send and receive the system load events. If you want to learn more about reactive messaging, see the  [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
 
 ::page{title="Getting started"}
@@ -42,11 +44,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-reactive-messaging.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-reactive-rest-client.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-microprofile-reactive-messaging.git
-cd guide-microprofile-reactive-messaging
+git clone https://github.com/openliberty/guide-reactive-rest-client.git
+cd guide-reactive-rest-client
 ```
 
 
@@ -54,72 +56,77 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-::page{title="Creating the producer in the system microservice"}
+::page{title="Creating a web client using the default JAX-RS API"}
 
-Navigate to the ***start*** directory to begin. 
+Navigate to the ***start*** directory to begin.
 ```bash
-cd /home/project/guide-microprofile-reactive-messaging/start
+cd /home/project/guide-reactive-rest-client/start
 ```
 
-The ***system*** microservice is the producer of the messages that are published to the Kafka messaging system as a stream of events. Every 15 seconds, the ***system*** microservice publishes an event that contains its calculation of the average system load (its CPU usage) for the last minute.
+JAX-RS provides a default reactive provider that you can use to create a reactive REST client using the ***CompletionStage*** interface.
 
-Create the ***SystemService*** class.
+Create an ***InventoryClient*** class, which retrieves inventory data, and a ***QueryResource*** class, which queries data from the ***inventory*** service.
+
+Create the ***InventoryClient*** interface.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
+touch /home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java
 ```
 
 
-> Then, to open the SystemService.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
+> Then, to open the InventoryClient.java file in your IDE, select
+> ***File*** > ***Open*** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
+::openFile{path="/home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java"}
 
 
 
 ```java
-package io.openliberty.guides.system;
+package io.openliberty.guides.query.client;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.concurrent.TimeUnit;
+import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.CompletionStage;
 
-import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.GenericType;
+import jakarta.ws.rs.core.HttpHeaders;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import org.eclipse.microprofile.reactive.messaging.Outgoing;
-import org.reactivestreams.Publisher;
+@RequestScoped
+public class InventoryClient {
 
-import io.openliberty.guides.models.SystemLoad;
-import io.reactivex.rxjava3.core.Flowable;
+    @Inject
+    @ConfigProperty(name = "INVENTORY_BASE_URI", defaultValue = "http://localhost:9085")
+    private String baseUri;
 
-@ApplicationScoped
-public class SystemService {
 
-    private static final OperatingSystemMXBean OS_MEAN =
-            ManagementFactory.getOperatingSystemMXBean();
-    private static String hostname = null;
-
-    private static String getHostname() {
-        if (hostname == null) {
-            try {
-                return InetAddress.getLocalHost().getHostName();
-            } catch (UnknownHostException e) {
-                return System.getenv("HOSTNAME");
-            }
-        }
-        return hostname;
+    public List<String> getSystems() {
+        return ClientBuilder.newClient()
+                            .target(baseUri)
+                            .path("/inventory/systems")
+                            .request()
+                            .header(HttpHeaders.CONTENT_TYPE,
+                                    MediaType.APPLICATION_JSON)
+                            .get(new GenericType<List<String>>() { });
     }
 
-    @Outgoing("systemLoad")
-    public Publisher<SystemLoad> sendSystemLoad() {
-        return Flowable.interval(15, TimeUnit.SECONDS)
-                .map((interval -> new SystemLoad(getHostname(),
-                Double.valueOf(OS_MEAN.getSystemLoadAverage()))));
+    public CompletionStage<Properties> getSystem(String hostname) {
+        return ClientBuilder.newClient()
+                            .target(baseUri)
+                            .path("/inventory/systems")
+                            .path(hostname)
+                            .request()
+                            .header(HttpHeaders.CONTENT_TYPE,
+                                    MediaType.APPLICATION_JSON)
+                            .rx()
+                            .get(Properties.class);
     }
-
 }
 ```
 
@@ -127,114 +134,116 @@ public class SystemService {
 Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
+The ***getSystem()*** method returns the ***CompletionStage*** interface. This interface represents a unit or stage of a computation. When the associated computation completes, the value can be retrieved. The ***rx()*** method calls the ***CompletionStage*** interface. It retrieves the ***CompletionStageRxInvoker*** class and allows these methods to function correctly with the ***CompletionStage*** interface return type.
 
-The ***SystemService*** class contains a ***Publisher*** method that is called ***sendSystemLoad()***, which calculates and returns the average system load. The ***@Outgoing*** annotation on the ***sendSystemLoad()*** method indicates that the method publishes its calculation as a message on a topic in the Kafka messaging system. The ***Flowable.interval()*** method from ***rxJava*** is used to set the frequency of how often the system service publishes the calculation to the event stream.
-
-The messages are transported between the service and the Kafka messaging system through a channel called ***systemLoad***. The name of the channel to use is set in the ***@Outgoing("systemLoad")*** annotation. Later in the guide, you will configure the service so that any messages sent by the ***system*** service through the ***systemLoad*** channel are published on a topic called ***system.load***, as shown in the following diagram:
-
-![Reactive system publisher](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/prod/assets/reactive-messaging-system-inventory-publisher.png)
-
-
-::page{title="Creating the consumer in the inventory microservice"}
-
-The ***inventory*** microservice records in its inventory the average system load information that it received from potentially multiple instances of the ***system*** service.
-
-Create the ***InventoryResource*** class.
+Create the ***QueryResource*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-microprofile-reactive-messaging/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+touch /home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java
 ```
 
 
-> Then, to open the InventoryResource.java file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-reactive-messaging/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
+> Then, to open the QueryResource.java file in your IDE, select
+> ***File*** > ***Open*** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-reactive-messaging/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java"}
+::openFile{path="/home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java"}
 
 
 
 ```java
-package io.openliberty.guides.inventory;
+package io.openliberty.guides.query;
 
+import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.Properties;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 
-import org.eclipse.microprofile.reactive.messaging.Incoming;
-
-import io.openliberty.guides.models.SystemLoad;
+import io.openliberty.guides.query.client.InventoryClient;
 
 @ApplicationScoped
-@Path("/inventory")
-public class InventoryResource {
-
-    private static Logger logger = Logger.getLogger(InventoryResource.class.getName());
+@Path("/query")
+public class QueryResource {
 
     @Inject
-    private InventoryManager manager;
+    private InventoryClient inventoryClient;
 
     @GET
-    @Path("/systems")
+    @Path("/systemLoad")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getSystems() {
-        List<Properties> systems = manager.getSystems()
-                .values()
-                .stream()
-                .collect(Collectors.toList());
-        return Response
-                .status(Response.Status.OK)
-                .entity(systems)
-                .build();
-    }
+    public Map<String, Properties> systemLoad() {
+        List<String> systems = inventoryClient.getSystems();
+        CountDownLatch remainingSystems = new CountDownLatch(systems.size());
+        final Holder systemLoads = new Holder();
 
-    @GET
-    @Path("/systems/{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getSystem(@PathParam("hostname") String hostname) {
-        Optional<Properties> system = manager.getSystem(hostname);
-        if (system.isPresent()) {
-            return Response
-                    .status(Response.Status.OK)
-                    .entity(system)
-                    .build();
+        for (String system : systems) {
+            inventoryClient.getSystem(system)
+                           .thenAcceptAsync(p -> {
+                                if (p != null) {
+                                    systemLoads.updateValues(p);
+                                }
+                                remainingSystems.countDown();
+                           })
+                           .exceptionally(ex -> {
+                                remainingSystems.countDown();
+                                ex.printStackTrace();
+                                return null;
+                           });
         }
-        return Response
-                .status(Response.Status.NOT_FOUND)
-                .entity("hostname does not exist.")
-                .build();
+
+        try {
+            remainingSystems.await(30, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        return systemLoads.getValues();
     }
 
-    @DELETE
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response resetSystems() {
-        manager.resetSystems();
-        return Response
-                .status(Response.Status.OK)
-                .build();
-    }
+    private class Holder {
+        private volatile Map<String, Properties> values;
 
-    @Incoming("systemLoad")
-    public void updateStatus(SystemLoad sl)  {
-        String hostname = sl.hostname;
-        if (manager.getSystem(hostname).isPresent()) {
-            manager.updateCpuStatus(hostname, sl.loadAverage);
-            logger.info("Host " + hostname + " was updated: " + sl);
-        } else {
-            manager.addSystem(hostname, sl.loadAverage);
-            logger.info("Host " + hostname + " was added: " + sl);
+        Holder() {
+            this.values = new ConcurrentHashMap<String, Properties>();
+            init();
+        }
+
+        public Map<String, Properties> getValues() {
+            return this.values;
+        }
+
+        public void updateValues(Properties p) {
+            final BigDecimal load = (BigDecimal) p.get("systemLoad");
+
+            this.values.computeIfPresent("lowest", (key, curr_val) -> {
+                BigDecimal lowest = (BigDecimal) curr_val.get("systemLoad");
+                return load.compareTo(lowest) < 0 ? p : curr_val;
+            });
+            this.values.computeIfPresent("highest", (key, curr_val) -> {
+                BigDecimal highest = (BigDecimal) curr_val.get("systemLoad");
+                return load.compareTo(highest) > 0 ? p : curr_val;
+            });
+        }
+
+        private void init() {
+            this.values.put("highest", new Properties());
+            this.values.put("lowest", new Properties());
+            this.values.get("highest").put("hostname", "temp_max");
+            this.values.get("lowest").put("hostname", "temp_min");
+            this.values.get("highest")
+                .put("systemLoad", new BigDecimal(Double.MIN_VALUE));
+            this.values.get("lowest")
+                .put("systemLoad", new BigDecimal(Double.MAX_VALUE));
         }
     }
 }
@@ -242,144 +251,90 @@ public class InventoryResource {
 
 
 
+The ***systemLoad*** endpoint asynchronously processes the data that is retrieved by the ***InventoryClient*** interface and serves that data after all of the services respond. The ***thenAcceptAsync()*** and ***exceptionally()*** methods together behave like an asynchronous try-catch block. The data is processed in the ***thenAcceptAsync()*** method only after the ***CompletionStage*** interface finishes retrieving it.  When you return a ***CompletionStage*** type in the resource, it doesn’t necessarily mean that the computation completed and the response was built.
 
-The ***inventory*** microservice receives the message from the ***system*** microservice over the ***@Incoming("systemLoad")*** channel. The properties of this channel are defined in the ***microprofile-config.properties*** file. The ***inventory*** microservice is also a RESTful service that is served at the ***/inventory*** endpoint.
+A ***CountDownLatch*** object is used to track how many asynchronous requests are being waited on. After each thread is completed, the ***countdown()*** methodcounts the ***CountDownLatch*** object down towards ***0***. This means that the value returns only after the thread that's retrieving the value is complete.The ***await()*** method stops and waits until all of the requests are complete. While the countdown completes, the main thread is free to perform other tasks. In this case, no such task is present.
 
-The ***InventoryResource*** class contains a method called ***updateStatus()***, which receives the message that contains the average system load and updates its existing inventory of systems and their average system load. The ***@Incoming("systemLoad")*** annotation on the ***updateStatus()*** method indicates that the method retrieves the average system load information by connecting to the channel called ***systemLoad***. Later in the guide, you will configure the service so that any messages sent by the ***system*** service through the ***systemLoad*** channel are retrieved from a topic called ***system.load***, as shown in the following diagram:
-
-![Reactive system inventory detail](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/prod/assets/reactive-messaging-system-inventory-detail.png)
-
-
-::page{title="Configuring the MicroProfile Reactive Messaging connectors for Kafka"}
-
-The ***system*** and ***inventory*** services exchange messages with the external messaging system through a channel. The MicroProfile Reactive Messaging Connector API makes it easy to connect each service to the channel. You just need to add configuration keys in a properties file for each of the services. These configuration keys define properties such as the name of the channel and the topic in the Kafka messaging system. Open Liberty includes the ***liberty-kafka*** connector for sending and receiving messages from Apache Kafka.
-
-The system and inventory microservices each have a MicroProfile Config properties file to define the properties of their outgoing and incoming streams.
-
-Create the system/microprofile-config.properties file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/resources/META-INF/microprofile-config.properties
-```
-
-
-> Then, to open the microprofile-config.properties file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-reactive-messaging/start/system/src/main/resources/META-INF/microprofile-config.properties, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-reactive-messaging/start/system/src/main/resources/META-INF/microprofile-config.properties"}
-
-
-
-```
-mp.messaging.connector.liberty-kafka.bootstrap.servers=kafka:9092
-
-mp.messaging.outgoing.systemLoad.connector=liberty-kafka
-mp.messaging.outgoing.systemLoad.topic=system.load
-mp.messaging.outgoing.systemLoad.key.serializer=org.apache.kafka.common.serialization.StringSerializer
-mp.messaging.outgoing.systemLoad.value.serializer=io.openliberty.guides.models.SystemLoad$SystemLoadSerializer
-```
-
-
-
-The ***mp.messaging.connector.liberty-kafka.bootstrap.servers*** property configures the hostname and port for connecting to the Kafka server. The ***system*** microservice uses an outgoing connector to send messages through the ***systemLoad*** channel to the ***system.load*** topic in the Kafka message broker so that the ***inventory*** microservices can consume the messages. The ***key.serializer*** and ***value.serializer*** properties characterize how to serialize the messages. The ***SystemLoadSerializer*** class implements the logic for turning a ***SystemLoad*** object into JSON and is configured as the ***value.serializer***.
-
-The ***inventory*** microservice uses a similar ***microprofile-config.properties*** configuration to define its required incoming stream.
-
-Create the inventory/microprofile-config.properties file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties
-```
-
-
-> Then, to open the microprofile-config.properties file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties"}
-
-
-
-```
-mp.messaging.connector.liberty-kafka.bootstrap.servers=kafka:9092
-
-mp.messaging.incoming.systemLoad.connector=liberty-kafka
-mp.messaging.incoming.systemLoad.topic=system.load
-mp.messaging.incoming.systemLoad.key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
-mp.messaging.incoming.systemLoad.value.deserializer=io.openliberty.guides.models.SystemLoad$SystemLoadDeserializer
-mp.messaging.incoming.systemLoad.group.id=system-load-status
-```
-
-
-
-The ***inventory*** microservice uses an incoming connector to receive messages through the ***systemLoad*** channel. The messages were published by the ***system*** microservice to the ***system.load*** topic in the Kafka message broker. The ***key.deserializer*** and ***value.deserializer*** properties define how to deserialize the messages. The ***SystemLoadDeserializer*** class implements the logic for turning JSON into a ***SystemLoad*** object and is configured as the ***value.deserializer***. The ***group.id*** property defines a unique name for the consumer group. A consumer group is a collection of consumers who share a common identifier for the group. You can also view a consumer group as the various machines that ingest from the Kafka topics. All of these properties are required by the [Apache Kafka Producer Configs](https://kafka.apache.org/documentation/#producerconfigs) and [Apache Kafka Consumer Configs](https://kafka.apache.org/documentation/#consumerconfigs).
-
-::page{title="Configuring Liberty"}
-
-To run the services, the Open Liberty on which each service runs needs to be correctly configured. Relevant features, including the [MicroProfile Reactive Messaging feature](https://openliberty.io/docs/ref/feature/#mpReactiveMessaging-3.0.html), must be enabled for the ***system*** and ***inventory*** services.
-
-Create the system/server.xml configuration file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/liberty/config/server.xml
-```
-
-
-> Then, to open the server.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-reactive-messaging/start/system/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-reactive-messaging/start/system/src/main/liberty/config/server.xml"}
-
-
-
-```xml
-<server description="System Service">
-
-  <featureManager>
-    <platform>jakartaee-10.0</platform>
-    <platform>microprofile-7.0</platform>
-    <feature>cdi</feature>
-    <feature>concurrent</feature>
-    <feature>jsonb</feature>
-    <feature>mpHealth</feature>
-    <feature>mpConfig</feature>
-    <feature>mpReactiveMessaging</feature>
-  </featureManager>
-
-  <variable name="http.port" defaultValue="9083"/>
-  <variable name="https.port" defaultValue="9446"/>
-
-  <httpEndpoint host="*" httpPort="${http.port}"
-      httpsPort="${https.port}" id="defaultHttpEndpoint"/>
-
-  <logging consoleLogLevel="INFO"/>
-  <webApplication location="system.war" contextRoot="/"/>
-</server>
-```
-
-
-
-
-The ***server.xml*** file is already configured for the ***inventory*** microservice.
 
 ::page{title="Building and running the application"}
 
-Build the ***system*** and ***inventory*** microservices using Maven and then run them in Docker containers.
+The ***system***, ***inventory***, and ***query*** microservices will be built in Docker containers. If you want to learn more about Docker containers, check out the [Containerizing microservices](https://openliberty.io/guides/containerize.html) guide.
 
-Create the Maven configuration file.
+Start your Docker environment.
 
-> Run the following touch command in your terminal
+To build the application, run the Maven ***install*** and ***package*** goals from the command-line session in the ***start*** directory:
+
+
 ```bash
-touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
+./mvnw -pl models install
+./mvnw package
 ```
 
 
-> Then, to open the pom.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-microprofile-reactive-messaging/start/system/pom.xml, or click the following button
+Run the following commands to containerize the microservices:
 
-::openFile{path="/home/project/guide-microprofile-reactive-messaging/start/system/pom.xml"}
+```bash
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+docker build -t query:1.0-SNAPSHOT query/.
+```
+
+Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It creates containers for Kafka and all of the microservices in the project.
+
+
+```bash
+./scripts/startContainers.sh
+```
+
+
+The microservices will take some time to become available. Run the following commands to confirm that the ***inventory*** and ***query*** microservices are up and running:
+```bash
+curl -s http://localhost:9085/health | jq
+```
+
+```bash
+curl -s http://localhost:9080/health | jq
+```
+
+Once the microservices are up and running, you can access the application by making requests to the ***query/systemLoad*** endpoint by using the following ***curl*** command:
+```bash
+curl -s http://localhost:9080/query/systemLoad | jq
+```
+
+When the service is ready, you see an output similar to the following example. This example was formatted for readability:
+
+```
+{
+    "highest": {
+        "hostname": "30bec2b63a96",
+        "systemLoad": 6.1
+    },     
+    "lowest": { 
+        "hostname": "55ec2b63a96",
+        "systemLoad": 0.1
+    }
+}
+```
+
+The JSON output contains a ***highest*** attribute that represents the system with the highest load. Similarly, the ***lowest*** attribute represents the system with the lowest load. The JSON output for each of these attributes contains the ***hostname*** and ***systemLoad*** of the system.
+
+When you are done checking out the application, run the following command to stop the ***query*** microservice. Leave the ***system*** and ***inventory*** services running because they will be used when the application is rebuilt later in the guide:
+
+```bash
+docker stop query
+```
+
+
+::page{title="Updating the web client to use an alternative reactive provider"}
+
+Although JAX-RS provides the default reactive provider that returns ***CompletionStage*** types, you can alternatively use another provider that supports other reactive frameworks like [RxJava](https://github.com/ReactiveX/RxJava). The Apache CXF and Eclipse Jersey projects produce such providers. You'll now update the web client to use the Jersey reactive provider for RxJava. With this updated reactive provider, you can write clients that use RxJava objects instead of clients that use only the ***CompletionStage*** interface. These custom objects provide a simpler and faster way for you to create scalable RESTful services with a ***CompletionStage*** interface.
+
+Replace the Maven configuration file.
+
+> To open the pom.xml file in your IDE, select
+> ***File*** > ***Open*** > guide-reactive-rest-client/start/query/pom.xml, or click the following button
+
+::openFile{path="/home/project/guide-reactive-rest-client/start/query/pom.xml"}
 
 
 
@@ -391,7 +346,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.openliberty.guides</groupId>
-    <artifactId>system</artifactId>
+    <artifactId>query</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>war</packaging>
 
@@ -401,8 +356,8 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <!-- Liberty configuration -->
-        <liberty.var.http.port>9083</liberty.var.http.port>
-        <liberty.var.https.port>9446</liberty.var.https.port>
+        <liberty.var.http.port>9080</liberty.var.http.port>
+        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
     </properties>
 
     <dependencies>
@@ -414,16 +369,22 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>jakarta.enterprise.concurrent</groupId>
+            <artifactId>jakarta.enterprise.concurrent-api</artifactId>
+            <version>3.0.3</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+            <version>3.0.2</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
             <version>7.0</version>
             <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.microprofile.reactive.messaging</groupId>
-            <artifactId>microprofile-reactive-messaging-api</artifactId>
-            <version>3.0</version>
             <scope>provided</scope>
         </dependency>
         <!-- Required dependencies -->
@@ -432,31 +393,33 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
             <artifactId>models</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+        <!-- Reactive dependencies -->
         <dependency>
-            <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka-clients</artifactId>
-            <version>4.1.0</version>
+            <groupId>org.glassfish.jersey.core</groupId>
+            <artifactId>jersey-client</artifactId>
+            <version>3.1.11</version>
         </dependency>
         <dependency>
-            <groupId>io.reactivex.rxjava3</groupId>
-            <artifactId>rxjava</artifactId>
-            <version>3.1.12</version>
+            <groupId>org.glassfish.jersey.ext.rx</groupId>
+            <artifactId>jersey-rx-client-rxjava</artifactId>
+            <version>3.1.11</version>
         </dependency>
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>2.0.17</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>2.0.17</version>
+            <groupId>org.glassfish.jersey.ext.rx</groupId>
+            <artifactId>jersey-rx-client-rxjava2</artifactId>
+            <version>3.1.11</version>
         </dependency>
         <!-- For tests -->
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>kafka</artifactId>
+            <artifactId>mockserver</artifactId>
             <version>1.21.3</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mock-server</groupId>
+            <artifactId>mockserver-client-java</artifactId>
+            <version>5.15.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -469,6 +432,42 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>1.21.3</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.ext</groupId>
+            <artifactId>jersey-proxy-client</artifactId>
+            <version>3.1.11</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-json-jackson</artifactId>
+            <version>3.1.11</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.inject</groupId>
+            <artifactId>jersey-hk2</artifactId>
+            <version>3.1.11</version>
+                <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.17</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.17</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.20.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -491,9 +490,8 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
                 <artifactId>liberty-maven-plugin</artifactId>
                 <version>3.11.5</version>
                 <configuration>
-                    <!-- devc config -->
                     <containerRunOpts>
-                        -p 9085:9085
+                        -e INVENTORY_BASE_URI=http://mock-server:1080
                         --network=reactive-app
                     </containerRunOpts>
                 </configuration>
@@ -517,9 +515,6 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
                         <goals>
                             <goal>integration-test</goal>
                         </goals>
-                        <configuration>
-                            <trimStackTrace>false</trimStackTrace>
-                        </configuration>
                     </execution>
                     <execution>
                         <id>verify</id>
@@ -536,113 +531,508 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
 
 
 
-The ***pom.xml*** file lists the ***microprofile-reactive-messaging-api***, ***kafka-clients***, and ***rxjava*** dependencies.
+The ***jersey-rx-client-rxjava*** and ***jersey-rx-client-rxjava2*** dependencies provide the ***RxInvokerProvider*** classes, which are registered to the ***jersey-client*** ***ClientBuilder*** class.
 
-The ***microprofile-reactive-messaging-api*** dependency is needed to enable the use of MicroProfile Reactive Messaging API. The ***kafka-clients*** dependency is added because the application needs a Kafka client to connect to the Kafka broker. The ***rxjava*** dependency is used for creating events at regular intervals.
+Update the client to accommodate the custom object types that you are trying to return. You'll need to register the type of object that you want inside the client invocation.
 
-Start your Docker environment. Dockerfiles are provided for you to use.
+Replace the ***InventoryClient*** interface.
 
-To build the application, run the Maven ***install*** and ***package*** goals from the command line in the ***start*** directory:
+> To open the InventoryClient.java file in your IDE, select
+> ***File*** > ***Open*** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java, or click the following button
 
-
-```bash
-./mvnw -pl models install
-./mvnw package
-```
+::openFile{path="/home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java"}
 
 
 
-Run the following commands to containerize the microservices:
+```java
+package io.openliberty.guides.query.client;
 
-```bash
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-```
+import java.util.List;
+import java.util.Properties;
 
-Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It also creates containers for Kafka and the microservices in the project. For simplicity, the script starts one instance of the system service.
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.GenericType;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MediaType;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.glassfish.jersey.client.rx.rxjava.RxObservableInvoker;
+import org.glassfish.jersey.client.rx.rxjava.RxObservableInvokerProvider;
 
-```bash
-./scripts/startContainers.sh
-```
+import rx.Observable;
 
-::page{title="Testing the application"}
+@RequestScoped
+public class InventoryClient {
 
-The application might take some time to become available. After the application is up and running, you can access it by making a GET request to the ***/systems*** endpoint of the ***inventory*** service. 
+    @Inject
+    @ConfigProperty(name = "INVENTORY_BASE_URI", defaultValue = "http://localhost:9085")
+    private String baseUri;
 
+    public List<String> getSystems() {
+        return ClientBuilder.newClient()
+                            .target(baseUri)
+                            .path("/inventory/systems")
+                            .request()
+                            .header(HttpHeaders.CONTENT_TYPE,
+                                    MediaType.APPLICATION_JSON)
+                            .get(new GenericType<List<String>>() { });
+    }
 
-
-Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
-
-
-Visit the ***http\://localhost:9085/health*** URL to confirm that the ***inventory*** microservice is up and running.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9085/health | jq
-```
-
-
-
-
-When both the liveness and readiness health checks are up, go to the ***http\://localhost:9085/inventory/systems*** URL to access the ***inventory*** microservice.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9085/inventory/systems | jq
-```
-
-
-You see the CPU ***systemLoad*** property for all the systems:
-
-```
-{
-   "hostname":"30bec2b63a96",
-   "systemLoad":2.25927734375
+    public Observable<Properties> getSystem(String hostname) {
+        return ClientBuilder.newClient()
+                            .target(baseUri)
+                            .register(RxObservableInvokerProvider.class)
+                            .path("/inventory/systems")
+                            .path(hostname)
+                            .request()
+                            .header(HttpHeaders.CONTENT_TYPE,
+                                    MediaType.APPLICATION_JSON)
+                            .rx(RxObservableInvoker.class)
+                            .get(new GenericType<Properties>() { });
+    }
 }
 ```
 
 
-You can revisit the ***http\://localhost:9085/inventory/systems*** URL after a while, and you will notice the CPU ***systemLoad*** property for the systems changed.
+
+The return type of the ***getSystem()*** method is now an ***Observable*** object instead of a ***CompletionStage*** interface. [Observable](http://reactivex.io/RxJava/javadoc/io/reactivex/Observable.html) is a collection of data that waits to be subscribed to before it can release any data and is part of RxJava. The ***rx()*** method now needs to contain ***RxObservableInvoker.class*** as an argument. This argument calls the specific invoker, ***RxObservableInvoker***, for the ***Observable*** class that's provided by Jersey. 
+
+In the ***getSystem()*** method, the ***register(RxObservableInvokerProvider)*** method call registers the ***RxObservableInvoker*** class,which means that the client can recognize the invoker provider.
+
+In some scenarios, a producer might generate more data than the consumers can handle. JAX-RS can deal with cases like these by using the RxJava ***Flowable*** class with backpressure. To learn more about RxJava and backpressure, see [JAX-RS reactive extensions with RxJava backpressure](https://openliberty.io/blog/2019/04/10/jaxrs-reactive-extensions.html).
 
 
-_To see the output for this URL in the IDE, run the following command at a terminal:_
+::page{title="Updating the REST resource to support the reactive JAX-RS client"}
 
-```bash
-curl -s http://localhost:9085/inventory/systems | jq
-```
+Now that the client methods return the ***Observable*** class, you must update the resource to accommodate these changes.
+
+Replace the ***QueryResource*** class.
+
+> To open the QueryResource.java file in your IDE, select
+> ***File*** > ***Open*** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java, or click the following button
+
+::openFile{path="/home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java"}
 
 
 
-You can use the ***http://localhost:9085/inventory/systems/{hostname}*** URL to see the CPU ***systemLoad*** property for one particular system.
+```java
+package io.openliberty.guides.query;
 
-In the following example, the ***30bec2b63a96*** value is the ***hostname***. If you go to the ***http://localhost:9085/inventory/systems/30bec2b63a96*** URL, you can see the CPU ***systemLoad*** property only for the ***30bec2b63a96*** ***hostname***:
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
-```
-{
-   "hostname":"30bec2b63a96",
-   "systemLoad":2.25927734375
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+
+import io.openliberty.guides.query.client.InventoryClient;
+
+@ApplicationScoped
+@Path("/query")
+public class QueryResource {
+
+    @Inject
+    private InventoryClient inventoryClient;
+
+    @GET
+    @Path("/systemLoad")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Map<String, Properties> systemLoad() {
+        List<String> systems = inventoryClient.getSystems();
+        CountDownLatch remainingSystems = new CountDownLatch(systems.size());
+        final Holder systemLoads = new Holder();
+        for (String system : systems) {
+            inventoryClient.getSystem(system)
+                           .subscribe(p -> {
+                                if (p != null) {
+                                    systemLoads.updateValues(p);
+                                }
+                                remainingSystems.countDown();
+                           }, e -> {
+                                remainingSystems.countDown();
+                                e.printStackTrace();
+                           });
+        }
+
+        try {
+            remainingSystems.await(30, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        return systemLoads.getValues();
+    }
+
+    private class Holder {
+        private volatile Map<String, Properties> values;
+
+        Holder() {
+            this.values = new ConcurrentHashMap<String, Properties>();
+            init();
+        }
+
+        public Map<String, Properties> getValues() {
+            return this.values;
+        }
+
+        public void updateValues(Properties p) {
+            final BigDecimal load = (BigDecimal) p.get("systemLoad");
+
+            this.values.computeIfPresent("lowest", (key, curr_val) -> {
+                BigDecimal lowest = (BigDecimal) curr_val.get("systemLoad");
+                return load.compareTo(lowest) < 0 ? p : curr_val;
+            });
+            this.values.computeIfPresent("highest", (key, curr_val) -> {
+                BigDecimal highest = (BigDecimal) curr_val.get("systemLoad");
+                return load.compareTo(highest) > 0 ? p : curr_val;
+            });
+        }
+
+        private void init() {
+            this.values.put("highest", new Properties());
+            this.values.put("lowest", new Properties());
+            this.values.get("highest").put("hostname", "temp_max");
+            this.values.get("lowest").put("hostname", "temp_min");
+            this.values.get("highest")
+                .put("systemLoad", new BigDecimal(Double.MIN_VALUE));
+            this.values.get("lowest")
+                .put("systemLoad", new BigDecimal(Double.MAX_VALUE));
+        }
+    }
 }
 ```
 
-::page{title="Tearing down the environment"}
 
-Run the following script to stop the application:
+
+The goal of the ***systemLoad()*** method is to return the system with the largest load and the system with the smallest load. The ***systemLoad*** endpoint first gets all of the hostnames by calling the ***getSystems()*** method.  Then it loops through the hostnames and calls the ***getSystem()*** method on each one.
+
+Instead of using the ***thenAcceptAsync()*** method, ***Observable*** uses the ***subscribe()*** method to asynchronously process data. Thus, any necessary data processing happens inside the ***subscribe()*** method. In this case, the necessary data processing is saving the data in the temporary ***Holder*** class. The ***Holder*** class is used to store the value that is returned from the client because values cannot be returned inside the ***subscribe()*** method.  The highest and lowest load systems are updated in the ***updateValues()*** method.
+
+
+::page{title="Rebuilding and running the application"}
+
+Run the Maven ***install*** and ***package*** goals from the command-line session in the ***start*** directory:
+
+
+```bash
+./mvnw -pl query package
+```
+
+Run the following command to containerize the ***query*** microservice:
+
+```bash
+docker build -t query:1.0-SNAPSHOT query/.
+```
+
+Next, use the provided script to restart the query service in a Docker container. 
+
+
+```bash
+./scripts/startQueryContainer.sh
+```
+
+
+The ***query*** microservice will take some time to become available. Run the following command to confirm that the ***query*** microservice is up and running:
+```bash
+curl -s http://localhost:9080/health | jq
+```
+
+Once the ***query*** microservice is up and running, you can access the application by making requests to the ***query/systemLoad*** endpoint using the following ***curl*** command:
+```bash
+curl -s http://localhost:9080/query/systemLoad | jq
+```
+
+Switching to a reactive programming model freed up the thread that was handling your request to ***query/systemLoad***. While the client request is being handled, the thread can handle other work.
+
+When you are done checking out the application, run the following script to stop the application:
 
 
 ```bash
 ./scripts/stopContainers.sh
 ```
 
+
+
+::page{title="Testing the query microservice"}
+
+A few tests are included for you to test the basic functionality of the ***query*** microservice. If a test failure occurs, then you might have introduced a bug into the code.
+
+Create the ***QueryServiceIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-reactive-rest-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java
+```
+
+
+> Then, to open the QueryServiceIT.java file in your IDE, select
+> ***File*** > ***Open*** > guide-reactive-rest-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java, or click the following button
+
+::openFile{path="/home/project/guide-reactive-rest-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.query;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.net.Socket;
+import java.nio.file.Paths;
+import java.time.Duration;
+import java.util.Map;
+import java.util.Properties;
+
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.JerseyClient;
+import org.glassfish.jersey.client.JerseyClientBuilder;
+import org.glassfish.jersey.client.JerseyWebTarget;
+import org.glassfish.jersey.client.proxy.WebResourceFactory;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
+import org.mockserver.client.MockServerClient;
+import org.mockserver.model.HttpRequest;
+import org.mockserver.model.HttpResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.MockServerContainer;
+import org.testcontainers.containers.Network;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.images.builder.ImageFromDockerfile;
+import org.testcontainers.utility.DockerImageName;
+
+public class QueryServiceIT {
+
+    private static Logger logger = LoggerFactory.getLogger(QueryServiceIT.class);
+
+    public static QueryResourceClient client;
+
+    private static boolean isServiceRunning;
+    private static Network network = createNetwork();
+
+    private static String testHost1 =
+        "{"
+            + "\"hostname\" : \"testHost1\","
+            + "\"systemLoad\" : 1.23"
+        + "}";
+    private static String testHost2 =
+        "{"
+            + "\"hostname\" : \"testHost2\","
+            + "\"systemLoad\" : 3.21"
+        + "}";
+    private static String testHost3 =
+        "{" + "\"hostname\" : \"testHost3\","
+            + "\"systemLoad\" : 2.13"
+        + "}";
+
+    private static ImageFromDockerfile queryImage =
+        new ImageFromDockerfile("query:1.0-SNAPSHOT")
+            .withDockerfile(Paths.get("./Dockerfile"));
+
+    public static final DockerImageName MOCKSERVER_IMAGE =
+        DockerImageName.parse("mockserver/mockserver")
+            .withTag("mockserver-"
+                + MockServerClient.class.getPackage().getImplementationVersion());
+
+    public static MockServerContainer mockServer =
+        new MockServerContainer(MOCKSERVER_IMAGE)
+            .withNetworkAliases("mock-server")
+            .withNetwork(network);
+
+    public static MockServerClient mockClient;
+
+    private static GenericContainer<?> queryContainer =
+        new GenericContainer(queryImage)
+            .withNetwork(network)
+            .withExposedPorts(9080)
+            .waitingFor(Wait.forLogMessage("^.*CWWKF0011I.*$", 1))
+            .withStartupTimeout(Duration.ofMinutes(3))
+            .withLogConsumer(new Slf4jLogConsumer(logger))
+            .dependsOn(mockServer);
+
+    private static QueryResourceClient createRestClient(String urlPath) {
+        ClientConfig config = new ClientConfig();
+        JerseyClient jerseyClient = JerseyClientBuilder.createClient(config);
+        JerseyWebTarget target = jerseyClient.target(urlPath);
+        return WebResourceFactory.newResource(QueryResourceClient.class, target);
+    }
+
+    private static boolean isServiceRunning(String host, int port) {
+        try {
+            Socket socket = new Socket(host, port);
+            socket.close();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private static Network createNetwork() {
+        if (isServiceRunning("localhost", 9080)) {
+            isServiceRunning = true;
+            return new Network() {
+
+                @Override
+                public Statement apply(Statement base, Description description) {
+                    return null;
+                }
+
+                @Override
+                public String getId() {
+                    return "reactive-app";
+                }
+
+                @Override
+                public void close() {
+                }
+            };
+        } else {
+            isServiceRunning = false;
+            return Network.newNetwork();
+        }
+    }
+
+    @BeforeAll
+    public static void startContainers() {
+        mockServer.start();
+        mockClient = new MockServerClient(
+            mockServer.getHost(),
+            mockServer.getServerPort());
+        String urlPath;
+        if (isServiceRunning) {
+            System.out.println("Testing with mvn liberty:devc");
+            urlPath = "http://localhost:9080";
+        } else {
+            System.out.println("Testing with mvn verify");
+            queryContainer.withEnv(
+                "INVENTORY_BASE_URI",
+                "http://mock-server:" + MockServerContainer.PORT);
+            queryContainer.start();
+            urlPath = "http://"
+                      + queryContainer.getHost()
+                      + ":" + queryContainer.getFirstMappedPort();
+        }
+
+        System.out.println("Creating REST client with: " + urlPath);
+        client = createRestClient(urlPath);
+    }
+
+    @BeforeEach
+    public void setup() throws InterruptedException {
+        mockClient.when(HttpRequest.request()
+                        .withMethod("GET")
+                        .withPath("/inventory/systems"))
+                    .respond(HttpResponse.response()
+                        .withStatusCode(200)
+                        .withBody("[\"testHost1\","
+                                  + "\"testHost2\","
+                                  + "\"testHost3\"]")
+                        .withHeader("Content-Type", "application/json"));
+
+        mockClient.when(HttpRequest.request()
+                        .withMethod("GET")
+                        .withPath("/inventory/systems/testHost1"))
+                    .respond(HttpResponse.response()
+                        .withStatusCode(200)
+                        .withBody(testHost1)
+                        .withHeader("Content-Type", "application/json"));
+
+        mockClient.when(HttpRequest.request()
+                        .withMethod("GET")
+                        .withPath("/inventory/systems/testHost2"))
+                    .respond(HttpResponse.response()
+                        .withStatusCode(200)
+                        .withBody(testHost2)
+                        .withHeader("Content-Type", "application/json"));
+
+        mockClient.when(HttpRequest.request()
+                        .withMethod("GET")
+                        .withPath("/inventory/systems/testHost3"))
+                    .respond(HttpResponse.response()
+                        .withStatusCode(200)
+                        .withBody(testHost3)
+                        .withHeader("Content-Type", "application/json"));
+    }
+
+    @AfterAll
+    public static void stopContainers() {
+        if (!isServiceRunning) {
+            queryContainer.stop();
+        }
+        mockClient.close();
+        mockServer.stop();
+        network.close();
+    }
+
+    @Test
+    public void testSystemLoad() {
+        Map<String, Properties> response = client.systemLoad();
+        assertEquals(
+            "testHost2",
+            response.get("highest").get("hostname"),
+            "Returned highest system load incorrect"
+        );
+        assertEquals(
+            "testHost1",
+            response.get("lowest").get("hostname"),
+            "Returned lowest system load incorrect"
+        );
+    }
+}
+```
+
+
+
+The ***testSystemLoad()*** test case verifies that the ***query*** service can correctly calculate the highest and lowest system loads. 
+
+
+### Running the tests
+
+Verify that the tests pass by running the Maven ***verify*** goal on the ***query*** service:
+
+
+```bash
+export TESTCONTAINERS_RYUK_DISABLED=true
+./mvnw -pl query verify
+```
+
+For more information about disabling Ryuk, see the [Testcontainers custom configuration](https://java.testcontainers.org/features/configuration/#disabling-ryuk) document.
+
+When the tests succeed, you see output similar to the following example:
+
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.query.QueryServiceIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.88 s - in it.io.openliberty.guides.query.QueryServiceIT
+
+Results:
+
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+```
+
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just developed a reactive Java application using MicroProfile Reactive Messaging, Open Liberty, and Kafka.
+You modified an application to make HTTP requests by using a reactive JAX-RS client with Open Liberty and Jersey's RxJava provider.
 
 
 
@@ -651,30 +1041,31 @@ You just developed a reactive Java application using MicroProfile Reactive Messa
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-microprofile-reactive-messaging*** project by running the following commands:
+Delete the ***guide-reactive-rest-client*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-microprofile-reactive-messaging
+rm -fr guide-reactive-rest-client
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20reactive%20Java%20microservices&guide-id=cloud-hosted-guide-microprofile-reactive-messaging)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20RESTful%20services%20using%20the%20reactive%20JAX-RS%20client&guide-id=cloud-hosted-guide-reactive-rest-client)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-reactive-rest-client/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-reactive-rest-client/pulls)
 
 
 
 ### Where to next?
 
-* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
+* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
+* [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
 
 
 ### Log out of the session
