@@ -187,34 +187,33 @@ touch /home/project/guide-reactive-service-testing/start/system/src/test/java/it
 ```java
 package it.io.openliberty.guides.system;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import java.net.Socket;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Properties;
-import java.nio.file.Paths;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import org.testcontainers.kafka.ConfluentKafkaContainer;
-import org.testcontainers.containers.Network;
-import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.images.builder.ImageFromDockerfile;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.images.builder.ImageFromDockerfile;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.kafka.KafkaContainer;
 
 import io.openliberty.guides.models.SystemLoad;
 import io.openliberty.guides.models.SystemLoad.SystemLoadDeserializer;
@@ -231,8 +230,8 @@ public class SystemServiceIT {
         new ImageFromDockerfile("system:1.0-SNAPSHOT")
             .withDockerfile(Paths.get("./Dockerfile"));
 
-    private static ConfluentKafkaContainer kafkaContainer =
-        new ConfluentKafkaContainer("confluentinc/cp-kafka:latest")
+    private static KafkaContainer kafkaContainer =
+        new KafkaContainer("apache/kafka:latest")
             .withListener("kafka:19092")
             .withNetwork(network);
 
@@ -333,7 +332,7 @@ Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Co
 
 Construct the ***systemImage*** by using the ***ImageFromDockerfile*** class, which allows Testcontainers to build the Docker image from a Dockerfile during the test run time. For instance, the provided Dockerfile at the specified ***./Dockerfile*** paths is used to generate the ***system:1.0-SNAPSHOT*** image.
 
-Use the ***kafkaContainer*** class to instantiate the ***kafkaContainer*** test container, initiating the ***confluentinc/cp-kafka:latest*** Docker image. Similarly, use the ***GenericContainer*** class to create the ***systemContainer*** test container, starting the ***system:1.0-SNAPSHOT*** Docker image.
+Use the ***kafkaContainer*** class to instantiate the ***kafkaContainer*** test container, initiating the ***apache/kafka:latest*** Docker image. Similarly, use the ***GenericContainer*** class to create the ***systemContainer*** test container, starting the ***system:1.0-SNAPSHOT*** Docker image.
  
 The ***withListener()*** is configured to ***kafka:19092***, as the containerized ***system*** microservice functions as an additional producer. Therefore, the Kafka container needs to set up a listener to accommodate this requirement. For more information about using an additional consumer or producer with a Kafka container, see the [Testcontainers Kafka documentation](https://java.testcontainers.org/modules/kafka/)
 
@@ -485,47 +484,42 @@ touch /home/project/guide-reactive-service-testing/start/inventory/src/test/java
 ```java
 package it.io.openliberty.guides.inventory;
 
-import java.util.List;
-import java.net.Socket;
-import java.time.Duration;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.math.BigDecimal;
+import java.net.Socket;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.util.List;
 import java.util.Properties;
-
-import jakarta.ws.rs.core.GenericType;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriBuilder;
-import jakarta.ws.rs.client.ClientBuilder;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Assertions;
-import org.testcontainers.containers.Network;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;
-import org.testcontainers.kafka.ConfluentKafkaContainer;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.images.builder.ImageFromDockerfile;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
-import org.testcontainers.containers.wait.strategy.Wait;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
-
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.images.builder.ImageFromDockerfile;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.kafka.KafkaContainer;
 import io.openliberty.guides.models.SystemLoad;
 import io.openliberty.guides.models.SystemLoad.SystemLoadSerializer;
-
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.GenericType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriBuilder;
 
 @Testcontainers
 public class InventoryServiceIT {
@@ -540,8 +534,8 @@ public class InventoryServiceIT {
         new ImageFromDockerfile("inventory:1.0-SNAPSHOT")
             .withDockerfile(Paths.get("./Dockerfile"));
 
-    private static ConfluentKafkaContainer kafkaContainer =
-        new ConfluentKafkaContainer("confluentinc/cp-kafka:latest")
+    private static KafkaContainer kafkaContainer =
+        new KafkaContainer("apache/kafka:latest")
             .withListener("kafka:19092")
             .withNetwork(network);
 
