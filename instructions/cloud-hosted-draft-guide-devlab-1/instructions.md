@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Consuming RESTful services using the reactive JAX-RS client guide!"}
+::page{title="Welcome to the Enabling observability in microservices with traces, metrics, and logs using OpenTelemetry and Grafana guide!"}
 
-Learn how to use a reactive JAX-RS client to asynchronously invoke RESTful microservices over HTTP.
+Learn how to enable the collection of traces, metrics, and logs from microservices by using MicroProfile Telemetry and the Grafana stack.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,24 +14,46 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 ::page{title="What you'll learn"}
 
-First, you'll learn how to create a reactive JAX-RS client application by using the default reactive JAX-RS client APIs. You will then learn how to take advantage of the RxJava reactive extensions with a pluggable reactive JAX-RS client provider that's published by [Eclipse Jersey](https://eclipse-ee4j.github.io/jersey). The JAX-RS client is an API used to communicate with RESTful web services.  The API makes it easy to consume a web service by using the HTTP protocol, which means that you can efficiently implement client-side applications. The reactive client extension to JAX-RS is an API that enables you to use the reactive programming model when using the JAX-RS client.
+In a microservices architecture, it can be difficult to understand how services interact, where latency occurs, and what causes failures. Without visibility across service boundaries, diagnosing issues and tuning performance can become slow and error-prone.
 
-Reactive programming is an extension of asynchronous programming and focuses on the flow of data through data streams. Reactive applications process data when it becomes available and respond to requests as soon as processing is complete. The request to the application and response from the application are decoupled so that the application is not blocked from responding to other requests in the meantime. Because reactive applications can run faster than synchronous applications, they provide a much smoother user experience.
+Observability helps address these challenges by capturing telemetry data such as logs, metrics, and traces. [OpenTelemetry](https://opentelemetry.io/) is an open source framework that provides APIs, SDKs, and tools for generating and managing this data. MicroProfile Telemetry adopts OpenTelemetry to enable both automatic and manual instrumentation in MicroProfile applications. Traces and metrics, along with runtime and application logs, can be exported in a standardized format through an OpenTelemetry Collector to any compatible backend.
 
-The application in this guide demonstrates how the JAX-RS client accesses remote RESTful services by using asynchronous method calls. You’ll first look at the supplied client application that uses the JAX-RS default ***CompletionStage***-based provider. Then, you’ll modify the client application to use Jersey’s RxJava provider, which is an alternative JAX-RS reactive provider. Both Jersey and Apache CXF provide third-party reactive libraries for RxJava and were tested for use in Open Liberty.
+In this guide, you'll use the [Grafana Docker OpenTelemetry LGTM](https://github.com/grafana/docker-otel-lgtm/?tab=readme-ov-file#docker-otel-lgtm) image (***grafana/otel-lgtm***), an open source Docker image that provides a preconfigured observability backend for OpenTelemetry, based on the [Grafana stack](https://grafana.com/about/grafana-stack/). This setup includes:
 
-The application that you will be working with consists of three microservices, ***system***, ***inventory***, and ***query***. Every 15 seconds, the ***system*** microservice calculates and publishes an event that contains its current average system load. The ***inventory*** microservice subscribes to that information so that it can keep an updated list of all the systems and their current system loads.
+* [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/): a gateway for receiving telemetry data from applications
 
-![Reactive Query Service](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-rest-client/prod/assets/QueryService.png)
+* [Prometheus](https://github.com/prometheus/prometheus): a time-series database for storing numerical metrics, like request rates and memory usage
+
+* [Loki](https://github.com/grafana/loki/): a log aggregation system for collecting and querying logs
+
+* [Tempo](https://github.com/grafana/tempo/): a distributed tracing backend that stores traces, which represent the path and timing of a request as it flows across services
+    
+* [Grafana](https://github.com/grafana/grafana): a dashboard tool that brings together logs, metrics, and traces for visualization and analysis
+
+The diagram shows a distributed environment with multiple services. For simplicity, this guide configures only the ***system*** and ***inventory*** services. You’ll learn how to enable automatic collection of traces, metrics, and logs from microservices by using MicroProfile Telemetry, and visualize them in Grafana.
+
+![Application architecture](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/architecture_diagram.png)
 
 
-The microservice that you will modify is the ***query*** service. It communicates with the ***inventory*** service to determine which system has the highest system load and which system has the lowest system load.
+```bash
+docker run -d --name otel-lgtm -p 3000:3000 -p 4317:4317 -p 4318:4318 --rm -ti grafana/otel-lgtm
+```
 
-The ***system*** and ***inventory*** microservices use MicroProfile Reactive Messaging to send and receive the system load events. If you want to learn more about reactive messaging, see the  [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
+You can monitor the container startup by viewing its logs:
 
+```bash
+docker logs otel-lgtm
+```
+
+It may take a minute for the container to start. After you see the following message, your observability stack is ready:
+
+```
+The OpenTelemetry collector and the Grafana LGTM stack are up and running.
+```
+
+When the container is running, you can access the Grafana dashboard at the ***http\://localhost:3000*** URL.
 
 ::page{title="Getting started"}
 
@@ -44,11 +66,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-reactive-rest-client.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/draft-guide-microprofile-telemetry-grafana-automatic.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-reactive-rest-client.git
-cd guide-reactive-rest-client
+git clone https://github.com/openliberty/draft-guide-microprofile-telemetry-grafana-automatic.git
+cd draft-guide-microprofile-telemetry-grafana-automatic
 ```
 
 
@@ -56,984 +78,555 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-::page{title="Creating a web client using the default JAX-RS API"}
+### Try what you'll build
+
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+
+To try out the application, go to the ***finish*** directory and run the following Maven goal to build the ***system*** service and deploy it to Open Liberty:
+
+
+```bash
+./mvnw -pl system liberty:run
+```
+
+Next, open another command-line session in the ***finish*** directory and run the following command to start the ***inventory*** service:
+
+
+```bash
+./mvnw -pl inventory liberty:run
+```
+
+After you see the following message in both command-line sessions, both of your services are ready:
+
+```
+The defaultServer server is ready to run a smarter planet.
+```
+
+Visit the ***http\://localhost:9081/inventory/systems/localhost*** URL. This action triggers the ***inventory*** service to retrieve and store system load information for ***localhost*** by making a request to the ***system*** service at ******http\://localhost:9080/system/systemLoad***.***
+
+In addition, the ***inventory*** service makes periodic background requests to the ***system*** service every 15 seconds to refresh system load information for all stored systems.
+
+You can view the telemetry data collected from the running services in the Grafana dashboard at the ***http\://localhost:3000*** URL.
+
+**Viewing trace with Tempo**
+
+1. Open the **Explore** view from the left menu.
+
+2. Select **Tempo** as the data source.
+
+3. Set **Query type** to ***Search***.
+
+4. Click the blue **Run query** button in the upper-right corner to list recent traces.
+
+5. Find and click the trace ID for the request named ***GET /inventory/systems/{hostname}***. You see the following result in the **Trace** view:
+
++
+![***GET /inventory/systems/{hostname}*** trace](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/inventory_systems_localhost_trace.png)
+
+
++
+The trace contains three spans, two from the ***inventory*** service and one from the ***system*** service.
+
+
+
+
+**Viewing logs with Loki**
+
+1. Open the **Drilldown -> Logs** view from the left menu. This view displays an overview of time-series log counts and log entries for all services that send logs to Loki.
+
+2. Click *Show logs* for a service to display its log entries inline and expand a log entry to view the full trace context.
+
++
+![Example of log details](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/log_logger_info.png)
+
+
+
+
+
+
+**Viewing metrics with Prometheus**
+
+1. Open the **Drilldown -> Metrics** view from the left menu. This view shows a query-less experience for browsing the available metrics that are collected by Prometheus.
+
++
+![Metrics overview](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/metrics_overview.png)
+
+
+2. For a more detailed view of any metric, click the **Select** button next to its graph.
+
+
+
+
+After you're finished reviewing the application, stop the Open Liberty instances by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***inventory*** services. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
+
+
+```bash
+./mvnw -pl system liberty:stop
+./mvnw -pl inventory liberty:stop
+```
+
+::page{title="Enabling automatic telemetry collection"}
+
+MicroProfile Telemetry automatically collects telemetry data without requiring changes to your application code. To collect and export telemetry data, you need to enable the MicroProfile Telemetry feature and configure the required OpenTelemetry properties in your application.
 
 Navigate to the ***start*** directory to begin.
-```bash
-cd /home/project/guide-reactive-rest-client/start
-```
 
-JAX-RS provides a default reactive provider that you can use to create a reactive REST client using the ***CompletionStage*** interface.
+Start by adding the MicroProfile Telemetry feature to the ***server.xml*** file of each service.
 
-Create an ***InventoryClient*** class, which retrieves inventory data, and a ***QueryResource*** class, which queries data from the ***inventory*** service.
+Replace the ***server.xml*** file of the inventory service.
 
-Create the ***InventoryClient*** interface.
+> To open the server.xml file in your IDE, select
+> ***File*** > ***Open*** > draft-guide-microprofile-telemetry-grafana-automatic/start/inventory/src/main/liberty/config/server.xml, or click the following button
 
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java
-```
-
-
-> Then, to open the InventoryClient.java file in your IDE, select
-> ***File*** > ***Open*** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java, or click the following button
-
-::openFile{path="/home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java"}
-
-
-
-```java
-package io.openliberty.guides.query.client;
-
-import java.util.List;
-import java.util.Properties;
-import java.util.concurrent.CompletionStage;
-
-import jakarta.enterprise.context.RequestScoped;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.GenericType;
-import jakarta.ws.rs.core.HttpHeaders;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
-@RequestScoped
-public class InventoryClient {
-
-    @Inject
-    @ConfigProperty(name = "INVENTORY_BASE_URI", defaultValue = "http://localhost:9085")
-    private String baseUri;
-
-
-    public List<String> getSystems() {
-        return ClientBuilder.newClient()
-                            .target(baseUri)
-                            .path("/inventory/systems")
-                            .request()
-                            .header(HttpHeaders.CONTENT_TYPE,
-                                    MediaType.APPLICATION_JSON)
-                            .get(new GenericType<List<String>>() { });
-    }
-
-    public CompletionStage<Properties> getSystem(String hostname) {
-        return ClientBuilder.newClient()
-                            .target(baseUri)
-                            .path("/inventory/systems")
-                            .path(hostname)
-                            .request()
-                            .header(HttpHeaders.CONTENT_TYPE,
-                                    MediaType.APPLICATION_JSON)
-                            .rx()
-                            .get(Properties.class);
-    }
-}
-```
-
-
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
-
-
-The ***getSystem()*** method returns the ***CompletionStage*** interface. This interface represents a unit or stage of a computation. When the associated computation completes, the value can be retrieved. The ***rx()*** method calls the ***CompletionStage*** interface. It retrieves the ***CompletionStageRxInvoker*** class and allows these methods to function correctly with the ***CompletionStage*** interface return type.
-
-Create the ***QueryResource*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java
-```
-
-
-> Then, to open the QueryResource.java file in your IDE, select
-> ***File*** > ***Open*** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java, or click the following button
-
-::openFile{path="/home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java"}
-
-
-
-```java
-package io.openliberty.guides.query;
-
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-
-import io.openliberty.guides.query.client.InventoryClient;
-
-@ApplicationScoped
-@Path("/query")
-public class QueryResource {
-
-    @Inject
-    private InventoryClient inventoryClient;
-
-    @GET
-    @Path("/systemLoad")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Map<String, Properties> systemLoad() {
-        List<String> systems = inventoryClient.getSystems();
-        CountDownLatch remainingSystems = new CountDownLatch(systems.size());
-        final Holder systemLoads = new Holder();
-
-        for (String system : systems) {
-            inventoryClient.getSystem(system)
-                           .thenAcceptAsync(p -> {
-                                if (p != null) {
-                                    systemLoads.updateValues(p);
-                                }
-                                remainingSystems.countDown();
-                           })
-                           .exceptionally(ex -> {
-                                remainingSystems.countDown();
-                                ex.printStackTrace();
-                                return null;
-                           });
-        }
-
-        try {
-            remainingSystems.await(30, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        return systemLoads.getValues();
-    }
-
-    private class Holder {
-        private volatile Map<String, Properties> values;
-
-        Holder() {
-            this.values = new ConcurrentHashMap<String, Properties>();
-            init();
-        }
-
-        public Map<String, Properties> getValues() {
-            return this.values;
-        }
-
-        public void updateValues(Properties p) {
-            final BigDecimal load = (BigDecimal) p.get("systemLoad");
-
-            this.values.computeIfPresent("lowest", (key, curr_val) -> {
-                BigDecimal lowest = (BigDecimal) curr_val.get("systemLoad");
-                return load.compareTo(lowest) < 0 ? p : curr_val;
-            });
-            this.values.computeIfPresent("highest", (key, curr_val) -> {
-                BigDecimal highest = (BigDecimal) curr_val.get("systemLoad");
-                return load.compareTo(highest) > 0 ? p : curr_val;
-            });
-        }
-
-        private void init() {
-            this.values.put("highest", new Properties());
-            this.values.put("lowest", new Properties());
-            this.values.get("highest").put("hostname", "temp_max");
-            this.values.get("lowest").put("hostname", "temp_min");
-            this.values.get("highest")
-                .put("systemLoad", new BigDecimal(Double.MIN_VALUE));
-            this.values.get("lowest")
-                .put("systemLoad", new BigDecimal(Double.MAX_VALUE));
-        }
-    }
-}
-```
-
-
-
-The ***systemLoad*** endpoint asynchronously processes the data that is retrieved by the ***InventoryClient*** interface and serves that data after all of the services respond. The ***thenAcceptAsync()*** and ***exceptionally()*** methods together behave like an asynchronous try-catch block. The data is processed in the ***thenAcceptAsync()*** method only after the ***CompletionStage*** interface finishes retrieving it.  When you return a ***CompletionStage*** type in the resource, it doesn’t necessarily mean that the computation completed and the response was built.
-
-A ***CountDownLatch*** object is used to track how many asynchronous requests are being waited on. After each thread is completed, the ***countdown()*** methodcounts the ***CountDownLatch*** object down towards ***0***. This means that the value returns only after the thread that's retrieving the value is complete.The ***await()*** method stops and waits until all of the requests are complete. While the countdown completes, the main thread is free to perform other tasks. In this case, no such task is present.
-
-
-::page{title="Building and running the application"}
-
-The ***system***, ***inventory***, and ***query*** microservices will be built in Docker containers. If you want to learn more about Docker containers, check out the [Containerizing microservices](https://openliberty.io/guides/containerize.html) guide.
-
-Start your Docker environment.
-
-To build the application, run the Maven ***install*** and ***package*** goals from the command-line session in the ***start*** directory:
-
-
-```bash
-./mvnw -pl models install
-./mvnw package
-```
-
-
-Run the following commands to containerize the microservices:
-
-```bash
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-docker build -t query:1.0-SNAPSHOT query/.
-```
-
-Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It creates containers for Kafka and all of the microservices in the project.
-
-
-```bash
-./scripts/startContainers.sh
-```
-
-
-The microservices will take some time to become available. Run the following commands to confirm that the ***inventory*** and ***query*** microservices are up and running:
-```bash
-curl -s http://localhost:9085/health | jq
-```
-
-```bash
-curl -s http://localhost:9080/health | jq
-```
-
-Once the microservices are up and running, you can access the application by making requests to the ***query/systemLoad*** endpoint by using the following ***curl*** command:
-```bash
-curl -s http://localhost:9080/query/systemLoad | jq
-```
-
-When the service is ready, you see an output similar to the following example. This example was formatted for readability:
-
-```
-{
-    "highest": {
-        "hostname": "30bec2b63a96",
-        "systemLoad": 6.1
-    },     
-    "lowest": { 
-        "hostname": "55ec2b63a96",
-        "systemLoad": 0.1
-    }
-}
-```
-
-The JSON output contains a ***highest*** attribute that represents the system with the highest load. Similarly, the ***lowest*** attribute represents the system with the lowest load. The JSON output for each of these attributes contains the ***hostname*** and ***systemLoad*** of the system.
-
-When you are done checking out the application, run the following command to stop the ***query*** microservice. Leave the ***system*** and ***inventory*** services running because they will be used when the application is rebuilt later in the guide:
-
-```bash
-docker stop query
-```
-
-
-::page{title="Updating the web client to use an alternative reactive provider"}
-
-Although JAX-RS provides the default reactive provider that returns ***CompletionStage*** types, you can alternatively use another provider that supports other reactive frameworks like [RxJava](https://github.com/ReactiveX/RxJava). The Apache CXF and Eclipse Jersey projects produce such providers. You'll now update the web client to use the Jersey reactive provider for RxJava. With this updated reactive provider, you can write clients that use RxJava objects instead of clients that use only the ***CompletionStage*** interface. These custom objects provide a simpler and faster way for you to create scalable RESTful services with a ***CompletionStage*** interface.
-
-Replace the Maven configuration file.
-
-> To open the pom.xml file in your IDE, select
-> ***File*** > ***Open*** > guide-reactive-rest-client/start/query/pom.xml, or click the following button
-
-::openFile{path="/home/project/guide-reactive-rest-client/start/query/pom.xml"}
+::openFile{path="/home/project/draft-guide-microprofile-telemetry-grafana-automatic/start/inventory/src/main/liberty/config/server.xml"}
 
 
 
 ```xml
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+<server description="inventory service">
 
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>query</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>war</packaging>
+    <featureManager>
+        <platform>jakartaee-10.0</platform>
+        <platform>microprofile-7.1</platform>
+        <feature>cdi</feature>
+        <feature>jsonb</feature>
+        <feature>jsonp</feature>
+        <feature>restfulWS</feature>
+        <feature>mpConfig</feature>
+        <feature>mpRestClient</feature>
+        <feature>enterpriseBeansLite</feature>
+        <feature>mpTelemetry</feature>
+    </featureManager>
 
-    <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <!-- Liberty configuration -->
-        <liberty.var.http.port>9080</liberty.var.http.port>
-        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
-    </properties>
+    <httpEndpoint httpPort="${http.port}"
+                  httpsPort="${https.port}"
+                  id="defaultHttpEndpoint" host="*" />
 
-    <dependencies>
-        <!-- Provided dependencies -->
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>10.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.enterprise.concurrent</groupId>
-            <artifactId>jakarta.enterprise.concurrent-api</artifactId>
-            <version>3.0.3</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.validation</groupId>
-            <artifactId>jakarta.validation-api</artifactId>
-            <version>3.0.2</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>7.0</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-        <!-- Required dependencies -->
-        <dependency>
-            <groupId>io.openliberty.guides</groupId>
-            <artifactId>models</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
-        <!-- Reactive dependencies -->
-        <dependency>
-            <groupId>org.glassfish.jersey.core</groupId>
-            <artifactId>jersey-client</artifactId>
-            <version>3.1.11</version>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.jersey.ext.rx</groupId>
-            <artifactId>jersey-rx-client-rxjava</artifactId>
-            <version>3.1.11</version>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.jersey.ext.rx</groupId>
-            <artifactId>jersey-rx-client-rxjava2</artifactId>
-            <version>3.1.11</version>
-        </dependency>
-        <!-- For tests -->
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>mockserver</artifactId>
-            <version>1.21.3</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mock-server</groupId>
-            <artifactId>mockserver-client-java</artifactId>
-            <version>5.15.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.14.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>1.21.3</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.jersey.ext</groupId>
-            <artifactId>jersey-proxy-client</artifactId>
-            <version>3.1.11</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.jersey.media</groupId>
-            <artifactId>jersey-media-json-jackson</artifactId>
-            <version>3.1.11</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.jersey.inject</groupId>
-            <artifactId>jersey-hk2</artifactId>
-            <version>3.1.11</version>
-                <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>2.0.17</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>2.0.17</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-core</artifactId>
-            <version>2.20.0</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+    <webApplication location="guide-microprofile-telemetry-grafana-automatic-inventory.war"
+                    contextRoot="/" />
 
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.4.0</version>
-                <configuration>
-                    <packagingExcludes>pom.xml</packagingExcludes>
-                </configuration>
-            </plugin>
+    <logging consoleLogLevel="INFO" />
 
-            <!-- Liberty plugin -->
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.11.5</version>
-                <configuration>
-                    <containerRunOpts>
-                        -e INVENTORY_BASE_URI=http://mock-server:1080
-                        --network=reactive-app
-                    </containerRunOpts>
-                </configuration>
-            </plugin>
+</server>
+```
 
-            <!-- Plugin to run unit tests -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.4</version>
-            </plugin>
 
-            <!-- Plugin to run integration tests -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.4</version>
-                <executions>
-                    <execution>
-                        <id>integration-test</id>
-                        <goals>
-                            <goal>integration-test</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>verify</id>
-                        <goals>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-</project>
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+
+
+The ***mpTelemetry*** feature enables MicroProfile Telemetry support in Open Liberty for the ***inventory*** service.
+
+Replace the ***server.xml*** file of the system service.
+
+> To open the server.xml file in your IDE, select
+> ***File*** > ***Open*** > draft-guide-microprofile-telemetry-grafana-automatic/start/system/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/draft-guide-microprofile-telemetry-grafana-automatic/start/system/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="system service">
+
+    <featureManager>
+        <platform>jakartaee-10.0</platform>
+        <platform>microprofile-7.1</platform>
+        <feature>jsonp</feature>
+        <feature>restfulWS</feature>
+        <feature>mpTelemetry</feature>
+    </featureManager>
+
+    <httpEndpoint httpPort="${http.port}"
+                  httpsPort="${https.port}"
+                  id="defaultHttpEndpoint" host="*" />
+
+    <webApplication location="guide-microprofile-telemetry-grafana-automatic-system.war"
+                    contextRoot="/" />
+
+    <logging consoleLogLevel="INFO" />
+
+</server>
 ```
 
 
 
-The ***jersey-rx-client-rxjava*** and ***jersey-rx-client-rxjava2*** dependencies provide the ***RxInvokerProvider*** classes, which are registered to the ***jersey-client*** ***ClientBuilder*** class.
+Similarly, the added ***mpTelemetry*** feature enables telemetry support for the ***system*** service.
 
-Update the client to accommodate the custom object types that you are trying to return. You'll need to register the type of object that you want inside the client invocation.
+By default, the OpenTelemetry SDK is disabled to reduce performance overhead. To enable it, set the ***otel.sdk.disabled*** property to ***false*** in a valid configuration source.
 
-Replace the ***InventoryClient*** interface.
-
-> To open the InventoryClient.java file in your IDE, select
-> ***File*** > ***Open*** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java, or click the following button
-
-::openFile{path="/home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java"}
-
-
-
-```java
-package io.openliberty.guides.query.client;
-
-import java.util.List;
-import java.util.Properties;
-
-import jakarta.enterprise.context.RequestScoped;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.GenericType;
-import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.MediaType;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.glassfish.jersey.client.rx.rxjava.RxObservableInvoker;
-import org.glassfish.jersey.client.rx.rxjava.RxObservableInvokerProvider;
-
-import rx.Observable;
-
-@RequestScoped
-public class InventoryClient {
-
-    @Inject
-    @ConfigProperty(name = "INVENTORY_BASE_URI", defaultValue = "http://localhost:9085")
-    private String baseUri;
-
-    public List<String> getSystems() {
-        return ClientBuilder.newClient()
-                            .target(baseUri)
-                            .path("/inventory/systems")
-                            .request()
-                            .header(HttpHeaders.CONTENT_TYPE,
-                                    MediaType.APPLICATION_JSON)
-                            .get(new GenericType<List<String>>() { });
-    }
-
-    public Observable<Properties> getSystem(String hostname) {
-        return ClientBuilder.newClient()
-                            .target(baseUri)
-                            .register(RxObservableInvokerProvider.class)
-                            .path("/inventory/systems")
-                            .path(hostname)
-                            .request()
-                            .header(HttpHeaders.CONTENT_TYPE,
-                                    MediaType.APPLICATION_JSON)
-                            .rx(RxObservableInvoker.class)
-                            .get(new GenericType<Properties>() { });
-    }
-}
-```
-
-
-
-The return type of the ***getSystem()*** method is now an ***Observable*** object instead of a ***CompletionStage*** interface. [Observable](http://reactivex.io/RxJava/javadoc/io/reactivex/Observable.html) is a collection of data that waits to be subscribed to before it can release any data and is part of RxJava. The ***rx()*** method now needs to contain ***RxObservableInvoker.class*** as an argument. This argument calls the specific invoker, ***RxObservableInvoker***, for the ***Observable*** class that's provided by Jersey. 
-
-In the ***getSystem()*** method, the ***register(RxObservableInvokerProvider)*** method call registers the ***RxObservableInvoker*** class,which means that the client can recognize the invoker provider.
-
-In some scenarios, a producer might generate more data than the consumers can handle. JAX-RS can deal with cases like these by using the RxJava ***Flowable*** class with backpressure. To learn more about RxJava and backpressure, see [JAX-RS reactive extensions with RxJava backpressure](https://openliberty.io/blog/2019/04/10/jaxrs-reactive-extensions.html).
-
-
-::page{title="Updating the REST resource to support the reactive JAX-RS client"}
-
-Now that the client methods return the ***Observable*** class, you must update the resource to accommodate these changes.
-
-Replace the ***QueryResource*** class.
-
-> To open the QueryResource.java file in your IDE, select
-> ***File*** > ***Open*** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java, or click the following button
-
-::openFile{path="/home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java"}
-
-
-
-```java
-package io.openliberty.guides.query;
-
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-
-import io.openliberty.guides.query.client.InventoryClient;
-
-@ApplicationScoped
-@Path("/query")
-public class QueryResource {
-
-    @Inject
-    private InventoryClient inventoryClient;
-
-    @GET
-    @Path("/systemLoad")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Map<String, Properties> systemLoad() {
-        List<String> systems = inventoryClient.getSystems();
-        CountDownLatch remainingSystems = new CountDownLatch(systems.size());
-        final Holder systemLoads = new Holder();
-        for (String system : systems) {
-            inventoryClient.getSystem(system)
-                           .subscribe(p -> {
-                                if (p != null) {
-                                    systemLoads.updateValues(p);
-                                }
-                                remainingSystems.countDown();
-                           }, e -> {
-                                remainingSystems.countDown();
-                                e.printStackTrace();
-                           });
-        }
-
-        try {
-            remainingSystems.await(30, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        return systemLoads.getValues();
-    }
-
-    private class Holder {
-        private volatile Map<String, Properties> values;
-
-        Holder() {
-            this.values = new ConcurrentHashMap<String, Properties>();
-            init();
-        }
-
-        public Map<String, Properties> getValues() {
-            return this.values;
-        }
-
-        public void updateValues(Properties p) {
-            final BigDecimal load = (BigDecimal) p.get("systemLoad");
-
-            this.values.computeIfPresent("lowest", (key, curr_val) -> {
-                BigDecimal lowest = (BigDecimal) curr_val.get("systemLoad");
-                return load.compareTo(lowest) < 0 ? p : curr_val;
-            });
-            this.values.computeIfPresent("highest", (key, curr_val) -> {
-                BigDecimal highest = (BigDecimal) curr_val.get("systemLoad");
-                return load.compareTo(highest) > 0 ? p : curr_val;
-            });
-        }
-
-        private void init() {
-            this.values.put("highest", new Properties());
-            this.values.put("lowest", new Properties());
-            this.values.get("highest").put("hostname", "temp_max");
-            this.values.get("lowest").put("hostname", "temp_min");
-            this.values.get("highest")
-                .put("systemLoad", new BigDecimal(Double.MIN_VALUE));
-            this.values.get("lowest")
-                .put("systemLoad", new BigDecimal(Double.MAX_VALUE));
-        }
-    }
-}
-```
-
-
-
-The goal of the ***systemLoad()*** method is to return the system with the largest load and the system with the smallest load. The ***systemLoad*** endpoint first gets all of the hostnames by calling the ***getSystems()*** method.  Then it loops through the hostnames and calls the ***getSystem()*** method on each one.
-
-Instead of using the ***thenAcceptAsync()*** method, ***Observable*** uses the ***subscribe()*** method to asynchronously process data. Thus, any necessary data processing happens inside the ***subscribe()*** method. In this case, the necessary data processing is saving the data in the temporary ***Holder*** class. The ***Holder*** class is used to store the value that is returned from the client because values cannot be returned inside the ***subscribe()*** method.  The highest and lowest load systems are updated in the ***updateValues()*** method.
-
-
-::page{title="Rebuilding and running the application"}
-
-Run the Maven ***install*** and ***package*** goals from the command-line session in the ***start*** directory:
-
-
-```bash
-./mvnw -pl query package
-```
-
-Run the following command to containerize the ***query*** microservice:
-
-```bash
-docker build -t query:1.0-SNAPSHOT query/.
-```
-
-Next, use the provided script to restart the query service in a Docker container. 
-
-
-```bash
-./scripts/startQueryContainer.sh
-```
-
-
-The ***query*** microservice will take some time to become available. Run the following command to confirm that the ***query*** microservice is up and running:
-```bash
-curl -s http://localhost:9080/health | jq
-```
-
-Once the ***query*** microservice is up and running, you can access the application by making requests to the ***query/systemLoad*** endpoint using the following ***curl*** command:
-```bash
-curl -s http://localhost:9080/query/systemLoad | jq
-```
-
-Switching to a reactive programming model freed up the thread that was handling your request to ***query/systemLoad***. While the client request is being handled, the thread can handle other work.
-
-When you are done checking out the application, run the following script to stop the application:
-
-
-```bash
-./scripts/stopContainers.sh
-```
-
-
-
-::page{title="Testing the query microservice"}
-
-A few tests are included for you to test the basic functionality of the ***query*** microservice. If a test failure occurs, then you might have introduced a bug into the code.
-
-Create the ***QueryServiceIT*** class.
+Create the ***bootstrap.properties*** file for the inventory service.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-reactive-rest-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java
+touch /home/project/draft-guide-microprofile-telemetry-grafana-automatic/start/inventory/src/main/liberty/config/bootstrap.properties
 ```
 
 
-> Then, to open the QueryServiceIT.java file in your IDE, select
-> ***File*** > ***Open*** > guide-reactive-rest-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java, or click the following button
+> Then, to open the bootstrap.properties file in your IDE, select
+> ***File*** > ***Open*** > draft-guide-microprofile-telemetry-grafana-automatic/start/inventory/src/main/liberty/config/bootstrap.properties, or click the following button
 
-::openFile{path="/home/project/guide-reactive-rest-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java"}
+::openFile{path="/home/project/draft-guide-microprofile-telemetry-grafana-automatic/start/inventory/src/main/liberty/config/bootstrap.properties"}
+
+
+
+```
+otel.service.name=inventory
+otel.sdk.disabled=false
+```
+
+
+
+Setting the ***otel.sdk.disabled*** property to ***false*** property in the [bootstrap properties](https://openliberty.io/docs/latest/reference/bootstrap-properties.html) file enables telemetry collection at the runtime level. This allows both runtime and application telemetry to be collected. If you instead configure this property at the application level, runtime telemetry will not be included. For more information, refer to the [MicroProfile Telemetry configuration documentation](https://openliberty.io/docs/latest/microprofile-telemetry.html#global).
+
+The ***otel.service.name*** property sets the service name to ***inventory***, helping identify the source of the telemetry data in monitoring tools like Grafana.
+
+The observability backend provided by the ***grafana/otel-lgtm*** image receives telemetry data through the OTLP protocol, which is the default for OpenTelemetry. Therefore, no extra exporter configuration is needed.
+
+Create the ***bootstrap.properties*** file for the system service.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/draft-guide-microprofile-telemetry-grafana-automatic/start/system/src/main/liberty/config/bootstrap.properties
+```
+
+
+> Then, to open the bootstrap.properties file in your IDE, select
+> ***File*** > ***Open*** > draft-guide-microprofile-telemetry-grafana-automatic/start/system/src/main/liberty/config/bootstrap.properties, or click the following button
+
+::openFile{path="/home/project/draft-guide-microprofile-telemetry-grafana-automatic/start/system/src/main/liberty/config/bootstrap.properties"}
+
+
+
+```
+otel.service.name=system
+otel.sdk.disabled=false
+```
+
+
+
+The ***otel.**** properties are configured in the ***bootstrap.properties*** file for the ***system*** service to enable telemetry collection and define service-specific settings.
+
+For more information about these and other Telemetry properties, see the [MicroProfile Config properties for MicroProfile Telemetry](https://openliberty.io/docs/latest/reference/microprofile-config-properties.html#telemetry) documentation.
+
+::page{title="Viewing the default telemetry data"}
+
+OpenTelemetry automatically generates trace spans for incoming HTTP requests to Jakarta RESTful Web Services (JAX-RS) endpoints and outgoing requests from MicroProfile REST Clients. It also collects metrics such as HTTP request durations and JVM performance, and captures logs from both the server and the application.
+
+Start the services to begin collecting telemetry data.
+
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following command to start the ***system*** service in dev mode:
+
+
+```bash
+./mvnw -pl system liberty:dev
+```
+
+Open another command-line session and run the following command to start the ***inventory*** service in dev mode:
+
+
+```bash
+./mvnw -pl inventory liberty:dev
+```
+
+When you see the following message, your Liberty instances are ready in dev mode:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+
+Telemetry such as Liberty startup logs and JVM metrics is generated when the servers start. To see request-scoped telemetry, interact with the services. The ***system*** service provides system load information, while the ***inventory*** service retrieves and stores this data through a MicroProfile REST Client. Both services expose REST endpoints built with Jakarta RESTful Web Services.
+
+Visit the ***http\://localhost:9081/inventory/systems/localhost*** URL to fetch and store the ***localhost*** system information, which triggers the ***inventory*** service to call the ***system*** service at ******http\://localhost:9080/system/systemLoad***.***
+
+Because the ***inventory*** service makes periodic background requests every 15 seconds to refresh system load information for all stored systems, telemetry data is continuously generated for you to monitor.
+
+Open the Grafana dashboard at the ***http\://localhost:3000*** URL to view the telemetry data collected from the running services.
+
+**Viewing request traces**
+
+View the trace that was automatically created from your request:
+
+1. Open the **Explore** view from the left menu.
+
+2. Select **Tempo** as the data source.
+
+3. Set **Query type** to ***Search***.
+
+4. Click the blue **Run query** button at the upper right of the **Explore** view to list recent traces.
+
+5. Find and click the trace ID for the request named ***GET /inventory/systems/{hostname}***. You see the following result in the **Trace** view:
+
++
+![***GET /inventory/systems/{hostname}*** trace](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/inventory_systems_localhost_trace.png)
+
+
++
+Verify that the trace contains three spans, one for the initial request to the ***inventory*** service, one client span from the ***inventory*** service making an outbound call to the ***system*** service, and one server span from the ***system*** service handling that request.
+
+6. In the **Service & Operation** table, click each span to view detailed metadata. This includes when the request was received, when the response was sent, and information such as the HTTP method, status code, and endpoint path.
+
++
+![***GET /inventory/systems/{hostname}*** spans](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/inventory_systems_localhost_spans.png)
+
+
+7. Expand the **Node graph** section to see the relationship between the spans and how the ***inventory*** and ***system*** microservices interact. This graph helps visualize the request flow across services and identify any latency hotspots or bottlenecks.
+
++
+![***GET /inventory/systems/{hostname}*** node graph](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/inventory_systems_localhost_node_graph.png)
+
+
+
+
+
+**Viewing trace logs**
+
+View logs associated with a specific span:
+
+1. From the **Trace** view you opened in the previous step, click the **Log icon** on the right side of the span entry in the **Service & Operation** table.
+
+2. Alternatively, click the blue **Logs for this span** button in the span detail section.
+
+**Viewing server logs**
+
+Monitor timestamped logs generated by the services:
+
+1. Navigate to **Drilldown -> Logs** from the menu. This view displays a time-series overview of log counts and log entries for all services.
+
++
+![Logs overview](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/logs_overview.png)
+
+
+2. Click *Show logs* for a service to display its log entries inline.
+
+
+
+
+**Viewing JVM metrics**
+
+Get insights into class count, CPU usage, and heap memory utilization:
+
+1. Open the **Dashboards** view from the menu.
+
+2. Select the **JVM Overview (OpenTelemetry)** dashboard.
+
++
+![JVM Overview](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/jvm_overview.png)
+
+
+**Viewing HTTP metrics**
+
+Get an overview of the HTTP request performance:
+
+1. Navigate back to the **Dashboards** view from the menu. 
+
+2. Open the **RED Metrics (classic histogram)** dashboard.
+
++
+![RED Metrics](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/red_metrics.png)
+
+
+::page{title="Enhancing application logs"}
+
+When MicroProfile Telemetry is enabled, OpenTelemetry automatically collects logs from the Liberty message log stream. This includes logs that are written by using the ***java.util.logging*** API at the ***INFO*** level or higher, as well as messages from the ***System.out*** standard output and ***System.err*** standard error streams.
+
+While ***System.out*** and ***System.err*** are useful for quick debugging, they are limited in production environments. These streams lack structure, consistent severity levels, and the contextual metadata that is critical for monitoring distributed systems. In contrast, the ***java.util.logging*** API produces structured logs with fine-grained control over log levels, built-in support for exceptions, and better integration with telemetry tools like Grafana.
+
+
+The current ***InventoryManager*** class logs messages by writing to ***System.out*** and ***System.err***.
+
+To observe a basic standard output log, visit the ***http\://localhost:9081/inventory/systems/localhost*** URL to trigger a successful request. Then, open the Grafana dashboard at the ***http\://localhost:3000*** URL.
+
+In the **Explore** view, select the **Loki** data source. Set a filter for ***service_name = inventory*** and click the blue **Run query** button. The results appear in the **Logs** view by default. If it is not already selected, switch to **Logs** at the upper right of the **Logs** section to enable log expansion.
+
+![Logs view](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/logs_view.png)
+
+
+Locate the log entry ***Retrieved system load from localhost***. When you expand it, you see that both the ***detected_level*** and the ***io_openliberty_module*** fields are set to ***SystemOut***.
+
+![Example log entry from ***System.out*** standard output stream](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/log_system_out.png)
+
+
+Next, observe a standard error log by visiting the ***http\://localhost:9081/inventory/systems/unknown*** URL. This simulates a request to a nonexistent host and triggers a ***RuntimeException***.
+
+Rerun the same query in Grafana. In the **Logs** section, locate and expand the following log entry:
+
+```
+Runtime exception while invoking system service: RESTEASY004655: Unable to invoke request: java.net.UnknownHostException: unknown: nodename nor servname provided, or not known
+```
+
+You see that both the ***detected_level*** and the ***io_openliberty_module*** fields are set to ***SystemErr***. The error stack trace is included directly in the log message, and no information about the exception type is provided.
+
+![Example log entry from ***System.err*** standard error stream](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/log_system_err.png)
+
+
+Although ***System.out*** and ***System.err*** logs are collected, they lack structured metadata. You cannot filter them by severity, separate stack traces from exceptions, or correlate them with originating classes and error types.
+
+To enable structured logging, update your application to use the ***java.util.logging*** API.
+
+Replace the ***InventoryManager*** class.
+
+> To open the InventoryManager.java file in your IDE, select
+> ***File*** > ***Open*** > draft-guide-microprofile-telemetry-grafana-automatic/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
+
+::openFile{path="/home/project/draft-guide-microprofile-telemetry-grafana-automatic/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.query;
+package io.openliberty.guides.inventory;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.net.Socket;
-import java.nio.file.Paths;
-import java.time.Duration;
+import java.net.URI;
+import java.util.ArrayList;
 import java.util.Map;
-import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.JerseyClient;
-import org.glassfish.jersey.client.JerseyClientBuilder;
-import org.glassfish.jersey.client.JerseyWebTarget;
-import org.glassfish.jersey.client.proxy.WebResourceFactory;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
-import org.mockserver.client.MockServerClient;
-import org.mockserver.model.HttpRequest;
-import org.mockserver.model.HttpResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.MockServerContainer;
-import org.testcontainers.containers.Network;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.images.builder.ImageFromDockerfile;
-import org.testcontainers.utility.DockerImageName;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.json.JsonObject;
 
-public class QueryServiceIT {
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.rest.client.RestClientBuilder;
 
-    private static Logger logger = LoggerFactory.getLogger(QueryServiceIT.class);
+import io.openliberty.guides.inventory.client.SystemClient;
+import io.openliberty.guides.inventory.model.InventoryList;
+import io.openliberty.guides.inventory.model.SystemData;
 
-    public static QueryResourceClient client;
+@ApplicationScoped
+public class InventoryManager {
 
-    private static boolean isServiceRunning;
-    private static Network network = createNetwork();
+    private static final Logger LOGGER =
+        Logger.getLogger(InventoryManager.class.getName());
 
-    private static String testHost1 =
-        "{"
-            + "\"hostname\" : \"testHost1\","
-            + "\"systemLoad\" : 1.23"
-        + "}";
-    private static String testHost2 =
-        "{"
-            + "\"hostname\" : \"testHost2\","
-            + "\"systemLoad\" : 3.21"
-        + "}";
-    private static String testHost3 =
-        "{" + "\"hostname\" : \"testHost3\","
-            + "\"systemLoad\" : 2.13"
-        + "}";
+    @Inject
+    @ConfigProperty(name = "system.http.port")
+    private int SYSTEM_PORT;
 
-    private static ImageFromDockerfile queryImage =
-        new ImageFromDockerfile("query:1.0-SNAPSHOT")
-            .withDockerfile(Paths.get("./Dockerfile"));
+    private Map<String, SystemData> systems = new ConcurrentHashMap<>();
 
-    public static final DockerImageName MOCKSERVER_IMAGE =
-        DockerImageName.parse("mockserver/mockserver")
-            .withTag("mockserver-"
-                + MockServerClient.class.getPackage().getImplementationVersion());
+    public JsonObject getSystemLoad(String hostname) {
+        String uriString = "http://" + hostname + ":" + SYSTEM_PORT + "/system";
+        try (SystemClient client = RestClientBuilder.newBuilder()
+                .baseUri(URI.create(uriString))
+                .build(SystemClient.class)) {
 
-    public static MockServerContainer mockServer =
-        new MockServerContainer(MOCKSERVER_IMAGE)
-            .withNetworkAliases("mock-server")
-            .withNetwork(network);
-
-    public static MockServerClient mockClient;
-
-    private static GenericContainer<?> queryContainer =
-        new GenericContainer(queryImage)
-            .withNetwork(network)
-            .withExposedPorts(9080)
-            .waitingFor(Wait.forLogMessage("^.*CWWKF0011I.*$", 1))
-            .withStartupTimeout(Duration.ofMinutes(3))
-            .withLogConsumer(new Slf4jLogConsumer(logger))
-            .dependsOn(mockServer);
-
-    private static QueryResourceClient createRestClient(String urlPath) {
-        ClientConfig config = new ClientConfig();
-        JerseyClient jerseyClient = JerseyClientBuilder.createClient(config);
-        JerseyWebTarget target = jerseyClient.target(urlPath);
-        return WebResourceFactory.newResource(QueryResourceClient.class, target);
-    }
-
-    private static boolean isServiceRunning(String host, int port) {
-        try {
-            Socket socket = new Socket(host, port);
-            socket.close();
-            return true;
+            JsonObject obj = client.getSystemLoad();
+            LOGGER.log(Level.INFO,
+                "Retrieved system load from {0}", hostname);
+            return obj;
+        } catch (RuntimeException e) {
+            LOGGER.log(Level.WARNING,
+                "Runtime exception while invoking system service", e);
         } catch (Exception e) {
-            return false;
+            LOGGER.log(Level.WARNING,
+                "Unexpected exception while processing system service request", e);
         }
+        return null;
     }
 
-    private static Network createNetwork() {
-        if (isServiceRunning("localhost", 9080)) {
-            isServiceRunning = true;
-            return new Network() {
+    public InventoryList list() {
+        return new InventoryList(new ArrayList<>(systems.values()));
+    }
 
-                @Override
-                public Statement apply(Statement base, Description description) {
-                    return null;
-                }
-
-                @Override
-                public String getId() {
-                    return "reactive-app";
-                }
-
-                @Override
-                public void close() {
-                }
-            };
+    public void set(String host, JsonObject systemLoad) {
+        SystemData system = systems.get(host);
+        if (system != null) {
+            system.setSystemLoad(systemLoad);
         } else {
-            isServiceRunning = false;
-            return Network.newNetwork();
+            systems.put(host, new SystemData(host, systemLoad));
         }
     }
 
-    @BeforeAll
-    public static void startContainers() {
-        mockServer.start();
-        mockClient = new MockServerClient(
-            mockServer.getHost(),
-            mockServer.getServerPort());
-        String urlPath;
-        if (isServiceRunning) {
-            System.out.println("Testing with mvn liberty:devc");
-            urlPath = "http://localhost:9080";
-        } else {
-            System.out.println("Testing with mvn verify");
-            queryContainer.withEnv(
-                "INVENTORY_BASE_URI",
-                "http://mock-server:" + MockServerContainer.PORT);
-            queryContainer.start();
-            urlPath = "http://"
-                      + queryContainer.getHost()
-                      + ":" + queryContainer.getFirstMappedPort();
+    public void refreshSystemsLoads() {
+        for (SystemData system : systems.values()) {
+            String hostname = system.getHostname();
+            JsonObject systemLoad = getSystemLoad(hostname);
+            system.setSystemLoad(systemLoad);
         }
-
-        System.out.println("Creating REST client with: " + urlPath);
-        client = createRestClient(urlPath);
     }
 
-    @BeforeEach
-    public void setup() throws InterruptedException {
-        mockClient.when(HttpRequest.request()
-                        .withMethod("GET")
-                        .withPath("/inventory/systems"))
-                    .respond(HttpResponse.response()
-                        .withStatusCode(200)
-                        .withBody("[\"testHost1\","
-                                  + "\"testHost2\","
-                                  + "\"testHost3\"]")
-                        .withHeader("Content-Type", "application/json"));
-
-        mockClient.when(HttpRequest.request()
-                        .withMethod("GET")
-                        .withPath("/inventory/systems/testHost1"))
-                    .respond(HttpResponse.response()
-                        .withStatusCode(200)
-                        .withBody(testHost1)
-                        .withHeader("Content-Type", "application/json"));
-
-        mockClient.when(HttpRequest.request()
-                        .withMethod("GET")
-                        .withPath("/inventory/systems/testHost2"))
-                    .respond(HttpResponse.response()
-                        .withStatusCode(200)
-                        .withBody(testHost2)
-                        .withHeader("Content-Type", "application/json"));
-
-        mockClient.when(HttpRequest.request()
-                        .withMethod("GET")
-                        .withPath("/inventory/systems/testHost3"))
-                    .respond(HttpResponse.response()
-                        .withStatusCode(200)
-                        .withBody(testHost3)
-                        .withHeader("Content-Type", "application/json"));
-    }
-
-    @AfterAll
-    public static void stopContainers() {
-        if (!isServiceRunning) {
-            queryContainer.stop();
-        }
-        mockClient.close();
-        mockServer.stop();
-        network.close();
-    }
-
-    @Test
-    public void testSystemLoad() {
-        Map<String, Properties> response = client.systemLoad();
-        assertEquals(
-            "testHost2",
-            response.get("highest").get("hostname"),
-            "Returned highest system load incorrect"
-        );
-        assertEquals(
-            "testHost1",
-            response.get("lowest").get("hostname"),
-            "Returned lowest system load incorrect"
-        );
+    public int clear() {
+        int systemsClearedCount = systems.size();
+        systems.clear();
+        return systemsClearedCount;
     }
 }
 ```
 
 
 
-The ***testSystemLoad()*** test case verifies that the ***query*** service can correctly calculate the highest and lowest system loads. 
+The updated ***InventoryManager*** class now uses the ***Logger.getLogger()*** method to obtain a logger instance and ***Logger.log()*** method to write messages at appropriate levels, such as ***INFO*** for successful operations and ***WARNING*** for exceptions.
 
+Because the services are running in dev mode, your changes are automatically picked up.
+
+Return to the ***http\://localhost:9081/inventory/systems/localhost*** URL to trigger a successful request. Rerun the Loki query in Grafana and locate the log entry ***Retrieved system load from localhost***. Expand the entry and verify that the ***detected_level*** is set to ***INFO*** and the ***io_openliberty_module*** field contains the logger name, ***io.openliberty.guides.inventory.client.InventoryManager***, which helps trace the origin of the log.
+
+![Example log entry from java.util.logging API at INFO level](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/log_logger_info.png)
+
+
+Next, access the ***http\://localhost:9081/inventory/systems/unknown*** URL to trigger an exception. Rerun the Loki query and locate the log entry ***Runtime exception while invoking system service***. When expanded, the entry shows that the ***detected_level*** field is set to ***WARNING***. The ***exception_stacktrace*** field contains a structured stack trace, and the ***exception_type*** field identifies the exception as ***jakarta.ws.rs.ProcessingException***.
+
+![Example log entry from java.util.logging API at WARNING level](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/log_logger_warning.png)
+
+
+By default, OpenTelemetry collects only message logs. For details on how to include other sources, see [Collect logs from a specified source](https://openliberty.io/docs/latest/reference/feature/mpTelemetry-2.0.html#logs).
+
+::page{title="Testing the application"}
+
+Manually verify the telemetry signals by inspecting them in the Grafana dashboard. You can also run the included tests to check the basic functionality of the services. If any of the tests fail, you might have introduced a bug into the code.
 
 ### Running the tests
 
-Verify that the tests pass by running the Maven ***verify*** goal on the ***query*** service:
+Because you started Open Liberty in dev mode, you can run the tests for the ***system*** and ***inventory*** services by pressing the ***enter/return*** key from the command-line sessions where you started the services.
 
-
-```bash
-export TESTCONTAINERS_RYUK_DISABLED=true
-./mvnw -pl query verify
-```
-
-For more information about disabling Ryuk, see the [Testcontainers custom configuration](https://java.testcontainers.org/features/configuration/#disabling-ryuk) document.
-
-When the tests succeed, you see output similar to the following example:
+If the tests pass, you see an output for each service similar to the following:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.query.QueryServiceIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.88 s - in it.io.openliberty.guides.query.QueryServiceIT
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.445 s -- in it.io.openliberty.guides.system.SystemEndpointIT
 
 Results:
 
 Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 ```
 
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+...
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.855 s -- in it.io.openliberty.guides.inventory.InventoryEndpointIT
+
+Results:
+
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+```
+
+When you are done checking out the services, exit dev mode by pressing `Ctrl+C` in the shell sessions where you ran the ***system*** and ***inventory*** services.
+
+Finally, run the following command to stop the container that you started from the ***grafana/otel-lgtm*** image in the **Additional prerequisites** section.
+
+```bash
+docker stop otel-lgtm
+```
+
+
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You modified an application to make HTTP requests by using a reactive JAX-RS client with Open Liberty and Jersey's RxJava provider.
+You just used MicroProfile Telemetry in Open Liberty to enable traces, metrics, and logs for microservices and the Grafana stack to collect and visualize the data.
 
+
+Try out one of the related MicroProfile guides. These guides demonstrate more technologies that you can learn to expand on what you built in this guide.
 
 
 ### Clean up your environment
@@ -1041,31 +634,33 @@ You modified an application to make HTTP requests by using a reactive JAX-RS cli
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-reactive-rest-client*** project by running the following commands:
+Delete the ***draft-guide-microprofile-telemetry-grafana-automatic*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-reactive-rest-client
+rm -fr draft-guide-microprofile-telemetry-grafana-automatic
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20RESTful%20services%20using%20the%20reactive%20JAX-RS%20client&guide-id=cloud-hosted-guide-reactive-rest-client)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Enabling%20observability%20in%20microservices%20with%20traces,%20metrics,%20and%20logs%20using%20OpenTelemetry%20and%20Grafana&guide-id=cloud-hosted-draft-guide-microprofile-telemetry-grafana-automatic)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-reactive-rest-client/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-reactive-rest-client/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/pulls)
 
 
 
 ### Where to next?
 
-* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
-* [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
+* [Enabling distributed tracing in microservices with OpenTelemetry and Jaeger](https://openliberty.io/guides/microprofile-telemetry-jaeger.html)
+* [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Consuming RESTful services with template interfaces](https://openliberty.io/guides/microprofile-rest-client.html)
 
 
 ### Log out of the session
