@@ -101,12 +101,18 @@ After you see the following message in both command-line sessions, both of your 
 ```
 The defaultServer server is ready to run a smarter planet.
 ```
+Run the following command:
+```bash
+curl -s http://localhost:9081/inventory/systems/localhost 
+```
 
-Visit the ***http\://localhost:9081/inventory/systems/localhost*** URL. This action triggers the ***inventory*** service to retrieve and store system load information for ***localhost*** by making a request to the ***system*** service at ******http\://localhost:9080/system/systemLoad***.***
+This action triggers the ***inventory*** service to retrieve and store system load information for ***localhost*** by making a request to the ***system*** service at ***http://localhost:9080/system/systemLoad***.
 
 In addition, the ***inventory*** service makes periodic background requests to the ***system*** service every 15 seconds to refresh system load information for all stored systems.
 
-You can view the telemetry data collected from the running services in the Grafana dashboard at the ***http\://localhost:3000*** URL.
+Click the following button to access the dashboard:
+
+::startApplication{port="3000" display="external" name="Grafana dashboard"}
 
 **Viewing trace with Tempo**
 
