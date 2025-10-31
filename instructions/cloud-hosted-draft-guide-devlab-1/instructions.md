@@ -112,7 +112,7 @@ In addition, the ***inventory*** service makes periodic background requests to t
 
 Click the following button to access the dashboard:
 
-::startApplication{port="3000" display="external" name="Grafana dashboard"}
+::startApplication{port="3000" display="external" name="Grafana dashboard" route="/"}
 
 **Viewing trace with Tempo**
 
