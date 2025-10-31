@@ -450,7 +450,14 @@ While ***System.out*** and ***System.err*** are useful for quick debugging, they
 
 The current ***InventoryManager*** class logs messages by writing to ***System.out*** and ***System.err***.
 
-To observe a basic standard output log, visit the ***http\://localhost:9081/inventory/systems/localhost*** URL to trigger a successful request. Then, open the Grafana dashboard at the ***http\://localhost:3000*** URL.
+To observe a basic standard output log, run the following command to trigger a successful request:
+```bash
+curl -s http://localhost:9081/inventory/systems/localhost
+```
+
+Then, click the following button to open the Grafana dashboard.
+
+::startApplication{port="3000" display="external" name="Grafana dashboard" route="/"}
 
 In the **Explore** view, select the **Loki** data source. Set a filter for ***service_name = inventory*** and click the blue **Run query** button. The results appear in the **Logs** view by default. If it is not already selected, switch to **Logs** at the upper right of the **Logs** section to enable log expansion.
 
@@ -462,7 +469,11 @@ Locate the log entry ***Retrieved system load from localhost***. When you expand
 ![Example log entry from ***System.out*** standard output stream](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/log_system_out.png)
 
 
-Next, observe a standard error log by visiting the ***http\://localhost:9081/inventory/systems/unknown*** URL. This simulates a request to a nonexistent host and triggers a ***RuntimeException***.
+Next, observe a standard error log by running the following command:
+```bash
+curl -s http://localhost:9081/inventory/systems/unknown
+```
+This simulates a request to a nonexistent host and triggers a ***RuntimeException***.
 
 Rerun the same query in Grafana. In the **Logs** section, locate and expand the following log entry:
 
@@ -576,12 +587,22 @@ The updated ***InventoryManager*** class now uses the ***Logger.getLogger()*** m
 
 Because the services are running in dev mode, your changes are automatically picked up.
 
-Return to the ***http\://localhost:9081/inventory/systems/localhost*** URL to trigger a successful request. Rerun the Loki query in Grafana and locate the log entry ***Retrieved system load from localhost***. Expand the entry and verify that the ***detected_level*** is set to ***INFO*** and the ***io_openliberty_module*** field contains the logger name, ***io.openliberty.guides.inventory.client.InventoryManager***, which helps trace the origin of the log.
+Run the following command to trigger a successful request:
+```bash
+curl -s http://localhost:9081/inventory/systems/localhost
+```
+
+Rerun the Loki query in Grafana and locate the log entry ***Retrieved system load from localhost***. Expand the entry and verify that the ***detected_level*** is set to ***INFO*** and the ***io_openliberty_module*** field contains the logger name, ***io.openliberty.guides.inventory.client.InventoryManager***, which helps trace the origin of the log.
 
 ![Example log entry from java.util.logging API at INFO level](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/log_logger_info.png)
 
 
-Next, access the ***http\://localhost:9081/inventory/systems/unknown*** URL to trigger an exception. Rerun the Loki query and locate the log entry ***Runtime exception while invoking system service***. When expanded, the entry shows that the ***detected_level*** field is set to ***WARNING***. The ***exception_stacktrace*** field contains a structured stack trace, and the ***exception_type*** field identifies the exception as ***jakarta.ws.rs.ProcessingException***.
+Next, run the following command to trigger an exception:
+```bash
+curl -s http://localhost:9081/inventory/systems/unknown
+```
+
+Rerun the Loki query and locate the log entry ***Runtime exception while invoking system service***. When expanded, the entry shows that the ***detected_level*** field is set to ***WARNING***. The ***exception_stacktrace*** field contains a structured stack trace, and the ***exception_type*** field identifies the exception as ***jakarta.ws.rs.ProcessingException***.
 
 ![Example log entry from java.util.logging API at WARNING level](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/log_logger_warning.png)
 
