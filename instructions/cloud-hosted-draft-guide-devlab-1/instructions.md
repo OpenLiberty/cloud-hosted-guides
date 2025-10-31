@@ -345,11 +345,18 @@ Dev mode holds your command-line session to listen for file changes. Open anothe
 
 Telemetry such as Liberty startup logs and JVM metrics is generated when the servers start. To see request-scoped telemetry, interact with the services. The ***system*** service provides system load information, while the ***inventory*** service retrieves and stores this data through a MicroProfile REST Client. Both services expose REST endpoints built with Jakarta RESTful Web Services.
 
-Visit the ***http\://localhost:9081/inventory/systems/localhost*** URL to fetch and store the ***localhost*** system information, which triggers the ***inventory*** service to call the ***system*** service at ******http\://localhost:9080/system/systemLoad***.***
+Run the following command:
+```bash
+curl -s http://localhost:9081/inventory/systems/localhost 
+```
+
+This action triggers the ***inventory*** service to retrieve and store system load information for ***localhost*** by making a request to the ***system*** service at ***http://localhost:9080/system/systemLoad***.
 
 Because the ***inventory*** service makes periodic background requests every 15 seconds to refresh system load information for all stored systems, telemetry data is continuously generated for you to monitor.
 
-Open the Grafana dashboard at the ***http\://localhost:3000*** URL to view the telemetry data collected from the running services.
+Click the following button to access the dashboard:
+
+::startApplication{port="3000" display="external" name="Grafana dashboard" route="/"}
 
 **Viewing request traces**
 
