@@ -54,7 +54,9 @@ The OpenTelemetry collector and the Grafana LGTM stack are up and running.
 ```
 
 When the container is running, you can access the Grafana dashboard at the ***http\://localhost:3000*** URL.
+You can access the dashboard by clicking the following button:
 
+::startApplication{port="3000" display="external" name="Grafana dashboard" route="/"}
 ::page{title="Getting started"}
 
 To open a new command-line session,
