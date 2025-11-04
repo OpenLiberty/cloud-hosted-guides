@@ -529,7 +529,7 @@ Replace the Liberty ***server.xml*** configuration file.
 
     <featureManager>
         <platform>jakartaee-10.0</platform>
-        <platform>microprofile-7.0</platform>
+        <platform>microprofile-7.1</platform>
         <feature>beanValidation</feature>
         <feature>cdi</feature>
         <feature>restfulWS</feature>
