@@ -679,7 +679,7 @@ Replace the Maven project file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>7.0</version>
+            <version>7.1</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -740,7 +740,7 @@ Replace the Maven project file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>3.4.0</version>
+                <version>3.5.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -782,7 +782,7 @@ Replace the Liberty server.xml configuration file.
 <server description="GraphQL service">
     <featureManager>
         <platform>jakartaee-10.0</platform>
-        <platform>microprofile-7.0</platform>
+        <platform>microprofile-7.1</platform>
         <feature>restfulWS</feature>
         <feature>jsonb</feature>
         <feature>jsonp</feature>
