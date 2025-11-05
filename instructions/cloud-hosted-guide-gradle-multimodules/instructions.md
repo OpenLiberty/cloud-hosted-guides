@@ -124,7 +124,7 @@ description = 'WAR Module'
 dependencies {
     implementation project(':jar')
     compileOnly 'jakarta.platform:jakarta.jakartaee-api:10.0.0'
-    compileOnly 'org.eclipse.microprofile:microprofile:7.0'
+    compileOnly 'org.eclipse.microprofile:microprofile:7.1'
 }
 
 war {
