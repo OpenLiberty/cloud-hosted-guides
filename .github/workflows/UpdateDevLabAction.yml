@@ -97,7 +97,8 @@ jobs:
             token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
             body: "Updated by github actions, triggered to the cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }} repo for ${{ github.event.inputs.guide_name }}."
             branch: "cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }}/staging"
-            base: "staging" 
+            base: "staging"
+            signoff: true
             labels: "RunTestsDev"
         name: Create Pull Request
 
@@ -166,6 +167,7 @@ jobs:
             token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
             body: "Updated by github actions, triggered to the cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }} repo for ${{ github.event.inputs.guide_name }}."
             branch: "cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }}/staging"
-            base: "staging" 
+            base: "staging"
+            signoff: true
             labels: "RunTestsDev"
         name: Create Pull Request
