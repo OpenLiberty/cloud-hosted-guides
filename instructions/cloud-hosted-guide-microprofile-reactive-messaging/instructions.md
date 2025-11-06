@@ -339,7 +339,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/
 
   <featureManager>
     <platform>jakartaee-10.0</platform>
-    <platform>microprofile-7.0</platform>
+    <platform>microprofile-7.1</platform>
     <feature>cdi</feature>
     <feature>concurrent</feature>
     <feature>jsonb</feature>
@@ -416,7 +416,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>7.0</version>
+            <version>7.1</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -479,7 +479,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>3.4.0</version>
+                <version>3.5.0</version>
                 <configuration>
                     <packagingExcludes>pom.xml</packagingExcludes>
                 </configuration>
