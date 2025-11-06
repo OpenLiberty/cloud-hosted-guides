@@ -90,7 +90,6 @@ jobs:
           git config --global user.name "GuidesBot"
           git commit -s -m "Updated by github actions from ${{ github.event.inputs.guide_name }}"
           git checkout --ours instructions/cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }}/instructions.md
-    
       - uses: peter-evans/create-pull-request@v3
         with:
             title: "To Staging: Change to cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }}"
@@ -98,7 +97,7 @@ jobs:
             body: "Updated by github actions, triggered to the cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }} repo for ${{ github.event.inputs.guide_name }}."
             branch: "cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }}/staging"
             base: "staging"
-            signoff: true
+            sign-commits: true
             labels: "RunTestsDev"
         name: Create Pull Request
 
