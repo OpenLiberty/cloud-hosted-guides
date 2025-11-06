@@ -86,7 +86,7 @@ jobs:
           git add .
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
-          git commit -m "Updated by github actions from ${{ github.event.inputs.guide_name }}"
+          git commit -s -m "Updated by github actions from ${{ github.event.inputs.guide_name }}"
           git checkout --ours instructions/${{ github.event.inputs.cloud_hosted_name }}/${instructionsMD}
     
       - uses: peter-evans/create-pull-request@v3
