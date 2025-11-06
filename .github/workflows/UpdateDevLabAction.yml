@@ -94,7 +94,7 @@ jobs:
         with:
             title: "To Staging: Change to cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }}"
             token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
-            committer: GuidesBot@ca.ibm.com
+            committer: GuidesBot <GuidesBot@ca.ibm.com>
             body: "Updated by github actions, triggered to the cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }} repo for ${{ github.event.inputs.guide_name }}."
             branch: "cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }}/staging"
             base: "staging"
@@ -166,7 +166,7 @@ jobs:
         with:
             title: "To Staging: Change to cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }}"
             token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
-            committer: GuidesBot@ca.ibm.com
+            committer: GuidesBot <GuidesBot@ca.ibm.com>
             body: "Updated by github actions, triggered to the cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }} repo for ${{ github.event.inputs.guide_name }}."
             branch: "cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }}/staging"
             base: "staging"
