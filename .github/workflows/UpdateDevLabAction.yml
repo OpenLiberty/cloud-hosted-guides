@@ -97,6 +97,7 @@ jobs:
             body: "Updated by github actions, triggered to the cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }} repo for ${{ github.event.inputs.guide_name }}."
             branch: "cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }}/staging"
             base: "staging"
+            signoff: true
             sign-commits: true
             labels: "RunTestsDev"
         name: Create Pull Request
@@ -168,5 +169,6 @@ jobs:
             branch: "cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }}/staging"
             base: "staging"
             signoff: true
+            sign-commits: true
             labels: "RunTestsDev"
         name: Create Pull Request
