@@ -51,12 +51,15 @@ jobs:
           path: GuideConverter
         
       - name: Checkout guide repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.inputs.guide_branch }}
           repository: OpenLiberty/${{ github.event.inputs.guide_name }}
           path: GuideConverter/${{ github.event.inputs.guide_name }}
-          token: ${{ secrets.QUICK_LAB_ACTIONS }}
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
         
       - name: Checkout guides-common repo
         uses: actions/checkout@v2
@@ -98,6 +101,7 @@ jobs:
             title: "To Staging: Change to cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }}"
             token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
             committer: GuidesBot <GuidesBot@ca.ibm.com>
+            author: GuidesBot <GuidesBot@ca.ibm.com>
             body: "Updated by github actions, triggered to the cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }} repo for ${{ github.event.inputs.guide_name }}."
             branch: "cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }}/staging"
             base: "staging"
