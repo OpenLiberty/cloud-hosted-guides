@@ -56,11 +56,15 @@ jobs:
           ref: ${{ github.event.inputs.guide_branch }}
           repository: OpenLiberty/${{ github.event.inputs.guide_name }}
           path: GuideConverter/${{ github.event.inputs.guide_name }}
+
+      - name: import gpg
+        uses: crazy-max/ghaction-import-gpg@v5
+        with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
           git_user_signingkey: true
           git_commit_gpgsign: true
-        
+
       - name: Checkout guides-common repo
         uses: actions/checkout@v2
         with:
@@ -96,7 +100,7 @@ jobs:
           git remote show origin -n
           git log -1 --oneline --show-signature
           git checkout --ours instructions/cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }}/instructions.md
-      - uses: peter-evans/create-pull-request@v3
+      - uses: peter-evans/create-pull-request@v7
         with:
             title: "To Staging: Change to cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }}"
             token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
