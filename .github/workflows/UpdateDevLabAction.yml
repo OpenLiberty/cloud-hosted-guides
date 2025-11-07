@@ -94,8 +94,8 @@ jobs:
           rm -rf GuideConverter
           bash .github/workflows/draftRemoval.sh cloud-hosted-draft-guide-devlab
           git add .
-          git config --global user.email "GuidesBot@ca.ibm.com"
-          git config --global user.name "GuidesBot"
+          git config --global user.email "gkwan@ca.ibm.com"
+          git config --global user.name "Gilbert Kwan"
           git commit -s -m "Updated by github actions from ${{ github.event.inputs.guide_name }}"
           git remote show origin -n
           git log -1 --oneline --show-signature
@@ -104,12 +104,11 @@ jobs:
         with:
             title: "To Staging: Change to cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }}"
             token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
-            committer: GuidesBot <GuidesBot@ca.ibm.com>
-            author: GuidesBot <GuidesBot@ca.ibm.com>
+            committer: Gilbert Kwan <gkwan@ca.ibm.com>
+            author: Gilbert Kwan <gkwan@ca.ibm.com>
             body: "Updated by github actions, triggered to the cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }} repo for ${{ github.event.inputs.guide_name }}."
             branch: "cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }}/staging"
             base: "staging"
-            signoff: true
             sign-commits: true
             labels: "RunTestsDev"
         name: Create Pull Request
