@@ -234,7 +234,7 @@ Replace the Maven project file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>7.0</version>
+            <version>7.1</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -260,7 +260,7 @@ Replace the Maven project file.
         <dependency>
             <groupId>io.smallrye.stork</groupId>
             <artifactId>stork-core</artifactId>
-            <version>2.7.5</version>
+            <version>2.7.6</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -296,7 +296,7 @@ Replace the Maven project file.
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.21.3</version>
+            <version>2.0.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -325,7 +325,7 @@ Replace the Maven project file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>3.4.0</version>
+                <version>3.5.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -375,7 +375,7 @@ Replace the Liberty server.xml configuration file.
 
   <featureManager>
     <platform>jakartaee-10.0</platform>
-    <platform>microprofile-7.0</platform>
+    <platform>microprofile-7.1</platform>
     <feature>restfulWS</feature>
     <feature>cdi</feature>
     <feature>jsonb</feature>
