@@ -691,7 +691,7 @@ Update the ***pom.xml*** file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>7.0</version>
+            <version>7.1</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -711,7 +711,7 @@ Update the ***pom.xml*** file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>3.4.0</version>
+                <version>3.5.0</version>
             </plugin>
             <!-- Enable liberty-maven plugin -->
             <plugin>
@@ -800,6 +800,7 @@ Update the ***pom.xml*** file.
             </plugin>
         </plugins>
     </build>
+
 </project>
 ```
 
