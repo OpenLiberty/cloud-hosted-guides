@@ -2,9 +2,9 @@
 markdown-version: v1
 tool-type: theia
 ---
-::page{title="Welcome to the Streaming updates to a client using Server-Sent Events guide!"}
+::page{title="Welcome to the Enabling observability in microservices with traces, metrics, and logs using OpenTelemetry and Grafana guide!"}
 
-Learn how to stream updates from a MicroProfile Reactive Messaging service to a front-end client by using Server-Sent Events (SSE).
+Learn how to enable the collection of traces, metrics, and logs from microservices by using MicroProfile Telemetry and the Grafana stack.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,30 +14,55 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 ::page{title="What you'll learn"}
 
-You will learn how to stream messages from a MicroProfile Reactive Messaging service to a front-end client by using Server-Sent Events (SSE).
+In a microservices architecture, it can be difficult to understand how services interact, where latency occurs, and what causes failures. Without visibility across service boundaries, diagnosing issues and tuning performance can become slow and error-prone.
 
-MicroProfile Reactive Messaging provides an easy way for Java services to send requests to other Java services, and asynchronously receive and process the responses as a stream of events. SSE provides a framework to stream the data in these events to a browser client.
+Observability helps address these challenges by capturing telemetry data such as logs, metrics, and traces. [OpenTelemetry](https://opentelemetry.io/) is an open source framework that provides APIs, SDKs, and tools for generating and managing this data. MicroProfile Telemetry adopts OpenTelemetry to enable both automatic and manual instrumentation in MicroProfile applications. Traces and metrics, along with runtime and application logs, can be exported in a standardized format through an OpenTelemetry Collector to any compatible backend.
 
-### What is SSE?
+In this guide, you'll use the [Grafana Docker OpenTelemetry LGTM](https://github.com/grafana/docker-otel-lgtm/?tab=readme-ov-file#docker-otel-lgtm) image (***grafana/otel-lgtm***), an open source Docker image that provides a preconfigured observability backend for OpenTelemetry, based on the [Grafana stack](https://grafana.com/about/grafana-stack/). This setup includes:
 
-Server-Sent Events is an API that allows clients to subscribe to a stream of events that is pushed from a server. First, the client makes a connection with the server over HTTP. The server continuously pushes events to the client as long as the connection persists. SSE differs from traditional HTTP requests, which use one request for one response. SSE also differs from Web Sockets in that SSE is unidirectional from the server to the client, and Web Sockets allow for bidirectional communication.
+* [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/): a gateway for receiving telemetry data from applications
 
-For example, an application that provides real-time stock quotes might use SSE to push price updates from the server to the browser as soon as the server receives them. Such an application wouldn't need Web Sockets because the data travels in only one direction, and polling the server by using HTTP requests wouldn't provide real-time updates.
+* [Prometheus](https://github.com/prometheus/prometheus): a time-series database for storing numerical metrics, like request rates and memory usage
 
-The application that you will build in this guide consists of a ***frontend*** service, a ***bff*** (backend for frontend) service, and three instances of a ***system*** service. The ***system*** services periodically publish messages that contain their hostname and current system load. The ***bff*** service receives the messages from the ***system*** services and pushes the contents as SSE to a JavaScript client in the ***frontend*** service. This client uses the events to update a table in the UI that displays each system's hostname and its periodically updating load. The following diagram depicts the application that is used in this guide:
+* [Loki](https://github.com/grafana/loki/): a log aggregation system for collecting and querying logs
 
-![SSE Diagram](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-messaging-sse/prod/assets/SSE_Diagram.png)
+* [Tempo](https://github.com/grafana/tempo/): a distributed tracing backend that stores traces, which represent the path and timing of a request as it flows across services
+    
+* [Grafana](https://github.com/grafana/grafana): a dashboard tool that brings together logs, metrics, and traces for visualization and analysis
+
+The diagram shows a distributed environment with multiple services. For simplicity, this guide configures only the ***system*** and ***inventory*** services.
+
+![Application architecture](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/architecture_diagram.png)
 
 
-In this guide, you will set up the ***bff*** service by creating an endpoint that clients can use to subscribe to events. You will also enable the service to read from the reactive messaging channel and push the contents to subscribers via SSE. After that, you will configure the Kafka connectors to allow the ***bff*** service to receive messages from the ***system*** services. Finally, you will configure the client in the ***frontend*** service to subscribe to these events, consume them, and display them in the UI.
+The ***system*** service provides system load information, while the ***inventory*** service retrieves and stores this data by calling the ***system*** service through a MicroProfile REST Client. Both services expose endpoints built with Jakarta RESTful Web Services.
 
-To learn more about the reactive Java services that are used in this guide, check out the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
+In addition, the ***inventory*** service makes periodic background requests to the ***system*** service every 15 seconds to refresh system load information for all stored systems.
 
+You’ll learn how to enable automatic collection of traces, metrics, and logs from microservices by using MicroProfile Telemetry, and visualize them in Grafana.
 
+```bash
+docker run -d --name otel-lgtm -p 3000:3000 -p 4317:4317 -p 4318:4318 --rm -ti grafana/otel-lgtm
+```
 
+You can monitor the container startup by viewing its logs:
+
+```bash
+docker logs otel-lgtm
+```
+
+It may take a minute for the container to start. After you see the following message, your observability stack is ready:
+
+```
+The OpenTelemetry collector and the Grafana LGTM stack are up and running.
+```
+
+When the container is running, you can access the Grafana dashboard at the ***http\://localhost:3000*** URL.
+You can access the dashboard by clicking the following button:
+
+::startApplication{port="3000" display="external" name="Grafana dashboard" route="/"}
 ::page{title="Getting started"}
 
 To open a new command-line session,
@@ -49,11 +74,11 @@ Run the following command to navigate to the ***/home/project*** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-reactive-messaging-sse.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/draft-guide-microprofile-telemetry-grafana-automatic.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-reactive-messaging-sse.git
-cd guide-reactive-messaging-sse
+git clone https://github.com/openliberty/draft-guide-microprofile-telemetry-grafana-automatic.git
+cd draft-guide-microprofile-telemetry-grafana-automatic
 ```
 
 
@@ -61,292 +86,596 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
+### Try what you'll build
+
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+
+To try out the application, go to the ***finish*** directory and run the following Maven goal to build the ***system*** service and deploy it to Open Liberty:
 
 
-::page{title="Setting up SSE in the bff service"}
+```bash
+./mvnw -pl system liberty:run
+```
 
-In this section, you will create a REST API for SSE in the ***bff*** service. When a client makes a request to this endpoint, the initial connection between the client and server is established and the client is subscribed to receive events that are pushed from the server. Later in this guide, the client in the ***frontend*** service uses this endpoint to subscribe to the events that are pushed from the ***bff*** service.
+Next, open another command-line session in the ***finish*** directory and run the following command to start the ***inventory*** service:
 
-Additionally, you will enable the ***bff*** service to read messages from the incoming stream and push the contents as events to subscribers via SSE.
+
+```bash
+./mvnw -pl inventory liberty:run
+```
+
+After you see the following message in both command-line sessions, both of your services are ready:
+
+```
+The defaultServer server is ready to run a smarter planet.
+```
+Run the following command:
+```bash
+curl -s http://localhost:9081/inventory/systems/localhost 
+```
+This action triggers the `inventory` service to retrieve and store system load information for `localhost` by making a request to the `system` service at `\http://localhost:9080/system/systemLoad`.
+
+In addition, the ***inventory*** service makes periodic background requests to the ***system*** service every 15 seconds to refresh system load information for all stored systems.
+
+Click the following button to access the dashboard:
+
+::startApplication{port="3000" display="external" name="Grafana dashboard" route="/"}
+
+**Viewing trace with Tempo**
+
+1. Open the **Explore** view from the left menu.
+
+2. Select **Tempo** as the data source.
+
+3. Set **Query type** to ***Search***.
+
+4. Click the blue **Run query** button at the upper right of the **Explore** view to list recent traces.
+
+5. Find and click the trace ID for the request named ***GET /inventory/systems/{hostname}***. You see the following result in the **Trace** view:
+
++
+![***GET /inventory/systems/{hostname}*** trace](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/inventory_systems_localhost_trace.png)
+
+
++
+The trace contains three spans, two from the ***inventory*** service and one from the ***system*** service.
+
+
+
+
+**Viewing logs with Loki**
+
+1. Open the **Drilldown -> Logs** view from the left menu. This view displays an overview of time-series log counts and log entries for all services that send logs to Loki.
+
+2. Click *Show logs* for a service to display its log entries inline and expand a log entry to view the full trace context.
+
++
+![Example of log details](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/log_logger_info.png)
+
+
+
+
+
+
+**Viewing metrics with Prometheus**
+
+1. Open the **Drilldown -> Metrics** view from the left menu. This view shows a query-less experience for browsing the available metrics that are collected by Prometheus.
+
++
+![Metrics overview](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/metrics_overview.png)
+
+
+2. For a more detailed view of any metric, click the **Select** button next to its graph.
+
+
+
+
+After you're finished reviewing the application, stop the Open Liberty instances by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***inventory*** services. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
+
+
+```bash
+./mvnw -pl system liberty:stop
+./mvnw -pl inventory liberty:stop
+```
+
+::page{title="Enabling automatic telemetry collection"}
+
+MicroProfile Telemetry automatically collects telemetry data without requiring changes to your application code. To collect and export telemetry data, you need to enable the MicroProfile Telemetry feature and configure the required OpenTelemetry properties in your application.
 
 Navigate to the ***start*** directory to begin.
 
-Create the BFFResource class.
+Start by adding the MicroProfile Telemetry feature to the ***server.xml*** file of each service.
 
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java
+Replace the ***server.xml*** file of the inventory service.
+
+> To open the server.xml file in your IDE, select
+> ***File*** > ***Open*** > draft-guide-microprofile-telemetry-grafana-automatic/start/inventory/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/draft-guide-microprofile-telemetry-grafana-automatic/start/inventory/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="inventory service">
+
+    <featureManager>
+        <platform>jakartaee-10.0</platform>
+        <platform>microprofile-7.1</platform>
+        <feature>cdi</feature>
+        <feature>jsonb</feature>
+        <feature>jsonp</feature>
+        <feature>restfulWS</feature>
+        <feature>mpConfig</feature>
+        <feature>mpRestClient</feature>
+        <feature>enterpriseBeansLite</feature>
+        <feature>mpTelemetry</feature>
+    </featureManager>
+
+    <httpEndpoint httpPort="${http.port}"
+                  httpsPort="${https.port}"
+                  id="defaultHttpEndpoint" host="*" />
+
+    <webApplication location="guide-microprofile-telemetry-grafana-automatic-inventory.war"
+                    contextRoot="/" />
+
+    <logging consoleLogLevel="INFO" />
+
+</server>
 ```
 
 
-> Then, to open the BFFResource.java file in your IDE, select
-> ***File*** > ***Open*** > guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java, or click the following button
+Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
-::openFile{path="/home/project/guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java"}
+
+The ***mpTelemetry*** feature enables MicroProfile Telemetry support in Open Liberty for the ***inventory*** service.
+
+Replace the ***server.xml*** file of the system service.
+
+> To open the server.xml file in your IDE, select
+> ***File*** > ***Open*** > draft-guide-microprofile-telemetry-grafana-automatic/start/system/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/draft-guide-microprofile-telemetry-grafana-automatic/start/system/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="system service">
+
+    <featureManager>
+        <platform>jakartaee-10.0</platform>
+        <platform>microprofile-7.1</platform>
+        <feature>jsonp</feature>
+        <feature>restfulWS</feature>
+        <feature>mpTelemetry</feature>
+    </featureManager>
+
+    <httpEndpoint httpPort="${http.port}"
+                  httpsPort="${https.port}"
+                  id="defaultHttpEndpoint" host="*" />
+
+    <webApplication location="guide-microprofile-telemetry-grafana-automatic-system.war"
+                    contextRoot="/" />
+
+    <logging consoleLogLevel="INFO" />
+
+</server>
+```
+
+
+
+Similarly, the added ***mpTelemetry*** feature enables telemetry support for the ***system*** service.
+
+By default, the OpenTelemetry SDK is disabled to reduce performance overhead. To enable it, set the ***otel.sdk.disabled*** property to ***false*** in a valid configuration source.
+
+Create the ***bootstrap.properties*** file for the inventory service.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/draft-guide-microprofile-telemetry-grafana-automatic/start/inventory/src/main/liberty/config/bootstrap.properties
+```
+
+
+> Then, to open the bootstrap.properties file in your IDE, select
+> ***File*** > ***Open*** > draft-guide-microprofile-telemetry-grafana-automatic/start/inventory/src/main/liberty/config/bootstrap.properties, or click the following button
+
+::openFile{path="/home/project/draft-guide-microprofile-telemetry-grafana-automatic/start/inventory/src/main/liberty/config/bootstrap.properties"}
+
+
+
+```
+otel.service.name=inventory
+otel.sdk.disabled=false
+```
+
+
+
+Setting the ***otel.sdk.disabled*** property to ***false*** property in the [bootstrap properties](https://openliberty.io/docs/latest/reference/bootstrap-properties.html) file enables telemetry collection at the runtime level. This allows both runtime and application telemetry to be collected. If you instead configure this property at the application level, runtime telemetry will not be included. For more information, refer to the [MicroProfile Telemetry configuration documentation](https://openliberty.io/docs/latest/microprofile-telemetry.html#global).
+
+The ***otel.service.name*** property sets the service name to ***inventory***, helping identify the source of the telemetry data in monitoring tools like Grafana.
+
+The observability backend provided by the ***grafana/otel-lgtm*** image receives telemetry data through the OTLP protocol, which is the default for OpenTelemetry. Therefore, no extra exporter configuration is needed.
+
+Create the ***bootstrap.properties*** file for the system service.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/draft-guide-microprofile-telemetry-grafana-automatic/start/system/src/main/liberty/config/bootstrap.properties
+```
+
+
+> Then, to open the bootstrap.properties file in your IDE, select
+> ***File*** > ***Open*** > draft-guide-microprofile-telemetry-grafana-automatic/start/system/src/main/liberty/config/bootstrap.properties, or click the following button
+
+::openFile{path="/home/project/draft-guide-microprofile-telemetry-grafana-automatic/start/system/src/main/liberty/config/bootstrap.properties"}
+
+
+
+```
+otel.service.name=system
+otel.sdk.disabled=false
+```
+
+
+
+The ***otel.**** properties are configured in the ***bootstrap.properties*** file for the ***system*** service to enable telemetry collection and define service-specific settings.
+
+For more information about these and other Telemetry properties, see the [MicroProfile Config properties for MicroProfile Telemetry](https://openliberty.io/docs/latest/reference/microprofile-config-properties.html#telemetry) documentation.
+
+::page{title="Viewing the default telemetry data"}
+
+When you enable OpenTelemetry for Open Liberty, it automatically generates trace spans for Jakarta RESTful Web Services (JAX-RS) servers and clients, as well as for MicroProfile REST Clients. It also collects metrics such as HTTP request durations, JVM performance, and application activity, and captures logs from the server and the application.
+
+For a complete list of the default metrics that Open Liberty collects when MicroProfile Telemetry is enabled, see the [MicroProfile Telemetry metrics reference list](https://openliberty.io/docs/latest/mptelemetry-metrics-list.html).
+
+Start the services to begin collecting telemetry data.
+
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following command to start the ***system*** service in dev mode:
+
+
+```bash
+./mvnw -pl system liberty:dev
+```
+
+Open another command-line session and run the following command to start the ***inventory*** service in dev mode:
+
+
+```bash
+./mvnw -pl inventory liberty:dev
+```
+
+When you see the following message, your Liberty instances are ready in dev mode:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+
+Telemetry such as Liberty startup logs and JVM metrics is generated when the servers start. To see request-scoped telemetry, interact with the services.
+
+Run the following command to fetch and store the `localhost` system information in `inventory`, which triggers the `inventory` service to call the `system` service at `\http://localhost:9080/system/systemLoad`:
+```bash
+curl -s http://localhost:9081/inventory/systems/localhost 
+```
+
+Because the ***inventory*** service makes periodic background requests every 15 seconds to refresh system load information for all stored systems, telemetry data is continuously generated for you to monitor.
+
+Click the following button to access the dashboard:
+
+::startApplication{port="3000" display="external" name="Grafana dashboard" route="/"}
+
+**Viewing request traces**
+
+View the trace that was automatically created from your request:
+
+1. Open the **Explore** view from the left menu.
+
+2. Select **Tempo** as the data source.
+
+3. Set **Query type** to ***Search***.
+
+4. Click the blue **Run query** button at the upper right of the **Explore** view to list recent traces.
+
+5. Find and click the trace ID for the request named ***GET /inventory/systems/{hostname}***. You see that the trace contains three spans in the **Trace** view:
+
++
+![***GET /inventory/systems/{hostname}*** trace](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/inventory_systems_localhost_trace.png)
+
+
+6. In the **Service & Operation** table, click each span to view detailed metadata. The ***Kind*** attribute identifies the span type. The first span is from the ***inventory*** service server handled by its Jakarta RESTful Web Services endpoint. The second span is from the MicroProfile REST Client in the ***inventory*** service with kind client calling the ***system*** service. The third span is from the ***system*** service server handled by its Jakarta RESTful Web Services endpoint.
++
+Each span includes details such as when the request was received, when the response was sent, the HTTP method, status code, and endpoint path, allowing you to trace the full request flow across services.
++
+![***GET /inventory/systems/{hostname}*** spans](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/inventory_systems_localhost_spans.png)
+
+
+7. Expand the **Node graph** section to see the relationship between the spans and how the ***inventory*** and ***system*** microservices interact. This view helps identify latency hotspots and bottlenecks.
+
++
+![***GET /inventory/systems/{hostname}*** node graph](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/inventory_systems_localhost_node_graph.png)
+
+
+This guide demonstrates automatic tracing using MicroProfile REST Client on the client side. If you want to see how distributed tracing works with Jakarta REST Clients instead, see the [Enabling distributed tracing in microservices with OpenTelemetry and Jaeger](https://openliberty.io/guides/microprofile-telemetry-jaeger.html) guide.
+
+
+
+
+**Viewing trace logs**
+
+View logs associated with a specific span:
+
+1. From the **Trace** view you opened in the previous step, click the image:log_icon.png[log icon] **Log icon** on the right side of the span entry in the **Service & Operation** table.
+
+2. Alternatively, click the blue **Logs for this span** button in the span detail section.
+
+**Viewing server logs**
+
+Monitor timestamped logs generated by the services:
+
+1. Navigate to **Drilldown -> Logs** from the menu. This view displays a time-series overview of log counts and log entries for all services.
+
++
+![Logs overview](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/logs_overview.png)
+
+
+2. Click *Show logs* for a service to display its log entries inline.
+
+
+
+
+**Viewing JVM metrics**
+
+Get insights into class count, CPU usage, and heap memory utilization:
+
+1. Open the **Dashboards** view from the menu.
+
+2. Select the **JVM Overview (OpenTelemetry)** dashboard.
+
++
+![JVM Overview](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/jvm_overview.png)
+
+
+**Viewing HTTP metrics**
+
+Get an overview of the HTTP request performance:
+
+1. Navigate back to the **Dashboards** view from the menu. 
+
+2. Open the **RED Metrics (classic histogram)** dashboard.
+
++
+![RED Metrics](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/red_metrics.png)
+
+
+**Viewing application metrics**
+
+View application-level metrics.
+
+1. Navigate to **Drilldown -> Metrics** from the menu.
+
+2. In the **Filters** section, set ***service_name*** to ***inventory*** or ***system*** to view application-specific metrics. You see a result similar to the following:
+
++
+![Inventory service metrics](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/inventory_metrics.png)
+
+
+::page{title="Enhancing application logs"}
+
+When MicroProfile Telemetry is enabled, OpenTelemetry automatically collects logs from the Liberty message log stream. This includes logs that are written by using the ***java.util.logging*** API at the ***INFO*** level or higher, as well as messages from the ***System.out*** standard output and ***System.err*** standard error streams.
+
+While ***System.out*** and ***System.err*** are useful for quick debugging, they are limited in production environments. These streams lack structure, consistent severity levels, and the contextual metadata that is critical for monitoring distributed systems. In contrast, the ***java.util.logging*** API produces structured logs with fine-grained control over log levels, built-in support for exceptions, and better integration with telemetry tools like Grafana.
+
+
+The current ***InventoryManager*** class logs messages by writing to ***System.out*** and ***System.err***.
+
+To observe a basic standard output log, run the following command to trigger a successful request:
+```bash
+curl -s http://localhost:9081/inventory/systems/localhost
+```
+
+Then, click the following button to open the Grafana dashboard.
+
+::startApplication{port="3000" display="external" name="Grafana dashboard" route="/"}
+
+In the **Explore** view, select the **Loki** data source. Set a filter for ***service_name = inventory*** and click the blue **Run query** button. The results appear in the **Logs** view by default. If it is not already selected, switch to **Logs** at the upper right of the **Logs** section to enable log expansion.
+
+![Logs view](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/logs_view.png)
+
+
+Locate the log entry ***Retrieved system load from localhost***. When you expand it, you see that both the ***detected_level*** and the ***io_openliberty_module*** fields are set to ***SystemOut***.
+
+![Example log entry from ***System.out*** standard output stream](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/log_system_out.png)
+
+
+Next, observe a standard error log by running the following command:
+```bash
+curl -s http://localhost:9081/inventory/systems/unknown
+```
+This simulates a request to a nonexistent host and triggers a ***RuntimeException***.
+
+Rerun the same query in Grafana. In the **Logs** section, locate and expand the following log entry:
+
+```
+Runtime exception while invoking system service: RESTEASY004655: Unable to invoke request: java.net.UnknownHostException: unknown: nodename nor servname provided, or not known
+```
+
+You see that both the ***detected_level*** and the ***io_openliberty_module*** fields are set to ***SystemErr***. The error stack trace is included directly in the log message, and no information about the exception type is provided.
+
+![Example log entry from ***System.err*** standard error stream](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/log_system_err.png)
+
+
+Although ***System.out*** and ***System.err*** logs are collected, they lack structured metadata. You cannot filter them by severity, separate stack traces from exceptions, or correlate them with originating classes and error types.
+
+To enable structured logging, update your application to use the ***java.util.logging*** API.
+
+Replace the ***InventoryManager*** class.
+
+> To open the InventoryManager.java file in your IDE, select
+> ***File*** > ***Open*** > draft-guide-microprofile-telemetry-grafana-automatic/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
+
+::openFile{path="/home/project/draft-guide-microprofile-telemetry-grafana-automatic/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
 
 
 
 ```java
-package io.openliberty.guides.bff;
+package io.openliberty.guides.inventory;
 
-import io.openliberty.guides.models.SystemLoad;
-
-import org.eclipse.microprofile.reactive.messaging.Incoming;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.sse.OutboundSseEvent;
-import jakarta.ws.rs.sse.Sse;
-import jakarta.ws.rs.sse.SseBroadcaster;
-import jakarta.ws.rs.sse.SseEventSink;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.json.JsonObject;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.rest.client.RestClientBuilder;
+
+import io.openliberty.guides.inventory.client.SystemClient;
+import io.openliberty.guides.inventory.model.InventoryList;
+import io.openliberty.guides.inventory.model.SystemData;
+
 @ApplicationScoped
-@Path("/sse")
-public class BFFResource {
+public class InventoryManager {
 
-    private Logger logger = Logger.getLogger(BFFResource.class.getName());
+    private static final Logger LOGGER =
+        Logger.getLogger(InventoryManager.class.getName());
 
-    private Sse sse;
-    private SseBroadcaster broadcaster;
+    @Inject
+    @ConfigProperty(name = "system.http.port")
+    private int SYSTEM_PORT;
 
-    @GET
-    @Path("/")
-    @Produces(MediaType.SERVER_SENT_EVENTS)
-    public void subscribeToSystem(
-        @Context SseEventSink sink,
-        @Context Sse sse
-        ) {
+    private Map<String, SystemData> systems = new ConcurrentHashMap<>();
 
-        if (this.sse == null || this.broadcaster == null) {
-            this.sse = sse;
-            this.broadcaster = sse.newBroadcaster();
-        }
-
-        this.broadcaster.register(sink);
-        logger.info("New sink registered to broadcaster.");
+    public ArrayList<String> getHosts() {
+        return new ArrayList<>(systems.keySet());
     }
 
-    private void broadcastData(String name, Object data) {
-        if (broadcaster != null) {
-            OutboundSseEvent event = sse.newEventBuilder()
-                                        .name(name)
-                                        .data(data.getClass(), data)
-                                        .mediaType(MediaType.APPLICATION_JSON_TYPE)
-                                        .build();
-            broadcaster.broadcast(event);
+    public InventoryList list() {
+        return new InventoryList(new ArrayList<>(systems.values()));
+    }
+
+    public JsonObject getSystemLoad(String host) {
+        String uriString = "http://" + host + ":" + SYSTEM_PORT + "/system";
+        try (SystemClient client = RestClientBuilder.newBuilder()
+                .baseUri(URI.create(uriString))
+                .build(SystemClient.class)) {
+
+            JsonObject obj = client.getSystemLoad();
+            LOGGER.log(Level.INFO,
+                "Retrieved system load from {0}", host);
+            return obj;
+        } catch (RuntimeException e) {
+            LOGGER.log(Level.WARNING,
+                "Runtime exception while invoking system service", e);
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING,
+                "Unexpected exception while processing system service request", e);
+        }
+        return null;
+    }
+
+    public void set(String host, JsonObject systemLoad) {
+        SystemData system = systems.get(host);
+        if (system != null) {
+            system.setSystemLoad(systemLoad);
         } else {
-            logger.info("Unable to send SSE. Broadcaster context is not set up.");
+            systems.put(host, new SystemData(host, systemLoad));
         }
     }
 
-    @Incoming("systemLoad")
-    public void getSystemLoadMessage(SystemLoad sl)  {
-        logger.info("Message received from system.load topic. " + sl.toString());
-        broadcastData("systemLoad", sl);
+    public int clear() {
+        int systemsClearedCount = systems.size();
+        systems.clear();
+        return systemsClearedCount;
     }
 }
 ```
 
 
-Click the :fa-copy: ***Copy*** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
+The updated ***InventoryManager*** class now uses the ***Logger.getLogger()*** method to obtain a logger instance and ***Logger.log()*** method to write messages at appropriate levels, such as ***INFO*** for successful operations and ***WARNING*** for exceptions.
 
-### Creating the SSE API endpoint
+Because the services are running in dev mode, your changes are automatically picked up.
 
-The ***subscribeToSystem()*** method allows clients to subscribe to events via an HTTP ***GET*** request to the ***/bff/sse/*** endpoint. The ***@Produces(MediaType.SERVER_SENT_EVENTS)*** annotation sets the ***Content-Type*** in the response header to ***text/event-stream***. This content type indicates that client requests that are made to this endpoint are to receive Server-Sent Events. Additionally, the method parameters take in an instance of the ***SseEventSink*** class and the ***Sse*** class, both of which are injected using the ***@Context*** annotation. First, the method checks if the ***sse*** and ***broadcaster*** instance variables are assigned. If these variables aren't assigned, the ***sse*** variable is obtained from the ***@Context*** injection and the ***broadcaster*** variable is obtained by using the ***Sse.newBroadcaster()*** method. Then, the ***register()*** method is called to register the ***SseEventSink*** instance to the ***SseBroadcaster*** instance to subscribe to events.
-
-For more information about these interfaces, see the Javadocs for [OutboundSseEvent](https://openliberty.io/docs/latest/reference/javadoc/liberty-jakartaee10-javadoc.html?path=liberty-jakartaee10-javadoc/jakarta/ws/rs/sse/OutboundSseEvent.html) and [OutboundSseEvent.Builder](https://openliberty.io/docs/latest/reference/javadoc/liberty-jakartaee10-javadoc.html?path=liberty-jakartaee10-javadoc/jakarta/ws/rs/sse/OutboundSseEvent.Builder.html).
-
-### Reading from the reactive messaging channel
-
-The ***getSystemLoadMessage()*** method receives the message that contains the hostname and the average system load. The ***@Incoming("systemLoad")*** annotation indicates that the method retrieves the message by connecting to the ***systemLoad*** channel in Kafka, which you configure in the next section.
-
-Each time a message is received, the ***getSystemLoadMessage()*** method is called, and the hostname and system load contained in that message are broadcasted in an event to all subscribers.
-
-### Broadcasting events
-
-Broadcasting events is handled in the ***broadcastData()*** method. First, it checks whether the ***broadcaster*** value is ***null***. The ***broadcaster*** value must include at least one subscriber or there's no client to send the event to. If the ***broadcaster*** value is specified, the ***OutboundSseEvent*** interface is created by using the ***Sse.newEventBuilder()*** method, where the ***name*** of the event, the ***data*** it contains, and the ***mediaType*** are set. The ***OutboundSseEvent*** interface is then broadcasted, or sent to all registered sinks, by invoking the ***SseBroadcaster.broadcast()*** method.
-
-
-You just set up an endpoint in the ***bff*** service that the client in the ***frontend*** service can use to subscribe to events. You also enabled the service to read from the reactive messaging channel and broadcast the information as events to subscribers via SSE.
-
-
-::page{title="Configuring the Kafka connector for the bff service"}
-
-A complete ***system*** service is provided for you in the ***start/system*** directory. The ***system*** service is the producer of the messages that are published to the Kafka messaging system. The periodically published messages contain the system's hostname and a calculation of the average system load (its CPU usage) for the last minute.
-
-Configure the Kafka connector in the ***bff*** service to receive the messages from the ***system*** service.
-
-Create the microprofile-config.properties file.
-
-> Run the following touch command in your terminal
+Run the following command to trigger a successful request:
 ```bash
-touch /home/project/guide-reactive-messaging-sse/start/bff/src/main/resources/META-INF/microprofile-config.properties
+curl -s http://localhost:9081/inventory/systems/localhost
 ```
 
+Rerun the Loki query in Grafana and locate the log entry ***Retrieved system load from localhost***. Expand the entry and verify that the ***detected_level*** is set to ***INFO*** and the ***io_openliberty_module*** field contains the logger name, ***io.openliberty.guides.inventory.client.InventoryManager***, which helps trace the origin of the log.
 
-> Then, to open the microprofile-config.properties file in your IDE, select
-> ***File*** > ***Open*** > guide-reactive-messaging-sse/start/bff/src/main/resources/META-INF/microprofile-config.properties, or click the following button
-
-::openFile{path="/home/project/guide-reactive-messaging-sse/start/bff/src/main/resources/META-INF/microprofile-config.properties"}
+![Example log entry from java.util.logging API at INFO level](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/log_logger_info.png)
 
 
-
-```
-mp.messaging.connector.liberty-kafka.bootstrap.servers=kafka:9092
-
-mp.messaging.incoming.systemLoad.connector=liberty-kafka
-mp.messaging.incoming.systemLoad.topic=system.load
-mp.messaging.incoming.systemLoad.key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
-mp.messaging.incoming.systemLoad.value.deserializer=io.openliberty.guides.models.SystemLoad$SystemLoadDeserializer
-mp.messaging.incoming.systemLoad.group.id=bff
-```
-
-
-
-The ***bff*** service uses an incoming connector to receive messages through the ***systemLoad*** channel. The messages are then published by the ***system*** service to the ***system.load***  topic in the Kafka message broker. The ***key.deserializer*** and ***value.deserializer*** properties define how to deserialize the messages. The ***group.id*** property defines a unique name for the consumer group. All of these properties are required by the [Apache Kafka Consumer Configs](https://kafka.apache.org/documentation/#consumerconfigs) documentation.
-
-
-
-::page{title="Configuring the frontend service to subscribe to and consume events"}
-
-In this section, you will configure the client in the ***frontend*** service to subscribe to events and display their contents in a table in the UI.
-
-The front-end UI is a table where each row contains the hostname and load of one of the three ***system*** services. The HTML and styling for the UI is provided for you but you must populate the table with information that is received from the Server-Sent Events.
-
-Create the index.js file.
-
-> Run the following touch command in your terminal
+Next, run the following command to trigger an exception:
 ```bash
-touch /home/project/guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js
+curl -s http://localhost:9081/inventory/systems/unknown
 ```
 
+Rerun the Loki query and locate the log entry ***Runtime exception while invoking system service***. When expanded, the entry shows that the ***detected_level*** field is set to ***WARNING***. The ***exception_stacktrace*** field contains a structured stack trace, and the ***exception_type*** field identifies the exception as ***jakarta.ws.rs.ProcessingException***.
 
-> Then, to open the index.js file in your IDE, select
-> ***File*** > ***Open*** > guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js, or click the following button
-
-::openFile{path="/home/project/guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js"}
+![Example log entry from java.util.logging API at WARNING level](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/log_logger_warning.png)
 
 
+By default, OpenTelemetry collects only message logs. To enable the MicroProfile Telemetry feature to collect logs from different sources in Open Liberty, set the ***source*** attribute of the [mpTelemetry](https://openliberty.io/docs/latest/reference/config/mpTelemetry.html) element to a comma-separated list of sources.
 
-```javascript
-function initSSE() {
-    var source = new EventSource('http://localhost:9084/bff/sse', { withCredentials: true });
-    source.addEventListener(
-        'systemLoad',
-        systemLoadHandler
-    );
-}
+::page{title="Testing the application"}
 
-function systemLoadHandler(event) {
-    var system = JSON.parse(event.data);
-    if (document.getElementById(system.hostname)) {
-        document.getElementById(system.hostname).cells[1].innerHTML =
-                                        system.loadAverage.toFixed(2);
-    } else {
-        var tableRow = document.createElement('tr');
-        tableRow.id = system.hostname;
-        tableRow.innerHTML = '<td>' + system.hostname + '</td><td>'
-                             + system.loadAverage.toFixed(2) + '</td>';
-        document.getElementById('sysPropertiesTableBody').appendChild(tableRow);
-    }
-}
+Manually verify the telemetry signals by inspecting them in the Grafana dashboard. You can also run the included tests to check the basic functionality of the services. If any of the tests fail, you might have introduced a bug into the code.
 
+### Running the tests
+
+Because you started Open Liberty in dev mode, you can run the tests for the ***system*** and ***inventory*** services by pressing the ***enter/return*** key from the command-line sessions where you started the services.
+
+If the tests pass, you see an output for each service similar to the following:
 
 ```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.445 s -- in it.io.openliberty.guides.system.SystemEndpointIT
 
+Results:
 
-
-### Subscribing to SSE
-
-The ***initSSE()*** method is called when the page first loads. This method subscribes the client to the SSE by creating a new instance of the ***EventSource*** interface and specifying the ***http://localhost:9084/bff/sse*** URL in the parameters. To connect to the server, the ***EventSource*** interface makes a ***GET*** request to this endpoint with a request header of ***Accept: text/event-stream***.
-
-In this IBM cloud environment, you need to update the ***EventSource*** URL with the ***bff*** service domain instead of ***localhost***. Run the following command:
-```bash
-BFF_DOMAIN=${USERNAME}-9084.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
-sed -i 's=http://localhost:9084='"https://$BFF_DOMAIN"'=g' /home/project/guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 ```
 
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+...
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.855 s -- in it.io.openliberty.guides.inventory.InventoryEndpointIT
 
+Results:
 
-Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+```
 
-Because this request comes from ***localhost:9080*** and is made to ***localhost:9084***, it must follow the Cross-Origin Resource Sharing (CORS) specification to avoid being blocked by the browser. To enable CORS for the client, set the ***withCredentials*** configuration element to true in the parameters of the ***EventSource*** interface. CORS is already enabled for you in the ***bff*** service. To learn more about CORS, check out the [CORS guide](https://openliberty.io/guides/cors.html).
+When you are done checking out the services, exit dev mode by pressing `Ctrl+C` in the shell sessions where you ran the ***system*** and ***inventory*** services.
 
-
-### Consuming the SSE
-
-The ***EventSource.addEventListener()*** method is called to add an event listener. This event listener listens for events with the name of ***systemLoad***. The ***systemLoadHandler()*** function is set as the handler function, and each time an event is received, this function is called. The ***systemLoadHandler()*** function will take the event object and parse the event's data property from a JSON string into a JavaScript object. The contents of this object are used to update the table with the system hostname and load. If a system is already present in the table, the load is updated, otherwise a new row is added for the system.
-
-
-::page{title="Building and running the application"}
-
-To build the application, navigate to the ***start*** directory and run the following Maven ***install*** and ***package*** goals from the command line:
+Finally, run the following command to stop the container that you started from the ***grafana/otel-lgtm*** image in the **Additional prerequisites** section.
 
 ```bash
-cd /home/project/guide-reactive-messaging-sse/start
-./mvnw -pl models install
-./mvnw package
+docker stop otel-lgtm
 ```
 
-
-Run the following commands to containerize the ***frontend***, ***bff***, and ***system*** services:
-
-```bash
-docker build -t frontend:1.0-SNAPSHOT frontend/.
-docker build -t bff:1.0-SNAPSHOT bff/.
-docker build -t system:1.0-SNAPSHOT system/.
-```
-
-Next, use the following ***startContainers.sh*** script to start the application in Docker containers:
-
-
-
-```bash
-./scripts/startContainers.sh
-```
-
-This script creates a network for the containers to communicate with each other. It also creates containers for Kafka, the ***frontend*** service, the ***bff*** service , and three instances of the ***system*** service.
-
-
-The application might take some time to get ready. Run the following command to confirm that the ***bff*** microservice is up and running:
-```bash
-curl -s http://localhost:9084/health | jq
-```
-
-Once your application is up and running, use the following command to get the URL. Open your browser and check out your ***front*** service by going to the URL that the command returns.
-```bash
-echo https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
-```
-
-The latest version of most modern web browsers supports Server-Sent Events. The exception is Internet Explorer, which does not support SSE. When you visit the URL, look for a table similar to the following example:
-
-![System table](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-messaging-sse/prod/assets/system_table.png)
-
-
-The table contains three rows, one for each of the running ***system*** containers. If you can see the loads updating, you know that your ***bff*** service is successfully receiving messages and broadcasting them as SSE to the client in the ***frontend*** service.
-
-
-::page{title="Tearing down the environment"}
-
-Run the following script to stop the application:
-
-
-```bash
-./scripts/stopContainers.sh
-```
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You developed an application that subscribes to Server-Sent Events by using MicroProfile Reactive Messaging, Open Liberty, and Kafka.
+You just used MicroProfile Telemetry in Open Liberty to enable traces, metrics, and logs for microservices and the Grafana stack to collect and visualize the data.
 
+
+Try out one of the related MicroProfile guides. These guides demonstrate more technologies that you can learn to expand on what you built in this guide.
 
 
 ### Clean up your environment
@@ -354,41 +683,33 @@ You developed an application that subscribes to Server-Sent Events by using Micr
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-reactive-messaging-sse*** project by running the following commands:
+Delete the ***draft-guide-microprofile-telemetry-grafana-automatic*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-reactive-messaging-sse
+rm -fr draft-guide-microprofile-telemetry-grafana-automatic
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Streaming%20updates%20to%20a%20client%20using%20Server-Sent%20Events&guide-id=cloud-hosted-guide-reactive-messaging-sse)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Enabling%20observability%20in%20microservices%20with%20traces,%20metrics,%20and%20logs%20using%20OpenTelemetry%20and%20Grafana&guide-id=cloud-hosted-draft-guide-microprofile-telemetry-grafana-automatic)
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-reactive-messaging-sse/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-reactive-messaging-sse/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/pulls)
 
 
 
 ### Where to next?
 
-* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
-* [Acknowledging messages using MicroProfile Reactive Messaging](https://openliberty.io/guides/microprofile-reactive-messaging-acknowledgment.html)
-* [Integrating RESTful services with a reactive system](https://openliberty.io/guides/microprofile-reactive-messaging-rest-integration.html)
-* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
-* [Containerizing microservices](https://openliberty.io/guides/containerize.html)
-
-**Learn more about MicroProfile**
-* [See the MicroProfile specs](https://microprofile.io/)
-* [View the MicroProfile API](https://openliberty.io/docs/ref/microprofile)
-* [View the MicroProfile Reactive Messaging Specification](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/microprofile-reactive-messaging-spec.html#_microprofile_reactive_messaging)
-* [View the JAX-RS Server-Sent Events API](https://openliberty.io/docs/ref/javaee/8/#package=javax/ws/rs/sse/package-frame.html&class=javax/ws/rs/sse/package-summary.html)
-* [View the Server-Sent Events HTML Specification](https://html.spec.whatwg.org/multipage/server-sent-events.html)
+* [Enabling distributed tracing in microservices with OpenTelemetry and Jaeger](https://openliberty.io/guides/microprofile-telemetry-jaeger.html)
+* [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Consuming RESTful services with template interfaces](https://openliberty.io/guides/microprofile-rest-client.html)
 
 
 ### Log out of the session
