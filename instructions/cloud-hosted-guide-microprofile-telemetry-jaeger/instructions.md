@@ -197,7 +197,7 @@ Replace the ***server.xml*** file of the system service:
 
     <featureManager>
         <platform>jakartaee-10.0</platform>
-        <platform>microprofile-7.0</platform>
+        <platform>microprofile-7.1</platform>
         <feature>cdi</feature>
         <feature>jsonb</feature>
         <feature>jsonp</feature>
@@ -235,7 +235,7 @@ Replace the ***server.xml*** file of the inventory service:
 
     <featureManager>
         <platform>jakartaee-10.0</platform>
-        <platform>microprofile-7.0</platform>
+        <platform>microprofile-7.1</platform>
         <feature>cdi</feature>
         <feature>jsonb</feature>
         <feature>jsonp</feature>
@@ -355,7 +355,7 @@ Replace the ***server.xml*** file of the inventory service:
 
     <featureManager>
         <platform>jakartaee-10.0</platform>
-        <platform>microprofile-7.0</platform>
+        <platform>microprofile-7.1</platform>
         <feature>cdi</feature>
         <feature>jsonb</feature>
         <feature>jsonp</feature>
