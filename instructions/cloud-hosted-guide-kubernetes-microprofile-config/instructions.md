@@ -152,7 +152,7 @@ Replace the ***server.xml*** file.
 
   <featureManager>
     <platform>jakartaee-10.0</platform>
-    <platform>microprofile-7.0</platform>
+    <platform>microprofile-7.1</platform>
     <feature>restfulWS</feature>
     <feature>jsonb</feature>
     <feature>cdi</feature>
