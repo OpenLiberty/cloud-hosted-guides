@@ -265,7 +265,7 @@ Replace the inventory's ***server.xml*** configuration file.
 
   <featureManager>
     <platform>jakartaee-10.0</platform>
-    <platform>microprofile-7.0</platform>
+    <platform>microprofile-7.1</platform>
     <feature>restfulWS</feature>
     <feature>cdi</feature>
     <feature>jsonb</feature>
@@ -439,7 +439,7 @@ Replace the system's ***server.xml*** configuration file.
 
   <featureManager>
     <platform>jakartaee-10.0</platform>
-    <platform>microprofile-7.0</platform>
+    <platform>microprofile-7.1</platform>
     <feature>cdi</feature>
     <feature>jsonb</feature>
     <feature>mpHealth</feature>
@@ -772,7 +772,7 @@ Replace the ***pom.xml*** file of the inventory service.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>7.0</version>
+            <version>7.1</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -810,7 +810,7 @@ Replace the ***pom.xml*** file of the inventory service.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>3.4.0</version>
+                <version>3.5.0</version>
                 <configuration>
                     <packagingExcludes>pom.xml</packagingExcludes>
                 </configuration>
@@ -875,7 +875,7 @@ Replace the ***server.xml*** file of the inventory service.
 
   <featureManager>
     <platform>jakartaee-10.0</platform>
-    <platform>microprofile-7.0</platform>
+    <platform>microprofile-7.1</platform>
     <feature>restfulWS</feature>
     <feature>cdi</feature>
     <feature>jsonb</feature>
@@ -981,7 +981,7 @@ Replace the ***pom.xml*** file of the system service.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>7.0</version>
+            <version>7.1</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -1016,7 +1016,7 @@ Replace the ***pom.xml*** file of the system service.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>3.4.0</version>
+                <version>3.5.0</version>
                 <configuration>
                     <packagingExcludes>pom.xml</packagingExcludes>
                 </configuration>
@@ -1084,7 +1084,7 @@ Replace the ***server.xml*** file of the system service.
 
   <featureManager>
     <platform>jakartaee-10.0</platform>
-    <platform>microprofile-7.0</platform>
+    <platform>microprofile-7.1</platform>
     <feature>cdi</feature>
     <feature>jsonb</feature>
     <feature>mpHealth</feature>
