@@ -83,9 +83,9 @@ jobs:
           rm -rf GuideConverter
           bash .github/workflows/draftRemoval.sh cloud-hosted-${{ github.event.inputs.guide_name }}
           git add .
-          git config --global user.email "GuidesBot@OpenLiberty.io"
+          git config --global user.email "GuidesBot@ca.ibm.com"
           git config --global user.name "GuidesBot"
-          git commit -m "Updated by github actions from ${{ github.event.inputs.guide_name }}"
+          git commit -s -m "Updated by github actions from ${{ github.event.inputs.guide_name }}"
           git checkout --ours instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/instructions.md
     
       - uses: peter-evans/create-pull-request@v3
@@ -152,9 +152,9 @@ jobs:
           rm -rf GuideConverter
           bash .github/workflows/draftRemoval.sh cloud-hosted-${{ github.event.inputs.guide_name }}
           git add .
-          git config --global user.email "GuidesBot@OpenLiberty.io"
+          git config --global user.email "GuidesBot@ca.ibm.com"
           git config --global user.name "GuidesBot"
-          git commit -m "Updated by github actions from ${{ github.event.inputs.guide_name }}"
+          git commit -s -m "Updated by github actions from ${{ github.event.inputs.guide_name }}"
           git checkout --ours instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/instructions.md
     
       - uses: peter-evans/create-pull-request@v3
