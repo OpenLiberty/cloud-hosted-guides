@@ -113,7 +113,7 @@ Run the following command:
 ```bash
 curl -s http://localhost:9081/inventory/systems/localhost 
 ```
-This action triggers the `inventory` service to retrieve and store system load information for `localhost` by making a request to the `system` service at `\http://localhost:9080/system/systemLoad`.
+This action triggers the `inventory` service to retrieve and store system load information for `localhost` by making a request to the `system` service at `http://localhost:9080/system/systemLoad`.
 
 In addition, the ***inventory*** service makes periodic background requests to the ***system*** service every 15 seconds to refresh system load information for all stored systems.
 
@@ -354,7 +354,7 @@ Dev mode holds your command-line session to listen for file changes. Open anothe
 
 Telemetry such as Liberty startup logs and JVM metrics is generated when the servers start. To see request-scoped telemetry, interact with the services.
 
-Run the following command to fetch and store the `localhost` system information in `inventory`, which triggers the `inventory` service to call the `system` service at `\http://localhost:9080/system/systemLoad`:
+Run the following command to fetch and store the `localhost` system information in `inventory`, which triggers the `inventory` service to call the `system` service at `http://localhost:9080/system/systemLoad`:
 ```bash
 curl -s http://localhost:9081/inventory/systems/localhost 
 ```
