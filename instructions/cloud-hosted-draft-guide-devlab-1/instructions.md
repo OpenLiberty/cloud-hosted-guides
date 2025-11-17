@@ -32,10 +32,16 @@ In this guide, you'll use the [Grafana Docker OpenTelemetry LGTM](https://github
     
 * [Grafana](https://github.com/grafana/grafana): a dashboard tool that brings together logs, metrics, and traces for visualization and analysis
 
-The diagram shows a distributed environment with multiple services. For simplicity, this guide configures only the ***system*** and ***inventory*** services. You’ll learn how to enable automatic collection of traces, metrics, and logs from microservices by using MicroProfile Telemetry, and visualize them in Grafana.
+The diagram shows a distributed environment with multiple services. For simplicity, this guide configures only the ***system*** and ***inventory*** services.
 
 ![Application architecture](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/architecture_diagram.png)
 
+
+The ***system*** service provides system load information, while the ***inventory*** service retrieves and stores this data by calling the ***system*** service through a MicroProfile REST Client. Both services expose endpoints built with Jakarta RESTful Web Services.
+
+In addition, the ***inventory*** service makes periodic background requests to the ***system*** service every 15 seconds to refresh system load information for all stored systems.
+
+You’ll learn how to enable automatic collection of traces, metrics, and logs from microservices by using MicroProfile Telemetry, and visualize them in Grafana.
 
 ```bash
 docker run -d --name otel-lgtm -p 3000:3000 -p 4317:4317 -p 4318:4318 --rm -ti grafana/otel-lgtm
@@ -86,15 +92,15 @@ The ***finish*** directory in the root of this guide contains the finished appli
 
 To try out the application, go to the ***finish*** directory and run the following Maven goal to build the ***system*** service and deploy it to Open Liberty:
 
-
 ```bash
+cd /home/project/guide-microprofile-telemetry-grafana-automatic/finish
 ./mvnw -pl system liberty:run
 ```
 
 Next, open another command-line session in the ***finish*** directory and run the following command to start the ***inventory*** service:
 
-
 ```bash
+cd /home/project/guide-microprofile-telemetry-grafana-automatic/finish
 ./mvnw -pl inventory liberty:run
 ```
 
@@ -107,8 +113,7 @@ Run the following command:
 ```bash
 curl -s http://localhost:9081/inventory/systems/localhost 
 ```
-
-This action triggers the ***inventory*** service to retrieve and store system load information for ***localhost*** by making a request to the ***system*** service at ***http://localhost:9080/system/systemLoad***.
+This action triggers the `inventory` service to retrieve and store system load information for `localhost` by making a request to the `system` service at `http://localhost:9080/system/systemLoad`.
 
 In addition, the ***inventory*** service makes periodic background requests to the ***system*** service every 15 seconds to refresh system load information for all stored systems.
 
@@ -124,7 +129,7 @@ Click the following button to access the dashboard:
 
 3. Set **Query type** to ***Search***.
 
-4. Click the blue **Run query** button in the upper-right corner to list recent traces.
+4. Click the blue **Run query** button at the upper right of the **Explore** view to list recent traces.
 
 5. Find and click the trace ID for the request named ***GET /inventory/systems/{hostname}***. You see the following result in the **Trace** view:
 
@@ -167,8 +172,8 @@ The trace contains three spans, two from the ***inventory*** service and one fro
 
 After you're finished reviewing the application, stop the Open Liberty instances by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***inventory*** services. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
 
-
 ```bash
+cd /home/project/guide-microprofile-telemetry-grafana-automatic/finish
 ./mvnw -pl system liberty:stop
 ./mvnw -pl inventory liberty:stop
 ```
@@ -318,21 +323,23 @@ For more information about these and other Telemetry properties, see the [MicroP
 
 ::page{title="Viewing the default telemetry data"}
 
-OpenTelemetry automatically generates trace spans for incoming HTTP requests to Jakarta RESTful Web Services (JAX-RS) endpoints and outgoing requests from MicroProfile REST Clients. It also collects metrics such as HTTP request durations and JVM performance, and captures logs from both the server and the application.
+When you enable OpenTelemetry for Open Liberty, it automatically generates trace spans for Jakarta RESTful Web Services (JAX-RS) servers and clients, as well as for MicroProfile REST Clients. It also collects metrics such as HTTP request durations, JVM performance, and application activity, and captures logs from the server and the application.
+
+For a complete list of the default metrics that Open Liberty collects when MicroProfile Telemetry is enabled, see the [MicroProfile Telemetry metrics reference list](https://openliberty.io/docs/latest/mptelemetry-metrics-list.html).
 
 Start the services to begin collecting telemetry data.
 
 When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following command to start the ***system*** service in dev mode:
 
-
 ```bash
+cd /home/project/guide-microprofile-telemetry-grafana-automatic/start
 ./mvnw -pl system liberty:dev
 ```
 
 Open another command-line session and run the following command to start the ***inventory*** service in dev mode:
 
-
 ```bash
+cd /home/project/guide-microprofile-telemetry-grafana-automatic/start
 ./mvnw -pl inventory liberty:dev
 ```
 
@@ -345,14 +352,12 @@ When you see the following message, your Liberty instances are ready in dev mode
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-Telemetry such as Liberty startup logs and JVM metrics is generated when the servers start. To see request-scoped telemetry, interact with the services. The ***system*** service provides system load information, while the ***inventory*** service retrieves and stores this data through a MicroProfile REST Client. Both services expose REST endpoints built with Jakarta RESTful Web Services.
+Telemetry such as Liberty startup logs and JVM metrics is generated when the servers start. To see request-scoped telemetry, interact with the services.
 
-Run the following command:
+Run the following command to fetch and store the `localhost` system information in `inventory`, which triggers the `inventory` service to call the `system` service at `http://localhost:9080/system/systemLoad`:
 ```bash
 curl -s http://localhost:9081/inventory/systems/localhost 
 ```
-
-This action triggers the ***inventory*** service to retrieve and store system load information for ***localhost*** by making a request to the ***system*** service at ***http://localhost:9080/system/systemLoad***.
 
 Because the ***inventory*** service makes periodic background requests every 15 seconds to refresh system load information for all stored systems, telemetry data is continuously generated for you to monitor.
 
@@ -372,26 +377,26 @@ View the trace that was automatically created from your request:
 
 4. Click the blue **Run query** button at the upper right of the **Explore** view to list recent traces.
 
-5. Find and click the trace ID for the request named ***GET /inventory/systems/{hostname}***. You see the following result in the **Trace** view:
+5. Find and click the trace ID for the request named ***GET /inventory/systems/{hostname}***. You see that the trace contains three spans in the **Trace** view:
 
 +
 ![***GET /inventory/systems/{hostname}*** trace](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/inventory_systems_localhost_trace.png)
 
 
+6. In the **Service & Operation** table, click each span to view detailed metadata. The ***Kind*** attribute identifies the span type. The first span is from the ***inventory*** service server handled by its Jakarta RESTful Web Services endpoint. The second span is from the MicroProfile REST Client in the ***inventory*** service with kind client calling the ***system*** service. The third span is from the ***system*** service server handled by its Jakarta RESTful Web Services endpoint.
 +
-Verify that the trace contains three spans, one for the initial request to the ***inventory*** service, one client span from the ***inventory*** service making an outbound call to the ***system*** service, and one server span from the ***system*** service handling that request.
-
-6. In the **Service & Operation** table, click each span to view detailed metadata. This includes when the request was received, when the response was sent, and information such as the HTTP method, status code, and endpoint path.
-
+Each span includes details such as when the request was received, when the response was sent, the HTTP method, status code, and endpoint path, allowing you to trace the full request flow across services.
 +
 ![***GET /inventory/systems/{hostname}*** spans](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/inventory_systems_localhost_spans.png)
 
 
-7. Expand the **Node graph** section to see the relationship between the spans and how the ***inventory*** and ***system*** microservices interact. This graph helps visualize the request flow across services and identify any latency hotspots or bottlenecks.
+7. Expand the **Node graph** section to see the relationship between the spans and how the ***inventory*** and ***system*** microservices interact. This view helps identify latency hotspots and bottlenecks.
 
 +
 ![***GET /inventory/systems/{hostname}*** node graph](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/inventory_systems_localhost_node_graph.png)
 
+
+This guide demonstrates automatic tracing using MicroProfile REST Client on the client side. If you want to see how distributed tracing works with Jakarta REST Clients instead, see the [Enabling distributed tracing in microservices with OpenTelemetry and Jaeger](https://openliberty.io/guides/microprofile-telemetry-jaeger.html) guide.
 
 
 
@@ -400,7 +405,7 @@ Verify that the trace contains three spans, one for the initial request to the *
 
 View logs associated with a specific span:
 
-1. From the **Trace** view you opened in the previous step, click the **Log icon** on the right side of the span entry in the **Service & Operation** table.
+1. From the **Trace** view you opened in the previous step, click the image:log_icon.png[log icon] **Log icon** on the right side of the span entry in the **Service & Operation** table.
 
 2. Alternatively, click the blue **Logs for this span** button in the span detail section.
 
@@ -441,6 +446,18 @@ Get an overview of the HTTP request performance:
 
 +
 ![RED Metrics](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/red_metrics.png)
+
+
+**Viewing application metrics**
+
+View application-level metrics.
+
+1. Navigate to **Drilldown -> Metrics** from the menu.
+
+2. In the **Filters** section, set ***service_name*** to ***inventory*** or ***system*** to view application-specific metrics. You see a result similar to the following:
+
++
+![Inventory service metrics](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/inventory_metrics.png)
 
 
 ::page{title="Enhancing application logs"}
@@ -534,15 +551,23 @@ public class InventoryManager {
 
     private Map<String, SystemData> systems = new ConcurrentHashMap<>();
 
-    public JsonObject getSystemLoad(String hostname) {
-        String uriString = "http://" + hostname + ":" + SYSTEM_PORT + "/system";
+    public ArrayList<String> getHosts() {
+        return new ArrayList<>(systems.keySet());
+    }
+
+    public InventoryList list() {
+        return new InventoryList(new ArrayList<>(systems.values()));
+    }
+
+    public JsonObject getSystemLoad(String host) {
+        String uriString = "http://" + host + ":" + SYSTEM_PORT + "/system";
         try (SystemClient client = RestClientBuilder.newBuilder()
                 .baseUri(URI.create(uriString))
                 .build(SystemClient.class)) {
 
             JsonObject obj = client.getSystemLoad();
             LOGGER.log(Level.INFO,
-                "Retrieved system load from {0}", hostname);
+                "Retrieved system load from {0}", host);
             return obj;
         } catch (RuntimeException e) {
             LOGGER.log(Level.WARNING,
@@ -554,24 +579,12 @@ public class InventoryManager {
         return null;
     }
 
-    public InventoryList list() {
-        return new InventoryList(new ArrayList<>(systems.values()));
-    }
-
     public void set(String host, JsonObject systemLoad) {
         SystemData system = systems.get(host);
         if (system != null) {
             system.setSystemLoad(systemLoad);
         } else {
             systems.put(host, new SystemData(host, systemLoad));
-        }
-    }
-
-    public void refreshSystemsLoads() {
-        for (SystemData system : systems.values()) {
-            String hostname = system.getHostname();
-            JsonObject systemLoad = getSystemLoad(hostname);
-            system.setSystemLoad(systemLoad);
         }
     }
 
@@ -609,7 +622,7 @@ Rerun the Loki query and locate the log entry ***Runtime exception while invokin
 ![Example log entry from java.util.logging API at WARNING level](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-grafana-automatic/draft/assets/log_logger_warning.png)
 
 
-By default, OpenTelemetry collects only message logs. For details on how to include other sources, see [Collect logs from a specified source](https://openliberty.io/docs/latest/reference/feature/mpTelemetry-2.0.html#logs).
+By default, OpenTelemetry collects only message logs. To enable the MicroProfile Telemetry feature to collect logs from different sources in Open Liberty, set the ***source*** attribute of the [mpTelemetry](https://openliberty.io/docs/latest/reference/config/mpTelemetry.html) element to a comma-separated list of sources.
 
 ::page{title="Testing the application"}
 
