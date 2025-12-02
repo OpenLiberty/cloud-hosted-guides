@@ -14,7 +14,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-::page{title="What you will learn"}
+::page{title="What you'll learn"}
 
 You will learn how to use Contexts and Dependency Injection (CDI) to manage scopes and inject dependencies in a simple inventory management application.
 
